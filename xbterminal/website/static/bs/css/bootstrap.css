@@ -262,7 +262,7 @@ html {
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 body {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: "Titillium Web", sans-serif;
   font-size: 14px;
   line-height: 1.428571429;
   color: #333;
@@ -2262,6 +2262,41 @@ input[type="button"].btn-block {
   font-family: 'Glyphicons Halflings';
   src: url('../fonts/glyphicons-halflings-regular.eot');
   src: url('../fonts/glyphicons-halflings-regular.eot?#iefix') format('embedded-opentype'), url('../fonts/glyphicons-halflings-regular.woff') format('woff'), url('../fonts/glyphicons-halflings-regular.ttf') format('truetype'), url('../fonts/glyphicons-halflings-regular.svg#glyphicons-halflingsregular') format('svg');
+}
+@font-face {
+  font-family: 'TitilliumWeb SemiBold';
+  src: url('../fonts/TitilliumWeb-SemiBold.eot');
+  src: local('?'), url('../fonts/TitilliumWeb-SemiBold.woff') format('woff'), url('../fonts/TitilliumWeb-SemiBold.ttf') format('truetype'), url('../fonts/TitilliumWeb-SemiBold.svg') format('svg');
+  font-style: normal;
+  font-weight: normal;
+}
+@font-face {
+  font-family: 'TitilliumWeb Regular';
+  src: url('../fonts/TitilliumWeb-Regular.eot');
+  src: local('?'), url('../fonts/TitilliumWeb-Regular.woff') format('woff'), url('../fonts/TitilliumWeb-Regular.ttf') format('truetype'), url('../fonts/TitilliumWeb-Regular.svg') format('svg');
+  font-style: normal;
+  font-weight: normal;
+}
+@font-face {
+  font-family: 'TitilliumWeb Bold';
+  src: url('../fonts/TitilliumWeb-Bold.eot');
+  src: local('?'), url('../fonts/TitilliumWeb-Bold.woff') format('woff'), url('../fonts/TitilliumWeb-Bold.ttf') format('truetype'), url('../fonts/TitilliumWeb-Bold.svg') format('svg');
+  font-style: normal;
+  font-weight: normal;
+}
+@font-face {
+  font-family: 'Titillium Web Thin';
+  src: url('../fonts/TitilliumWeb-Thin.eot');
+  src: local('?'), url('../fonts/TitilliumWeb-Thin.woff') format('woff'), url('../fonts/TitilliumWeb-Thin.ttf') format('truetype'), url('../fonts/TitilliumWeb-Thin.svg') format('svg');
+  font-style: normal;
+  font-weight: normal;
+}
+@font-face {
+  font-family: 'Titillium Web Light';
+  src: url('../fonts/TitilliumWeb-Light.eot');
+  src: local('?'), url('../fonts/TitilliumWeb-Light.woff') format('woff'), url('../fonts/TitilliumWeb-Light.ttf') format('truetype'), url('../fonts/TitilliumWeb-Light.svg') format('svg');
+  font-style: normal;
+  font-weight: normal;
 }
 .glyphicon {
   position: relative;
