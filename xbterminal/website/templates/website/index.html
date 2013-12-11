@@ -1,19 +1,27 @@
 {% extends "website/base.html" %}
+
 {% block css %}
 <style type="text/css">
+  {# fix bug in twitter bootstrap https://github.com/twbs/bootstrap/issues/9862?source=cc #}
+  .container-fluid {
+    padding: 0 15px;
+  }
 </style>
 {% endblock %}
+
 {% block content %}
 {% load staticfiles %}
-<div style="border-top: 4px solid #428bca;width: 100%;padding-bottom: 0px;">
-</div>
-<div class="row" style="background-color: #f3f3f3">
-  <div class="container">
-    <div class="row">
-      <div class="col-md-12 col-md-offset-1">
+
+<div style="border-top: 4px solid #428bca;width: 100%;padding-bottom: 0px;"></div>
+
+<div class="container-fluid">
+  <div class="row" style="background-color: #f3f3f3">
+    <div class="container">
+      <div class="row">
         <img src="{% static 'landing/img/logo.png' %}" alt=""/>
       </div>
     </div>
   </div>
 </div>
+
 {% endblock %}
