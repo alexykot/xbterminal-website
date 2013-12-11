@@ -1,9 +1,9 @@
 {% extends "website/base.html" %}
 
 {% block content %}
-{% include "website/common/header.html" %}
-
-<div class="container">
+<div id="wrap">
+  {% include "website/common/header.html" %}
+  <div class="container">
   <div class="row">&nbsp;</div>
   <div class="row">
     <div class="col-md-6">
@@ -12,26 +12,29 @@
     </div>
     <div class="col-md-6">
       <h3>Contact form:</h3>
-      <form role="form">
+      <form role="form" action="{% url 'website:contact_save' %}" method="post">
+        {% csrf_token %}
         <div class="form-group">
           <label for="contact-name">Name *</label>
           <input class="form-control" type="text" name="contact-name" value=""/>
         </div>
         <div class="form-group">
-          <label for="contact-name">Contact phone *</label>
-          <input class="form-control" type="text" name="contact-name" value=""/>
+          <label for="contact-phone">Contact phone *</label>
+          <input class="form-control" type="text" name="contact-phone" value=""/>
         </div>
         <div class="form-group">
           <label for="contact-name">Email *</label>
           <input class="form-control" type="text" name="contact-name" value=""/>
         </div>
         <div class="form-group">
-          <label for="contact-name">Business name *</label>
-          <input class="form-control" type="text" name="contact-name" value=""/>
+          <label for="contact-business-name">Business name *</label>
+          <input class="form-control" type="text" name="contact-business-name" value=""/>
         </div>
+        <button type="submit" class="btn btn-default pull-right">Submit</button>
       </form>
     </div>
   </div>
+</div>
 </div>
 
 {% include "website/common/footer.html" %}
