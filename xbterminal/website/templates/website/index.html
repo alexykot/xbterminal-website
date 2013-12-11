@@ -1,27 +1,38 @@
 {% extends "website/base.html" %}
 
-{% block css %}
-<style type="text/css">
-  {# fix bug in twitter bootstrap https://github.com/twbs/bootstrap/issues/9862?source=cc #}
-  .container-fluid {
-    padding: 0 15px;
-  }
-</style>
-{% endblock %}
-
 {% block content %}
-{% load staticfiles %}
+{% include "website/common/header.html" %}
 
-<div style="border-top: 4px solid #428bca;width: 100%;padding-bottom: 0px;"></div>
-
-<div class="container-fluid">
-  <div class="row" style="background-color: #f3f3f3">
-    <div class="container">
-      <div class="row">
-        <img src="{% static 'landing/img/logo.png' %}" alt=""/>
-      </div>
+<div class="container">
+  <div class="row">&nbsp;</div>
+  <div class="row">
+    <div class="col-md-6">
+      {% load staticfiles %}
+      <img src="{% static 'landing/img/terminal.png' %}" alt=""/>
+    </div>
+    <div class="col-md-6">
+      <h3>Contact form:</h3>
+      <form role="form">
+        <div class="form-group">
+          <label for="contact-name">Name *</label>
+          <input class="form-control" type="text" name="contact-name" value=""/>
+        </div>
+        <div class="form-group">
+          <label for="contact-name">Contact phone *</label>
+          <input class="form-control" type="text" name="contact-name" value=""/>
+        </div>
+        <div class="form-group">
+          <label for="contact-name">Email *</label>
+          <input class="form-control" type="text" name="contact-name" value=""/>
+        </div>
+        <div class="form-group">
+          <label for="contact-name">Business name *</label>
+          <input class="form-control" type="text" name="contact-name" value=""/>
+        </div>
+      </form>
     </div>
   </div>
 </div>
 
+{% include "website/common/footer.html" %}
 {% endblock %}
