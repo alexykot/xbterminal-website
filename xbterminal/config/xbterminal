@@ -10,10 +10,10 @@ server {
 	}
 
 	location /media/ {
-		alias	/home/xbterminal/website/static/;
+		alias	/home/xbterminal/static_root/;
 	}
 
 	location /static/ {
-		alias	/home/xbterminal/website/static/;
+		alias	/home/xbterminal/static_root/;
 	}
 }
