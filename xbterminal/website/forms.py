@@ -1,5 +1,5 @@
 from django import forms
-from website.models import Contact
+from website.models import Contact, MerchantAccount
 
 class ContactForm(forms.ModelForm):
   """
@@ -8,3 +8,11 @@ class ContactForm(forms.ModelForm):
   class Meta:
     model = Contact
     fields = ['email','message']
+
+class MerchantAccountForm(forms.ModelForm):
+  """
+  Merchant Account register form
+  """
+  class Meta:
+    model = MerchantAccount
+    exclude = ['add_date','is_enabled']
