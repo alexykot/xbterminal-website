@@ -3,6 +3,19 @@
 # -*- coding: utf-8 -*-
 from django.db import models
 
+class Contact(models.Model):
+  """
+  Simple contact info from users
+  """
+  email = models.EmailField(max_length=254)
+  add_date = models.DateTimeField(auto_now_add=True)
+  add_date.editable=True # hack to show datetime in admin
+  message = models.TextField()
+  def __unicode__(self):
+    return self.message
+  class Meta:
+    db_table = "website_contact"
+
 class MerchantAccount(models.Model):
   """
   Merchant account model
@@ -10,7 +23,7 @@ class MerchantAccount(models.Model):
   name = models.CharField(max_length=255)
   contact_phone = models.CharField(max_length=20)
   # using for login
-  email = models.CharField(max_length=1000)
+  email = models.EmailField(max_length=254)
   business_name = models.CharField(max_length=1000)
   class Meta:
     db_table = "website_merch_acc"
