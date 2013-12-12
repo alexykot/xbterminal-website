@@ -34,3 +34,8 @@ body {
 .container .text-muted {
   margin: 20px 0;
 }
+
+/*override container width to clone landing*/
+.container {
+    width: 960px;
+}
