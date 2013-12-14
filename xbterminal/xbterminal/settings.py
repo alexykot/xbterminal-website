@@ -87,4 +87,23 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
 STATIC_URL = '/static/'
+
 STATIC_ROOT = 'static_root'
+
+EMAIL_USE_TLS = False
+
+EMAIL_USE_SSL = False
+
+EMAIL_FILE_PATH = "mailto"
+
+EMAIL_HOST = 'smtp.gmail.com'
+
+EMAIL_HOST_PASSWORD = 'UjhzxbqKtl!=Gnbwf'
+
+EMAIL_HOST_USER = 'webusnix@gmail.com'
+
+EMAIL_PORT = 25
+
+DEFAULT_FROM_EMAIL = "webusnix@gmail.com"
+
+SERVER_EMAIL = "webusnix@gmail.com"
