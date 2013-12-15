@@ -28,7 +28,7 @@ def contact(request):
         "message from xbterminal.com",
         mail_text,
         "webusnix@gmail.com",
-        ["webusnix@gmail.com"],
+        ["webusnix@gmail.com","info@xbterminal.com"],
         fail_silently=False)
       return HttpResponse(json.dumps({'msg':'ok'}),content_type='application/json')
     else:
