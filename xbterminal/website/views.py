@@ -55,7 +55,6 @@ def merchant_login(request):
       if user is not None:
         if user.is_active:
           login(request,user)
-          #import pdb; pdb.set_trace()
           return redirect(merchant_cabinet)
         else:
           return HttpResponseRedirect('/')
@@ -87,6 +86,10 @@ def merchant(request):
       merch = MerchantAccount.objects.get(company_name=form.data['company_name'])
       merch.user = user
       merch.save()
+    else:
+      errors = form.errors
+      errors['msg'] = 'error'
+      return HttpResponse(json.dumps(form.errors),content_type='application/json')
   else:
     form = MerchantRegistrationForm()
   return render(request,'website/merchant.html',{'form': form})
