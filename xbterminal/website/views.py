@@ -34,7 +34,7 @@ def contact(request):
     else:
       errors = form.errors
       errors['msg'] = 'error'
-      return HttpResponse(json.dumps(form.errors),content_type='application/json')
+      return HttpResponse(json.dumps(errors),content_type='application/json')
   else:
     form = ContactForm()
   return render(request,'website/contact.html',{'form': form})
@@ -86,10 +86,14 @@ def merchant(request):
       merch = MerchantAccount.objects.get(company_name=form.data['company_name'])
       merch.user = user
       merch.save()
+
+      errors = {}
+      errors['msg'] = 'ok'
+      return HttpResponse(json.dumps(errors),content_type='application/json')
     else:
       errors = form.errors
       errors['msg'] = 'error'
-      return HttpResponse(json.dumps(form.errors),content_type='application/json')
+      return HttpResponse(json.dumps(errors),content_type='application/json')
   else:
     form = MerchantRegistrationForm()
   return render(request,'website/merchant.html',{'form': form})

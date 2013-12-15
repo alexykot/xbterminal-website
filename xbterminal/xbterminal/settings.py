@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-
+from settings_server import REAL_EMAIL_HOST_PASSWORD
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
@@ -96,7 +96,7 @@ EMAIL_FILE_PATH = "mailto"
 
 EMAIL_HOST = 'smtp.googlemail.com'
 
-EMAIL_HOST_PASSWORD = ''
+EMAIL_HOST_PASSWORD = REAL_EMAIL_HOST_PASSWORD
 
 EMAIL_HOST_USER = 'webusnix@gmail.com'
 

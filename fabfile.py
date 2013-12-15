@@ -12,6 +12,17 @@ def copy():
   with cd('/home'):
     run('tar -xzf /home/xbterminal.tgz -C /home/xbterminal')
 
+def soft_deploy():
+  local('tar -C xbterminal -czf /tmp/xbterminal.tgz --exclude .hg .')
+  put('/tmp/xbterminal.tgz','/home')
+  with cd('/home'):
+    run('tar -xzf /home/xbterminal.tgz -C /home/xbterminal')
+    run('service nginx restart && service uwsgi restart')
+  with cd('/home/xbterminal'):
+    with prefix('source ./venv/xbterminal/bin/activate'):
+      run('python manage.py collectstatic')
+  local('hg push')
+
 def deploy():
   local('tar -C xbterminal -czf /tmp/xbterminal.tgz --exclude .hg .')
   put('/tmp/xbterminal.tgz','/home')
