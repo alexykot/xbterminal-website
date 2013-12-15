@@ -1,7 +1,8 @@
 import sys
+import json
 
 from django.shortcuts import render, redirect
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
@@ -17,8 +18,23 @@ def contact(request):
   if request.method == 'POST':
     form = ContactForm(request.POST)
     if form.is_valid():
-      form.save()
-      return HttpResponseRedirect('/')
+      mail_text = ""
+      mail_text += "Message from user: " + '\n'
+      mail_text += "Email: " + form.data['email'] + '\n'
+      mail_text += "Name: " + form.data['name'] + '\n'
+      mail_text += "Company name: " + form.data['company_name'] + '\n'
+      mail_text += "Message: " + form.data['message'] + '\n'
+      send_mail(
+        "message from xbterminal.com",
+        mail_text,
+        "webusnix@gmail.com",
+        ["webusnix@gmail.com"],
+        fail_silently=False)
+      return HttpResponse(json.dumps({'msg':'ok'}),content_type='application/json')
+    else:
+      errors = form.errors
+      errors['msg'] = 'error'
+      return HttpResponse(json.dumps(form.errors),content_type='application/json')
   else:
     form = ContactForm()
   return render(request,'website/contact.html',{'form': form})
