@@ -84,7 +84,7 @@
 
 {% block ready %}
 $(".alert").alert();
-$('#send_merchant').click(function(){
+$(document).on("click","#send_merchant",function(){
   $.ajax({
     type: 'POST',
     url: {% url 'website:merchant' %},
