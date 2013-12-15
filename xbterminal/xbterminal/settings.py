@@ -90,20 +90,18 @@ STATIC_URL = '/static/'
 
 STATIC_ROOT = 'static_root'
 
-EMAIL_USE_TLS = False
-
-EMAIL_USE_SSL = False
+EMAIL_USE_TLS = True
 
 EMAIL_FILE_PATH = "mailto"
 
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST = 'smtp.googlemail.com'
 
-EMAIL_HOST_PASSWORD = ''
+EMAIL_HOST_PASSWORD = 'UjhzxbqKtl!=Gnbwf'
 
 EMAIL_HOST_USER = 'webusnix@gmail.com'
 
-EMAIL_PORT = 25
+EMAIL_PORT = 587
 
-DEFAULT_FROM_EMAIL = "webusnix@gmail.com"
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-SERVER_EMAIL = "webusnix@gmail.com"
+SERVER_EMAIL = DEFAULT_FROM_EMAIL

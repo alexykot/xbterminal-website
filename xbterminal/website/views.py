@@ -1,9 +1,10 @@
 import sys
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect
 
 from django.contrib.auth import login, authenticate
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 
@@ -38,7 +39,8 @@ def merchant_login(request):
       if user is not None:
         if user.is_active:
           login(request,user)
-          return HttpResponseRedirect('/')
+          #import pdb; pdb.set_trace()
+          return redirect(merchant_cabinet)
         else:
           return HttpResponseRedirect('/')
       else:
@@ -57,20 +59,22 @@ def merchant(request):
       mail_text = ""
       mail_text += "Thank you to register on xbterminal.com" + '\n'
       mail_text += "You can logon to the site with your company name and password" + '\n'
-      mail_text += "You current password: " + pwd + '\n'
-      """
+      mail_text += "Your company name: " + form.data['company_name'] + '\n'
+      mail_text += "Your current password: " + pwd + '\n'
       send_mail(
         "registration on xbterminal.com",
         mail_text,
         "webusnix@gmail.com",
         [form.data['contact_email']],
         fail_silently=False)
-      """
       form.save()
       merch = MerchantAccount.objects.get(contact_email=form.data['contact_email'])
       merch.user = user
       merch.save()
-      #return HttpResponseRedirect('/')
   else:
     form = MerchantRegistrationForm()
   return render(request,'website/merchant.html',{'form': form})
+
+@login_required(login_url='/login')
+def merchant_cabinet(request):
+  return render(request,'website/merchant_cabinet.html',{})
