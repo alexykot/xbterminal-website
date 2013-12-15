@@ -11,14 +11,13 @@
   <div class="row">
     <div class="col-md-2">
     </div>
-    <div class="col-md-8">
+    <div class="col-md-8" id="merchant_view">
       <h3>Merchant registration:</h3>
-      <form role="form" action="{% url 'website:merchant' %}" method="post">
+      <form role="form" action="{% url 'website:merchant' %}" method="post" id="merchant_form">
         {% csrf_token %}
         {% comment %}
         {{form | bootstrap}}
         {% endcomment %}
-
         <div class="form-group">
           <label class="control-label" for="company_name">Company name</label>
           <input class="form-control" type="text" name="company_name" id="company_name" value=""/>
@@ -57,7 +56,10 @@
           <label class="control-label" for="contact_email">Contact Email</label>
           <input class="form-control" type="text" name="contact_email" id="contact_email" value=""/>
         </div>
+        {% comment %}
         <button type="submit" class="btn btn-default pull-right">Submit</button>
+        {% endcomment %}
+        <a href="#" class="btn btn-default pull-right" id="send_merchant">Submit</a>
       </form>
     </div>
     <div class="col-md-2"></div>
@@ -67,4 +69,19 @@
 </div>
 
 {% include "website/common/footer.html" %}
+{% endblock %}
+
+{% block ready %}
+$('#send_merchant').click(function(){
+        $.ajax({
+                type: 'POST',
+                url: {% url 'website:merchant' %},
+                data: $('#merchant_form').serialize(),
+                success: function(data) {
+                        $('#merchant_view').empty();
+                        $('#merchant_view').html(
+"<h3>Thanks!</h3><p class='lead'>Now you can <a href='{% url 'website:login' %}'>logon</a> to xbterminal.com</p><p class='lead'>Check your email, it was sent to an initial password to log in to xbterminal.com</p>");
+                }
+        });
+});
 {% endblock %}

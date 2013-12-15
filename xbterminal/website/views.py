@@ -58,17 +58,19 @@ def merchant(request):
       mail_text += "Thank you to register on xbterminal.com" + '\n'
       mail_text += "You can logon to the site with your company name and password" + '\n'
       mail_text += "You current password: " + pwd + '\n'
+      """
       send_mail(
         "registration on xbterminal.com",
         mail_text,
         "webusnix@gmail.com",
         [form.data['contact_email']],
         fail_silently=False)
+      """
+      form.save()
       merch = MerchantAccount.objects.get(contact_email=form.data['contact_email'])
       merch.user = user
       merch.save()
-      import pdb; pdb.set_trace()
-      return HttpResponseRedirect('/')
+      #return HttpResponseRedirect('/')
   else:
     form = MerchantRegistrationForm()
   return render(request,'website/merchant.html',{'form': form})

@@ -98,7 +98,7 @@ EMAIL_FILE_PATH = "mailto"
 
 EMAIL_HOST = 'smtp.gmail.com'
 
-EMAIL_HOST_PASSWORD = 'UjhzxbqKtl!=Gnbwf'
+EMAIL_HOST_PASSWORD = ''
 
 EMAIL_HOST_USER = 'webusnix@gmail.com'
 
