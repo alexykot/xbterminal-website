@@ -15,9 +15,6 @@
       <h3>Merchant registration:</h3>
       <form role="form" action="{% url 'website:merchant' %}" method="post" id="merchant_form">
         {% csrf_token %}
-        {% comment %}
-        {{form | bootstrap}}
-        {% endcomment %}
         <div class="form-group">
           <label class="control-label" for="company_name">Company name</label>
           <input class="form-control" type="text" name="company_name" id="company_name" value=""/>
