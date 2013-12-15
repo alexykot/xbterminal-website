@@ -68,7 +68,7 @@ def merchant(request):
         [form.data['contact_email']],
         fail_silently=False)
       form.save()
-      merch = MerchantAccount.objects.get(contact_email=form.data['contact_email'])
+      merch = MerchantAccount.objects.get(company_name=form.data['company_name'])
       merch.user = user
       merch.save()
   else:
