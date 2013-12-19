@@ -84,7 +84,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = 'static'
 
 DEFAULT_FROM_EMAIL = "test@example.com"
-CONTACT_EMAIL_RECIPIENTS = ["webusnix@gmail.com", "info@xbterminal.com"]
+CONTACT_EMAIL_RECIPIENTS = ["info@xbterminal.com"]
 
 APPEND_SLASH = False
 
