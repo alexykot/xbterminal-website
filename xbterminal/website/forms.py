@@ -1,14 +1,15 @@
 from django import forms
 from website.models import Contact, MerchantAccount
 
+
 class ContactForm(forms.Form):
-  """
-  Simple contact form
-  """
-  email = forms.EmailField()
-  name = forms.CharField()
-  company_name = forms.CharField()
-  message = forms.CharField(widget=forms.Textarea)
+    """
+    Simple contact form
+    """
+    email = forms.EmailField()
+    name = forms.CharField()
+    company_name = forms.CharField(required=False)
+    message = forms.CharField(widget=forms.Textarea)
 
 """
 class MerchantAccountForm(forms.ModelForm):

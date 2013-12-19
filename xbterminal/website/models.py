@@ -1,38 +1,41 @@
-"""
-"""
 # -*- coding: utf-8 -*-
 from django.db import models
 from django.contrib.auth.models import User
 
+
 class Contact(models.Model):
-  """
-  Simple contact info from users
-  """
-  email = models.EmailField(max_length=254)
-  add_date = models.DateTimeField(auto_now_add=True)
-  add_date.editable=True # hack to show datetime in admin
-  message = models.TextField()
-  def __unicode__(self):
-    return self.message
-  class Meta:
-    db_table = "website_contact"
+    """
+    Simple contact info from users
+    """
+    email = models.EmailField(max_length=254)
+    add_date = models.DateTimeField(auto_now_add=True)
+    message = models.TextField()
+
+    class Meta:
+        db_table = "website_contact"
+
+    def __unicode__(self):
+        return self.message
+
 
 class MerchantAccount(models.Model):
-  user = models.OneToOneField(User,null=True)
-  company_name = models.CharField(max_length=254,unique=True)
-  business_address = models.CharField(max_length=1000)
-  business_address1 = models.CharField(max_length=1000)
-  business_address2 = models.CharField(max_length=1000)
-  town = models.CharField(max_length=1000)
-  county = models.CharField(max_length=1000)
-  post_code = models.CharField(max_length=1000)
-  contact_name = models.CharField(max_length=1000)
-  contact_phone = models.CharField(max_length=1000)
-  contact_email = models.EmailField()
-  def __unicode__(self):
-    return self.company_name
-  class Meta:
-    db_table = "website_merch_acc"
+    user = models.OneToOneField(User, null=True)
+    company_name = models.CharField(max_length=254, unique=True)
+    business_address = models.CharField(max_length=1000)
+    business_address1 = models.CharField(max_length=1000)
+    business_address2 = models.CharField(max_length=1000)
+    town = models.CharField(max_length=1000)
+    county = models.CharField(max_length=1000)
+    post_code = models.CharField(max_length=1000)
+    contact_name = models.CharField(max_length=1000)
+    contact_phone = models.CharField(max_length=1000)
+    contact_email = models.EmailField()
+
+    class Meta:
+        db_table = "website_merch_acc"
+
+    def __unicode__(self):
+        return self.company_name
 
 """
 class MerchantAccount(models.Model):
