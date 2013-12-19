@@ -9,7 +9,7 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         # Adding model 'Contact'
-        db.create_table('website_contact', (
+        db.create_table(u'website_contact', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('email', self.gf('django.db.models.fields.EmailField')(max_length=254)),
             ('add_date', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
@@ -18,29 +18,29 @@ class Migration(SchemaMigration):
         db.send_create_signal(u'website', ['Contact'])
 
         # Adding model 'MerchantAccount'
-        db.create_table('website_merch_acc', (
+        db.create_table(u'website_merchantaccount', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('user', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['auth.User'], unique=True, null=True)),
-            ('company_name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=254)),
+            ('company_name', self.gf('django.db.models.fields.CharField')(max_length=254)),
             ('business_address', self.gf('django.db.models.fields.CharField')(max_length=1000)),
-            ('business_address1', self.gf('django.db.models.fields.CharField')(max_length=1000)),
-            ('business_address2', self.gf('django.db.models.fields.CharField')(max_length=1000)),
+            ('business_address1', self.gf('django.db.models.fields.CharField')(default='', max_length=1000, blank=True)),
+            ('business_address2', self.gf('django.db.models.fields.CharField')(default='', max_length=1000, blank=True)),
             ('town', self.gf('django.db.models.fields.CharField')(max_length=1000)),
-            ('county', self.gf('django.db.models.fields.CharField')(max_length=1000)),
+            ('county', self.gf('django.db.models.fields.CharField')(default='', max_length=1000, blank=True)),
             ('post_code', self.gf('django.db.models.fields.CharField')(max_length=1000)),
             ('contact_name', self.gf('django.db.models.fields.CharField')(max_length=1000)),
             ('contact_phone', self.gf('django.db.models.fields.CharField')(max_length=1000)),
-            ('contact_email', self.gf('django.db.models.fields.EmailField')(max_length=75)),
+            ('contact_email', self.gf('django.db.models.fields.EmailField')(unique=True, max_length=75)),
         ))
         db.send_create_signal(u'website', ['MerchantAccount'])
 
 
     def backwards(self, orm):
         # Deleting model 'Contact'
-        db.delete_table('website_contact')
+        db.delete_table(u'website_contact')
 
         # Deleting model 'MerchantAccount'
-        db.delete_table('website_merch_acc')
+        db.delete_table(u'website_merchantaccount')
 
 
     models = {
@@ -88,15 +88,15 @@ class Migration(SchemaMigration):
             'message': ('django.db.models.fields.TextField', [], {})
         },
         u'website.merchantaccount': {
-            'Meta': {'object_name': 'MerchantAccount', 'db_table': "'website_merch_acc'"},
+            'Meta': {'object_name': 'MerchantAccount'},
             'business_address': ('django.db.models.fields.CharField', [], {'max_length': '1000'}),
-            'business_address1': ('django.db.models.fields.CharField', [], {'max_length': '1000'}),
-            'business_address2': ('django.db.models.fields.CharField', [], {'max_length': '1000'}),
-            'company_name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '254'}),
-            'contact_email': ('django.db.models.fields.EmailField', [], {'max_length': '75'}),
+            'business_address1': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '1000', 'blank': 'True'}),
+            'business_address2': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '1000', 'blank': 'True'}),
+            'company_name': ('django.db.models.fields.CharField', [], {'max_length': '254'}),
+            'contact_email': ('django.db.models.fields.EmailField', [], {'unique': 'True', 'max_length': '75'}),
             'contact_name': ('django.db.models.fields.CharField', [], {'max_length': '1000'}),
             'contact_phone': ('django.db.models.fields.CharField', [], {'max_length': '1000'}),
-            'county': ('django.db.models.fields.CharField', [], {'max_length': '1000'}),
+            'county': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '1000', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'post_code': ('django.db.models.fields.CharField', [], {'max_length': '1000'}),
             'town': ('django.db.models.fields.CharField', [], {'max_length': '1000'}),

@@ -1,5 +1,7 @@
 from django import forms
-from website.models import Contact, MerchantAccount
+from django.contrib.auth.forms import AuthenticationForm as DjangoAuthenticationForm
+
+from website.models import MerchantAccount
 
 
 class ContactForm(forms.Form):
@@ -11,26 +13,15 @@ class ContactForm(forms.Form):
     company_name = forms.CharField(required=False)
     message = forms.CharField(widget=forms.Textarea)
 
-"""
-class MerchantAccountForm(forms.ModelForm):
-  class Meta:
-    model = MerchantAccount
-    exclude = ['add_date','is_enabled']
-"""
 
 class MerchantRegistrationForm(forms.ModelForm):
-  class Meta:
-    model = MerchantAccount
-    exclude = ['user']
-  """
-  company_name = forms.CharField()
-  business_address = forms.CharField()
-  business_address1 = forms.CharField()
-  business_address2 = forms.CharField()
-  town = forms.CharField()
-  county = forms.CharField()
-  post_code = forms.CharField()
-  contact_name = forms.CharField()
-  contact_phone = forms.CharField()
-  contact_email = forms.EmailField()
-  """
+    class Meta:
+        model = MerchantAccount
+        exclude = ['user']
+
+
+class AuthenticationForm(DjangoAuthenticationForm):
+    def __init__(self, request=None, *args, **kwargs):
+        super(AuthenticationForm, self).__init__(*args, **kwargs)
+
+        self.fields['username'].label = 'Email'

@@ -1,0 +1,4 @@
+Thank you to register on xbterminal.com
+You can logon to the site with your email and password
+Your email: {{ email }}
+Your current password: {{ password }}

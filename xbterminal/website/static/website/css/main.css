@@ -21,6 +21,12 @@ body {
   background-color: #f3f3f3;
 }
 
+.gap {
+  margin-bottom: 50px;
+}
+#loading-img {
+  display: none;
+}
 
 /* Custom page CSS
 -------------------------------------------------- */

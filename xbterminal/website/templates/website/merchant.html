@@ -5,61 +5,61 @@
 {% load staticfiles %}
 
 <div id="wrap">
-  {% include "website/common/header.html" %}
-  <div class="container">
-  <div class="row">&nbsp;</div>
-  <div class="row">
-    <div class="col-md-2">
+{% include "website/common/header.html" %}
+    <div class="container">
+        <div class="row">&nbsp;</div>
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2" id="merchant_view">
+                <h3>Merchant registration:</h3>
+                <form role="form" action="{% url 'website:merchant' %}" method="post" id="merchant_form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                      <label class="control-label" for="company_name">Company name</label>
+                      <input class="form-control" type="text" name="company_name" id="company_name" value=""/>
+                    </div>
+                    <div class="gap"></div>
+                    <div class="form-group">
+                      <label class="control-label" for="business_address">Business address</label>
+                      <input class="form-control" type="text" name="business_address" id="business_address" value=""/>
+                    </div>
+                    <div class="form-group">
+                      <input class="form-control" type="text" name="business_address1" id="business_address1" value=""/>
+                    </div>
+                    <div class="form-group">
+                      <input class="form-control" type="text" name="business_address2" id="business_address2" value=""/>
+                    </div>
+                    <div class="form-group">
+                      <label class="control-label" for="town">Town</label>
+                      <input class="form-control" type="text" name="town" id="town" value=""/>
+                    </div>
+                    <div class="form-group">
+                      <label class="control-label" for="county">County</label>
+                      <input class="form-control" type="text" name="county" id="county" value=""/>
+                    </div>
+                    <div class="form-group">
+                      <label class="control-label" for="post_code">Post code</label>
+                      <input class="form-control" type="text" name="post_code" id="post_code" value=""/>
+                    </div>
+                    <div class="gap"></div>
+                    <div class="form-group">
+                      <label class="control-label" for="contact_name">Contact name</label>
+                      <input class="form-control" type="text" name="contact_name" id="contact_name" value=""/>
+                    </div>
+                    <div class="form-group">
+                      <label class="control-label" for="contact_phone">Contact phone</label>
+                      <input class="form-control" type="text" name="contact_phone" id="contact_phone" value=""/>
+                    </div>
+                    <div class="form-group">
+                      <label class="control-label" for="contact_email">Contact Email</label>
+                      <input class="form-control" type="text" name="contact_email" id="contact_email" value=""/>
+                    </div>
+                    <button type="submit" id="send_merchant" class="btn btn-default pull-right">Submit</button>
+                    <img id="loading-img" class="pull-right" src="{% static 'website/images/loading.gif' %}">
+                </form>
+            </div>
+        </div>
+        <div class="row">&nbsp;</div>
     </div>
-    <div class="col-md-8" id="merchant_view">
-      <h3>Merchant registration:</h3>
-      <form role="form" action="{% url 'website:merchant' %}" method="post" id="merchant_form">
-        {% csrf_token %}
-        <div class="form-group">
-          <label class="control-label" for="company_name">Company name</label>
-          <input class="form-control" type="text" name="company_name" id="company_name" value=""/>
-        </div>
-        <div class="form-group">
-          <label class="control-label" for="business_address">Business address</label>
-          <input class="form-control" type="text" name="business_address" id="business_address" value=""/>
-        </div>
-        <div class="form-group">
-          <input class="form-control" type="text" name="business_address1" id="business_address1" value=""/>
-        </div>
-        <div class="form-group">
-          <input class="form-control" type="text" name="business_address2" id="business_address2" value=""/>
-        </div>
-        <div class="form-group">
-          <label class="control-label" for="town">Town</label>
-          <input class="form-control" type="text" name="town" id="town" value=""/>
-        </div>
-        <div class="form-group">
-          <label class="control-label" for="county">County</label>
-          <input class="form-control" type="text" name="county" id="county" value=""/>
-        </div>
-        <div class="form-group">
-          <label class="control-label" for="post_code">Post code</label>
-          <input class="form-control" type="text" name="post_code" id="post_code" value=""/>
-        </div>
-        <div class="form-group">
-          <label class="control-label" for="contact_name">Contact name</label>
-          <input class="form-control" type="text" name="contact_name" id="contact_name" value=""/>
-        </div>
-        <div class="form-group">
-          <label class="control-label" for="contact_phone">Contact phone</label>
-          <input class="form-control" type="text" name="contact_phone" id="contact_phone" value=""/>
-        </div>
-        <div class="form-group">
-          <label class="control-label" for="contact_email">Contact Email</label>
-          <input class="form-control" type="text" name="contact_email" id="contact_email" value=""/>
-        </div>
-        <a href="#" class="btn btn-default pull-right" id="send_merchant">Submit</a>
-      </form>
-    </div>
-    <div class="col-md-2"></div>
-  </div>
-  <div class="row">&nbsp;</div>
-</div>
 </div>
 
 {% include "website/common/footer.html" %}
@@ -69,7 +69,7 @@
 <script src="{% static 'website/js/handlebars-v1.1.2.js' %}" type="text/javascript"></script>
 {% verbatim %}
 <script id="entry-template" type="text/x-handlebars-template">
-<div class="alert alert-danger alert-dismissable">
+<div id="alert" class="alert alert-danger alert-dismissable">
   <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
   <strong>Warning!</strong>
   <ul>
@@ -83,32 +83,40 @@
 {% endblock %}
 
 {% block ready %}
+$(document)
+    .ajaxStart(function() {
+        $('#loading-img').show();
+    })
+    .ajaxStop(function() {
+        $('#loading-img').hide();
+    });
 $(".alert").alert();
-$(document).on("click","#send_merchant",function(){
+$(document).on("click","#send_merchant",function(e){
+  $('#alert').remove();
   $.ajax({
     type: 'POST',
     url: {% url 'website:merchant' %},
     data: $('#merchant_form').serialize(),
     success: function(data) {
-      if(data.msg == "ok") {
+      if(data.result == "ok") {
         $('#merchant_view').empty();
         $('#merchant_view').html(
           "<h3>Thanks!</h3><p class='lead'>Now you can <a href='{% url 'website:django.contrib.auth.views.login' %}'>logon</a> to xbterminal.com</p><p class='lead'>Check your email, it was sent to an initial password to log in to xbterminal.com</p>");
       } else {
-        err_msg = [];
-        for(var x in Object.keys(data)) {
-          var field = Object.keys(data)[x];
-          if(field != "msg") {
-            err_msg.push(field.replace('_',' ') + " - " + data[field].join(","));
-          }
+        var err_msg = [];
+        var errors = data.errors;
+        for(var x in Object.keys(errors)) {
+          var field = Object.keys(errors)[x];
+          err_msg.push(field.replace('_',' ') + " - " + errors[field].join(","));
         };
         var source   = $("#entry-template").html();
         var template = Handlebars.compile(source);
         var context = {"hb_message": err_msg}
         var html    = template(context);
-        $('#merchant_view').html(html + $('#merchant_view').html());
+        $('#merchant_view').prepend(html);
       }
     }
   });
+  e.preventDefault();
 });
 {% endblock %}

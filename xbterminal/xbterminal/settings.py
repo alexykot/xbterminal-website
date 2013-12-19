@@ -83,6 +83,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = 'static_root'
 
+DEFAULT_FROM_EMAIL = "test@example.com"
 CONTACT_EMAIL_RECIPIENTS = ["webusnix@gmail.com", "info@xbterminal.com"]
 
 APPEND_SLASH = False

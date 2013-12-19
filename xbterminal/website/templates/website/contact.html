@@ -5,7 +5,6 @@
 <div id="wrap">
   {% include "website/common/header.html" %}
   <div class="container">
-  <div class="row">&nbsp;</div>
   <div class="row">
     <div class="col-sm-6 col-sm-offset-3" id="contact_view">
       <h3>Contact form:</h3>
@@ -74,7 +73,7 @@ $(document).on("click","#contact_send",function(){
         var context = {"hb_message": err_msg}
         var html    = template(context);
         $('#alert').remove();
-        $('#contact_view').html(html + $('#contact_view').html());
+        $('#contact_view').prepend(html);
       }
     }
   })
