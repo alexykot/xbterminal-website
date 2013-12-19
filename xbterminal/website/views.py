@@ -1,18 +1,14 @@
-import sys
 import json
 
-from django.shortcuts import render, redirect
-from django.http import HttpResponseRedirect, HttpResponse
+from django.shortcuts import render
+from django.http import HttpResponse
 
-from django.contrib.auth import login, authenticate, get_user_model
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
 
-from website.models import MerchantAccount
 from website.forms import ContactForm, MerchantRegistrationForm
 
 
@@ -25,7 +21,7 @@ def contact(request):
             send_mail(
                 "message from xbterminal.com",
                 mail_text,
-                "webusnix@gmail.com",
+                settings.DEFAULT_FROM_EMAIL,
                 settings.CONTACT_EMAIL_RECIPIENTS,
                 fail_silently=False
             )
