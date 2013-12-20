@@ -8,8 +8,13 @@ from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
+from django.views.generic import UpdateView, CreateView
+from django.utils.decorators import method_decorator
+from django.core.urlresolvers import reverse, reverse_lazy
+from django.http import Http404
 
-from website.forms import ContactForm, MerchantRegistrationForm
+from website.models import Device
+from website.forms import ContactForm, MerchantRegistrationForm, ProfileForm, DeviceForm
 
 
 def contact(request):
@@ -83,6 +88,61 @@ def merchant(request):
     return render(request, 'website/merchant.html', {'form': form})
 
 
-@login_required
-def merchant_cabinet(request):
-    return render(request, 'website/merchant_cabinet.html', {})
+class ProfileView(UpdateView):
+    form_class = ProfileForm
+    template_name = 'website/profile_form.html'
+    success_url = reverse_lazy('website:profile')
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(ProfileView, self).dispatch(*args, **kwargs)
+
+    def get_object(self):
+        user = self.request.user
+        if not hasattr(user, 'merchant'):
+            raise Http404
+        return user.merchant
+
+
+class DeviceView(UpdateView):
+    form_class = DeviceForm
+    template_name = 'website/device_form.html'
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(DeviceView, self).dispatch(*args, **kwargs)
+
+    def get_object(self):
+        user = self.request.user
+        if not hasattr(user, 'merchant'):
+            raise Http404
+
+        number = self.kwargs.get('number')
+
+        if number is not None:
+            try:
+                number = int(number) - 1
+                device = user.merchant.device_set.all()[number]
+            except IndexError:
+                raise Http404
+        else:
+            device = None
+
+        return device
+
+    def form_valid(self, form):
+        device = form.save(commit=False)
+        device.merchant = self.request.user.merchant
+        device.save()
+        self.object = device
+        return super(DeviceView, self).form_valid(form)
+
+    def get_success_url(self):
+        devices = list(self.request.user.merchant.device_set.all())
+        device = self.object
+        number = devices.index(device) + 1
+        return reverse('website:device', kwargs={'number': number})
+
+    def get_context_data(self, **kwargs):
+        kwargs['current_device'] = self.object
+        return super(DeviceView, self).get_context_data(**kwargs)

@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm as DjangoAuthenticationForm
 
-from website.models import MerchantAccount
+from website.models import MerchantAccount, Device
 
 
 class ContactForm(forms.Form):
@@ -25,3 +25,19 @@ class AuthenticationForm(DjangoAuthenticationForm):
         super(AuthenticationForm, self).__init__(*args, **kwargs)
 
         self.fields['username'].label = 'Email'
+
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = MerchantAccount
+        fields = ('company_name', 'business_address', 'business_address1', 'business_address2',
+                  'town', 'county', 'post_code')
+
+    class Media:
+        css = {'all': ('css/custom.css',)}
+
+
+class DeviceForm(forms.ModelForm):
+    class Meta:
+        model = Device
+        exclude = ('merchant',)

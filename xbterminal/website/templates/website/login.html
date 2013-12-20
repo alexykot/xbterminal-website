@@ -1,12 +1,9 @@
 {% extends "website/base.html" %}
+{% load bootstrap %}
+
 
 {% block content %}
-{% load bootstrap %}
-<div id="wrap">
-  {% include "website/common/header.html" %}
-  <div class="container">
-  <div class="row">&nbsp;</div>
-  <div class="row">
+<div class="row">
     <div class="col-md-6">
       {% load staticfiles %}
       <img src="{% static 'landing/img/terminal.png' %}" alt=""/>
@@ -19,10 +16,5 @@
         <input type="hidden" name="next" value="{{ next }}" />
       </form>
     </div>
-  </div>
-  <div class="row">&nbsp;</div>
 </div>
-</div>
-
-{% include "website/common/footer.html" %}
 {% endblock %}

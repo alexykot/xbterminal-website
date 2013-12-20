@@ -14,7 +14,17 @@
     {% block css %}{% endblock %}
   </head>
   <body>
-    {% block content %}{% endblock %}
+    <div id="wrap">
+      {% include "website/common/header.html" %}
+      <div class="container">
+        <div class="row">&nbsp;</div>
+        {% block content %}{% endblock %}
+        <div class="row">&nbsp;</div>
+      </div>
+    </div>
+
+    {% include "website/common/footer.html" %}
+
     <script src="https://code.jquery.com/jquery.js"></script>
     <script src="{% static 'bs/js/bootstrap.min.js' %}"></script>
     {% block js %}{% endblock %}

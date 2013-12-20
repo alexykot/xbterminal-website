@@ -88,6 +88,8 @@ CONTACT_EMAIL_RECIPIENTS = ["info@xbterminal.com"]
 
 APPEND_SLASH = False
 
+LOGIN_REDIRECT_URL = '/profile/'
+
 try:
     from local_settings import *
 except ImportError:

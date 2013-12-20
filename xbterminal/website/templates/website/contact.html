@@ -2,10 +2,7 @@
 {% load bootstrap staticfiles %}
 
 {% block content %}
-<div id="wrap">
-  {% include "website/common/header.html" %}
-  <div class="container">
-  <div class="row">
+<div class="row">
     <div class="col-sm-6 col-sm-offset-3" id="contact_view">
       <h3>Contact form:</h3>
       <form role="form" action="{% url 'website:contact' %}" method="post" id="contact_form">
@@ -15,12 +12,7 @@
         <img id="loading-img" class="pull-right" src="{% static 'website/images/loading.gif' %}">
       </form>
     </div>
-  </div>
-  <div class="row">&nbsp;</div>
 </div>
-</div>
-
-{% include "website/common/footer.html" %}
 {% endblock %}
 
 {% block js %}

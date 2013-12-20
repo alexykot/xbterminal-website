@@ -28,6 +28,26 @@ body {
   display: none;
 }
 
+.nav-devices {
+  text-align: center;
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+  font-weight: bold;
+}
+.nav-devices li {
+  display: inline-block;
+  padding: 0 5px;
+  white-space: nowrap;
+}
+.nav-devices li a {
+  color: black;
+  text-decoration: none;
+}
+.nav-devices li a:hover, .nav-devices li.active a {
+  color: #428bca;
+}
+
 /* Custom page CSS
 -------------------------------------------------- */
 /* Not required for template or sticky footer method. */

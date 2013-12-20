@@ -1,5 +1,5 @@
 from django.contrib import admin
-from website.models import MerchantAccount, Contact
+from website.models import MerchantAccount, Contact, Device
 
 
 class ContactAdmin(admin.ModelAdmin):
@@ -7,3 +7,4 @@ class ContactAdmin(admin.ModelAdmin):
 
 admin.site.register(MerchantAccount)
 admin.site.register(Contact, ContactAdmin)
+admin.site.register(Device)
