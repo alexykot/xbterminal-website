@@ -19,8 +19,13 @@
         <header>
             <nav role="header">
                 <a class="logo" href="/" title="XBTerminal"></a>
-                <a class="faq" href="{% url 'website:django.contrib.auth.views.login' %}">LOGIN</a>
-                <a class="faq" href="{% url 'website:merchant' %}">REGISTER</a>
+                {% if user.is_authenticated %}
+                    <a class="faq" href="{% url 'logout' %}">LOGOUT</a>
+                {% else %}
+                    <a class="faq" href="{% url 'login' %}">LOGIN</a>
+                    <a class="faq" href="{% url 'website:merchant' %}">REGISTER</a>
+                {% endif %}
+
                 <a class="faq" href="{% url 'website:landing_faq' %}">FAQ</a>
                 <div class="merchant-login-wrapper" style="display: none">
                     <a class="merchant-login">Merchant Login</a>
