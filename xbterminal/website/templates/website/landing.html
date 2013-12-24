@@ -6,7 +6,7 @@
 {% block js %}
 <script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
 <script type="text/javascript" src="{% static 'fancybox/jquery.fancybox-1.3.4.pack.js' %}"></script>
-<link rel="stylesheet" type="text/css" href="{% static 'fancybox/jquery.fancybox-1.3.4.css' %}" media="screen" />
+<link rel="stylesheet" type="text/css" href="{% static 'fancybox/jquery.fancybox-1.3.4.css' %}" />
 <script type="text/javascript" src="{% static 'js/video.js' %}"></script>
 {% endblock %}
 
@@ -31,7 +31,7 @@
                         </button>
                     </div>
                     <div class="col-sm-6 front-terminal-image hidden-xs">
-                        <img src="{% static 'img/terminal.png' %}">
+                        <img src="{% static 'img/terminal.png' %}" alt="">
                     </div>
                 </div>
             </div>
