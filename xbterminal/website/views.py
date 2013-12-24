@@ -8,12 +8,12 @@ from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
-from django.views.generic import UpdateView, CreateView
+from django.views.generic import UpdateView
 from django.utils.decorators import method_decorator
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.http import Http404
+from django.views.decorators.clickjacking import xframe_options_exempt
 
-from website.models import Device
 from website.forms import ContactForm, MerchantRegistrationForm, ProfileForm, DeviceForm
 
 
@@ -46,6 +46,7 @@ def landing(request):
     return render(request, 'website/landing.html', {})
 
 
+@xframe_options_exempt
 def landing_faq(request):
     return render(request, 'website/faq.html', {})
 
