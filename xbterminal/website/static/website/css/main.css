@@ -60,8 +60,9 @@ body {
 .container .text-muted {
   margin: 20px 0;
 }
-
-/*override container width to clone landing*/
-.container {
-    width: 960px;
+.header {
+  margin-right: auto;
+  margin-left: auto;
+  padding-left: 15px;
+  padding-right: 15px;
 }
