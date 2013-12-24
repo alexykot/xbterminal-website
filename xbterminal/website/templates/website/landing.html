@@ -1,155 +1,113 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
-<head>
-    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/>
-    {% load staticfiles %}
-    <link rel="stylesheet" href="{% static 'landing/css/reset.css' %}"/>
-    <link rel="stylesheet" href="{% static 'landing/css/all.css' %}">
-    <link rel="stylesheet" href="{% static 'landing/css/custom.css' %}">
-    <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
-    <script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
-    <script type="text/javascript" src="{% static 'landing/fancybox/jquery.fancybox-1.3.4.pack.js' %}"></script>
-    <link rel="stylesheet" type="text/css" href="{% static 'landing/fancybox/jquery.fancybox-1.3.4.css' %}" media="screen" />
-    <script type="text/javascript" src="{% static 'landing/fancybox/video.js' %}"></script>
+{% extends 'website/base.html' %}
+{% load staticfiles %}
 
-    <title>XBTerminal</title>
-</head>
-<body>
-    <div class="container-wrapper">
-        <header>
-            <nav role="header">
-                <a class="logo" href="/" title="XBTerminal"></a>
-                {% if user.is_authenticated %}
-                    <a class="faq" href="{% url 'logout' %}">LOGOUT</a>
-                {% else %}
-                    <a class="faq" href="{% url 'login' %}">LOGIN</a>
-                    <a class="faq" href="{% url 'website:merchant' %}">REGISTER</a>
-                {% endif %}
+{% block css %}{% endblock %}
 
-                <a class="faq" href="{% url 'website:landing_faq' %}">FAQ</a>
-                <div class="merchant-login-wrapper" style="display: none">
-                    <a class="merchant-login">Merchant Login</a>
-                </div>
-            </nav>
+{% block js %}
+<script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+<script type="text/javascript" src="{% static 'fancybox/jquery.fancybox-1.3.4.pack.js' %}"></script>
+<link rel="stylesheet" type="text/css" href="{% static 'fancybox/jquery.fancybox-1.3.4.css' %}" media="screen" />
+<script type="text/javascript" src="{% static 'js/video.js' %}"></script>
+{% endblock %}
 
-        </header>
-
-            <section class="terminal">
-                <div class="container">
-                    <div class="container-inner">
+{% block before_content %}
+<section class="terminal">
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-8 col-sm-10 col-xs-offset-2 col-sm-offset-1">
+                <div class="row">
+                    <div class="col-sm-6">
                         <h1>
-                            Bitcoin NFC based in-person <br/>
-                            &nbsp; &nbsp; &nbsp;payment solution
+                            Bitcoin NFC based <span class="nowrap">in-person</span> <span class="payment-solution">payment solution</span>
                         </h1>
                         <p>
-                            Modern, no-hassle, smartphone friendly NFC in-person <br/>
-                            Bitcoin payment terminal, with direct integration into your <br/>
-                            bitcoin wallet or instant conversion into fiat and automated <br/>
+                            Modern, no-hassle, smartphone friendly NFC in-person
+                            Bitcoin payment terminal, with direct integration into your
+                            bitcoin wallet or instant conversion into fiat and automated
                             withdrawals. And no strings attached.
                         </p>
                         <button class="order-terminal" data-href="https://www.youtube.com/watch?v=c5t88eoPbAc?autoplay=1">
                               Prototype Video
                         </button>
-                        <div class="terminal-prototype">
-                        </div>
-                        <div class="shine"></div>
+                    </div>
+                    <div class="col-sm-6 front-terminal-image hidden-xs">
+                        <img src="{% static 'img/terminal.png' %}">
                     </div>
                 </div>
-            </section>
-        <div class="container">
-            <div class="container-inner">
-                <section class="facilities">
-                    <div class="b-facility">
-                        <h2>Easy and simple</h2>
-                        <p>
-                            With plug-n-play design and online dashboard operation is even simpler than regular card machine.
-                            And with <a href="">NFC integration</a> customer checkout is just one tap away.
-                            <a href="#" class="demo-video" data-href="https://www.youtube.com/watch?v=c5t88eoPbAc?autoplay=1">Process demo</a>
-                        </p>
-                    </div>
-                    <div class="b-facility">
-                        <h2>
-                            Decentralized system
-                        </h2>
-                        <p>
-                            Being a full Bitcoin node, each terminal does full transaction verification onsite.
-                            Also, with no central value storage there is no risk of central server hacks failures.
-                            <a href="faq.html">Full node terminal.</a>
-                        </p>
-                    </div>
-                    <div class="b-facility">
-                        <h2>
-                            Flexible cashflow
-                        </h2>
-                        <p>
-                            You get your bitcoins directly to your wallet located anywhere in the world,
-                            just setup an address in the dashboard.
-                            Or sign up with <a href="http://bitpay.com">BitPay</a>, <a href="http://bips.me/">BIPS</a> or <a href="https://cryptopay.me/">CryptoPay</a>
-                            and get fiat transfer into your bank account.
-                            <a href="faq.html">Cashflow integrations</a>.
-                        </p>
-                    </div>
-                    <div class="b-facility">
-                        <h2>
-                            Integrated solution
-                        </h2>
-                        <p>
-                            Works with both NFC enabled and not enabled smartphones.
-                            NFC used as standard, and QR codes available for scanning at a tap of a button.
-                            All main mobile wallets supported, all others should also work fine.
-                        </p>
-                    </div>
-
-                    <div class="b-facility">
-                        <h2>
-                            Fair pricing
-                        </h2>
-                        <p>
-                            Operations take only tiny percentage of your transaction costs and are
-                            also monthly capped, so you never pay more than a fixed monthly price for
-                            your service. <a href="faq.html">Prices</a>.
-                        </p>
-                    </div>
-
-                    <div class="b-facility">
-                        <h2>
-                            Reliable operations
-                        </h2>
-                        <p>
-                            Each of our strong and sturdy heavy device runs a full
-                            Bitcoin node and needs no external servers or systems for daily operations.
-                            Internet connection is the only thing needed, all the rest is optional.
-                        </p>
-                    </div>
-
-            </section>
+            </div>
         </div>
-        </div>
-
-        <footer>
-            <nav role="footer">
-                <div class="copy">
-                    XBT Services Ltd
-                </div>
-                <ul>
-                    <li><a href="{% url 'website:contact' %}">Contact Us</a></li>
-                    <li><a href="#">About Us</a></li>
-                    <li><a href="#">Merchant Login </a></li>
-                    <li><a href="#">Terms and Conditions</a></li>
-                </ul>
-            </nav>
-        </footer>
     </div>
-<script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+</section>
+{% endblock %}
 
-  ga('create', 'UA-46271940-1', 'xbterminal.com');
-  ga('send', 'pageview');
+{% block content %}
+<section class="facilities">
+    <div class="row">
+        <div class="col-xs-8 col-xs-offset-2 col-sm-offset-0 col-sm-4 b-facility">
+            <h2>Easy and simple</h2>
+            <p>
+                With plug-n-play design and online dashboard operation is even simpler than regular card machine.
+                And with <a href="">NFC integration</a> customer checkout is just one tap away.
+                <a href="#" class="demo-video" data-href="https://www.youtube.com/watch?v=c5t88eoPbAc?autoplay=1">Process demo</a>
+            </p>
+        </div>
+        <div class="col-xs-8 col-xs-offset-2 col-sm-offset-0 col-sm-4 b-facility">
+            <h2>
+                Decentralized system
+            </h2>
+            <p>
+                Being a full Bitcoin node, each terminal does full transaction verification onsite.
+                Also, with no central value storage there is no risk of central server hacks failures.
+                <a href="faq.html">Full node terminal.</a>
+            </p>
+        </div>
+        <div class="col-xs-8 col-xs-offset-2 col-sm-offset-0 col-sm-4 b-facility">
+            <h2>
+                Flexible cashflow
+            </h2>
+            <p>
+                You get your bitcoins directly to your wallet located anywhere in the world,
+                just setup an address in the dashboard.
+                Or sign up with <a href="http://bitpay.com">BitPay</a>, <a href="http://bips.me/">BIPS</a> or <a href="https://cryptopay.me/">CryptoPay</a>
+                and get fiat transfer into your bank account.
+                <a href="faq.html">Cashflow integrations</a>.
+            </p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-8 col-xs-offset-2 col-sm-offset-0 col-sm-4 b-facility">
+            <h2>
+                Integrated solution
+            </h2>
+            <p>
+                Works with both NFC enabled and not enabled smartphones.
+                NFC used as standard, and QR codes available for scanning at a tap of a button.
+                All main mobile wallets supported, all others should also work fine.
+            </p>
+        </div>
+    
+        <div class="col-xs-8 col-xs-offset-2 col-sm-offset-0 col-sm-4 b-facility">
+            <h2>
+                Fair pricing
+            </h2>
+            <p>
+                Operations take only tiny percentage of your transaction costs and are
+                also monthly capped, so you never pay more than a fixed monthly price for
+                your service. <a href="faq.html">Prices</a>.
+            </p>
+        </div>
+    
+        <div class="col-xs-8 col-xs-offset-2 col-sm-offset-0 col-sm-4 b-facility">
+            <h2>
+                Reliable operations
+            </h2>
+            <p>
+                Each of our strong and sturdy heavy device runs a full
+                Bitcoin node and needs no external servers or systems for daily operations.
+                Internet connection is the only thing needed, all the rest is optional.
+            </p>
+        </div>
+    </div>
 
-</script>
-</body>
-</html>
+</section>
+{% endblock %}

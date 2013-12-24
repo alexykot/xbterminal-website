@@ -1,0 +1,289 @@
+@font-face {
+    font-family: 'TitilliumWeb SemiBold';
+    src: url('fonts/TitilliumWeb-SemiBold.eot');
+    src: local('?'), url('fonts/TitilliumWeb-SemiBold.woff') format('woff'), url('fonts/TitilliumWeb-SemiBold.ttf') format('truetype'), url('fonts/TitilliumWeb-SemiBold.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'TitilliumWeb Regular';
+    src: url('fonts/TitilliumWeb-Regular.eot');
+    src: local('?'), url('fonts/TitilliumWeb-Regular.woff') format('woff'), url('fonts/TitilliumWeb-Regular.ttf') format('truetype'), url('fonts/TitilliumWeb-Regular.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'TitilliumWeb Bold';
+    src: url('fonts/TitilliumWeb-Bold.eot');
+    src: local('?'), url('fonts/TitilliumWeb-Bold.woff') format('woff'), url('fonts/TitilliumWeb-Bold.ttf') format('truetype'), url('fonts/TitilliumWeb-Bold.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Titillium Web Thin';
+    src: url('fonts/TitilliumWeb-Thin.eot');
+    src: local('?'), url('fonts/TitilliumWeb-Thin.woff') format('woff'), url('fonts/TitilliumWeb-Thin.ttf') format('truetype'), url('fonts/TitilliumWeb-Thin.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Titillium Web Light';
+    src: url('fonts/TitilliumWeb-Light.eot');
+    src: local('?'), url('fonts/TitilliumWeb-Light.woff') format('woff'), url('fonts/TitilliumWeb-Light.ttf') format('truetype'), url('fonts/TitilliumWeb-Light.svg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+.header-line {
+    border-top: 4px solid #428bca;
+    width: 100%;
+    padding-bottom: 0px;
+}
+
+html,
+body {
+  height: 100%;
+ min-width: 360px;
+}
+h1, h2, h3 {
+  font-family: 'TitilliumWeb SemiBold';
+}
+
+#wrap {
+  min-height: 100%;
+  height: auto;
+  margin: 0 auto -60px;
+  padding: 0 0 60px;
+}
+.nowrap {
+  white-space: nowrap;
+}
+#footer {
+  height: 60px;
+  background-color: #f3f3f3;
+}
+
+.gap {
+  margin-bottom: 50px;
+}
+#loading-img {
+  display: none;
+}
+
+.nav-devices {
+  text-align: center;
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+  font-weight: bold;
+}
+.nav-devices li {
+  display: inline-block;
+  padding: 0 5px;
+  white-space: nowrap;
+}
+.nav-devices li a {
+  color: black;
+  text-decoration: none;
+}
+.nav-devices li a:hover, .nav-devices li.active a {
+  color: #428bca;
+}
+.center {
+  text-align: center;
+}
+.faq p, .faq ul, .faq ol {
+  color: #666666;
+}
+.faq h1 {
+  text-align: center;
+}
+
+ul.header-menu li {
+  float: right;
+  text-transform: uppercase;
+  font-size: 19px;
+  text-decoration: none;
+  color: #428bca;
+  font-family: 'Titillium Web Thin';
+  padding: 23px 0px;
+  margin-right: 30px;
+  list-style: none;
+}
+@media (max-width: 767px) {
+  .xbt-logo {
+    text-align: center;
+  }
+  ul.header-menu {
+    text-align: center;
+    margin-bottom: 0px;
+  }
+  ul.header-menu li {
+    display: inline-block;
+    float: none;
+  }
+}
+
+/* Teaser
+--------------------------------- */
+.terminal {
+  padding-top: 40px;
+  height: 350px;
+  overflow: hidden;
+  background: #8db1cf url("../images/shine.png") no-repeat 200px;
+  position: relative;
+  z-index: 2;
+}
+.terminal h1 {
+    font-size: 36px;
+    font-family: 'TitilliumWeb SemiBold';
+    color: #fff;
+    line-height: 1;
+    width: 450px;
+}
+.terminal p {
+    color: #fffefe;
+    font-size: 14px;
+    line-height: 17px;
+    font-family: 'Titillium Web Light';
+    margin-top: 13px;
+    width: 350px;
+    margin-left: 3px;
+}
+.terminal .order-terminal {
+    font-size: 30px;
+    font-family: 'Titillium Web Thin';
+    color: #f3f3f3;
+    background: #10b114;
+    width: 325px;
+    text-align: left;
+    border: 0;
+    margin-top: 20px;
+    margin-left: 105px;
+    z-index: 2;
+    position: relative;
+    padding: 10px 0 10px 28px;
+    height: auto;
+}
+.terminal .order-terminal:hover {
+    cursor: pointer;
+}
+.front-terminal-image img {
+  z-index: 10;
+  position: relative;
+  top: -50px;
+  left: -120px;
+}
+.payment-solution {
+  display: block;
+  margin-left: 40px;
+}
+@media (max-width: 1200px) {
+  .front-terminal-image img {
+    left: -50px;
+  }
+}
+@media (max-width: 991px) {
+  .front-terminal-image img {
+    width: 350px;
+    top: 30px;
+    left: 30px;
+  }
+}
+@media (max-width: 767px) {
+  .terminal {
+    height: auto;
+    background: #8db1cf;
+  }
+  .terminal h1 {
+    width: auto;
+    text-align: center;
+  }
+  .terminal p {
+    width: auto;
+    text-align: justify;
+  }
+  .terminal .order-terminal {
+    width: 80%;
+    padding-right: 28px;
+    margin-left: 10%;
+    margin-right: auto;
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .payment-solution {
+    display: inline;
+    margin-left: 0px;
+  }
+}
+
+/* Terminal image on login page
+----------------------------------- */
+.terminal-image {
+  text-align: center;
+}
+.terminal-image img {
+  width: 80%;
+}
+
+
+.footer-container {
+  /*width: auto;*/
+  /*max-width: 680px;*/
+  padding: 0 15px;
+}
+.container .text-muted {
+  margin: 20px 0;
+}
+.header {
+  margin-right: auto;
+  margin-left: auto;
+  padding-left: 15px;
+  padding-right: 15px;
+  border-bottom: 1px solid #e4e4e4;
+}
+
+
+/* Facilities
+--------------------------------------------- */
+.facilities {
+    overflow: hidden;
+    padding-top: 40px;
+}
+.facilities .b-facility {
+    height: 242px;
+}
+.facilities .b-facility a {
+    color: #428bca;
+    text-decoration: none;
+}
+.facilities .b-facility a:hover {
+    text-decoration: underline;
+}
+.facilities .b-facility:nth-child(3n+3) {
+    margin-right: 0;
+}
+.b-facility h2 {
+  border-top: 2px solid #10b114;
+  margin-top: 0;
+  font-size: 24px;
+  color: #000;
+  line-height: 29px;
+  padding-top: 3px;
+  font-family: 'Titillium Web Thin';
+}
+.b-facility p {
+    font-family: Tahoma, sans-serif;
+    font-size: 12px;
+    color: #666666;
+    line-height: 20px;
+    padding-top: 5px;
+}
+@media (max-width: 767px) {
+  .facilities .b-facility {
+    height: auto;
+    margin-bottom: 30px;
+  }
+}
+/* ##### End facilities #####*/

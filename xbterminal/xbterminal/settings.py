@@ -88,6 +88,7 @@ CONTACT_EMAIL_RECIPIENTS = ["info@xbterminal.com"]
 
 APPEND_SLASH = False
 
+LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/profile/'
 
 try:

@@ -4,11 +4,11 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-md-6">
+    <div class="col-sm-6 hidden-xs terminal-image">
       {% load staticfiles %}
-      <img src="{% static 'landing/img/terminal.png' %}" alt=""/>
+      <img src="{% static 'img/terminal.png' %}" alt=""/>
     </div>
-    <div class="col-md-6">
+    <div class="col-sm-6 col-xs-8 col-xs-offset-2 col-sm-offset-0">
       <form role="form" action="{% url 'login' %}" method="post">
         {% csrf_token %}
         {{ form|bootstrap }}

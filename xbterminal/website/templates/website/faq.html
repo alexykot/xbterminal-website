@@ -1,242 +1,196 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
-<head>
-    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/>
-    {% load staticfiles %}
-    <link rel="stylesheet" href="{% static 'landing/css/reset.css' %}"/>
-    <link rel="stylesheet" href="{% static 'landing/css/all.css' %}">
+{% extends 'website/base.html' %}
 
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"></script>
-    <script type="text/javascript" src="{% static 'landing/fancybox/jquery.fancybox-1.3.4.pack.js' %}"></script>
-    <link rel="stylesheet" type="text/css" href="{% static 'landing/fancybox/jquery.fancybox-1.3.4.css' %}" media="screen" />
-    <script type="text/javascript" src="{% static 'landing/fancybox/video.js' %}"></script>
-
-    <title>XBTerminal</title>
-</head>
-<body>
-    <div class="container-wrapper">
-        <header>
-            <nav role="header">
-                <a class="logo" href="/" title="XBTerminal"></a>
-                <a class="faq" href="{% url 'website:landing_faq' %}">FAQ</a>
-                <div class="merchant-login-wrapper" style="display: none">
-                    <a class="merchant-login">Merchant Login</a>
-                </div>
-            </nav>
-
-        </header>
-        <div class="container">
-            <div class="container-inner">
-
-                <div class="content">
-                    <h1>FAQ</h1>
-                    <h2>The terminal</h2>
-                    <div class="question">
-                        <h3>So is it a card payment terminal?</h3>
-                        <p>
-                            No, it's a Bitcoin payment terminal, and it is designed to work with smartphones that have mobile bitcoin wallets installed.
-                            Of course, since XBTerminal is designed to work with Bitcoin network directly, it can accept payments from online and desktop wallets also,
-                            although this might be a rare occasion for in person payments.
-                        </p>
-                    </div>
-                    <div class="question">
-                        <h3>So how does it work?</h3>
-                        <p>
-                            Check the video to see the process, if you've not seen it yet, and here is the explanation.
-                            <ol>
-                              <li>Merchant types in the amount to be paid, in their local currency</li>
-                              <li>Terminal fetches the current exchange rate.</li>
-                              <li>Amount to pay in bitcoins is then shown on the screen.</li>
-                              <li>Client unlocks their phone and touches terminal NFC antenna.</li>
-                              <li>Amount, address and merchant name are sent to the client's phone over NFC. Bitcoin wallet app is opened on client's phone automatically with all data prefilled.</li>
-                              <li>Client hits "pay" button on their phone.</li>
-                              <li>In few seconds transaction will be propagated to the Bitcoin network, the terminal receives and verifies it.</li>
-                              <li>Payment done!</li>
-                            </ol>
-                        </p>
-                        <p>
-                            If it so happens that client's phone is not NFC-enabled, the process looks like this:
-                            <ol>
-                              <li>Merchant types in the amount to be paid, in their local currency</li>
-                              <li>Terminal fetches the current exchange rate.</li>
-                              <li>Amount to pay in bitcoins is then shown on the screen.</li>
-                              <li>Client unlocks their phone, and then a Bitcoin wallet app.</li>
-                              <li>Merchant hit's "QR" button on the terminal. A QR code is shown on the terminal.</li>
-                              <li>Client scans QR code from the terminal screen with their phone.</li>
-                              <li>Amount, address and merchant name are sent to the client's phone over NFC. Bitcoin wallet app is opened on client's phone automatically with all data prefilled.</li>
-                              <li>Client hits "pay" button on their phone.</li>
-                              <li>In few seconds transaction will be propagated to the Bitcoin network, the terminal receives and verifies it.</li>
-                              <li>Payment done!</li>
-                            </ol>
-                        </p>
-                        <p>
-                            So at any point in time neither phone nor terminal change hands. They just interact in the hand's of merchant and client.
-                        </p>
-                    </div>
-                    <div class="question">
-                        <h3>What is NFC?</h3>
-                        <p>
-                            NFC stands for Near Field Communication.
-                            It's a method of communication between devices that works on distance of no more than roughly two inches.
-                            It's used in various things around, like contactless payment cards, and also is available in
-                            most Android smartphones (also called Android Beam). It is not available in any iPhone, but
-                            don't worry iPhone users, check next answer.
-                        </p>
-                    </div>
-                    <div class="question">
-                        <h3>What if I don't have NFC in my phone?</h3>
-                        <p>
-                            If your phone doesn't support NFC - fallback to QR code based interaction is still available.
-                            Of course it's not as smooth, quick and easy, but it's a proven and widely used way for bitcoin payments.
-                        </p>
-                    </div>
-                    <div class="question">
-                        <h3>Can I pay with my contactless NFC payment card?</h3>
-                        <p>
-                            No. Although it is also NFC, NFC in smartphone and in payment card are not exactly same thing.
-                            And of course - your payment card has nothing to do with Bitcoin, and this is a Bitcoin-based system.
-                        </p>
-                    </div>
-                    <div class="question">
-                        <h3>Is it safe?</h3>
-                        <p>
-                            It's nearly as safe as the Bitcoin network itself. Each terminal is a full Bitcoin network node,
-                            and uses most recent bitcoind software with all security updates installed.
-                            Also each terminal inside itself is encrypted to prevent in-person tampering.
-                            And the whole system is decentralized, with no central server or storage vault to be attacked.
-                        </p>
-                    </div>
-                    <div class="question">
-                        <h3>What do you mean "decentralized"?</h3>
-                        <p>
-                            This means that each terminal is acting by itself, it issues address for payment, calculates amounts,
-                            accepts and verifies transactions, and sends funds further to merchant's wallet or payment processing service like BitPay.
-                            But there is no single place where all funds are gathered, central server or cold storage.
-                            So there is no single place for attack or failure.
-                        </p>
-                    </div>
-                    <div class="question">
-                        <h3>Is this hardware PCI compliant?</h3>
-                        <p>
-                            PCI stands for Payment Card Industry. There are no payment cards involved in this system,
-                            so this terminal technically impossible to make PCI compliant.
-                            A supersonic jet cannot be compliant to cargo ship rules.
-                        </p>
-                    </div>
-                    <div class="question">
-                        <h3>How is this better than a cheap mobile phone with a merchant app, doing the same thing?</h3>
-                        <p>
-                            Oh, there are plenty of advantages:
-                            <ol>
-                              <li>Security. This is a dedicated hardware with limited low level access, so nobody will
-                                  install random (and potentially compromising) apps onto it.</li>
-                              <li>Security. This is a full Bitcoin node, so the level of transaction verification reliability
-                                  will be always higher than for a light client on the smartphone.</li>
-                              <li>Security. A dedicated device will rarely be a target for thiefs, while an expensive smartphone
-                                  on the counter is always at risk.</li>
-                              <li>Reliability. An industrial grade dedicated hardware will always be more reliable and long-living
-                                  than consumer devices.</li>
-                              <li>Usability. An all purpose universal device like a smartphone has to be good for everything,
-                                  at a trade off of being not completely perfect for certain areas.
-                                  A dedicated device can be designed perfectly for the cause, with no trade offs for other
-                                  use cases.</li>
-                              <li>Price. On the same level of mass production, dedicated device will have a more specialized
-                                  and cheaper hardware, and will always outperform the allpurpose device with plenty of
-                                  features not used in this particular case.</li>
-                            </ol>
-                        </p>
-                    </div>
-                    <h2>The payment solution</h2>
-                    <div class="question">
-                        <h3>So it's just a terminal, or is it something bigger?</h3>
-                        <p>
-                            It's not just a terminal, it's a complete in person payment solution. Terminal is the core of the system,
-                            but without sofisticated software and clever integrations it has not much use.
-                            The solution consists of:
-                            <ol>
-                              <li>Hardware itself</li>
-                              <li>Online merchant dashboard, allowing remote control and configuration.</li>
-                              <li>Payment integrations, allowing transparent currency conversions.</li>
-                              <li>Onsite and remote support.</li>
-                            </ol>
-                        </p>
-                    </div>
-                    <div class="question">
-                        <h3>So you also provide onsite support if I have problems installing it or any other difficulties?</h3>
-                        <p>
-                            Yes, we will provide you with all needed support, onsite and remote, either directly, or though
-                            our certified partners.
-                        </p>
-                    </div>
-                    <div class="question">
-                        <h3>Certified partners? Can I become one?</h3>
-                        <p>
-                            Yes, probably you can. Send us a note at <a href="mailto:partners@xbterminal.com">partners@xbterminal.com</a>
-                            describing what your proposal, situation and area and we'll see what we can do together.
-                        </p>
-                    </div>
-                    <div class="question">
-                        <h3>Where is the money stored and how merchant gets it?</h3>
-                        <p>
-                            Merchant has two ways to get his money. One way is to specify his own bitcoin address,
-                            in any wallet he has, and all incoming payments will be sent into it.
-                            Another way is to register with bitcoin payment processor (BitPay, BIPS or CryptoPay) and get
-                            bitcoins instantly converted into fiat money and automatically withdrawn into his account.
-                        </p>
-                    </div>
-                    <div class="question">
-                        <h3>What rates are used for payment calculation?</h3>
-                        <p>
-                            If merchant receives funds in bitcoins - BitcoinAverage rate is used for conversions.
-                            If payment processor is used for instant conversion into fiat - payment processor rates are used.
-                        </p>
-                    </div>
-                    <div class="question">
-                        <h3>How can I get it for my business?</h3>
-                        <p>
-                            We do not sell it yet, hovewer if you are interested in getting it earliest possible - send us a note at
-                            <a href="mailto:orders@xbterminal.com">orders@xbterminal.com</a>
-                        </p>
-                    </div>
-                    <div class="question">
-                        <h3>How much does it cost?</h3>
-                        <p>
-                            Final prices are not defined yet, however we are sure to be way cheaper than any card processing option.
-                            Otherwise what is bitcoin all about?
-                        </p>
-                    </div>
-                    <div class="question">
-                        <h3>I'm in the country X, can I use it?</h3>
-                        <p></p>
-                    </div>
-                    <div class="question">
-                        <h3>Who is building and supporting this solution?</h3>
-                        <p>
-                            UK registered company called "XBT Services Ltd" is running this initiative. We are a startup and are
-                            looking for investments at the moment. Contact us at <a href="mailto:info@xbterminal.com">info@xbterminal.com</a>
-                            if you are interested in working with us.
-                        </p>
-                    </div>
-                </div>
-            </div>
+{% block content %}
+<div class="row faq">
+    <div class="col-sm-10 ">
+        <h1>FAQ</h1>
+        <h2>The terminal</h2>
+        <div class="question">
+            <h3>So is it a card payment terminal?</h3>
+            <p>
+                No, it's a Bitcoin payment terminal, and it is designed to work with smartphones that have mobile bitcoin wallets installed.
+                Of course, since XBTerminal is designed to work with Bitcoin network directly, it can accept payments from online and desktop wallets also,
+                although this might be a rare occasion for in person payments.
+            </p>
         </div>
-
-        <footer>
-            <nav role="footer">
-                <div class="copy">
-                    © XBT Services Ltd, 2013 <br/>
-                    All rights reserved
-                </div>
-                <ul>
-                    <li><a href="#">About Us</a></li>
-                    <li><a href="#">Contact Us</a></li>
-                    <li><a href="#">Merchant Login </a></li>
-                    <li><a href="#">Terms and Conditions</a></li>
-                </ul>
-            </nav>
-        </footer>
+        <div class="question">
+            <h3>So how does it work?</h3>
+            <p>
+                Check the video to see the process, if you've not seen it yet, and here is the explanation.
+                <ol>
+                  <li>Merchant types in the amount to be paid, in their local currency</li>
+                  <li>Terminal fetches the current exchange rate.</li>
+                  <li>Amount to pay in bitcoins is then shown on the screen.</li>
+                  <li>Client unlocks their phone and touches terminal NFC antenna.</li>
+                  <li>Amount, address and merchant name are sent to the client's phone over NFC. Bitcoin wallet app is opened on client's phone automatically with all data prefilled.</li>
+                  <li>Client hits "pay" button on their phone.</li>
+                  <li>In few seconds transaction will be propagated to the Bitcoin network, the terminal receives and verifies it.</li>
+                  <li>Payment done!</li>
+                </ol>
+            </p>
+            <p>
+                If it so happens that client's phone is not NFC-enabled, the process looks like this:
+                <ol>
+                  <li>Merchant types in the amount to be paid, in their local currency</li>
+                  <li>Terminal fetches the current exchange rate.</li>
+                  <li>Amount to pay in bitcoins is then shown on the screen.</li>
+                  <li>Client unlocks their phone, and then a Bitcoin wallet app.</li>
+                  <li>Merchant hit's "QR" button on the terminal. A QR code is shown on the terminal.</li>
+                  <li>Client scans QR code from the terminal screen with their phone.</li>
+                  <li>Amount, address and merchant name are sent to the client's phone over NFC. Bitcoin wallet app is opened on client's phone automatically with all data prefilled.</li>
+                  <li>Client hits "pay" button on their phone.</li>
+                  <li>In few seconds transaction will be propagated to the Bitcoin network, the terminal receives and verifies it.</li>
+                  <li>Payment done!</li>
+                </ol>
+            </p>
+            <p>
+                So at any point in time neither phone nor terminal change hands. They just interact in the hand's of merchant and client.
+            </p>
+        </div>
+        <div class="question">
+            <h3>What is NFC?</h3>
+            <p>
+                NFC stands for Near Field Communication.
+                It's a method of communication between devices that works on distance of no more than roughly two inches.
+                It's used in various things around, like contactless payment cards, and also is available in
+                most Android smartphones (also called Android Beam). It is not available in any iPhone, but
+                don't worry iPhone users, check next answer.
+            </p>
+        </div>
+        <div class="question">
+            <h3>What if I don't have NFC in my phone?</h3>
+            <p>
+                If your phone doesn't support NFC - fallback to QR code based interaction is still available.
+                Of course it's not as smooth, quick and easy, but it's a proven and widely used way for bitcoin payments.
+            </p>
+        </div>
+        <div class="question">
+            <h3>Can I pay with my contactless NFC payment card?</h3>
+            <p>
+                No. Although it is also NFC, NFC in smartphone and in payment card are not exactly same thing.
+                And of course - your payment card has nothing to do with Bitcoin, and this is a Bitcoin-based system.
+            </p>
+        </div>
+        <div class="question">
+            <h3>Is it safe?</h3>
+            <p>
+                It's nearly as safe as the Bitcoin network itself. Each terminal is a full Bitcoin network node,
+                and uses most recent bitcoind software with all security updates installed.
+                Also each terminal inside itself is encrypted to prevent in-person tampering.
+                And the whole system is decentralized, with no central server or storage vault to be attacked.
+            </p>
+        </div>
+        <div class="question">
+            <h3>What do you mean "decentralized"?</h3>
+            <p>
+                This means that each terminal is acting by itself, it issues address for payment, calculates amounts,
+                accepts and verifies transactions, and sends funds further to merchant's wallet or payment processing service like BitPay.
+                But there is no single place where all funds are gathered, central server or cold storage.
+                So there is no single place for attack or failure.
+            </p>
+        </div>
+        <div class="question">
+            <h3>Is this hardware PCI compliant?</h3>
+            <p>
+                PCI stands for Payment Card Industry. There are no payment cards involved in this system,
+                so this terminal technically impossible to make PCI compliant.
+                A supersonic jet cannot be compliant to cargo ship rules.
+            </p>
+        </div>
+        <div class="question">
+            <h3>How is this better than a cheap mobile phone with a merchant app, doing the same thing?</h3>
+            <p>
+                Oh, there are plenty of advantages:
+                <ol>
+                  <li>Security. This is a dedicated hardware with limited low level access, so nobody will
+                      install random (and potentially compromising) apps onto it.</li>
+                  <li>Security. This is a full Bitcoin node, so the level of transaction verification reliability
+                      will be always higher than for a light client on the smartphone.</li>
+                  <li>Security. A dedicated device will rarely be a target for thiefs, while an expensive smartphone
+                      on the counter is always at risk.</li>
+                  <li>Reliability. An industrial grade dedicated hardware will always be more reliable and long-living
+                      than consumer devices.</li>
+                  <li>Usability. An all purpose universal device like a smartphone has to be good for everything,
+                      at a trade off of being not completely perfect for certain areas.
+                      A dedicated device can be designed perfectly for the cause, with no trade offs for other
+                      use cases.</li>
+                  <li>Price. On the same level of mass production, dedicated device will have a more specialized
+                      and cheaper hardware, and will always outperform the allpurpose device with plenty of
+                      features not used in this particular case.</li>
+                </ol>
+            </p>
+        </div>
+        <h2>The payment solution</h2>
+        <div class="question">
+            <h3>So it's just a terminal, or is it something bigger?</h3>
+            <p>
+                It's not just a terminal, it's a complete in person payment solution. Terminal is the core of the system,
+                but without sofisticated software and clever integrations it has not much use.
+                The solution consists of:
+                <ol>
+                  <li>Hardware itself</li>
+                  <li>Online merchant dashboard, allowing remote control and configuration.</li>
+                  <li>Payment integrations, allowing transparent currency conversions.</li>
+                  <li>Onsite and remote support.</li>
+                </ol>
+            </p>
+        </div>
+        <div class="question">
+            <h3>So you also provide onsite support if I have problems installing it or any other difficulties?</h3>
+            <p>
+                Yes, we will provide you with all needed support, onsite and remote, either directly, or though
+                our certified partners.
+            </p>
+        </div>
+        <div class="question">
+            <h3>Certified partners? Can I become one?</h3>
+            <p>
+                Yes, probably you can. Send us a note at <a href="mailto:partners@xbterminal.com">partners@xbterminal.com</a>
+                describing what your proposal, situation and area and we'll see what we can do together.
+            </p>
+        </div>
+        <div class="question">
+            <h3>Where is the money stored and how merchant gets it?</h3>
+            <p>
+                Merchant has two ways to get his money. One way is to specify his own bitcoin address,
+                in any wallet he has, and all incoming payments will be sent into it.
+                Another way is to register with bitcoin payment processor (BitPay, BIPS or CryptoPay) and get
+                bitcoins instantly converted into fiat money and automatically withdrawn into his account.
+            </p>
+        </div>
+        <div class="question">
+            <h3>What rates are used for payment calculation?</h3>
+            <p>
+                If merchant receives funds in bitcoins - BitcoinAverage rate is used for conversions.
+                If payment processor is used for instant conversion into fiat - payment processor rates are used.
+            </p>
+        </div>
+        <div class="question">
+            <h3>How can I get it for my business?</h3>
+            <p>
+                We do not sell it yet, hovewer if you are interested in getting it earliest possible - send us a note at
+                <a href="mailto:orders@xbterminal.com">orders@xbterminal.com</a>
+            </p>
+        </div>
+        <div class="question">
+            <h3>How much does it cost?</h3>
+            <p>
+                Final prices are not defined yet, however we are sure to be way cheaper than any card processing option.
+                Otherwise what is bitcoin all about?
+            </p>
+        </div>
+        <div class="question">
+            <h3>I'm in the country X, can I use it?</h3>
+            <p></p>
+        </div>
+        <div class="question">
+            <h3>Who is building and supporting this solution?</h3>
+            <p>
+                UK registered company called "XBT Services Ltd" is running this initiative. We are a startup and are
+                looking for investments at the moment. Contact us at <a href="mailto:info@xbterminal.com">info@xbterminal.com</a>
+                if you are interested in working with us.
+            </p>
+        </div>
     </div>
-
-</body>
-</html>
+</div>
+{% endblock %}

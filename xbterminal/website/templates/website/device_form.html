@@ -3,33 +3,31 @@
 
 
 {% block content %}
-<div class="row">
-    <div class="col-xs-12 text-center">
-      <h3>Merchant Control Panel</h3>
-      <ul class="pagination pagination-lg">
-          <li class=""><a href="{% url 'website:profile' %}">profile</a></li>
-          <li class="active">
-              <a href="{{ user.merchant.get_first_device_url }}">devices</a></li>
-      </ul>
-      
-      {% if current_device %}<div><a class="btn btn-default" href="{% url 'website:create_device' %}">Create</a></div>{% endif %}
-      <ul class="nav-devices">
-          {% for device in user.merchant.device_set.all %}
-              <li{% if device == current_device %} class="active"{% endif %}>
-                  <a href="{% url 'website:device' forloop.counter %}">{{ device.name }}</a>
-              </li>
-          {% endfor %}
-      </ul>
+<div class="text-center">
+  <h3>Merchant Control Panel</h3>
+  <ul class="pagination pagination-lg">
+      <li class=""><a href="{% url 'website:profile' %}">profile</a></li>
+      <li class="active">
+          <a href="{{ user.merchant.get_first_device_url }}">devices</a></li>
+  </ul>
 
-      <div class="row">
-          <div class="col-xs-8 col-xs-offset-2">
-          <form action="" method="post">
-              {% csrf_token %}
-              {{ form|bootstrap }}
-              <button type="submit" class="btn btn-default pull-right">{% if current_device %}Update{% else %}Create{% endif %}</button>
-          </form>
-          </div>
+  {% if current_device %}<div><a class="btn btn-default" href="{% url 'website:create_device' %}">Create</a></div>{% endif %}
+  <ul class="nav-devices">
+      {% for device in user.merchant.device_set.all %}
+          <li{% if device == current_device %} class="active"{% endif %}>
+              <a href="{% url 'website:device' forloop.counter %}">{{ device.name }}</a>
+          </li>
+      {% endfor %}
+  </ul>
+
+  <div class="row">
+      <div class="col-xs-8 col-xs-offset-2">
+      <form action="" method="post">
+          {% csrf_token %}
+          {{ form|bootstrap }}
+          <button type="submit" class="btn btn-default pull-right">{% if current_device %}Update{% else %}Create{% endif %}</button>
+      </form>
       </div>
-    </div>
+  </div>
 </div>
 {% endblock %}
