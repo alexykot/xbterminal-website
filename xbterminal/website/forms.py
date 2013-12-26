@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.forms import AuthenticationForm as DjangoAuthenticationForm
 
 from website.models import MerchantAccount, Device
+from website.fields import BCAddressField
 
 
 class ContactForm(forms.Form):
@@ -41,6 +42,8 @@ class ProfileForm(forms.ModelForm):
 
 
 class DeviceForm(forms.ModelForm):
+    bitcoin_address = BCAddressField(required=False)
+
     class Meta:
         model = Device
         exclude = ('merchant',)

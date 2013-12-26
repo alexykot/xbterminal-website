@@ -1,5 +1,6 @@
 from django.contrib import admin
-from website.models import MerchantAccount, Contact, Device
+
+from website.models import MerchantAccount, Contact, Device, Language, Currency
 
 
 class ContactAdmin(admin.ModelAdmin):
@@ -8,3 +9,5 @@ class ContactAdmin(admin.ModelAdmin):
 admin.site.register(MerchantAccount)
 admin.site.register(Contact, ContactAdmin)
 admin.site.register(Device)
+admin.site.register(Language)
+admin.site.register(Currency)

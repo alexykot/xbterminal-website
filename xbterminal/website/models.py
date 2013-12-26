@@ -4,18 +4,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 
 from django_countries.fields import CountryField
-
-
-class Contact(models.Model):
-    """
-    Simple contact info from users
-    """
-    email = models.EmailField(max_length=254)
-    add_date = models.DateTimeField(auto_now_add=True)
-    message = models.TextField()
-
-    def __unicode__(self):
-        return self.message
+from website.validators import validate_percent
 
 
 class MerchantAccount(models.Model):
@@ -40,15 +29,45 @@ class MerchantAccount(models.Model):
         return reverse('website:device', kwargs={'number': 1})
 
 
+class Language(models.Model):
+    name = models.CharField(max_length=50)
+
+    def __unicode__(self):
+        return self.name
+
+
+class Currency(models.Model):
+    name = models.CharField(max_length=50)
+
+    class Meta:
+        verbose_name_plural = 'currencies'
+
+    def __unicode__(self):
+        return self.name
+
+
 class Device(models.Model):
+    PAYMENT_PROCESSING_CHOICES = (
+        ('keep', 'keep bitcoins'),
+        ('partially', 'convert partially'),
+        ('full', 'convert full amount')
+    )
+    PAYMENT_PROCESSOR_CHOICES = (
+        ('BitPay', 'BitPay'),
+        ('BIPS', 'BIPS'),
+        ('CryptoPay', 'CryptoPay')
+    )
     merchant = models.ForeignKey(MerchantAccount)
 
     name = models.CharField(max_length=100)
-    comment = models.CharField(max_length=100)
-    instantfiat = models.CharField('instantfiat service used', max_length=100)
-    api_key = models.CharField('instantfiat service API key', max_length=100)
-    percent = models.SmallIntegerField('percent to convert to fiat')
-    bitcoin_address = models.CharField('bitcoin address to send to', max_length=100)
+    language = models.ForeignKey(Language, default=1)  # by default, English, see fixtures
+    currency = models.ForeignKey(Currency, default=1)  # by default, GBP, see fixtures
+    comment = models.CharField(max_length=100, blank=True)
+    payment_processing = models.CharField(max_length=50, choices=PAYMENT_PROCESSING_CHOICES)
+    payment_processor = models.CharField(max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, blank=True)
+    api_key = models.CharField(max_length=100, blank=True)
+    percent = models.SmallIntegerField('percent to convert', blank=True, validators=[validate_percent], null=True)
+    bitcoin_address = models.CharField('bitcoin address to send to', max_length=100, blank=True)
 
     class Meta:
         ordering = ['id']

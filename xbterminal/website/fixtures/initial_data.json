@@ -1,0 +1,16 @@
+[
+  {
+    "model": "website.language",
+    "pk": 1,
+    "fields": {
+      "name": "English"
+    }
+  },
+  {
+    "model": "website.currency",
+    "pk": 1,
+    "fields": {
+      "name": "GBP"
+    }
+  }
+]
