@@ -3,6 +3,8 @@ from django.db import models
 from django.conf import settings
 from django.core.urlresolvers import reverse
 
+from django_countries.fields import CountryField
+
 
 class Contact(models.Model):
     """
@@ -23,7 +25,7 @@ class MerchantAccount(models.Model):
     business_address1 = models.CharField('', max_length=1000, blank=True, default='')
     business_address2 = models.CharField('', max_length=1000, blank=True, default='')
     town = models.CharField(max_length=1000)
-    county = models.CharField(max_length=1000, blank=True, default='')
+    country = CountryField("State / Country", blank=True, default='')
     post_code = models.CharField(max_length=1000)
     contact_name = models.CharField(max_length=1000)
     contact_phone = models.CharField(max_length=1000)

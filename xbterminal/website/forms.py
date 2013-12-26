@@ -18,6 +18,9 @@ class MerchantRegistrationForm(forms.ModelForm):
     class Meta:
         model = MerchantAccount
         exclude = ['user']
+        widgets = {
+            'country': forms.Select(attrs={'class': 'form-control'}),
+        }
 
 
 class AuthenticationForm(DjangoAuthenticationForm):
@@ -31,7 +34,7 @@ class ProfileForm(forms.ModelForm):
     class Meta:
         model = MerchantAccount
         fields = ('company_name', 'business_address', 'business_address1', 'business_address2',
-                  'town', 'county', 'post_code')
+                  'town', 'country', 'post_code')
 
     class Media:
         css = {'all': ('css/custom.css',)}
