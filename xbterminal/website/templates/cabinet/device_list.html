@@ -1,0 +1,31 @@
+{% extends "cabinet/base.html" %}
+{% load bootstrap staticfiles %}
+
+{% block cabinet_nav %}
+{% include 'cabinet/inclusions/nav.html' with DEVICES_ACTIVE='True' %}
+{% endblock %}
+
+{% block cabinet_content %}
+<div class="device-create-button"><a class="btn btn-default" href="{% url 'website:create_device' %}">Create</a></div>
+
+<table class="table table-striped table-bordered table-responsive">
+    <tr>
+        <th>Name</th>
+        <th>Comment</th>
+        <th>Receiving address</th>
+        <th>Payment processor</th>
+        <th>Transaction history</th>
+        <th>Actions</th>
+    </tr>
+{% for device in devices %}
+    <tr>
+        <td><a href="{% url 'website:device' forloop.counter %}">{{ device.name }}</a></td>
+        <td>{{ device.comment }}</td>
+        <td>{{ device.bitcoin_address|slice:":3" }}...{{ device.bitcoin_address|slice:"-3:" }}</td>
+        <td>{{ device.payment_processor }}</td>
+        <td></td>
+        <td></td>
+    </tr>
+{% endfor %}
+</table>
+{% endblock %}

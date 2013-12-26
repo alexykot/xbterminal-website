@@ -89,7 +89,7 @@ CONTACT_EMAIL_RECIPIENTS = ["info@xbterminal.com"]
 APPEND_SLASH = False
 
 LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/profile/'
+LOGIN_REDIRECT_URL = '/devices/'
 
 try:
     from local_settings import *

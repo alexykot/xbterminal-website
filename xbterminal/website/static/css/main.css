@@ -287,3 +287,7 @@ ul.header-menu li {
   }
 }
 /* ##### End facilities #####*/
+
+.device-create-button {
+  margin-bottom: 20px;
+}

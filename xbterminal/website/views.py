@@ -8,12 +8,13 @@ from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
-from django.views.generic import UpdateView
+from django.views.generic import UpdateView, ListView
 from django.utils.decorators import method_decorator
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.http import Http404
 from django.views.decorators.clickjacking import xframe_options_exempt
 
+from website.models import Device
 from website.forms import ContactForm, MerchantRegistrationForm, ProfileForm, DeviceForm
 
 
@@ -91,7 +92,7 @@ def merchant(request):
 
 class ProfileView(UpdateView):
     form_class = ProfileForm
-    template_name = 'website/profile_form.html'
+    template_name = 'cabinet/profile_form.html'
     success_url = reverse_lazy('website:profile')
 
     @method_decorator(login_required)
@@ -107,7 +108,7 @@ class ProfileView(UpdateView):
 
 class DeviceView(UpdateView):
     form_class = DeviceForm
-    template_name = 'website/device_form.html'
+    template_name = 'cabinet/device_form.html'
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
@@ -147,3 +148,12 @@ class DeviceView(UpdateView):
     def get_context_data(self, **kwargs):
         kwargs['current_device'] = self.object
         return super(DeviceView, self).get_context_data(**kwargs)
+
+
+class DeviceList(ListView):
+    model = Device
+    template_name = 'cabinet/device_list.html'
+    context_object_name = 'devices'
+
+    def get_queryset(self):
+        return self.request.user.merchant.device_set.all()

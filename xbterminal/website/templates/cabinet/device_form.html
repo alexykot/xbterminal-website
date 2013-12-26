@@ -1,0 +1,19 @@
+{% extends "cabinet/base.html" %}
+{% load bootstrap staticfiles %}
+
+
+{% block cabinet_nav %}
+{% include 'cabinet/inclusions/nav.html' with DEVICES_ACTIVE='True' %}
+{% endblock %}
+
+{% block cabinet_content %}
+  <div class="row">
+      <div class="col-xs-8 col-xs-offset-2">
+      <form action="" method="post">
+          {% csrf_token %}
+          {{ form|bootstrap }}
+          <button type="submit" class="btn btn-default pull-right">{% if current_device %}Update{% else %}Create{% endif %}</button>
+      </form>
+      </div>
+  </div>
+{% endblock %}
