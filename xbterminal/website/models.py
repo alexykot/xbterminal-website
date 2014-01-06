@@ -63,8 +63,8 @@ class Device(models.Model):
     language = models.ForeignKey(Language, default=1)  # by default, English, see fixtures
     currency = models.ForeignKey(Currency, default=1)  # by default, GBP, see fixtures
     comment = models.CharField(max_length=100, blank=True)
-    payment_processing = models.CharField(max_length=50, choices=PAYMENT_PROCESSING_CHOICES)
-    payment_processor = models.CharField(max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, blank=True)
+    payment_processing = models.CharField(max_length=50, choices=PAYMENT_PROCESSING_CHOICES, default='keep')
+    payment_processor = models.CharField(max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, null=True)
     api_key = models.CharField(max_length=100, blank=True)
     percent = models.SmallIntegerField('percent to convert', blank=True, validators=[validate_percent], null=True)
     bitcoin_address = models.CharField('bitcoin address to send to', max_length=100, blank=True)

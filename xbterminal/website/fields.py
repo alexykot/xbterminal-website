@@ -16,7 +16,6 @@ class BCAddressField(forms.CharField):
         value = value.strip()
         if re.match(r"[a-zA-Z1-9]{27,35}$", value) is None:
             raise ValidationError(self.error_messages['invalid'])
-        print 're valid'
         version = get_bcaddress_version(value)
         if version is None:
             raise ValidationError(self.error_messages['invalid'])

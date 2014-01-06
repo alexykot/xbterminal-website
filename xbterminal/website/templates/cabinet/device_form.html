@@ -1,5 +1,5 @@
 {% extends "cabinet/base.html" %}
-{% load bootstrap staticfiles %}
+{% load bootstrap bootstrap3 staticfiles %}
 
 
 {% block cabinet_nav %}
@@ -7,13 +7,70 @@
 {% endblock %}
 
 {% block cabinet_content %}
-  <div class="row">
-      <div class="col-xs-8 col-xs-offset-2">
-      <form action="" method="post">
-          {% csrf_token %}
-          {{ form|bootstrap }}
+<div class="row">
+    <div class="col-sm-8 col-sm-offset-2">
+        <form action="" method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="row">
+                    <div class="col-sm-6 has-error">
+                        {% for error in form.non_field_errors %}
+                            <span class="help-block">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+          <div class="row">
+              <div class="col-sm-6">
+                  {% bootstrap_field form.name %}
+              </div>
+              <div class="col-sm-3">
+                  {% bootstrap_field form.language %}
+              </div>
+              <div class="col-sm-3">
+                  {% bootstrap_field form.currency %}
+              </div>
+          </div>
+
+          <div class="row">
+              <div class="col-sm-12">
+                  {% bootstrap_field form.comment %}
+              </div>
+          </div>
+
+          <div class="row">
+              <div class="col-sm-12">
+                  {% bootstrap_field form.payment_processing %}
+              </div>
+          </div>
+
+          <div class="row">
+              <div class="col-sm-6">
+                  {% bootstrap_field form.payment_processor %}
+              </div>
+              <div class="col-sm-5 col-sm-offset-1">
+                  {% bootstrap_field form.api_key %}
+              </div>
+          </div>
+
+          <div class="row">
+              <div class="col-sm-6">
+                  {% bootstrap_field form.percent %}
+              </div>
+          </div>
+
+          <div class="row">
+              <div class="col-sm-12">
+                  {% bootstrap_field form.bitcoin_address %}
+              </div>
+          </div>
+
           <button type="submit" class="btn btn-default pull-right">{% if current_device %}Update{% else %}Create{% endif %}</button>
-      </form>
-      </div>
-  </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+{{ form.media }}
 {% endblock %}
