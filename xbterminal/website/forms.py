@@ -86,3 +86,12 @@ class DeviceForm(forms.ModelForm):
             raise forms.ValidationError('This field is required.')
 
         return percent
+
+    def clean_bitcoin_address(self):
+        payment_processing = self.cleaned_data['payment_processing']
+        bitcoin_address = self.cleaned_data['bitcoin_address']
+
+        if payment_processing in ['keep', 'partially'] and not bitcoin_address:
+            raise forms.ValidationError('This field is required.')
+
+        return bitcoin_address

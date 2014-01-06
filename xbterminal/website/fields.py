@@ -12,14 +12,19 @@ class BCAddressField(forms.CharField):
     def __init__(self, *args, **kwargs):
         super(BCAddressField, self).__init__(*args, **kwargs)
 
-    def clean(self, value):
+    def validate(self, value):
+        super(BCAddressField, self).validate(value)
+
+        if value in self.empty_values and not self.required:
+            return
+
         value = value.strip()
         if re.match(r"[a-zA-Z1-9]{27,35}$", value) is None:
             raise ValidationError(self.error_messages['invalid'])
         version = get_bcaddress_version(value)
         if version is None:
             raise ValidationError(self.error_messages['invalid'])
-        return value
+
 
 __b58chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 __b58base = len(__b58chars)
