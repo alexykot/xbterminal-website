@@ -7,7 +7,6 @@ $(document).ready(function(){
 
     paymentProcessing.change(function(){
         if ($(this).val() == 'keep'){
-            paymentProcessor.val('');
             paymentProcessor.attr('disabled', true);
             paymentProcessor.parent().addClass('disabled').removeClass('active');
             percent.attr('disabled', true).val('');

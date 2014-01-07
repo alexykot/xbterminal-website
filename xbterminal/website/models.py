@@ -74,3 +74,8 @@ class Device(models.Model):
 
     def __unicode__(self):
         return 'device: %s' % self.name
+
+    def payment_processor_info(self):
+        if self.payment_processing in ['partially', 'full']:
+            return '%s, %s%% converted' % (self.payment_processor, self.percent)
+        return ''

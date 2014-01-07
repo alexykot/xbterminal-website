@@ -21,8 +21,12 @@
     <tr>
         <td><a href="{% url 'website:device' forloop.counter %}">{{ device.name }}</a></td>
         <td>{{ device.comment }}</td>
-        <td>{{ device.bitcoin_address|slice:":3" }}...{{ device.bitcoin_address|slice:"-3:" }}</td>
-        <td>{{ device.payment_processor }}</td>
+        <td>
+            {% if device.bitcoin_address %}
+                {{ device.bitcoin_address|slice:":3" }}...{{ device.bitcoin_address|slice:"-3:" }}
+            {% endif %}
+        </td>
+        <td>{{ device.payment_processor_info }}</td>
         <td></td>
         <td></td>
     </tr>

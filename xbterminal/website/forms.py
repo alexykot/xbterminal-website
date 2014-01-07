@@ -85,6 +85,9 @@ class DeviceForm(forms.ModelForm):
         if payment_processing == 'partially' and not percent:
             raise forms.ValidationError('This field is required.')
 
+        if payment_processing == 'full':
+            percent = 100
+
         return percent
 
     def clean_bitcoin_address(self):
