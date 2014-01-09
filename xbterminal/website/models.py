@@ -66,7 +66,14 @@ class Device(models.Model):
     payment_processing = models.CharField(max_length=50, choices=PAYMENT_PROCESSING_CHOICES, default='keep')
     payment_processor = models.CharField(max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, null=True)
     api_key = models.CharField(max_length=100, blank=True)
-    percent = models.SmallIntegerField('percent to convert', blank=True, validators=[validate_percent], null=True)
+    percent = models.DecimalField(
+        'percent to convert',
+        max_digits=4,
+        decimal_places=1,
+        blank=True,
+        validators=[validate_percent],
+        null=True
+    )
     bitcoin_address = models.CharField('bitcoin address to send to', max_length=100, blank=True)
 
     class Meta:
