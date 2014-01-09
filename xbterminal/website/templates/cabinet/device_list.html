@@ -23,10 +23,12 @@
         <td>{{ device.comment }}</td>
         <td>
             {% if device.bitcoin_address %}
-                {{ device.bitcoin_address|slice:":3" }}...{{ device.bitcoin_address|slice:"-3:" }}
+                {{ device.bitcoin_address|slice:":6" }}...{{ device.bitcoin_address|slice:"-6:" }}
+            {% else %}
+                --
             {% endif %}
         </td>
-        <td>{{ device.payment_processor_info }}</td>
+        <td>{{ device.payment_processor_info|default:"--" }}</td>
         <td></td>
         <td></td>
     </tr>

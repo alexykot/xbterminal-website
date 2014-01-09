@@ -140,10 +140,7 @@ class DeviceView(UpdateView):
         return super(DeviceView, self).form_valid(form)
 
     def get_success_url(self):
-        devices = list(self.request.user.merchant.device_set.all())
-        device = self.object
-        number = devices.index(device) + 1
-        return reverse('website:device', kwargs={'number': number})
+        return reverse('website:devices')
 
     def get_context_data(self, **kwargs):
         kwargs['current_device'] = self.object

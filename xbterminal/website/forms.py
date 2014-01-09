@@ -3,7 +3,7 @@ from django.contrib.auth.forms import AuthenticationForm as DjangoAuthentication
 
 from website.models import MerchantAccount, Device
 from website.fields import BCAddressField
-from website.widgets import ButtonGroupRadioSelect
+from website.widgets import ButtonGroupRadioSelect, PercentWidget
 
 
 class ContactForm(forms.Form):
@@ -54,7 +54,8 @@ class DeviceForm(forms.ModelForm):
         model = Device
         exclude = ('merchant',)
         widgets = {
-            'payment_processing': ButtonGroupRadioSelect
+            'payment_processing': ButtonGroupRadioSelect,
+            'percent': PercentWidget
        }
 
     class Media:

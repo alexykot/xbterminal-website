@@ -59,13 +59,16 @@
               </div>
           </div>
 
-          <div class="row">
-              <div class="col-sm-12">
-                  {% bootstrap_field form.bitcoin_address %}
-              </div>
-          </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    {% bootstrap_field form.bitcoin_address %}
+                </div>
+            </div>
 
-          <button type="submit" class="btn btn-default pull-right">{% if current_device %}Update{% else %}Create{% endif %}</button>
+            <div class="pull-right">
+                <button type="submit" class="btn btn-default">{% if current_device %}Update{% else %}Create{% endif %}</button>
+                <a href="{% url 'website:devices' %}" class="btn btn-default">Cancel</a>
+            </div>
         </form>
     </div>
 </div>
