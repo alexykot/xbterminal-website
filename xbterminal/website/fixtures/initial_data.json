@@ -10,7 +10,8 @@
     "model": "website.currency",
     "pk": 1,
     "fields": {
-      "name": "GBP"
+      "name": "GBP",
+      "prefix": "£"
     }
   }
 ]

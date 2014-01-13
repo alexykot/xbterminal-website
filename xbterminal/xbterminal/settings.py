@@ -38,6 +38,7 @@ INSTALLED_APPS = (
     'south',
     'bootstrapform',
     'bootstrap3',
+    'rest_framework',
 
     'website',
 )
@@ -98,3 +99,7 @@ try:
     from local_settings import *
 except ImportError:
     pass
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': []
+}

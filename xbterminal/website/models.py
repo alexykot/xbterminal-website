@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import uuid
+
 from django.db import models
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -32,6 +34,8 @@ class MerchantAccount(models.Model):
 
 class Language(models.Model):
     name = models.CharField(max_length=50)
+    fractional_split = models.CharField(max_length=1, default=".")
+    thousands_split = models.CharField(max_length=1, default=",")
 
     def __unicode__(self):
         return self.name
@@ -39,6 +43,8 @@ class Language(models.Model):
 
 class Currency(models.Model):
     name = models.CharField(max_length=50)
+    postfix = models.CharField(max_length=50, default="")
+    prefix = models.CharField(max_length=50, default="")
 
     class Meta:
         verbose_name_plural = 'currencies'
@@ -77,11 +83,16 @@ class Device(models.Model):
     )
     bitcoin_address = models.CharField('bitcoin address to send to', max_length=100, blank=True)
 
+    key = models.CharField(max_length=32, editable=False, unique=True, default=lambda:uuid.uuid4().hex)
+
     class Meta:
         ordering = ['id']
 
     def __unicode__(self):
         return 'device: %s' % self.name
+
+    def save(self, *args, **kwargs):
+        super(Device, self).save(*args, **kwargs)
 
     def payment_processor_info(self):
         if self.payment_processing in ['partially', 'full']:
