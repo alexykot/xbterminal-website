@@ -3,8 +3,10 @@ from django.shortcuts import get_object_or_404
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.generics import CreateAPIView
 
-from website.models import Device
+from website.models import Device, Transaction
+from api.serializers import TransactionSerializer
 
 
 @api_view(['GET'])
@@ -28,3 +30,8 @@ def device(request, key):
         "OUTPUT_DEC_THOUSANDS_SPLIT": device.language.thousands_split
     }
     return Response(response)
+
+
+class CreateTransaction(CreateAPIView):
+    model = Transaction
+    serializer_class = TransactionSerializer

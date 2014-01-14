@@ -4,9 +4,9 @@ import uuid
 from django.db import models
 from django.conf import settings
 from django.core.urlresolvers import reverse
-
 from django_countries.fields import CountryField
-from website.validators import validate_percent
+
+from website.validators import validate_percent, validate_bitcoin, validate_transaction
 
 
 class MerchantAccount(models.Model):
@@ -98,3 +98,17 @@ class Device(models.Model):
         if self.payment_processing in ['partially', 'full']:
             return '%s, %s%% converted' % (self.payment_processor, self.percent)
         return ''
+
+
+class Transaction(models.Model):
+    device = models.ForeignKey(Device)
+    source_address = models.CharField(max_length=35, validators=[validate_bitcoin])
+    hop_address = models.CharField(max_length=35, validators=[validate_bitcoin])
+    dest_address = models.CharField(max_length=35, validators=[validate_bitcoin])
+    bitcoin_transaction_id_1 = models.CharField(max_length=64, validators=[validate_transaction])
+    bitcoin_transaction_id_2 = models.CharField(max_length=64, validators=[validate_transaction])
+    amount = models.DecimalField(max_digits=20, decimal_places=8)
+    time = models.DateTimeField()
+
+    def get_api_url(self):
+        return '- view is not yet ready -'
