@@ -111,4 +111,13 @@ class Transaction(models.Model):
     time = models.DateTimeField()
 
     def get_api_url(self):
-        return '- view is not yet ready -'
+        return reverse('transaction_pdf', kwargs={'transaction_id': self.id})
+
+    def get_bitcoin_transaction_id_url(self, transaction_id):
+        return 'https://blockchain.info/en/tx/%s' % transaction_id
+
+    def get_bitcoin_transaction_id_1_url(self):
+        return self.get_bitcoin_transaction_id_url(self.bitcoin_transaction_id_1)
+
+    def get_bitcoin_transaction_id_2_url(self):
+        return self.get_bitcoin_transaction_id_url(self.bitcoin_transaction_id_2)

@@ -11,3 +11,5 @@ wsgiref==0.1.2
 django-countries==2.0b3
 django-bootstrap3==2.5.2
 djangorestframework==2.3.10
+xhtml2pdf==0.0.5
+django-qrcode==0.3

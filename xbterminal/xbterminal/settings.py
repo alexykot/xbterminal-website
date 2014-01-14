@@ -39,8 +39,10 @@ INSTALLED_APPS = (
     'bootstrapform',
     'bootstrap3',
     'rest_framework',
+    'qrcode',
 
     'website',
+    'api'
 )
 
 MIDDLEWARE_CLASSES = (

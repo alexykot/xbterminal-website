@@ -1,5 +1,6 @@
 # coding=utf-8
 from django.shortcuts import get_object_or_404
+from django.conf import settings
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -7,6 +8,7 @@ from rest_framework.generics import CreateAPIView
 
 from website.models import Device, Transaction
 from api.serializers import TransactionSerializer
+from api.shotcuts import render_to_pdf
 
 
 @api_view(['GET'])
@@ -35,3 +37,12 @@ def device(request, key):
 class CreateTransaction(CreateAPIView):
     model = Transaction
     serializer_class = TransactionSerializer
+
+
+def transaction_pdf(request, transaction_id):
+    transaction = get_object_or_404(Transaction, id=transaction_id)
+
+    return render_to_pdf(
+        'api/transaction.html',
+        {'transaction': transaction, 'STATIC_ROOT': settings.STATIC_ROOT}
+    )

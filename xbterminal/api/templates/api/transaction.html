@@ -1,0 +1,57 @@
+{% load qr_tags %}
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<style type="text/css">
+    body {
+        font-size: 16px;
+    }
+    @page {
+      margin: 1cm;
+      margin-top: 3cm;
+    }
+    td, th { border: thin solid black; padding: 5px; padding-bottom: 0px; }
+</style>
+
+</head>
+<body>
+<table>
+    <tr>
+        <td>Company name</td>
+        <td>{{ transaction.device.merchant.company_name }}</td>
+    </tr>
+    <tr>
+        <td>Time</td>
+        <td>{{ transaction.time }}</td>
+    </tr>
+    <tr>
+        <td>Ammount</td>
+        <td>{{ transaction.amount }}</td>
+    </tr>
+    <tr>
+        <td>Transaction id</td>
+        <td>{{ transaction.id }}</td>
+    </tr>
+    <tr>
+        <td>Bitcoin transaction id 1</td>
+        <td>{{ transaction.bitcoin_transaction_id_1 }}</td>
+    </tr>
+    <tr>
+        <td>Source address</td>
+        <td>{{ transaction.source_address }}</td>
+    </tr>
+    <tr>
+        <td>Destination address</td>
+        <td>{{ transaction.dest_address }}</td>
+    </tr>
+</table>
+
+<div>
+    {% qr_from_text transaction.get_bitcoin_transaction_id_1_url %}
+    {% qr_from_text transaction.get_bitcoin_transaction_id_2_url %}
+</div>
+
+</body>
+</html>
