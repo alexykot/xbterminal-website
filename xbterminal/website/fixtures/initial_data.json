@@ -13,5 +13,13 @@
       "name": "GBP",
       "prefix": "£"
     }
+  },
+  {
+    "model": "sites.Site",
+    "pk": 1,
+    "fields": {
+      "domain": "xbterminal.com",
+      "name": "xbterminal.com"
+    }
   }
 ]
