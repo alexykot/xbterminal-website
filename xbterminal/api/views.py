@@ -41,10 +41,14 @@ class CreateTransaction(CreateAPIView):
 
 def transaction_pdf(request, key):
     transaction = get_object_or_404(Transaction, key=key)
-
-    return render_to_pdf(
+    response = render_to_pdf(
         'api/transaction.html', {
             'transaction': transaction,
             'STATIC_ROOT': settings.STATIC_ROOT
         }
     )
+
+    disposition = 'inline; filename="receipt %s %s.pdf"' %\
+        (transaction.id, transaction.device.merchant.company_name)
+    response['Content-Disposition'] = disposition
+    return response
