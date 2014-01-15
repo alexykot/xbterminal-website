@@ -5,6 +5,7 @@ from django.db import models
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django_countries.fields import CountryField
+from django.contrib.sites.models import Site
 
 from website.validators import validate_percent, validate_bitcoin, validate_transaction
 
@@ -30,6 +31,11 @@ class MerchantAccount(models.Model):
         if not self.device_set.exists():
             return reverse('website:create_device')
         return reverse('website:device', kwargs={'number': 1})
+
+    def get_address(self):
+        strings = [self.business_address, self.business_address1, self.business_address2,
+                   self.town, self.county, unicode(self.country.name)]
+        return ', '.join(filter(None, strings))
 
 
 class Language(models.Model):
@@ -107,17 +113,26 @@ class Transaction(models.Model):
     dest_address = models.CharField(max_length=35, validators=[validate_bitcoin])
     bitcoin_transaction_id_1 = models.CharField(max_length=64, validators=[validate_transaction])
     bitcoin_transaction_id_2 = models.CharField(max_length=64, validators=[validate_transaction])
-    amount = models.DecimalField(max_digits=20, decimal_places=8)
+    fiat_amount = models.DecimalField(max_digits=20, decimal_places=8)
+    btc_amount = models.DecimalField(max_digits=20, decimal_places=8)
+    effective_exchange_rate = models.DecimalField(max_digits=20, decimal_places=8)
     time = models.DateTimeField()
 
+    key = models.CharField(max_length=32, editable=False, unique=True, default=lambda:uuid.uuid4().hex)
+
     def get_api_url(self):
-        return reverse('api:transaction_pdf', kwargs={'transaction_id': self.id})
+        domain = Site.objects.get_current().domain
+        path = reverse('api:transaction_pdf', kwargs={'key': self.key})
+        return 'https://%s%s' % (domain, path)
 
-    def get_bitcoin_transaction_id_url(self, transaction_id):
-        return 'https://blockchain.info/en/tx/%s' % transaction_id
+    def get_blockchain_transaction_url(self):
+        return 'https://blockchain.info/en/tx/%s' % self.bitcoin_transaction_id_1
 
-    def get_bitcoin_transaction_id_1_url(self):
-        return self.get_bitcoin_transaction_id_url(self.bitcoin_transaction_id_1)
+    def get_blockchain_address_url(self, address):
+        return 'https://blockchain.info/en/address/%s' % address
 
-    def get_bitcoin_transaction_id_2_url(self):
-        return self.get_bitcoin_transaction_id_url(self.bitcoin_transaction_id_2)
+    def get_source_address_url(self):
+        return self.get_blockchain_address_url(self.source_address)
+
+    def get_dest_address_url(self):
+        return self.get_blockchain_address_url(self.dest_address)

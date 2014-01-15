@@ -34,6 +34,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
 
     'south',
     'bootstrapform',
@@ -87,7 +88,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = 'static'
+STATIC_ROOT = os.path.join(BASE_DIR, '..', 'static')
 
 DEFAULT_FROM_EMAIL = "test@example.com"
 CONTACT_EMAIL_RECIPIENTS = ["info@xbterminal.com"]
@@ -101,6 +102,8 @@ try:
     from local_settings import *
 except ImportError:
     pass
+
+SITE_ID = 1
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': []

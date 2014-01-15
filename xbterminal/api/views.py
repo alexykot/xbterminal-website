@@ -39,10 +39,12 @@ class CreateTransaction(CreateAPIView):
     serializer_class = TransactionSerializer
 
 
-def transaction_pdf(request, transaction_id):
-    transaction = get_object_or_404(Transaction, id=transaction_id)
+def transaction_pdf(request, key):
+    transaction = get_object_or_404(Transaction, key=key)
 
     return render_to_pdf(
-        'api/transaction.html',
-        {'transaction': transaction, 'STATIC_ROOT': settings.STATIC_ROOT}
+        'api/transaction.html', {
+            'transaction': transaction,
+            'STATIC_ROOT': settings.STATIC_ROOT
+        }
     )

@@ -1,4 +1,4 @@
-{% load qr_tags %}
+{% load qr_tags api_tags %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -11,47 +11,123 @@
     @page {
       margin: 1cm;
       margin-top: 3cm;
+      @frame qrcode-text {
+        -pdf-frame-content: qrcode-text;
+        width: 12cm;
+        bottom: 5cm;
+        height: 2.5cm;
+        right: 6cm;
+      }
+      @frame qrcode {
+        -pdf-frame-content: qrcode;
+        width: 5cm;
+        bottom: 5cm;
+        height: 5cm;
+        right: 0cm;
+      }
+      @frame footer {
+        -pdf-frame-content: footer;
+        bottom: 0.25cm;
+        text-align: center;
+        height: 2cm;
+        left: 5cm;
+        vertical-align: middle;
+      }
+      @frame footer-image {
+        -pdf-frame-content: footer-image;
+        bottom: 0cm;
+        height: 3cm;
+        left: 8.5cm;
+      }
     }
-    td, th { border: thin solid black; padding: 5px; padding-bottom: 0px; }
+    #qrcode-text {
+        font-size: 14px;
+        color: #555;
+    }
+    #footer {
+        color: #777;
+    }
+    .title {
+        text-align: center;
+        font-weight: bold;
+        font-size: 20px;
+    }
+    table {
+        margin-top: 30px;
+        color: #555;
+        border: 1px;
+    }
+    td, th { padding: 5px; padding-bottom: 0px; }
+    .col1 {
+        text-align: right;
+    }
 </style>
 
 </head>
 <body>
+
+<div class="title">Customer Receipt - #{{ transaction.id }}</div>
+
 <table>
     <tr>
-        <td>Company name</td>
-        <td>{{ transaction.device.merchant.company_name }}</td>
+        <td style="width: 400px;" class="col1">Fiat Amount</td>
+        <td class="col2">${{ transaction.fiat_amount|amount }}</td>
     </tr>
     <tr>
-        <td>Time</td>
-        <td>{{ transaction.time }}</td>
+        <td class="col1">BTC Amount</td>
+        <td class="col2">{{ transaction.btc_amount|amount }} mBTC</td>
     </tr>
     <tr>
-        <td>Ammount</td>
-        <td>{{ transaction.amount }}</td>
+        <td class="col1">Effective Exchange Rate</td>
+        <td class="col2">${{ transaction.effective_exchange_rate|amount }}</td>
+    </tr>
+
+    <tr></tr>
+
+    <tr>
+        <td class="col1">Destination Address</td>
+        <td class="col2"><a href="{{ transaction.get_dest_address_url }}">{{ transaction.dest_address }}</a></td>
+    </tr>
+
+    <tr>
+        <td class="col1">Source Address</td>
+        <td class="col2"><a href="{{ transaction.get_source_address_url }}">{{ transaction.source_address }}</a></td>
     </tr>
     <tr>
-        <td>Transaction id</td>
-        <td>{{ transaction.id }}</td>
+        <td class="col1">Bitcoin Transaction ID</td>
+        <td class="col2"><a href="{{ transaction.get_blockchain_transaction_url }}">{{ transaction.bitcoin_transaction_id_1 }}</a></td>
+    </tr>
+
+    <tr></tr>
+
+    <tr>
+        <td class="col1">Merchant Name</td>
+        <td class="col2">{{ transaction.device.merchant.company_name }}</td>
     </tr>
     <tr>
-        <td>Bitcoin transaction id 1</td>
-        <td>{{ transaction.bitcoin_transaction_id_1 }}</td>
+        <td class="col1">Merchant Address</td>
+        <td class="col2">{{ transaction.device.merchant.get_address }}</td>
     </tr>
     <tr>
-        <td>Source address</td>
-        <td>{{ transaction.source_address }}</td>
+        <td class="col1">Merchant Invoice Number</td>
+        <td class="col2">{{ transaction.id }}</td>
     </tr>
     <tr>
-        <td>Destination address</td>
-        <td>{{ transaction.dest_address }}</td>
+        <td class="col1">Transaction Time</td>
+        <td class="col2">{{ transaction.time }}</td>
     </tr>
 </table>
 
-<div>
-    {% qr_from_text transaction.get_bitcoin_transaction_id_1_url %}
-    {% qr_from_text transaction.get_bitcoin_transaction_id_2_url %}
+<div id="qrcode-text">
+    <div>{{ transaction.get_api_url }}</div>
+    <div>View this receipt online by visiting the link above, or by scanning the QR code adjacent.</div>
 </div>
+<div id="qrcode">
+    {% qr_from_text transaction.get_api_url %}
+</div>
+
+<div id="footer">payment processed by</div>
+<div id="footer-image"><img src="{{ STATIC_ROOT }}/img/logo.png"></div>
 
 </body>
 </html>
