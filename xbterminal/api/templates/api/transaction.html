@@ -70,50 +70,50 @@
 
 <table>
     <tr>
-        <td style="width: 400px;" class="col1">Fiat Amount</td>
-        <td class="col2">${{ transaction.fiat_amount|amount }}</td>
+        <td style="width: 400px;" class="col1">Amount</td>
+        <td class="col2">&#163;{{ transaction.fiat_amount|amount }}</td>
     </tr>
     <tr>
-        <td class="col1">BTC Amount</td>
-        <td class="col2">{{ transaction.btc_amount|amount }} mBTC</td>
+        <td class="col1">Bitcoin amount paid</td>
+        <td class="col2">m&#3647; {{ transaction.btc_amount|amount }}</td>
     </tr>
     <tr>
-        <td class="col1">Effective Exchange Rate</td>
-        <td class="col2">${{ transaction.effective_exchange_rate|amount }}</td>
+        <td class="col1">Effective exchange rate</td>
+        <td class="col2">&#163;{{ transaction.effective_exchange_rate|amount }}</td>
     </tr>
 
     <tr></tr>
 
     <tr>
-        <td class="col1">Destination Address</td>
+        <td class="col1">Destination address</td>
         <td class="col2"><a href="{{ transaction.get_dest_address_url }}">{{ transaction.dest_address }}</a></td>
     </tr>
 
     <tr>
-        <td class="col1">Source Address</td>
+        <td class="col1">Source address</td>
         <td class="col2"><a href="{{ transaction.get_source_address_url }}">{{ transaction.source_address }}</a></td>
     </tr>
     <tr>
-        <td class="col1">Bitcoin Transaction ID</td>
+        <td class="col1">Bitcoin transaction ID</td>
         <td class="col2"><a href="{{ transaction.get_blockchain_transaction_url }}">{{ transaction.bitcoin_transaction_id_1 }}</a></td>
     </tr>
 
     <tr></tr>
 
     <tr>
-        <td class="col1">Merchant Name</td>
+        <td class="col1">Merchant name</td>
         <td class="col2">{{ transaction.device.merchant.company_name }}</td>
     </tr>
     <tr>
-        <td class="col1">Merchant Address</td>
+        <td class="col1">Merchant address</td>
         <td class="col2">{{ transaction.device.merchant.get_address }}</td>
     </tr>
     <tr>
-        <td class="col1">Merchant Invoice Number</td>
+        <td class="col1">Merchant invoice number</td>
         <td class="col2">{{ transaction.id }}</td>
     </tr>
     <tr>
-        <td class="col1">Transaction Time</td>
+        <td class="col1">Transaction time</td>
         <td class="col2">{{ transaction.time }}</td>
     </tr>
 </table>
