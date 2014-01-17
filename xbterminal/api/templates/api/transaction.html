@@ -3,9 +3,11 @@
 <html>
 <head>
 
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta http-equiv="content-type" content="text/html; charset=utf-8"> 
 <style type="text/css">
+    @font-face { font-family: Verdata; src: url({{ STATIC_ROOT }}/fonts/verdana.ttf); }
     body {
+        font-family: Verdana;
         font-size: 16px;
     }
     @page {
@@ -61,6 +63,9 @@
     .col1 {
         text-align: right;
     }
+    .col2 {
+    vertical-align: middle;
+    }
 </style>
 
 </head>
@@ -71,15 +76,15 @@
 <table>
     <tr>
         <td style="width: 400px;" class="col1">Amount</td>
-        <td class="col2">&#163;{{ transaction.fiat_amount|amount }}</td>
+        <td class="col2">{{ transaction.device.currency.prefix }}{{ transaction.fiat_amount|amount }}{{ transaction.device.currency.postfix }}</td>
     </tr>
     <tr>
         <td class="col1">Bitcoin amount paid</td>
-        <td class="col2">m&#3647; {{ transaction.btc_amount|amount }}</td>
+        <td class="col2">m&#3647; {{ transaction.scaled_btc_amount|amount }}</td>
     </tr>
     <tr>
         <td class="col1">Effective exchange rate</td>
-        <td class="col2">&#163;{{ transaction.effective_exchange_rate|amount }}</td>
+        <td class="col2">{{ transaction.device.currency.prefix }}{{ transaction.scaled_effective_exchange_rate|amount }}{{ transaction.device.currency.postfix }}</td>
     </tr>
 
     <tr></tr>
@@ -89,10 +94,6 @@
         <td class="col2"><a href="{{ transaction.get_dest_address_url }}">{{ transaction.dest_address }}</a></td>
     </tr>
 
-    <tr>
-        <td class="col1">Source address</td>
-        <td class="col2"><a href="{{ transaction.get_source_address_url }}">{{ transaction.source_address }}</a></td>
-    </tr>
     <tr>
         <td class="col1">Bitcoin transaction ID</td>
         <td class="col2"><a href="{{ transaction.get_blockchain_transaction_url }}">{{ transaction.bitcoin_transaction_id_1 }}</a></td>
@@ -119,7 +120,7 @@
 </table>
 
 <div id="qrcode-text">
-    <div>{{ transaction.get_api_url }}</div>
+    <div><a href="{{ transaction.get_api_url }}">{{ transaction.get_api_url }}</a></div>
     <div>View this receipt online by visiting the link above, or by scanning the QR code adjacent.</div>
 </div>
 <div id="qrcode">
@@ -127,7 +128,7 @@
 </div>
 
 <div id="footer">payment processed by</div>
-<div id="footer-image"><img src="{{ STATIC_ROOT }}/img/logo.png"></div>
+<div id="footer-image"><img src="file:///{{ STATIC_ROOT }}/img/logo.png"></div>
 
 </body>
 </html>

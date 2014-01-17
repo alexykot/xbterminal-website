@@ -94,7 +94,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, '..', 'static')
 DEFAULT_FROM_EMAIL = "test@example.com"
 CONTACT_EMAIL_RECIPIENTS = ["info@xbterminal.com"]
 
-APPEND_SLASH = False
+APPEND_SLASH = True
 
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/devices/'
@@ -109,3 +109,5 @@ SITE_ID = 1
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': []
 }
+
+BITCOIN_SCALE_DIVIZER = 1000

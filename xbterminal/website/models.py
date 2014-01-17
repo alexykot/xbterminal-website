@@ -108,16 +108,22 @@ class Device(models.Model):
 
 class Transaction(models.Model):
     device = models.ForeignKey(Device)
-    source_address = models.CharField(max_length=35, validators=[validate_bitcoin])
     hop_address = models.CharField(max_length=35, validators=[validate_bitcoin])
-    dest_address = models.CharField(max_length=35, validators=[validate_bitcoin])
+    dest_address = models.CharField(max_length=35, validators=[validate_bitcoin], blank=True)
+    instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin], blank=True)
     bitcoin_transaction_id_1 = models.CharField(max_length=64, validators=[validate_transaction])
     bitcoin_transaction_id_2 = models.CharField(max_length=64, validators=[validate_transaction])
+    fiat_currency = models.CharField(max_length=3)
     fiat_amount = models.DecimalField(max_digits=20, decimal_places=8)
     btc_amount = models.DecimalField(max_digits=20, decimal_places=8)
     effective_exchange_rate = models.DecimalField(max_digits=20, decimal_places=8)
+    instantfiat_fiat_amount = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
+    instantfiat_btc_amount = models.DecimalField(max_digits=18, decimal_places=8, blank=True, null=True)
+    fee_btc_amount = models.DecimalField(max_digits=18, decimal_places=8, blank=True, null=True)
+    instantfiat_invoice_id = models.CharField(max_length=255, blank=True)
     time = models.DateTimeField()
 
+    date_created = models.DateTimeField(auto_now_add=True)
     key = models.CharField(max_length=32, editable=False, unique=True, default=lambda:uuid.uuid4().hex)
 
     def get_api_url(self):
@@ -131,8 +137,11 @@ class Transaction(models.Model):
     def get_blockchain_address_url(self, address):
         return 'https://blockchain.info/en/address/%s' % address
 
-    def get_source_address_url(self):
-        return self.get_blockchain_address_url(self.source_address)
-
     def get_dest_address_url(self):
         return self.get_blockchain_address_url(self.dest_address)
+
+    def scaled_btc_amount(self):
+        return self.btc_amount * settings.BITCOIN_SCALE_DIVIZER
+
+    def scaled_effective_exchange_rate(self):
+        return self.effective_exchange_rate / settings.BITCOIN_SCALE_DIVIZER
