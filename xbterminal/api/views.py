@@ -41,7 +41,7 @@ class CreateTransaction(CreateAPIView):
 
 def transaction_pdf(request, key):
     transaction = get_object_or_404(Transaction, key=key)
-    from django.shortcuts import render_to_response
+
     response = render_to_pdf(
         'api/transaction.html', {
             'transaction': transaction,

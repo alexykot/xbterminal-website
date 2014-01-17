@@ -5,9 +5,7 @@
 
 <meta http-equiv="content-type" content="text/html; charset=utf-8"> 
 <style type="text/css">
-    @font-face { font-family: Verdata; src: url({{ STATIC_ROOT }}/fonts/verdana.ttf); }
     body {
-        font-family: Verdana;
         font-size: 16px;
     }
     @page {
@@ -54,6 +52,10 @@
         font-weight: bold;
         font-size: 20px;
     }
+    .btc-symbol {
+        vertical-align: bottom;
+        height: 16px;
+    }
     table {
         margin-top: 30px;
         color: #555;
@@ -62,9 +64,6 @@
     td, th { padding: 5px; padding-bottom: 0px; }
     .col1 {
         text-align: right;
-    }
-    .col2 {
-    vertical-align: middle;
     }
 </style>
 
@@ -80,7 +79,7 @@
     </tr>
     <tr>
         <td class="col1">Bitcoin amount paid</td>
-        <td class="col2">m&#3647; {{ transaction.scaled_btc_amount|amount }}</td>
+        <td class="col2 btc-amount">m<img class="btc-symbol" src="file:///{{ STATIC_ROOT }}/img/btc-symbol.png"> {{ transaction.scaled_btc_amount|amount }}</td>
     </tr>
     <tr>
         <td class="col1">Effective exchange rate</td>
