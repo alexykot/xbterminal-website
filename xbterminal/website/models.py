@@ -109,8 +109,8 @@ class Device(models.Model):
 class Transaction(models.Model):
     device = models.ForeignKey(Device)
     hop_address = models.CharField(max_length=35, validators=[validate_bitcoin])
-    dest_address = models.CharField(max_length=35, validators=[validate_bitcoin], blank=True)
-    instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin], blank=True)
+    dest_address = models.CharField(max_length=35, validators=[validate_bitcoin], blank=True, null=True)
+    instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin], blank=True, null=True)
     bitcoin_transaction_id_1 = models.CharField(max_length=64, validators=[validate_transaction])
     bitcoin_transaction_id_2 = models.CharField(max_length=64, validators=[validate_transaction])
     fiat_currency = models.CharField(max_length=3)
@@ -120,7 +120,7 @@ class Transaction(models.Model):
     instantfiat_fiat_amount = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
     instantfiat_btc_amount = models.DecimalField(max_digits=18, decimal_places=8, blank=True, null=True)
     fee_btc_amount = models.DecimalField(max_digits=18, decimal_places=8, blank=True, null=True)
-    instantfiat_invoice_id = models.CharField(max_length=255, blank=True)
+    instantfiat_invoice_id = models.CharField(max_length=255, blank=True, null=True)
     time = models.DateTimeField()
 
     date_created = models.DateTimeField(auto_now_add=True)
