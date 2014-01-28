@@ -15,7 +15,8 @@ from django.http import Http404
 from django.views.decorators.clickjacking import xframe_options_exempt
 
 from website.models import Device
-from website.forms import ContactForm, MerchantRegistrationForm, ProfileForm, DeviceForm
+from website.forms import ContactForm, MerchantRegistrationForm, ProfileForm, DeviceForm,\
+    SendReconciliationForm, SendDailyReconciliationForm
 
 
 def contact(request):
@@ -106,6 +107,19 @@ class ProfileView(UpdateView):
         return user.merchant
 
 
+def get_device(merchant, number):
+    if number is not None:
+        try:
+            number = int(number) - 1
+            device = merchant.device_set.all()[number]
+        except IndexError:
+            raise Http404
+    else:
+        device = None
+
+    return device
+
+
 class DeviceView(UpdateView):
     form_class = DeviceForm
     template_name = 'cabinet/device_form.html'
@@ -120,15 +134,7 @@ class DeviceView(UpdateView):
             raise Http404
 
         number = self.kwargs.get('number')
-
-        if number is not None:
-            try:
-                number = int(number) - 1
-                device = user.merchant.device_set.all()[number]
-            except IndexError:
-                raise Http404
-        else:
-            device = None
+        device = get_device(user.merchant, number)
 
         return device
 
@@ -154,3 +160,28 @@ class DeviceList(ListView):
 
     def get_queryset(self):
         return self.request.user.merchant.device_set.all()
+
+
+def reconciliation(request, number):
+    user = request.user
+    if not hasattr(user, 'merchant'):
+        raise Http404
+
+    device = get_device(user.merchant, number)
+
+    form_1 = SendReconciliationForm(request.POST if request.POST.get('form_1') is not None else None)
+    form_2 = SendDailyReconciliationForm(request.POST if request.POST.get('form_2') is not None else None)
+
+    print request.POST.get('form_1')
+    print request.POST.get('form_2')
+
+    if form_1.is_valid():
+        print 'form 1 valid'
+    else:
+        print 'form 1 not valid'
+    if form_2.is_valid():
+        print 'form 2 valid'
+    else:
+        print 'form 2 not valid'
+
+    return render(request, 'cabinet/reconciliation.html', {'form_1': form_1, 'form_2': form_2})

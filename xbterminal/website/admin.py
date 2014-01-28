@@ -8,7 +8,7 @@ class DeviceAdmin(admin.ModelAdmin):
 
 
 class TransactionAdmin(admin.ModelAdmin):
-    readonly_fields = ('key',)
+    readonly_fields = ('receipt_key',)
 
 
 admin.site.register(MerchantAccount)

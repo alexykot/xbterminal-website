@@ -30,7 +30,9 @@
         </td>
         <td>{{ device.payment_processor_info|default:"--" }}</td>
         <td></td>
-        <td></td>
+        <td>
+            <a href="{% url 'website:reconciliation' forloop.counter %}">reconciliation</a>
+        </td>
     </tr>
 {% endfor %}
 </table>

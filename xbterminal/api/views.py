@@ -26,7 +26,7 @@ def device(request, key):
         "MERCHANT_INSTANTFIAT_TRANSACTION_SPEED": "high",
         "MERCHANT_NAME": device.merchant.company_name,
         "MERCHANT_TRANSACTION_DESCRIPTION": "Payment to %s" % device.merchant.company_name,
-        "OUR_FEE_BITCOIN_ADDRESS": "1FCrwY2CsLJgsmbogSunECwCa6WswBBrfz",
+        "OUR_FEE_BITCOIN_ADDRESS": "mqhQfj9e57SNEYWNvULegMWfM9DQ8UGi9b",
         "OUR_FEE_SHARE": 0.05,
         "OUTPUT_DEC_FRACTIONAL_SPLIT": device.language.fractional_split,
         "OUTPUT_DEC_THOUSANDS_SPLIT": device.language.thousands_split
@@ -40,7 +40,7 @@ class CreateTransaction(CreateAPIView):
 
 
 def transaction_pdf(request, key):
-    transaction = get_object_or_404(Transaction, key=key)
+    transaction = get_object_or_404(Transaction, receipt_key=key)
 
     response = render_to_pdf(
         'api/transaction.html', {

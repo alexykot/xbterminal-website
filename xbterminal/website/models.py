@@ -89,7 +89,7 @@ class Device(models.Model):
     )
     bitcoin_address = models.CharField('bitcoin address to send to', max_length=100, blank=True)
 
-    key = models.CharField(max_length=32, editable=False, unique=True, default=lambda:uuid.uuid4().hex)
+    key = models.CharField(max_length=32, editable=False, unique=True, default=lambda: uuid.uuid4().hex)
 
     class Meta:
         ordering = ['id']
@@ -124,11 +124,11 @@ class Transaction(models.Model):
     time = models.DateTimeField()
 
     date_created = models.DateTimeField(auto_now_add=True)
-    key = models.CharField(max_length=32, editable=False, unique=True, default=lambda:uuid.uuid4().hex)
+    receipt_key = models.CharField(max_length=32, editable=False, unique=True, default=lambda: uuid.uuid4().hex)
 
     def get_api_url(self):
         domain = Site.objects.get_current().domain
-        path = reverse('api:transaction_pdf', kwargs={'key': self.key})
+        path = reverse('api:transaction_pdf', kwargs={'key': self.receipt_key})
         return 'https://%s%s' % (domain, path)
 
     def get_blockchain_transaction_url(self):

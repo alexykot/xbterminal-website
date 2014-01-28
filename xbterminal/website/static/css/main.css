@@ -291,3 +291,7 @@ ul.header-menu li {
 .device-create-button {
   margin-bottom: 20px;
 }
+.form-title {
+  font-weight: bold;
+  margin-top: 30px;
+}

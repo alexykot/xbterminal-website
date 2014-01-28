@@ -99,3 +99,13 @@ class DeviceForm(forms.ModelForm):
             raise forms.ValidationError('This field is required.')
 
         return bitcoin_address
+
+
+class SendReconciliationForm(forms.Form):
+    email = forms.EmailField()
+    date = forms.DateField()
+
+
+class SendDailyReconciliationForm(forms.Form):
+    email = forms.EmailField()
+    time = forms.TimeField()
