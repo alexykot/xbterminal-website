@@ -172,16 +172,9 @@ def reconciliation(request, number):
     form_1 = SendReconciliationForm(request.POST if request.POST.get('form_1') is not None else None)
     form_2 = SendDailyReconciliationForm(request.POST if request.POST.get('form_2') is not None else None)
 
-    print request.POST.get('form_1')
-    print request.POST.get('form_2')
-
     if form_1.is_valid():
-        print 'form 1 valid'
-    else:
-        print 'form 1 not valid'
+        pass
     if form_2.is_valid():
-        print 'form 2 valid'
-    else:
-        print 'form 2 not valid'
+        pass
 
     return render(request, 'cabinet/reconciliation.html', {'form_1': form_1, 'form_2': form_2})
