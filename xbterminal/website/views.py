@@ -13,6 +13,7 @@ from django.utils.decorators import method_decorator
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.http import Http404
 from django.views.decorators.clickjacking import xframe_options_exempt
+from django.core.mail import EmailMessage
 
 from website.models import Device
 from website.forms import ContactForm, MerchantRegistrationForm, ProfileForm, DeviceForm,\
@@ -170,11 +171,28 @@ def reconciliation(request, number):
     device = get_device(user.merchant, number)
 
     form_1 = SendReconciliationForm(request.POST if request.POST.get('form_1') is not None else None)
-    form_2 = SendDailyReconciliationForm(request.POST if request.POST.get('form_2') is not None else None)
+    form_2 = SendDailyReconciliationForm(
+        request.POST if request.POST.get('form_2') is not None else None,
+        instance=device
+    )
 
     if form_1.is_valid():
-        pass
+        email = form_1.cleaned_data['email']
+        date = form_1.cleaned_data['date']
+
+        email = EmailMessage(
+            'Reconciliation',
+            '',
+            settings.DEFAULT_FROM_EMAIL,
+            [email]
+        )
+
+        csv = device.get_transaction_csv_by_date(date)
+
+        email.attach('reconciliation.csv', csv.read(), 'text/csv')
+        email.send()
+
     if form_2.is_valid():
-        pass
+        form_2.save()
 
     return render(request, 'cabinet/reconciliation.html', {'form_1': form_1, 'form_2': form_2})

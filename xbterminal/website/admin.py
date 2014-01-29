@@ -8,6 +8,7 @@ class DeviceAdmin(admin.ModelAdmin):
 
 
 class TransactionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'device', 'date_created')
     readonly_fields = ('receipt_key',)
 
 

@@ -106,6 +106,8 @@ class SendReconciliationForm(forms.Form):
     date = forms.DateField()
 
 
-class SendDailyReconciliationForm(forms.Form):
-    email = forms.EmailField()
-    time = forms.TimeField()
+class SendDailyReconciliationForm(forms.ModelForm):
+
+    class Meta:
+        model = Device
+        fields = ('email', 'time')

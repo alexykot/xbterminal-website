@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 import uuid
+import datetime
+from cStringIO import StringIO
+import unicodecsv
 
 from django.db import models
 from django.conf import settings
@@ -91,6 +94,9 @@ class Device(models.Model):
 
     key = models.CharField(max_length=32, editable=False, unique=True, default=lambda: uuid.uuid4().hex)
 
+    email = models.EmailField(null=True)
+    time = models.TimeField(null=True)
+
     class Meta:
         ordering = ['id']
 
@@ -104,6 +110,23 @@ class Device(models.Model):
         if self.payment_processing in ['partially', 'full']:
             return '%s, %s%% converted' % (self.payment_processor, self.percent)
         return ''
+
+    def get_transaction_csv_by_date(self, date):
+        csv = StringIO()
+        writer = unicodecsv.writer(csv, encoding='utf-8')
+
+        transactions = Transaction.objects.filter(
+            date_created__range=(datetime.datetime.combine(date, datetime.time.min),
+                                 datetime.datetime.combine(date, datetime.time.max))
+        )
+
+        fields = Transaction._meta.fields
+
+        for transaction in transactions:
+            row = ','.join([unicode(getattr(transaction, field.name)) for field in fields])
+            writer.writerow(row)
+
+        return csv
 
 
 class Transaction(models.Model):
