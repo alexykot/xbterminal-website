@@ -14,6 +14,7 @@ from django.core.urlresolvers import reverse, reverse_lazy
 from django.http import Http404
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.core.mail import EmailMessage
+from django.contrib import messages
 
 from website.models import Device
 from website.forms import ContactForm, MerchantRegistrationForm, ProfileForm, DeviceForm,\
@@ -176,6 +177,7 @@ def reconciliation(request, number):
         instance=device
     )
 
+    is_send = False
     if form_1.is_valid():
         email = form_1.cleaned_data['email']
         date = form_1.cleaned_data['date']
@@ -191,6 +193,8 @@ def reconciliation(request, number):
 
         email.attach('reconciliation.csv', csv.read(), 'text/csv')
         email.send()
+
+        messages.success(request, 'Email has been sent successfully.')
 
     if form_2.is_valid():
         form_2.save()
