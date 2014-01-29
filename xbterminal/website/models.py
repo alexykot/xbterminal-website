@@ -123,8 +123,10 @@ class Device(models.Model):
         fields = Transaction._meta.fields
 
         for transaction in transactions:
-            row = ','.join([unicode(getattr(transaction, field.name)) for field in fields])
+            row = [unicode(getattr(transaction, field.name)) for field in fields]
             writer.writerow(row)
+
+        csv.seek(0)
 
         return csv
 

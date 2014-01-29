@@ -177,7 +177,6 @@ def reconciliation(request, number):
         instance=device
     )
 
-    is_send = False
     if form_1.is_valid():
         email = form_1.cleaned_data['email']
         date = form_1.cleaned_data['date']
