@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from django.core.mail import EmailMessage
 from django.conf import settings
+from django.template.loader import render_to_string
 
 from api.shotcuts import generate_pdf
 
@@ -69,20 +70,27 @@ def get_transaction_pdf_archive(transactions):
 
 
 def send_reconciliation(email, device, date):
+    transactions = device.get_transactions_by_date(date)
+
+    mail_text = render_to_string('website/email/reconciliation.txt', {
+        'device': device,
+        'date': date,
+        'transactions': transactions
+    })
+
     email = EmailMessage(
         'Reconciliation',
-        '',
+        mail_text,
         settings.DEFAULT_FROM_EMAIL,
         [email]
     )
 
-    transactions = device.get_transactions_by_date(date)
+    if transactions:
+        csv = get_transaction_csv(transactions)
+        csv.seek(0)
+        email.attach('reconciliation.csv', csv.read(), 'text/csv')
 
-    csv = get_transaction_csv(transactions)
-    csv.seek(0)
-    email.attach('reconciliation.csv', csv.read(), 'text/csv')
-
-    archive = get_transaction_pdf_archive(transactions)
-    email.attach('receipts.zip', archive.getvalue(), 'application/x-zip-compressed')
+        archive = get_transaction_pdf_archive(transactions)
+        email.attach('receipts.zip', archive.getvalue(), 'application/x-zip-compressed')
 
     email.send()

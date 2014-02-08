@@ -92,8 +92,10 @@ class Device(models.Model):
 
     key = models.CharField(max_length=32, editable=False, unique=True, default=lambda: uuid.uuid4().hex)
 
+    # reconsiliation options
     email = models.EmailField(null=True)
     time = models.TimeField(null=True)
+    date = models.DateField(null=True)
 
     class Meta:
         ordering = ['id']

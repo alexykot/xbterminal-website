@@ -1,0 +1,5 @@
+{{ device }}
+{{ date }}
+{% if transactions %}
+No transactions on this date.
+{% endif %}
