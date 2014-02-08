@@ -13,12 +13,12 @@ from django.utils.decorators import method_decorator
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.http import Http404
 from django.views.decorators.clickjacking import xframe_options_exempt
-from django.core.mail import EmailMessage
 from django.contrib import messages
 
 from website.models import Device
 from website.forms import ContactForm, MerchantRegistrationForm, ProfileForm, DeviceForm,\
     SendReconciliationForm, SendDailyReconciliationForm
+from website.utils import send_reconciliation, get_transaction_csv
 
 
 def contact(request):
@@ -171,7 +171,10 @@ def reconciliation(request, number):
 
     device = get_device(user.merchant, number)
 
-    form_1 = SendReconciliationForm(request.POST if request.POST.get('form_1') is not None else None)
+    form_1 = SendReconciliationForm(
+        request.POST if request.POST.get('form_1') is not None else None,
+        instance=device
+    )
     form_2 = SendDailyReconciliationForm(
         request.POST if request.POST.get('form_2') is not None else None,
         instance=device
@@ -181,21 +184,26 @@ def reconciliation(request, number):
         email = form_1.cleaned_data['email']
         date = form_1.cleaned_data['date']
 
-        email = EmailMessage(
-            'Reconciliation',
-            '',
-            settings.DEFAULT_FROM_EMAIL,
-            [email]
-        )
-
-        csv = device.get_transaction_csv_by_date(date)
-
-        email.attach('reconciliation.csv', csv.read(), 'text/csv')
-        email.send()
+        send_reconciliation(email, device, date)
 
         messages.success(request, 'Email has been sent successfully.')
 
     if form_2.is_valid():
         form_2.save()
+        form_2 = SendDailyReconciliationForm(instance=device)
 
     return render(request, 'cabinet/reconciliation.html', {'form_1': form_1, 'form_2': form_2})
+
+
+def transaction_csv(request, number):
+    user = request.user
+    if not hasattr(user, 'merchant'):
+        raise Http404
+
+    device = get_device(user.merchant, number)
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="%s device transactions.csv"' % device.name
+
+    get_transaction_csv(device.transaction_set.all(), response)
+    return response

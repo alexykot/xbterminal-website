@@ -31,7 +31,9 @@
         <td>{{ device.payment_processor_info|default:"--" }}</td>
         <td></td>
         <td>
-            <a href="{% url 'website:reconciliation' forloop.counter %}">reconciliation</a>
+            <div>{% if device.email %}sent daily to {{ device.email }}{% endif %}</div>
+            <div><a href="{% url 'website:reconciliation' forloop.counter %}">reconciliation</a></div>
+            <div><a href="{% url 'website:transaction_csv' forloop.counter %}">transactions in csv</a></div>
         </td>
     </tr>
 {% endfor %}

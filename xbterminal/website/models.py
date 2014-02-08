@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import uuid
 import datetime
-from cStringIO import StringIO
-import unicodecsv
 
 from django.db import models
 from django.conf import settings
@@ -111,24 +109,11 @@ class Device(models.Model):
             return '%s, %s%% converted' % (self.payment_processor, self.percent)
         return ''
 
-    def get_transaction_csv_by_date(self, date):
-        csv = StringIO()
-        writer = unicodecsv.writer(csv, encoding='utf-8')
-
-        transactions = Transaction.objects.filter(
+    def get_transactions_by_date(self, date):
+        return self.transaction_set.filter(
             date_created__range=(datetime.datetime.combine(date, datetime.time.min),
                                  datetime.datetime.combine(date, datetime.time.max))
         )
-
-        fields = Transaction._meta.fields
-
-        for transaction in transactions:
-            row = [unicode(getattr(transaction, field.name)) for field in fields]
-            writer.writerow(row)
-
-        csv.seek(0)
-
-        return csv
 
 
 class Transaction(models.Model):
@@ -142,9 +127,9 @@ class Transaction(models.Model):
     fiat_amount = models.DecimalField(max_digits=20, decimal_places=8)
     btc_amount = models.DecimalField(max_digits=20, decimal_places=8)
     effective_exchange_rate = models.DecimalField(max_digits=20, decimal_places=8)
-    instantfiat_fiat_amount = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
-    instantfiat_btc_amount = models.DecimalField(max_digits=18, decimal_places=8, blank=True, null=True)
-    fee_btc_amount = models.DecimalField(max_digits=18, decimal_places=8, blank=True, null=True)
+    instantfiat_fiat_amount = models.DecimalField(max_digits=9, decimal_places=2, blank=True, default=0)
+    instantfiat_btc_amount = models.DecimalField(max_digits=18, decimal_places=8, blank=True, default=0)
+    fee_btc_amount = models.DecimalField(max_digits=18, decimal_places=8, blank=True, default=0)
     instantfiat_invoice_id = models.CharField(max_length=255, blank=True, null=True)
     time = models.DateTimeField()
 
@@ -165,8 +150,16 @@ class Transaction(models.Model):
     def get_dest_address_url(self):
         return self.get_blockchain_address_url(self.dest_address)
 
-    def scaled_btc_amount(self):
+    def scaled_total_btc_amount(self):
         return self.btc_amount * settings.BITCOIN_SCALE_DIVIZER
 
     def scaled_effective_exchange_rate(self):
         return self.effective_exchange_rate / settings.BITCOIN_SCALE_DIVIZER
+
+    def scaled_btc_amount(self):
+        if self.fee_btc_amount:
+            return (self.btc_amount - self.fee_btc_amount) * settings.BITCOIN_SCALE_DIVIZER
+        return self.scaled_total_btc_amount()
+
+    def scaled_exchange_rate(self):
+        return self.fiat_amount / self.scaled_btc_amount()

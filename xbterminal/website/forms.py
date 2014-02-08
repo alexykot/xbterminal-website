@@ -105,9 +105,36 @@ class SendReconciliationForm(forms.Form):
     email = forms.EmailField()
     date = forms.DateField()
 
+    def __init__(self, *args, **kwargs):
+        self.device = kwargs.pop('instance')
+        super(SendReconciliationForm, self).__init__(*args, **kwargs)
+
+    def clean_date(self):
+        date = self.cleaned_data['date']
+
+        if not self.device.get_transactions_by_date(date).exists():
+            raise forms.ValidationError('There are no transactions on this date.')
+
+        return date
+
 
 class SendDailyReconciliationForm(forms.ModelForm):
+    reset = forms.BooleanField(required=False)
 
     class Meta:
         model = Device
         fields = ('email', 'time')
+
+    def save(self, commit=True):
+        reset = self.cleaned_data['reset']
+        if reset:
+            instance = self.instance
+            instance.email = None
+            instance.time = None
+        else:
+            instance = super(SendDailyReconciliationForm, self).save(commit=False)
+
+        if commit:
+            instance.save()
+
+        return instance
