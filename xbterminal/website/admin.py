@@ -4,7 +4,7 @@ from website.models import MerchantAccount, Device, Language, Currency, Transact
 
 
 class DeviceAdmin(admin.ModelAdmin):
-    readonly_fields = ('key',)
+    readonly_fields = ('key', 'email', 'time', 'date')
 
 
 class TransactionAdmin(admin.ModelAdmin):
