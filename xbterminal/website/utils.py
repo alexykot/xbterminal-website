@@ -60,7 +60,7 @@ def get_transaction_pdf_archive(transactions):
                 'STATIC_ROOT': settings.STATIC_ROOT
             }
         )
-        archive.writestr('receipt #%s' % transaction.id, result.getvalue())
+        archive.writestr('receipt #%s.pdf' % transaction.id, result.getvalue())
         result.close()
 
     archive.close()
