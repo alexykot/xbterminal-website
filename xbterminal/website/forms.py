@@ -119,22 +119,7 @@ class SendReconciliationForm(forms.Form):
 
 
 class SendDailyReconciliationForm(forms.ModelForm):
-    reset = forms.BooleanField(required=False)
 
     class Meta:
         model = Device
         fields = ('email', 'time')
-
-    def save(self, commit=True):
-        reset = self.cleaned_data['reset']
-        if reset:
-            instance = self.instance
-            instance.email = None
-            instance.time = None
-        else:
-            instance = super(SendDailyReconciliationForm, self).save(commit=False)
-
-        if commit:
-            instance.save()
-
-        return instance

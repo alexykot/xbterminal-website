@@ -14,7 +14,6 @@
         <th>Comment</th>
         <th>Receiving address</th>
         <th>Payment processor</th>
-        <th>Transaction history</th>
         <th>Actions</th>
     </tr>
 {% for device in devices %}
@@ -29,11 +28,9 @@
             {% endif %}
         </td>
         <td>{{ device.payment_processor_info|default:"--" }}</td>
-        <td></td>
         <td>
-            <div>{% if device.email %}sent daily to {{ device.email }}{% endif %}</div>
+            <div>{% if device.email and device.time %}sent daily at {{ device.time }} to {{ device.email }}{% endif %}</div>
             <div><a href="{% url 'website:reconciliation' forloop.counter %}">reconciliation</a></div>
-            <div><a href="{% url 'website:transaction_csv' forloop.counter %}">transactions in csv</a></div>
         </td>
     </tr>
 {% endfor %}

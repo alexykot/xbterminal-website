@@ -171,28 +171,23 @@ def reconciliation(request, number):
 
     device = get_device(user.merchant, number)
 
-    form_1 = SendReconciliationForm(
-        request.POST if request.POST.get('form_1') is not None else None,
+    is_post = request.method == 'POST'
+    if 'reset' in request.POST:
+        device.email = device.time = None
+        device.save()
+
+        is_post = False
+
+    form = SendDailyReconciliationForm(
+        request.POST if is_post else None,
         instance=device
     )
-    form_2 = SendDailyReconciliationForm(
-        request.POST if request.POST.get('form_2') is not None else None,
-        instance=device
-    )
 
-    if form_1.is_valid():
-        email = form_1.cleaned_data['email']
-        date = form_1.cleaned_data['date']
+    if form.is_valid():
+        form.save()
+        form = SendDailyReconciliationForm(instance=device)
 
-        send_reconciliation(email, device, date)
-
-        messages.success(request, 'Email has been sent successfully.')
-
-    if form_2.is_valid():
-        form_2.save()
-        form_2 = SendDailyReconciliationForm(instance=device)
-
-    return render(request, 'cabinet/reconciliation.html', {'form_1': form_1, 'form_2': form_2})
+    return render(request, 'cabinet/reconciliation.html', {'form': form, 'device': device})
 
 
 def transaction_csv(request, number):

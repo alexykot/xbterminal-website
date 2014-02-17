@@ -7,56 +7,27 @@
 {% endblock %}
 
 {% block cabinet_content %}
-<div class="row">
-    <div class="col-sm-8 col-sm-offset-2">
-        <div class="form-title">send daily reconciliation data to email</div>
-        <form action="" method="post">
-            {% csrf_token %}
-            {% if form_1.non_field_errors %}
-                <div class="row">
-                    <div class="col-sm-6 has-error">
-                        {% for error in form_1.non_field_errors %}
-                            <span class="help-block">{{ error }}</span>
-                        {% endfor %}
-                    </div>
-                </div>
-            {% endif %}
-            {% bootstrap_field form_1.email show_label="" %}
-            <div class="row">
-                <div class="col-sm-3">
-                    {% bootstrap_field form_1.date %}
-                </div>
+<h3>{{ device.name }}</h3>
+<div class="form-title">send daily reconciliation to email every day at</div>
+<form action="" method="post">
+    {% csrf_token %}
+    <div class="row">
+        <div class="col-sm-4">
+            {% bootstrap_field form.email show_label="" %}
+        </div>
+        <div class="col-sm-2">
+            {% bootstrap_field form.time show_label="" %}
+        </div>
+        <div class="col-sm-6">
+            <div class="button-group">
+                <button type="submit" class="btn btn-default">Send Daily</button>
+                <button type="submit" class="btn btn-default" name="reset">Clear</button>
             </div>
-            <div class="form-group">
-                <button type="submit" class="btn btn-default" name="form_1">Send Now</button>
-            </div>
-        </form>
-        <div class="form-title">send daily reconciliation to email every day at</div>
-        <form action="" method="post">
-            {% csrf_token %}
-            {% if form_2.non_field_errors %}
-                <div class="row">
-                    <div class="col-sm-6 has-error">
-                        {% for error in form_2.non_field_errors %}
-                            <span class="help-block">{{ error }}</span>
-                        {% endfor %}
-                    </div>
-                </div>
-            {% endif %}
-            {% bootstrap_field form_2.email show_label="" %}
-            <div class="row">
-                <div class="col-sm-3">
-                    {% bootstrap_field form_2.time %}
-                </div>
-            </div>
-            {% bootstrap_field form_2.reset %}
-            <div class="form-group">
-                <button type="submit" class="btn btn-default" name="form_2">Send Daily</button>
-            </div>
-        </form>
-        <a href="{% url 'website:devices' %}" class="btn btn-default">Cancel</a>
+        </div>
     </div>
-</div>
+    
+
+</form>
 {% endblock %}
 
 {% block js %}

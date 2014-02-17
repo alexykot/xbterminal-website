@@ -159,9 +159,7 @@ class Transaction(models.Model):
         return self.effective_exchange_rate / settings.BITCOIN_SCALE_DIVIZER
 
     def scaled_btc_amount(self):
-        if self.fee_btc_amount:
-            return (self.btc_amount - self.fee_btc_amount) * settings.BITCOIN_SCALE_DIVIZER
-        return self.scaled_total_btc_amount()
+        return self.scaled_total_btc_amount() - self.fee_btc_amount
 
     def scaled_exchange_rate(self):
         return self.fiat_amount / self.scaled_btc_amount()

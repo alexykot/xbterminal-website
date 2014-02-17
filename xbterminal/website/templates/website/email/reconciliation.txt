@@ -1,5 +1,4 @@
-{{ device }}
-{{ date }}
-{% if not transactions %}
-No transactions on this date.
+device: {{ device.name }}
+{% if transactions %}transactions: {{ transactions.count }}
+total m฿: {{ amount }}{% else %}No transactions on this date.
 {% endif %}
