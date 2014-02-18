@@ -13,12 +13,12 @@ from django.utils.decorators import method_decorator
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.http import Http404
 from django.views.decorators.clickjacking import xframe_options_exempt
-from django.contrib import messages
+from django.db.models import Count, Sum
 
 from website.models import Device
 from website.forms import ContactForm, MerchantRegistrationForm, ProfileForm, DeviceForm,\
-    SendReconciliationForm, SendDailyReconciliationForm
-from website.utils import send_reconciliation, get_transaction_csv
+                          SendDailyReconciliationForm
+from website.utils import get_transaction_csv
 
 
 def contact(request):
@@ -187,7 +187,18 @@ def reconciliation(request, number):
         form.save()
         form = SendDailyReconciliationForm(instance=device)
 
-    return render(request, 'cabinet/reconciliation.html', {'form': form, 'device': device})
+    daily_transaction_info = device.transaction_set.extra({'date': "date(time)"})\
+                                                   .values('date', 'fiat_currency')\
+                                                   .annotate(count=Count('id'),
+                                                             btc_amount=Sum('btc_amount'),
+                                                             fiat_amount=Sum('fiat_amount'),
+                                                             instantfiat_fiat_amount=Sum('instantfiat_fiat_amount'))
+
+    return render(request, 'cabinet/reconciliation.html', {
+        'form': form,
+        'device': device,
+        'daily_transaction_info': daily_transaction_info
+    })
 
 
 def transaction_csv(request, number):

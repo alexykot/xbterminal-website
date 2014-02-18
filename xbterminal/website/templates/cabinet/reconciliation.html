@@ -1,5 +1,5 @@
 {% extends "cabinet/base.html" %}
-{% load bootstrap bootstrap3 staticfiles %}
+{% load bootstrap bootstrap3 staticfiles website_tags %}
 
 
 {% block cabinet_nav %}
@@ -25,9 +25,27 @@
             </div>
         </div>
     </div>
-    
-
 </form>
+<div class="form-title">daily reconciliation history</div>
+<table class="table table-striped table-bordered table-responsive">
+    <tr>
+        <td>date</td>
+        <td>total transactions</td>
+        <td>total amount</td>
+        <td>total converted</td>
+        
+    </tr>
+    {% for info in daily_transaction_info %}
+    <tr>
+        <td>{{ info.date|date:"d N Y" }}</td>
+        <td>{{ info.count }}</td>
+        <td>m฿ {{ info.btc_amount|scale|floatformat:2 }} / {{ info.fiat_currency }} {{ info.fiat_amount|floatformat:2 }}</td>
+        <td>{{ info.instantfiat_fiat_amount }}</td>
+    </tr>
+    {% empty %}
+    <tr><td>empty</td></tr>
+    {% endfor %}
+</table>
 {% endblock %}
 
 {% block js %}
