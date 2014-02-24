@@ -113,8 +113,8 @@ class Device(models.Model):
 
     def get_transactions_by_date(self, date):
         return self.transaction_set.filter(
-            date_created__range=(datetime.datetime.combine(date, datetime.time.min),
-                                 datetime.datetime.combine(date, datetime.time.max))
+            time__range=(datetime.datetime.combine(date, datetime.time.min),
+                         datetime.datetime.combine(date, datetime.time.max))
         )
 
 

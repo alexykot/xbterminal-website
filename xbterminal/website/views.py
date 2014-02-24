@@ -1,8 +1,8 @@
 import json
+import datetime
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse
-
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
@@ -14,11 +14,12 @@ from django.core.urlresolvers import reverse, reverse_lazy
 from django.http import Http404
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.db.models import Count, Sum
+from django.contrib import messages
 
 from website.models import Device
 from website.forms import ContactForm, MerchantRegistrationForm, ProfileForm, DeviceForm,\
-                          SendDailyReconciliationForm
-from website.utils import get_transaction_csv
+                          SendDailyReconciliationForm, SendReconciliationForm
+from website.utils import get_transaction_csv, get_transaction_pdf_archive, send_reconciliation
 
 
 def contact(request):
@@ -197,19 +198,87 @@ def reconciliation(request, number):
     return render(request, 'cabinet/reconciliation.html', {
         'form': form,
         'device': device,
-        'daily_transaction_info': daily_transaction_info
+        'daily_transaction_info': daily_transaction_info,
+        'number': number,
+        'send_form': SendReconciliationForm(initial={'email': user.merchant.contact_email})
     })
 
 
-def transaction_csv(request, number):
+def transactions(request, number, year=None, month=None, day=None):
     user = request.user
     if not hasattr(user, 'merchant'):
         raise Http404
 
     device = get_device(user.merchant, number)
 
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="%s device transactions.csv"' % device.name
+    if year and month and day:
+        try:
+            date = datetime.date(int(year), int(month), int(day))
+        except ValueError:
+            raise Http404
 
-    get_transaction_csv(device.transaction_set.all(), response)
+        transactions = device.get_transactions_by_date(date)
+        cd_template = 'attachment; filename="%s device transactions %s.csv"'
+        content_disposition = cd_template % (device.name, date.strftime('%d %b %Y'))
+    else:
+        transactions = device.transaction_set.all()
+        cd_template = 'attachment; filename="%s device transactions.csv"'
+        content_disposition = cd_template % device.name
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = content_disposition
+
+    get_transaction_csv(transactions, response)
     return response
+
+
+def receipts(request, number, year=None, month=None, day=None):
+    user = request.user
+    if not hasattr(user, 'merchant'):
+        raise Http404
+
+    device = get_device(user.merchant, number)
+
+    if year and month and day:
+        try:
+            date = datetime.date(int(year), int(month), int(day))
+        except ValueError:
+            raise Http404
+
+        transactions = device.get_transactions_by_date(date)
+        cd_template = 'attachment; filename="%s device receipts %s.zip"'
+        content_disposition = cd_template % (device.name, date.strftime('%d %b %Y'))
+    else:
+        transactions = device.transaction_set.all()
+        cd_template = 'attachment; filename="%s device receipts.zip"'
+        content_disposition = cd_template % device.name
+
+    response = HttpResponse(content_type='application/x-zip-compressed')
+
+    response['Content-Disposition'] = content_disposition
+
+    get_transaction_pdf_archive(transactions, response)
+    return response
+
+
+def send_all_to_email(request, number):
+    user = request.user
+    if not hasattr(user, 'merchant'):
+        raise Http404
+
+    device = get_device(user.merchant, number)
+
+    if request.method != 'POST':
+        raise Http404
+
+    form = SendReconciliationForm(request.POST)
+
+    if form.is_valid():
+        email = form.cleaned_data['email']
+        date = form.cleaned_data['date']
+        send_reconciliation(email, device, date)
+        messages.success(request, 'Email has been sent successfully.')
+    else:
+        messages.error(request, 'Error: Invalid email. Please, try again.')
+
+    return redirect('website:reconciliation', number)

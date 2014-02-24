@@ -103,19 +103,7 @@ class DeviceForm(forms.ModelForm):
 
 class SendReconciliationForm(forms.Form):
     email = forms.EmailField()
-    date = forms.DateField()
-
-    def __init__(self, *args, **kwargs):
-        self.device = kwargs.pop('instance')
-        super(SendReconciliationForm, self).__init__(*args, **kwargs)
-
-    def clean_date(self):
-        date = self.cleaned_data['date']
-
-        if not self.device.get_transactions_by_date(date).exists():
-            raise forms.ValidationError('There are no transactions on this date.')
-
-        return date
+    date = forms.DateField(widget=forms.HiddenInput)
 
 
 class SendDailyReconciliationForm(forms.ModelForm):

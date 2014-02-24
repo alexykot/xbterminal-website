@@ -51,9 +51,10 @@ def get_transaction_csv(transactions, csv_file=None):
     return csv_file
 
 
-def get_transaction_pdf_archive(transactions):
-    f = StringIO()
-    archive = ZipFile(f, "w")
+def get_transaction_pdf_archive(transactions, to_file=None):
+    if to_file is None:
+        to_file = StringIO()
+    archive = ZipFile(to_file, "w")
 
     for transaction in transactions:
         result = generate_pdf(
@@ -67,7 +68,7 @@ def get_transaction_pdf_archive(transactions):
 
     archive.close()
 
-    return f
+    return to_file
 
 
 def send_reconciliation(email, device, date):
