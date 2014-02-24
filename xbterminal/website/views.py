@@ -162,6 +162,10 @@ class DeviceList(ListView):
     context_object_name = 'devices'
 
     def get_queryset(self):
+        user = self.request.user
+        if not hasattr(user, 'merchant'):
+            raise Http404
+
         return self.request.user.merchant.device_set.all()
 
 
