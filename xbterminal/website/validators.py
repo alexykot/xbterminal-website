@@ -76,7 +76,6 @@ def get_bcaddress_version(strAddress):
 
 
 def validate_bitcoin(value):
-    print 'validate_bitcoin'
     value = value.strip()
     if re.match(r"[a-zA-Z1-9]{27,35}$", value) is None:
         raise ValidationError('Invalid Bitcoin address.')
@@ -86,7 +85,6 @@ def validate_bitcoin(value):
 
 
 def validate_transaction(value):
-    print 'validate_transaction'
     print re.match(r"^[0-9A-Fa-f]{64}$", value)
     if re.match(r"^[0-9A-Fa-f]{64}$", value) is None:
         raise ValidationError('Invalid Bitcoin transaction.')

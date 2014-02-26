@@ -12,6 +12,7 @@
             <ul class="header-menu">
             {% if user.is_authenticated %}
                 <li><a class="faq" href="{% url 'logout' %}">LOGOUT</a></li>
+                <li><a class="faq" href="{% url 'website:devices' %}">CABINET</a></li>
             {% else %}
                 <li><a class="faq" href="{% url 'login' %}">LOGIN</a></li>
                 <li><a class="faq" href="{% url 'website:merchant' %}">REGISTER</a></li>
