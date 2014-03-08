@@ -1,4 +1,5 @@
 syntax:glob
 *.pyc
 settings_server.py
+local_settings.py
 venv

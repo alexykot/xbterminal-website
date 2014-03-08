@@ -1,6 +1,6 @@
 jQuery(document).ready(function() {
 
-	$("button.order-terminal, a.demo-video").click(function() {
+	$("a.demo-video").click(function() {
 		$.fancybox({
 			'padding'		: 0,
 			'autoScale'		: true,

@@ -9,15 +9,12 @@
           <a href="/"><img src="{% static 'img/logo.png' %}" alt=""/></a>
         </div>
         <div class="col-sm-6">
-            <ul class="header-menu">
-            {% if user.is_authenticated %}
-                <li><a class="faq" href="{% url 'logout' %}">LOGOUT</a></li>
-                <li><a class="faq" href="{% url 'website:devices' %}">CABINET</a></li>
-            {% else %}
-                <li><a class="faq" href="{% url 'login' %}">LOGIN</a></li>
-                <li><a class="faq" href="{% url 'website:merchant' %}">REGISTER</a></li>
-            {% endif %}
-                <li><a class="faq" href="{% url 'website:landing_faq' %}">FAQ</a></li>
+            <ul class="nav header-menu">
+                <li><a class="header-icon" href="#" title="Share"><img src="{% static 'img/header-icon-share.png' %}" alt="Share"></a></li>
+                <li><a class="header-icon" href="#" title="Like"><img src="{% static 'img/header-icon-like.png' %}" alt="Like"></a></li>
+                <li><a class="header-icon" href="#" title="Twitter"><img src="{% static 'img/header-icon-twitter.png' %}" alt="Twitter"></a></li>
+                <li><a class="header-icon" href="#" title="Mail"><img src="{% static 'img/header-icon-mail.png' %}" alt="Mail"></a></li>
+                <li><a class="header-icon" href="#" title="Phone"><img src="{% static 'img/header-icon-phone.png' %}" alt="Phone"></a></li>
             </ul>
         </div>
       </div>
