@@ -59,11 +59,6 @@ h1, h2, h3 {
 .nowrap {
   white-space: nowrap;
 }
-#footer {
-  height: 60px;
-  background-color: #f3f3f3;
-}
-
 .gap {
   margin-bottom: 50px;
 }
@@ -211,15 +206,6 @@ h1, h2, h3 {
   width: 80%;
 }
 
-
-.footer-container {
-  /*width: auto;*/
-  /*max-width: 680px;*/
-  padding: 0 15px;
-}
-.container .text-muted {
-  margin: 20px 0;
-}
 .header {
   margin-right: auto;
   margin-left: auto;
@@ -295,4 +281,12 @@ h1, h2, h3 {
   font-weight: bold;
   margin-top: 30px;
   margin-bottom: 5px;
+}
+
+#footer {
+  background-color: #f3f3f3;
+}
+#footer p {
+  line-height: 36px;
+  padding: 19px 0 20px;
 }
