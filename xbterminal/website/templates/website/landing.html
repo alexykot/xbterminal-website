@@ -19,10 +19,10 @@
                 <div class="row">
                     <div class="col-sm-6 terminal-hello">
                         <h1>
-                            <span class="descr-line-1 oneline-justify">Bitcoin NFC based</span>
-                            <span class="descr-line-2 oneline-justify">in-person payment solution</span>
+                            <span class="descr-line-1">Bitcoin NFC based</span>
+                            <span class="descr-line-2">in-person payment solution</span>
                         </h1>
-                        <a class="demo-video oneline-justify" data-href="https://www.youtube.com/watch?v=c5t88eoPbAc?autoplay=1">
+                        <a class="demo-video" data-href="https://www.youtube.com/watch?v=c5t88eoPbAc?autoplay=1">
                             Watch the proto-type video to find out more
                         </a>
                         <div class="row">
@@ -32,6 +32,31 @@
                     </div>
                     <div class="col-sm-6 front-terminal-image hidden-xs">
                         <img src="{% static 'img/device.png' %}" alt="">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<section class="advantages">
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-8 col-sm-10 col-xs-offset-2 col-sm-offset-1">
+                <div class="row">
+                    <div class="col-sm-4">
+                        <div class="advantage-img"><img src="{% static 'img/mid-nfc.png' %}"></div>
+                        <h2>NFC</h2>
+                        <p>You get your bitcoins directly to your wallet located anywhere in the world, just setup an address in the dashboard.</p>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="advantage-img"><img src="{% static 'img/mid-bitcoin.png' %}"></div>
+                        <h2>Bitcoin Aware</h2>
+                        <p>You get your bitcoins directly to your wallet located anywhere in the world, just setup an address in the dashboard.</p>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="advantage-img"><img src="{% static 'img/mid-universe.png' %}"></div>
+                        <h2>Universal</h2>
+                        <p>You get your bitcoins directly to your wallet located anywhere in the world, just setup an address in the dashboard.</p>
                     </div>
                 </div>
             </div>
@@ -109,5 +134,32 @@
         </div>
     </div>
 
+</section>
+{% endblock %}
+
+{% block after_content %}
+<section class="information">
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-8 col-sm-10 col-xs-offset-2 col-sm-offset-1">
+                <div class="row">
+                    <div class="col-sm-4">
+                        <h2>Newsletters</h2>
+                        <p>You get your bitcoins directly to your wallet located anywhere in the world, just setup an address in the dashboard.</p>
+                    </div>
+                    <div class="col-sm-4">
+                        <h2>Contact Us</h2>
+                        <p><span class="glyphicon glyphicon-map-marker"></span>Address: 123</p>
+                        <p><span class="glyphicon glyphicon-earphone"></span>Phone: 123</p>
+                        <p><span class="glyphicon glyphicon-envelope"></span><a>mail@example.net</a></p>
+                    </div>
+                    <div class="col-sm-4">
+                        <h2>FAQ</h2>
+                        <p>You get your bitcoins directly to your wallet located anywhere in the world, just setup an address in the dashboard.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </section>
 {% endblock %}
