@@ -216,6 +216,10 @@ h1, h2, h3 {
 
 /* Advantages */
 
+.advantages {
+  margin-bottom: 20px;
+}
+
 .advantage-img {
   height: 100px;
   margin-top: 15px;
@@ -228,38 +232,33 @@ h1, h2, h3 {
 
 /* Facilities
 --------------------------------------------- */
+.content {
+  background: url("../img/content-bg.png");
+}
 .facilities {
-    overflow: hidden;
-    padding-top: 40px;
+  overflow: hidden;
+  padding-top: 20px;
 }
 .facilities .b-facility {
-    height: 242px;
+  height: 150px;
 }
 .facilities .b-facility a {
-    color: #428bca;
-    text-decoration: none;
+  color: #428bca;
+  text-decoration: underline;
 }
 .facilities .b-facility a:hover {
-    text-decoration: underline;
+  text-decoration: none;
 }
 .facilities .b-facility:nth-child(3n+3) {
     margin-right: 0;
 }
 .b-facility h2 {
-  border-top: 2px solid #10b114;
-  margin-top: 0;
-  font-size: 24px;
-  color: #000;
-  line-height: 29px;
-  padding-top: 3px;
-  font-family: 'Titillium Web Thin';
+  color: white;
 }
 .b-facility p {
-    font-family: Tahoma, sans-serif;
-    font-size: 12px;
-    color: #666666;
-    line-height: 20px;
-    padding-top: 5px;
+  font-family: Tahoma, sans-serif;
+  font-size: 12px;
+  color: #aaa;
 }
 @media (max-width: 767px) {
   .facilities .b-facility {
