@@ -22,4 +22,10 @@ $(function () {
         event.preventDefault();
         alert('Coming soon');
     });
+
+    // ShareThis
+    stLight.options({
+        publisher: '6ea95e06-4966-45e6-a369-cd0503255bf3',
+    });
+    
 });
