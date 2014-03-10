@@ -135,9 +135,6 @@ h1, h2, h3 {
   position: relative;
   z-index: 2;
 }
-.terminal-hello {
-  text-align: center;
-}
 .terminal h1 {
   color: white;
   font-weight: bold;
@@ -147,10 +144,12 @@ h1, h2, h3 {
 .terminal .descr-line-1 {
   display: block;
   font-size: 46px;
+  word-spacing: 13px;
 }
 .terminal .descr-line-2 {
   display: block;
   font-size: 28px;
+  word-spacing: 14px;
 }
 .terminal .demo-video {
   color: white;
@@ -162,6 +161,7 @@ h1, h2, h3 {
   text-decoration: underline;
   text-transform: uppercase;
   white-space: nowrap;
+  word-spacing: 4.3px;
 }
 .terminal .demo-video:hover {
   cursor: pointer;
@@ -178,7 +178,22 @@ h1, h2, h3 {
   top: -20px;
   left: 80px;
 }
+@media (max-width: 1200px) {
+  .terminal .descr-line-1 {
+    word-spacing: 7px;
+  }
+  .terminal .descr-line-2 {
+    word-spacing: 8px;
+  }
+  .terminal .demo-video {
+    word-spacing: 3px;
+  }
+}
 @media (max-width: 991px) {
+  .terminal {
+    padding-top: 20px;
+    text-align: center;
+  }
   .front-terminal-image img {
     width: 150px;
     top: 20px;
