@@ -258,7 +258,7 @@ h1, h2, h3 {
   padding-top: 20px;
 }
 .facilities .b-facility {
-  height: 150px;
+  height: auto;
 }
 .facilities .b-facility a {
   color: #428bca;
@@ -270,7 +270,8 @@ h1, h2, h3 {
 .facilities .b-facility:nth-child(3n+3) {
     margin-right: 0;
 }
-.b-facility h2 {
+.b-facility h2,
+.b-facility h3 {
   color: white;
 }
 .b-facility p {
