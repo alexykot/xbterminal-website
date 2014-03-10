@@ -135,33 +135,39 @@ h1, h2, h3 {
   position: relative;
   z-index: 2;
 }
+.justify-one-line {
+  text-align: justify;
+}
+.justify-one-line:after {
+  content: "";
+  display: inline-block;
+  width: 100%;
+}
 .terminal h1 {
   color: white;
   font-weight: bold;
   text-transform: uppercase;
-  white-space: nowrap;
 }
 .terminal .descr-line-1 {
   display: block;
   font-size: 46px;
-  word-spacing: 16px;
+  height: 1.1em;
 }
 .terminal .descr-line-2 {
   display: block;
   font-size: 28px;
-  word-spacing: 17px;
+  height: 1.1em;
 }
 .terminal .demo-video {
   color: white;
   display: block;
   font-size: 17px;
   font-weight: bold;
+  height: 1.5em;
   margin-top: 35px;
   margin-bottom: 35px;
   text-decoration: underline;
   text-transform: uppercase;
-  white-space: nowrap;
-  word-spacing: 5.5px;
 }
 .terminal .demo-video:hover {
   cursor: pointer;
@@ -184,33 +190,25 @@ h1, h2, h3 {
   top: -20px;
   left: 80px;
 }
-@media (max-width: 1200px) {
-  .terminal .descr-line-1 {
-    word-spacing: 8px;
-  }
-  .terminal .descr-line-2 {
-    word-spacing: 9px;
-  }
-  .terminal .demo-video {
-    word-spacing: 3px;
-  }
-}
 @media (max-width: 991px) {
   .terminal {
     padding-top: 20px;
     text-align: center;
   }
-  .terminal .descr-line-1 {
-    word-spacing: normal;
-    letter-spacing: -2.4px;
-  }
-  .terminal .descr-line-2 {
-    word-spacing: normal;
-    letter-spacing: -1.6px;
-  }
+  .terminal .descr-line-1,
+  .terminal .descr-line-2,
   .terminal .demo-video {
-    word-spacing: normal;
-    letter-spacing: -0.9px;
+    height: auto;
+  }
+  .justify-one-line {
+    text-align: center;
+  }
+  .justify-one-line:after {
+    display: none;
+  }
+  .terminal .btn-preorder,
+  .terminal .btn-invest {
+    text-align: center;
   }
   .front-terminal-image img {
     width: 150px;
@@ -222,18 +220,6 @@ h1, h2, h3 {
   .terminal {
     height: auto;
     background: #8db1cf;
-  }
-  .terminal h1 {
-    width: auto;
-    white-space: normal;
-  }
-  .terminal .btn-preorder,
-  .terminal .btn-invest {
-    text-align: center;
-  }
-  .terminal .demo-video {
-    width: auto;
-    white-space: normal;
   }
 }
 
