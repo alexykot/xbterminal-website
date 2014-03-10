@@ -144,12 +144,12 @@ h1, h2, h3 {
 .terminal .descr-line-1 {
   display: block;
   font-size: 46px;
-  word-spacing: 13px;
+  word-spacing: 16px;
 }
 .terminal .descr-line-2 {
   display: block;
   font-size: 28px;
-  word-spacing: 14px;
+  word-spacing: 17px;
 }
 .terminal .demo-video {
   color: white;
@@ -161,7 +161,7 @@ h1, h2, h3 {
   text-decoration: underline;
   text-transform: uppercase;
   white-space: nowrap;
-  word-spacing: 4.3px;
+  word-spacing: 5.5px;
 }
 .terminal .demo-video:hover {
   cursor: pointer;
@@ -172,6 +172,12 @@ h1, h2, h3 {
   text-transform: uppercase;
   width: 170px;
 }
+.terminal .btn-preorder {
+  text-align: left;
+}
+.terminal .btn-invest {
+  text-align: right;
+}
 .front-terminal-image img {
   z-index: 10;
   position: relative;
@@ -180,10 +186,10 @@ h1, h2, h3 {
 }
 @media (max-width: 1200px) {
   .terminal .descr-line-1 {
-    word-spacing: 7px;
+    word-spacing: 8px;
   }
   .terminal .descr-line-2 {
-    word-spacing: 8px;
+    word-spacing: 9px;
   }
   .terminal .demo-video {
     word-spacing: 3px;
@@ -193,6 +199,18 @@ h1, h2, h3 {
   .terminal {
     padding-top: 20px;
     text-align: center;
+  }
+  .terminal .descr-line-1 {
+    word-spacing: normal;
+    letter-spacing: -2.4px;
+  }
+  .terminal .descr-line-2 {
+    word-spacing: normal;
+    letter-spacing: -1.6px;
+  }
+  .terminal .demo-video {
+    word-spacing: normal;
+    letter-spacing: -0.9px;
   }
   .front-terminal-image img {
     width: 150px;
@@ -208,6 +226,10 @@ h1, h2, h3 {
   .terminal h1 {
     width: auto;
     white-space: normal;
+  }
+  .terminal .btn-preorder,
+  .terminal .btn-invest {
+    text-align: center;
   }
   .terminal .demo-video {
     width: auto;
