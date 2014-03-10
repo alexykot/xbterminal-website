@@ -126,7 +126,7 @@
                 <div class="row">
                     <div class="col-sm-4">
                         <h2>Newsletters</h2>
-                        <p>You get your bitcoins directly to your wallet located anywhere in the world, just setup an address in the dashboard.</p>
+                        <p>Get updated once our preorder batch or investment opportunity opens.</p>
                         <form action="" role="form" method="post">
                             {% csrf_token %}
                             <div class="form-group input-group">
@@ -144,8 +144,10 @@
                         <p><span class="glyphicon glyphicon-envelope"></span><a>mail@example.net</a></p>
                     </div>
                     <div class="col-sm-4">
+                        {% comment %}
                         <h2>FAQ</h2>
                         <p>You get your bitcoins directly to your wallet located anywhere in the world, just setup an address in the dashboard.</p>
+                        {% endcomment %}
                     </div>
                 </div>
             </div>
