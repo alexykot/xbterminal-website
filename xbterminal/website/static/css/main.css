@@ -223,15 +223,6 @@ h1, h2, h3 {
   }
 }
 
-/* Terminal image on login page
------------------------------------ */
-.terminal-image {
-  text-align: center;
-}
-.terminal-image img {
-  width: 80%;
-}
-
 .header {
   margin-right: auto;
   margin-left: auto;
@@ -329,4 +320,14 @@ h1, h2, h3 {
 .fancy-alert {
   font-size: 1.2em;
   text-align: center;
+}
+
+/* Login page
+----------------------------------- */
+.terminal-image {
+  text-align: center;
+}
+
+.login-form {
+  color: white;
 }
