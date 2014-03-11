@@ -130,7 +130,7 @@
                         <form class="subscribe-form" action="{% url 'website:subscribe' %}" role="form" method="post">
                             {% csrf_token %}
                             <div class="form-group input-group">
-                                <input type="email" class="form-control" name="email" placeholder="Enter your email address">
+                                <input type="email" class="form-control" name="email" placeholder="Enter your email address" required>
                                 <span class="input-group-btn">
                                     <button class="btn btn-default" type="submit"><span class="glyphicon glyphicon-chevron-right"></a></button>
                                 </span>
@@ -144,10 +144,7 @@
                         <p><span class="glyphicon glyphicon-envelope"></span><a>mail@example.net</a></p>
                     </div>
                     <div class="col-sm-4">
-                        {% comment %}
-                        <h2>FAQ</h2>
-                        <p>You get your bitcoins directly to your wallet located anywhere in the world, just setup an address in the dashboard.</p>
-                        {% endcomment %}
+                        <a href="{% url 'login' %}" title="Merchant Login"><h2>Merchant Login</h2></a>
                     </div>
                 </div>
             </div>

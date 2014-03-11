@@ -20,7 +20,13 @@ $(function () {
 
     $('.terminal button').on('click', function (event) {
         event.preventDefault();
-        alert('Coming soon');
+        $.fancybox({
+            modal: true,
+            content: '<div class="fancy-alert">\
+                <p>Coming soon</p>\
+                <button class="btn btn-primary" onclick="$.fancybox.close();">OK</button>\
+                </div>'
+        });
     });
 
     // ShareThis
@@ -41,7 +47,7 @@ $(function () {
         }).done(function (data) {
             $.fancybox({
                 modal: true,
-                content: '<div class="subscribe-alert">\
+                content: '<div class="fancy-alert">\
                     <p>Thank you for registering your interest!</p>\
                     <button class="btn btn-primary" onclick="$.fancybox.close();">OK</button>\
                     </div>'

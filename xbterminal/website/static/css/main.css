@@ -295,11 +295,6 @@ h1, h2, h3 {
 }
 /* ##### End facilities #####*/
 
-.subscribe-alert {
-  font-size: 1.2em;
-  text-align: center;
-}
-
 .information .glyphicon {
   display: inline-block;
   margin-right: 5px;
@@ -329,4 +324,9 @@ h1, h2, h3 {
   -o-box-sizing: content-box;
   -ms-box-sizing: content-box;
   box-sizing: content-box;
+}
+
+.fancy-alert {
+  font-size: 1.2em;
+  text-align: center;
 }
