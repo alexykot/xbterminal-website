@@ -286,9 +286,14 @@ h1, h2, h3 {
 }
 /* ##### End facilities #####*/
 
-.information .glyphicon {
+.contacts .glyphicon {
   display: inline-block;
-  margin-right: 5px;
+  margin-right: 0.5em;
+}
+
+.contacts .address {
+  margin-top: -10px;
+  margin-left: 1.5em;
 }
 
 .device-create-button {
