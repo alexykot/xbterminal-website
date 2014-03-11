@@ -1,10 +1,11 @@
 from django.conf.urls import patterns, url
 
 
-from views import ProfileView, DeviceView, DeviceList
+from views import ProfileView, DeviceView, DeviceList, SubscribeNewsView
 
 urlpatterns = patterns('website.views',
     url(r'^$', 'landing', name='landing'),
+    url(r'^subscribe/$', SubscribeNewsView.as_view(), name='subscribe'),
     url(r'^contact/$', 'contact', name='contact'),
     url(r'^faq/$', 'landing_faq', name='landing_faq'),
     url(r'^merchant/$', 'merchant', name='merchant'),

@@ -295,6 +295,11 @@ h1, h2, h3 {
 }
 /* ##### End facilities #####*/
 
+.subscribe-alert {
+  font-size: 1.2em;
+  text-align: center;
+}
+
 .information .glyphicon {
   display: inline-block;
   margin-right: 5px;
@@ -315,4 +320,13 @@ h1, h2, h3 {
 #footer p {
   line-height: 36px;
   padding: 19px 0 20px;
+}
+
+/* Fancybox + Bootstrap fix */
+#fancybox-wrap, #fancybox-wrap * {
+  -moz-box-sizing: content-box;
+  -webkit-box-sizing: content-box;
+  -o-box-sizing: content-box;
+  -ms-box-sizing: content-box;
+  box-sizing: content-box;
 }

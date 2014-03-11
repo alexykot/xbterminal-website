@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
-from django.views.generic import UpdateView, ListView
+from django.views.generic import UpdateView, ListView, View
 from django.utils.decorators import method_decorator
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.http import Http404
@@ -18,7 +18,7 @@ from django.contrib import messages
 
 from website.models import Device
 from website.forms import ContactForm, MerchantRegistrationForm, ProfileForm, DeviceForm,\
-                          SendDailyReconciliationForm, SendReconciliationForm
+                          SendDailyReconciliationForm, SendReconciliationForm, SubscribeForm
 from website.utils import get_transaction_csv, get_transaction_pdf_archive, send_reconciliation
 
 
@@ -49,6 +49,30 @@ def contact(request):
 
 def landing(request):
     return render(request, 'website/landing.html', {})
+
+
+class SubscribeNewsView(View):
+    """
+    Subscribe to newsletters (Ajax)
+    """
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        form = SubscribeForm(request.POST)
+        if form.is_valid():
+            subscriber_email = form.data['email']
+            text = render_to_string(
+                "website/email/subscription.txt",
+                {'subscriber_email': subscriber_email})
+            send_mail(
+                "Subscription to newsletters",
+                text,
+                settings.DEFAULT_FROM_EMAIL,
+                settings.CONTACT_EMAIL_RECIPIENTS,
+                fail_silently=True)
+            return HttpResponse("")
+        else:
+            raise Http404
 
 
 @xframe_options_exempt
