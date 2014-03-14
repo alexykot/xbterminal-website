@@ -3,3 +3,5 @@ syntax:glob
 settings_server.py
 local_settings.py
 venv
+static
+fabfile.py
