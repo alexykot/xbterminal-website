@@ -91,18 +91,13 @@ STATIC_URL = '/static/'
 # need to set absolute path, because it use in pdf generating
 STATIC_ROOT = os.path.join(BASE_DIR, '..', 'static')
 
-DEFAULT_FROM_EMAIL = "test@example.com"
+DEFAULT_FROM_EMAIL = "no-reply@xbterminal.com"
 CONTACT_EMAIL_RECIPIENTS = ["info@xbterminal.com"]
 
 APPEND_SLASH = True
 
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/devices/'
-
-try:
-    from local_settings import *
-except ImportError:
-    pass
 
 SITE_ID = 1
 
@@ -112,9 +107,16 @@ REST_FRAMEWORK = {
 
 BITCOIN_SCALE_DIVIZER = 1000
 
-# Email Config
-EMAIL_HOST=""
-EMAIL_PORT=""
-EMAIL_HOST_USER=""
-EMAIL_HOST_PASSWORD=""
-EMAIL_USE_TLS=True
+# Email
+# https://docs.djangoproject.com/en/1.6/topics/email/
+EMAIL_HOST = ""
+EMAIL_PORT = ""
+EMAIL_HOST_USER = ""
+EMAIL_HOST_PASSWORD = ""
+EMAIL_USE_TLS = True
+
+# Override default settings
+try:
+    from local_settings import *
+except ImportError:
+    pass

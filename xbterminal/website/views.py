@@ -69,7 +69,7 @@ class SubscribeNewsView(View):
                 text,
                 settings.DEFAULT_FROM_EMAIL,
                 settings.CONTACT_EMAIL_RECIPIENTS,
-                fail_silently=True)
+                fail_silently=False)
             return HttpResponse("")
         else:
             raise Http404
