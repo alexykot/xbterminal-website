@@ -109,6 +109,9 @@ BITCOIN_SCALE_DIVIZER = 1000
 
 # Email
 # https://docs.djangoproject.com/en/1.6/topics/email/
+
+EMAIL_BACKEND = 'django_smtp_ssl.SSLEmailBackend'
+
 EMAIL_HOST = ""
 EMAIL_PORT = ""
 EMAIL_HOST_USER = ""
