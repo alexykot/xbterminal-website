@@ -52,7 +52,8 @@ class DeviceForm(forms.ModelForm):
 
     class Meta:
         model = Device
-        exclude = ('merchant', 'email', 'time', 'date')
+        fields = ('name', 'language', 'currency', 'comment', 'payment_processing', 'payment_processor',
+                  'api_key', 'percent', 'bitcoin_address')
         widgets = {
             'payment_processing': ButtonGroupRadioSelect,
             'percent': PercentWidget

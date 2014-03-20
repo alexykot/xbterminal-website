@@ -97,6 +97,11 @@ class Device(models.Model):
     time = models.TimeField(null=True)
     date = models.DateField(null=True)
 
+    # firmware data
+    current_firmware = models.ForeignKey("Firmware", editable=False, related_name='current_for_device_set', blank=True, null=True)
+    last_firmware_update_date = models.DateTimeField(editable=False, blank=True, null=True)
+    next_firmware = models.ForeignKey("Firmware", editable=False, related_name='next_to_device_set', blank=True, null=True)
+
     class Meta:
         ordering = ['id']
 
@@ -163,3 +168,14 @@ class Transaction(models.Model):
 
     def scaled_exchange_rate(self):
         return self.fiat_amount / self.scaled_btc_amount()
+
+
+class Firmware(models.Model):
+    hash = models.CharField(max_length=32, editable=False, unique=True, default=lambda: uuid.uuid4().hex)
+    version = models.CharField(max_length=50)
+    comment = models.TextField(blank=True)
+    added = models.DateField(auto_now_add=True)
+    filename = models.FilePathField(path='/var/firmware')
+
+    def __unicode__(self):
+        return 'firmware %s' % self.version
