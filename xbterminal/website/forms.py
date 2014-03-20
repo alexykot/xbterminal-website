@@ -16,6 +16,13 @@ class ContactForm(forms.Form):
     message = forms.CharField(widget=forms.Textarea)
 
 
+class SubscribeForm(forms.Form):
+    """
+    Subscribe to newsletters
+    """
+    email = forms.EmailField()
+
+
 class MerchantRegistrationForm(forms.ModelForm):
     class Meta:
         model = MerchantAccount

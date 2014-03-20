@@ -1,0 +1,13 @@
+[uwsgi]
+vhost = true
+plugins = python2
+socket = /tmp/xbterminal.com.sock
+chmod-socket = 666
+master = true
+enable-threads = true
+processes = 2
+home = /repo_root/venv
+module = xbterminal.wsgi
+chdir = /repo_root/xbterminal
+vacuum = true
+logto = /repo_root/uwsgi.log

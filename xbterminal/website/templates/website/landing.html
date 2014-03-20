@@ -6,9 +6,9 @@
 {% endblock %}
 
 {% block js %}
-<script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+<script type="text/javascript" src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
 <script type="text/javascript" src="{% static 'fancybox/jquery.fancybox-1.3.4.pack.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/video.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/landing.js' %}"></script>
 {% endblock %}
 
 {% block before_content %}
@@ -17,22 +17,46 @@
         <div class="row">
             <div class="col-xs-8 col-sm-10 col-xs-offset-2 col-sm-offset-1">
                 <div class="row">
-                    <div class="col-sm-6">
+                    <div class="col-lg-6 col-md-7 col-md-offset-0 col-sm-10 col-sm-offset-1">
                         <h1>
-                            Bitcoin NFC based <span class="nowrap">in-person</span> <span class="payment-solution">payment solution</span>
+                            <span class="descr-line-1 justify-one-line">Bitcoin NFC based</span>
+                            <span class="descr-line-2 justify-one-line">in-person payment solution</span>
                         </h1>
-                        <p>
-                            Modern, no-hassle, smartphone friendly NFC in-person
-                            Bitcoin payment terminal, with direct integration into your
-                            bitcoin wallet or instant conversion into fiat and automated
-                            withdrawals. And no strings attached.
-                        </p>
-                        <button class="order-terminal" data-href="https://www.youtube.com/watch?v=c5t88eoPbAc?autoplay=1">
-                              Prototype Video
-                        </button>
+                        <a class="demo-video" data-href="https://www.youtube.com/watch?v=DGOMIG9JUY8?autoplay=1">
+                            <div class="justify-one-line">Watch the prototype video to find out more</div>
+                        </a>
+                        <div class="row">
+                            <div class="col-md-6 col-sm-6 btn-preorder"><button class="btn btn-primary btn-lg"><b>Preorder</b> now</button></div>
+                            <div class="col-md-6 col-sm-6 btn-invest"><button class="btn btn-primary btn-lg"><b>Invest</b> now</button></div>
+                        </div>
                     </div>
-                    <div class="col-sm-6 front-terminal-image hidden-xs">
-                        <img src="{% static 'img/terminal.png' %}" alt="">
+                    <div class="col-lg-6 col-md-5 hidden-sm hidden-xs front-terminal-image">
+                        <img src="{% static 'img/device.png' %}" alt="">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<section class="advantages">
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-8 col-sm-10 col-xs-offset-2 col-sm-offset-1">
+                <div class="row">
+                    <div class="col-sm-4">
+                        <div class="advantage-img"><img src="{% static 'img/mid-nfc.png' %}"></div>
+                        <h2>NFC</h2>
+                        <p>Inbuilt NFC technology enables seamless integration with mobile wallets on compatible android devices. QR codes may also be used on mobile devices without NFC enabling any phone with a camera.</p>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="advantage-img"><img src="{% static 'img/mid-bitcoin.png' %}"></div>
+                        <h2>Bitcoin Aware</h2>
+                        <p>Your XBTerminal contains a full bitcoin node, doing all required payment verification inside the terminal. This also means that advancements like the upcoming Bitcoin Payment Protocol will be supported.</p>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="advantage-img"><img src="{% static 'img/mid-universe.png' %}"></div>
+                        <h2>Universal</h2>
+                        <p>Your XBTerminal will work anywhere in the world that there is an internet connection and integrate with whichever payment processor you choose to enable immediate FIAT cashouts.</p>
                     </div>
                 </div>
             </div>
@@ -44,71 +68,88 @@
 {% block content %}
 <section class="facilities">
     <div class="row">
-        <div class="col-xs-8 col-xs-offset-2 col-sm-offset-0 col-sm-4 b-facility">
-            <h2>Easy and simple</h2>
-            <p>
-                With plug-n-play design and online dashboard operation is even simpler than regular card machine.
-                And with <a href="">NFC integration</a> customer checkout is just one tap away.
-                <a href="#" class="demo-video" data-href="https://www.youtube.com/watch?v=c5t88eoPbAc?autoplay=1">Process demo</a>
-            </p>
+        <div class="col-xs-8 col-xs-offset-2 col-sm-offset-0 col-sm-6 b-facility">
+            <h2><b>Merchant</b> FAQ</h2>
+            <div>
+                <h3>Price and delivery schedule</h3>
+                <p>Pre­order units will cost from £XXXGBP. Delivery will be on a first come first served basis.</p>
+            </div>
+            <div>
+                <h3>What does NFC enabled mean?</h3>
+                <p>NFC stands for Near Field Communitcation. Currently we have raised £XXXXXXX It is a two way communication technology which works at very close range. Currently many android phones are equipped with NFC.</p>
+            </div>
+            <div>
+                <h3>What is FIAT money?</h3>
+                <p>FIAT money is basically any currency recognised by a government as legal tender. In our context we usually mean your local currency, like GBP or USD.</p>
+            </div>
+            <div>
+                <h3>Payment processing</h3>
+                <p>If your business needs FIAT currency rather than holding bitcoin, we integrate with several payment processors. Currently we integrate with BIPS, Bitpay and Cryptopay.</p>
+            </div>
+            <div>
+                <h3>Payment Security</h3>
+                <p>Bitcoin is a very secure protocol. We do not handle your coins or FIAT, your XBTerminal handles the whole process to either transfer funds to your business wallet or directly to the payment processor.</p>
+            </div>
+            <div>
+                <h3>Why Bitcoin over card payments?</h3>
+                <p>There are several advantages to using bitcoin over regular credit or debit cards. The first is that fees are substantially lower than any existing card system. The second main advantage is that there is no chargeback mechanism so once you have received customer’s coins they can’t be taken from you via chargeback.</p>
+            </div>
         </div>
-        <div class="col-xs-8 col-xs-offset-2 col-sm-offset-0 col-sm-4 b-facility">
-            <h2>
-                Decentralized system
-            </h2>
-            <p>
-                Being a full Bitcoin node, each terminal does full transaction verification onsite.
-                Also, with no central value storage there is no risk of central server hacks failures.
-                <a href="faq.html">Full node terminal.</a>
-            </p>
-        </div>
-        <div class="col-xs-8 col-xs-offset-2 col-sm-offset-0 col-sm-4 b-facility">
-            <h2>
-                Flexible cashflow
-            </h2>
-            <p>
-                You get your bitcoins directly to your wallet located anywhere in the world,
-                just setup an address in the dashboard.
-                Or sign up with <a href="http://bitpay.com">BitPay</a>, <a href="http://bips.me/">BIPS</a> or <a href="https://cryptopay.me/">CryptoPay</a>
-                and get fiat transfer into your bank account.
-                <a href="faq.html">Cashflow integrations</a>.
-            </p>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-xs-8 col-xs-offset-2 col-sm-offset-0 col-sm-4 b-facility">
-            <h2>
-                Integrated solution
-            </h2>
-            <p>
-                Works with both NFC enabled and not enabled smartphones.
-                NFC used as standard, and QR codes available for scanning at a tap of a button.
-                All main mobile wallets supported, all others should also work fine.
-            </p>
-        </div>
-    
-        <div class="col-xs-8 col-xs-offset-2 col-sm-offset-0 col-sm-4 b-facility">
-            <h2>
-                Fair pricing
-            </h2>
-            <p>
-                Operations take only tiny percentage of your transaction costs and are
-                also monthly capped, so you never pay more than a fixed monthly price for
-                your service. <a href="faq.html">Prices</a>.
-            </p>
-        </div>
-    
-        <div class="col-xs-8 col-xs-offset-2 col-sm-offset-0 col-sm-4 b-facility">
-            <h2>
-                Reliable operations
-            </h2>
-            <p>
-                Each of our strong and sturdy heavy device runs a full
-                Bitcoin node and needs no external servers or systems for daily operations.
-                Internet connection is the only thing needed, all the rest is optional.
-            </p>
+        <div class="col-xs-8 col-xs-offset-2 col-sm-offset-0 col-sm-6 b-facility">
+            <h2><b>Investor</b> FAQ</h2>
+            <div>
+                <h3>Who is on the team?</h3>
+                <p>Our team blends a combination of business management and leadership skills, with expert coding and extensive cryptocurrency experience. <a>Click here</a> to view team profiles.</p>
+            </div>
+            <div>
+                <h3>How much have we raised so far?</h3>
+                <p>Currently we have raised £XXXXXXX</p>
+            </div>
+            <div>
+                <h3>Can I claim any tax relief?</h3>
+                <p>Yes, we are registered for SEIS tax relief, meaning that if you pay UK income tax you are entitled to substantial tax breaks. Please visit our investor information page for detailed information.</p>
+            </div>
+            <div>
+                <h3>Can I invest in Bitcoin?</h3>
+                <p>Of course!  We welcome investment in Bitcoin as well as FIAT.</p>
+            </div>
         </div>
     </div>
+</section>
+{% endblock %}
 
+{% block after_content %}
+<section class="information">
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-8 col-sm-10 col-xs-offset-2 col-sm-offset-1">
+                <div class="row">
+                    <div class="col-sm-4">
+                        <h2>Newsletters</h2>
+                        <p>Get updated once our preorder batch or investment opportunity opens.</p>
+                        <form class="subscribe-form" action="{% url 'website:subscribe' %}" role="form" method="post">
+                            {% csrf_token %}
+                            <div class="form-group input-group">
+                                <input type="email" class="form-control" name="email" placeholder="Enter your email address" required>
+                                <span class="input-group-btn">
+                                    <button class="btn btn-default" type="submit"><span class="glyphicon glyphicon-chevron-right"></a></button>
+                                </span>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="col-sm-4 contacts">
+                        <h2>Contact Us</h2>
+                        <p><span class="glyphicon glyphicon-map-marker"></span>Address:</p>
+                        <p class="address">145-157 St. John Street<br>London<br>EC1V 4PW</p>
+                        <p><span class="glyphicon glyphicon-earphone"></span>Phone: +44 (0) 75 45 42 49 45</p>
+                        <p><span class="glyphicon glyphicon-envelope"></span><a href="mailto:info@xbterminal.com">info@xbterminal.com</a></p>
+                    </div>
+                    <div class="col-sm-4">
+                        <a href="{% url 'login' %}" title="Merchant Login"><h2>Merchant Login</h2></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </section>
 {% endblock %}
