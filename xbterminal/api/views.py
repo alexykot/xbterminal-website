@@ -33,7 +33,9 @@ def device(request, key):
         "OUR_FEE_BITCOIN_ADDRESS": "mqhQfj9e57SNEYWNvULegMWfM9DQ8UGi9b",
         "OUR_FEE_SHARE": 0.05,
         "OUTPUT_DEC_FRACTIONAL_SPLIT": device.language.fractional_split,
-        "OUTPUT_DEC_THOUSANDS_SPLIT": device.language.thousands_split
+        "OUTPUT_DEC_THOUSANDS_SPLIT": device.language.thousands_split,
+        "SERIAL_NUMBER": device.serial_number,
+        "BITCOIN_NETWORK": device.bitcoin_network
     }
     return Response(response)
 

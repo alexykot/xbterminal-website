@@ -15,6 +15,7 @@ class TransactionAdmin(admin.ModelAdmin):
 
 class FirmwareAdmin(admin.ModelAdmin):
     list_display = ('id', 'version', 'hash', 'added')
+    readonly_fields = ('hash',)
 
 
 admin.site.register(MerchantAccount)

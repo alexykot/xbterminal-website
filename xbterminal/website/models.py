@@ -92,6 +92,9 @@ class Device(models.Model):
 
     key = models.CharField(max_length=32, editable=False, unique=True, default=lambda: uuid.uuid4().hex)
 
+    serial_number = models.CharField(max_length=50, blank=True, null=True)
+    bitcoin_network = models.CharField(max_length=50, blank=True, null=True)
+
     # reconsiliation options
     email = models.EmailField(null=True)
     time = models.TimeField(null=True)
