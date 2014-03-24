@@ -98,9 +98,9 @@ class Device(models.Model):
     date = models.DateField(null=True)
 
     # firmware data
-    current_firmware = models.ForeignKey("Firmware", editable=False, related_name='current_for_device_set', blank=True, null=True)
-    last_firmware_update_date = models.DateTimeField(editable=False, blank=True, null=True)
-    next_firmware = models.ForeignKey("Firmware", editable=False, related_name='next_to_device_set', blank=True, null=True)
+    current_firmware = models.ForeignKey("Firmware", related_name='current_for_device_set', blank=True, null=True)
+    last_firmware_update_date = models.DateTimeField(blank=True, null=True)
+    next_firmware = models.ForeignKey("Firmware", related_name='next_to_device_set', blank=True, null=True)
 
     class Meta:
         ordering = ['id']
