@@ -14,3 +14,4 @@ reportlab==2.7
 django-qrcode==0.3
 unicodecsv==0.9.4
 -e git+https://github.com/comoga/django-constance.git@987e13f1ae24b419574d09d88097f41b7bd6ffc1#egg=django-constance-dev
+django-picklefield==0.3.1
