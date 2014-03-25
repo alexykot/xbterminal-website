@@ -9,6 +9,7 @@ from django.utils import timezone
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.generics import CreateAPIView
+from constance import config
 
 from website.models import Device, Transaction, Firmware
 from api.serializers import TransactionSerializer
@@ -30,7 +31,7 @@ def device(request, key):
         "MERCHANT_INSTANTFIAT_TRANSACTION_SPEED": "high",
         "MERCHANT_NAME": device.merchant.company_name,
         "MERCHANT_TRANSACTION_DESCRIPTION": "Payment to %s" % device.merchant.company_name,
-        "OUR_FEE_BITCOIN_ADDRESS": "mqhQfj9e57SNEYWNvULegMWfM9DQ8UGi9b",
+        "OUR_FEE_BITCOIN_ADDRESS": config.OUR_FEE_BITCOIN_ADDRESS,
         "OUR_FEE_SHARE": 0.05,
         "OUTPUT_DEC_FRACTIONAL_SPLIT": device.language.fractional_split,
         "OUTPUT_DEC_THOUSANDS_SPLIT": device.language.thousands_split,

@@ -41,6 +41,8 @@ INSTALLED_APPS = (
     'bootstrap3',
     'rest_framework',
     'qrcode',
+    'constance',
+    'constance.backends.database',
 
     'website',
     'api'
@@ -117,6 +119,11 @@ EMAIL_PORT = ""
 EMAIL_HOST_USER = ""
 EMAIL_HOST_PASSWORD = ""
 EMAIL_USE_TLS = True
+
+CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
+CONSTANCE_CONFIG = {
+    'OUR_FEE_BITCOIN_ADDRESS': ("mqhQfj9e57SNEYWNvULegMWfM9DQ8UGi9b", ' '),
+}
 
 # Override default settings
 try:
