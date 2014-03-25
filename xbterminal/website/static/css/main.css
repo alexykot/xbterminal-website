@@ -249,7 +249,7 @@ h1, h2, h3 {
 
 /* Facilities
 --------------------------------------------- */
-.content {
+.content.landing {
   background: url("../img/content-bg.png");
 }
 .facilities {
