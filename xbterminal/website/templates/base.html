@@ -20,16 +20,9 @@
     <div id="wrap">
       {% include "website/common/header.html" %}
       {% block before_content %}{% endblock %}
-      <section class="content">
-        <div class="container">
-          <div class="row">
-            <div class="col-sm-10 col-sm-offset-1">{% block content %}{% endblock %}</div>
-          </div>
-        </div>
-      </section>
+      {% block content %}{% endblock %}
       {% block after_content %}{% endblock %}
     </div>
-
     {% include "website/common/footer.html" %}
 
     <script src="{% static 'bs/js/bootstrap.min.js' %}"></script>
