@@ -7,7 +7,7 @@
 <style type="text/css">
     @font-face {
       font-family: FontAwesome;
-      src: url({{ STATIC_ROOT }}/fonts/fontawesome-webfont.ttf);
+      src: url({% static 'fonts/fontawesome-webfont.ttf' %});
     }
     body {
         font-size: 16px;
@@ -130,7 +130,7 @@
 </div>
 
 <div id="footer">payment processed by</div>
-<div id="footer-image"><img src="file:///{{ STATIC_ROOT }}/img/logo.png"></div>
+<div id="footer-image"><img src="{% static 'img/logo.png' %}"></div>
 
 </body>
 </html>
