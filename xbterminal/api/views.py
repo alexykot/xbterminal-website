@@ -33,7 +33,7 @@ def device(request, key):
         "MERCHANT_NAME": device.merchant.company_name,
         "MERCHANT_TRANSACTION_DESCRIPTION": "Payment to %s" % device.merchant.company_name,
         "OUR_FEE_BITCOIN_ADDRESS": config.OUR_FEE_BITCOIN_ADDRESS,
-        "OUR_FEE_SHARE": 0.05,
+        "OUR_FEE_SHARE": config.OUR_FEE_SHARE,
         "OUTPUT_DEC_FRACTIONAL_SPLIT": device.language.fractional_split,
         "OUTPUT_DEC_THOUSANDS_SPLIT": device.language.thousands_split,
         "SERIAL_NUMBER": device.serial_number,

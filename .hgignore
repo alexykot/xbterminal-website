@@ -6,3 +6,4 @@ venv
 static
 fabfile.py
 cert
+.idea/*
