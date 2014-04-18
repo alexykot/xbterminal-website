@@ -105,6 +105,8 @@ class Device(models.Model):
     last_firmware_update_date = models.DateTimeField(blank=True, null=True)
     next_firmware = models.ForeignKey("Firmware", related_name='next_to_device_set', blank=True, null=True)
 
+    our_fee_override = models.CharField(max_length=50, blank=True, null=True)
+
     class Meta:
         ordering = ['id']
 

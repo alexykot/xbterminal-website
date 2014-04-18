@@ -85,6 +85,5 @@ def validate_bitcoin(value):
 
 
 def validate_transaction(value):
-    print re.match(r"^[0-9A-Fa-f]{64}$", value)
     if re.match(r"^[0-9A-Fa-f]{64}$", value) is None:
         raise ValidationError('Invalid Bitcoin transaction.')

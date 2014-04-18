@@ -106,7 +106,32 @@ class DeviceForm(forms.ModelForm):
         if payment_processing in ['keep', 'partially'] and not bitcoin_address:
             raise forms.ValidationError('This field is required.')
 
+        if bitcoin_address and self.instance:
+            bitcoin_network = self.instance.bitcoin_network
+            if bitcoin_network == 'mainnet' and bitcoin_address[0] not in ['1', '3']:
+                raise forms.ValidationError('This field must starts with "1" or "3".')
+            if bitcoin_network == 'testnet' and bitcoin_address[0] not in ['n', 'm']:
+                raise forms.ValidationError('This field must starts with "n" or "m" on testnet.')
+
         return bitcoin_address
+
+
+class DeviceAdminForm(forms.ModelForm):
+    class Meta:
+        model = Device
+
+    def clean(self):
+        cleaned_data = super(DeviceAdminForm, self).clean()
+        bitcoin_address = cleaned_data['bitcoin_address']
+        bitcoin_network = cleaned_data['bitcoin_network']
+
+        if bitcoin_address:
+            if bitcoin_network == 'mainnet' and bitcoin_address[0] not in ['1', '3']:
+                raise forms.ValidationError('This field must starts with "1" or "3" on mainnet.')
+            if bitcoin_network == 'testnet' and bitcoin_address[0] not in ['n', 'm']:
+                raise forms.ValidationError('This field must starts with "n" or "m" on testnet.')
+
+        return cleaned_data
 
 
 class SendReconciliationForm(forms.Form):

@@ -2,10 +2,12 @@ from django.contrib import admin
 
 from website.models import (MerchantAccount, Device, Language, Currency, Transaction,
                             Firmware)
+from website.forms import DeviceAdminForm
 
 
 class DeviceAdmin(admin.ModelAdmin):
     readonly_fields = ('key', 'email', 'time', 'date')
+    form = DeviceAdminForm
 
 
 class TransactionAdmin(admin.ModelAdmin):
