@@ -60,7 +60,7 @@ class PercentWidget(TextInput):
     class Media:
         js = ('jquery-ui/slider.min.js',
               'js/percentWidget.js')
-        css = {'all': ("http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css",)}
+        css = {'all': ("https://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css",)}
 
 
 class TimeWidget(TimeInput):
@@ -74,5 +74,5 @@ class TimeWidget(TimeInput):
 
     class Media:
         js = ('jquery.ptTimeSelect/jquery.ptTimeSelect.js',)
-        css = {'all': ("http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css",
+        css = {'all': ("https://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css",
                        "jquery.ptTimeSelect/jquery.ptTimeSelect.css")}
