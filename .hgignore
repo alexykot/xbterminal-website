@@ -3,7 +3,10 @@ syntax:glob
 settings_server.py
 local_settings.py
 venv
-/static
+static
 fabfile.py
 cert
 .idea/*
+config/xbterminal.ini
+config/xbterminal.conf
+*.log
