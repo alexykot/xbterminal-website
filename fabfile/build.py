@@ -1,4 +1,12 @@
-from fabric.api import env, task, settings, prefix
+from fabric.api import env, task, settings, prefix, local
+
+
+def pip_version():
+    if env.run == local:
+        output = env.run("pip --version", capture=True)
+    else:
+        output = env.run("pip --version")
+    return output.split()[1]
 
 
 @task
@@ -8,7 +16,10 @@ def venv():
     if result.failed:
         env.run("virtualenv -p /usr/bin/python2 venv")
         with prefix(". venv/bin/activate"):
-            env.run("pip install -r requirements.txt --upgrade --allow-all-external --allow-unverified pyPdf")
+            pip_install = "pip install -r requirements.txt --upgrade"
+            if pip_version() > "1.4":
+                pip_install += " --allow-all-external --allow-unverified pyPdf"
+            env.run(pip_install)
         env.run("touch venv/bin/activate")
 
 
