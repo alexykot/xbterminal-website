@@ -150,8 +150,9 @@ h1, h2, h3 {
 }
 .terminal .descr-line-1 {
   display: block;
-  font-size: 46px;
+  font-size: 44px;
   height: 1.1em;
+  white-space: nowrap;
 }
 .terminal .descr-line-2 {
   display: block;
