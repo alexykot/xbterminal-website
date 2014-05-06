@@ -150,12 +150,14 @@ h1, h2, h3 {
 }
 .terminal .descr-line-1 {
   display: block;
-  font-size: 46px;
+  font-size: 44px;
+  font-weight: 700;
   height: 1.1em;
 }
 .terminal .descr-line-2 {
   display: block;
   font-size: 28px;
+  font-weight: 700;
   height: 1.1em;
 }
 .terminal .demo-video {
