@@ -1,3 +1,5 @@
+import re
+
 from fabric.api import env, task, settings, prefix, local
 
 
@@ -6,7 +8,8 @@ def pip_version():
         output = env.run("pip --version", capture=True)
     else:
         output = env.run("pip --version")
-    return output.split()[1]
+    m = re.search(r"pip\s(?P<version>[\d\.]+)\sfrom", output)
+    return m.group("version")
 
 
 @task
