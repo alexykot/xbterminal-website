@@ -32,7 +32,7 @@ def device(request, key):
         "MERCHANT_INSTANTFIAT_TRANSACTION_SPEED": "high",
         "MERCHANT_NAME": device.merchant.company_name,
         "MERCHANT_TRANSACTION_DESCRIPTION": "Payment to %s" % device.merchant.company_name,
-        "OUR_FEE_BITCOIN_ADDRESS": config.OUR_FEE_BITCOIN_ADDRESS,
+        "OUR_FEE_BITCOIN_ADDRESS": device.our_fee_override if device.our_fee_override else config.OUR_FEE_BITCOIN_ADDRESS,
         "OUR_FEE_SHARE": config.OUR_FEE_SHARE,
         "OUTPUT_DEC_FRACTIONAL_SPLIT": device.language.fractional_split,
         "OUTPUT_DEC_THOUSANDS_SPLIT": device.language.thousands_split,
