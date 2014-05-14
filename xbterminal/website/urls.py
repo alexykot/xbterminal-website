@@ -5,6 +5,7 @@ from views import ProfileView, DeviceView, DeviceList, SubscribeNewsView
 
 urlpatterns = patterns('website.views',
     url(r'^$', 'landing', name='landing'),
+    url(r'^profiles/$', 'profiles', name='profiles'),
     url(r'^subscribe/$', SubscribeNewsView.as_view(), name='subscribe'),
     url(r'^contact/$', 'contact', name='contact'),
     url(r'^faq/$', 'landing_faq', name='landing_faq'),
