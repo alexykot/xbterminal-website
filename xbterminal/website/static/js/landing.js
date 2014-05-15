@@ -28,7 +28,7 @@ $(function () {
         $.fancybox({
             modal: true,
             content: '<div class="fancy-alert">\
-                <p>Coming soon</p>\
+                <p>Coming at the end of May 2014, check back soon!</p>\
                 <button class="btn btn-primary" onclick="$.fancybox.close();">OK</button>\
                 </div>'
         });

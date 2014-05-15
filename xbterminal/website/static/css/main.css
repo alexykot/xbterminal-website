@@ -156,7 +156,7 @@ h1, h2, h3 {
 }
 .terminal .descr-line-2 {
   display: block;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   height: 1.1em;
 }
@@ -251,7 +251,7 @@ h1, h2, h3 {
 /* Facilities
 --------------------------------------------- */
 .content.landing {
-  background: url("../img/content-bg.png");
+  background: #04294b;
 }
 .facilities {
   overflow: hidden;

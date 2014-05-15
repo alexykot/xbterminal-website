@@ -50,6 +50,8 @@ def contact(request):
 def landing(request):
     return render(request, 'website/landing.html', {})
 
+def profiles(request):
+    return render(request, 'website/profiles.html', {})
 
 class SubscribeNewsView(View):
     """
