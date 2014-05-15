@@ -3,12 +3,14 @@
 
 {% block css %}
 <link href="{% static 'fancybox/jquery.fancybox-1.3.4.css' %}" rel="stylesheet" type="text/css">
+<link href="{% static 'slider/fractionslider.css' %}" rel="stylesheet" type="text/css">
 {% endblock %}
 
 {% block js %}
 <script type="text/javascript" src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
 <script type="text/javascript" src="{% static 'fancybox/jquery.fancybox-1.3.4.pack.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/landing.js' %}"></script>
+<script type="text/javascript" src="{% static 'slider/jquery.fractionslider.min.js' %}"></script>
 {% endblock %}
 
 {% block before_content %}
@@ -31,7 +33,12 @@
                         </div>
                     </div>
                     <div class="col-lg-6 col-md-5 hidden-sm hidden-xs front-terminal-image">
-                        <img src="{% static 'img/device.png' %}" alt="">
+                        <div class="slide">
+                            <img src="{% static 'img/device.png' %}" alt="" data-position="0,80">
+                        </div>
+                        <div class="slide">
+                            <img src="{% static 'img/logo.png' %}" alt="" data-position="100,80">
+                        </div>
                     </div>
                 </div>
             </div>

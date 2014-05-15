@@ -18,6 +18,8 @@ $(function () {
         return false;
     });
 
+    $('.front-terminal-image').fractionSlider();
+
     $('.terminal button').on('click', function (event) {
         event.preventDefault();
         $.fancybox({
