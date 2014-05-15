@@ -187,17 +187,10 @@ h1, h2, h3 {
   text-align: right;
 }
 .front-terminal-image {
-  height: 300px;
+  height: 330px;
   margin-top: -20px;
   z-index: 10;
 }
-/*
-.front-terminal-image img {
-  
-  top: -20px;
-  left: 80px;
-}
-*/
 @media (max-width: 991px) {
   .terminal {
     padding-top: 20px;

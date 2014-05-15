@@ -7,4 +7,5 @@ try:
 except ImportError:
     pass
 
+env.use_ssh_config = True
 env.run = local
