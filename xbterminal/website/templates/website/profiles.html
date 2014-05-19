@@ -3,14 +3,12 @@
 
 {% block css %}
 <link href="{% static 'fancybox/jquery.fancybox-1.3.4.css' %}" rel="stylesheet" type="text/css">
-<link href="{% static 'slider/fractionslider.css' %}" rel="stylesheet" type="text/css">
 {% endblock %}
 
 {% block js %}
 <script type="text/javascript" src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
 <script type="text/javascript" src="{% static 'fancybox/jquery.fancybox-1.3.4.pack.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/landing.js' %}"></script>
-<script type="text/javascript" src="{% static 'slider/jquery.fractionslider.min.js' %}"></script>
 {% endblock %}
 
 {% block before_content %}
@@ -22,29 +20,18 @@
                     <div class="col-lg-6 col-md-7 col-md-offset-0 col-sm-10 col-sm-offset-1">
                         <h1>
                             <span class="descr-line-1 justify-one-line">Bitcoin NFC based</span>
-                            <span class="descr-line-2 justify-one-line">merchant point-of-sale system</span>
+                            <span class="descr-line-2 justify-one-line">in-person payment solution</span>
                         </h1>
-                        <a class="demo-video" data-href="https://www.youtube.com/watch?v=9aO0BO6YHrU?autoplay=1">
+                        <a class="demo-video" data-href="https://www.youtube.com/watch?v=DGOMIG9JUY8?autoplay=1">
                             <div class="justify-one-line">Watch the prototype video to find out more</div>
                         </a>
                         <div class="row">
-                            <div class="col-md-6 col-sm-6 btn-preorder"><button class="btn btn-primary btn-lg"><b>Preorder</b></button></div>
-                            <div class="col-md-6 col-sm-6 btn-invest"><button class="btn btn-primary btn-lg"><b>Invest</b></button></div>
+                            <div class="col-md-6 col-sm-6 btn-preorder"><button class="btn btn-primary btn-lg"><b>Preorder</b> now</button></div>
+                            <div class="col-md-6 col-sm-6 btn-invest"><button class="btn btn-primary btn-lg"><b>Invest</b> now</button></div>
                         </div>
                     </div>
                     <div class="col-lg-6 col-md-5 hidden-sm hidden-xs front-terminal-image">
-                        <div class="slide">
-                            <img src="{% static 'img/terminal_1.png' %}" alt="" data-position="0,80">
-                        </div>
-                        <div class="slide">
-                            <img src="{% static 'img/terminal_2.png' %}" alt="" data-position="15,80">
-                        </div>
-                        <div class="slide">
-                            <img src="{% static 'img/terminal_3.png' %}" alt="" data-position="20,80">
-                        </div>
-                        <div class="slide">
-                            <img src="{% static 'img/terminal_4.png' %}" alt="" data-position="45,60">
-                        </div>
+                        <img src="{% static 'img/device.png' %}" alt="">
                     </div>
                 </div>
             </div>
@@ -61,24 +48,17 @@
                         <h2>NFC</h2>
                         <p>Inbuilt NFC technology enables seamless integration with mobile wallets on
                             <a href="http://en.wikipedia.org/wiki/List_of_NFC-enabled_mobile_devices">compatible android devices</a>.
-                            QR codes may also be used on mobile devices without NFC, enabling any phone with a camera.</p>
+                            QR codes may also be used on mobile devices without NFC enabling any phone with a camera.</p>
                     </div>
                     <div class="col-sm-4">
                         <div class="advantage-img"><img src="{% static 'img/mid-bitcoin.png' %}"></div>
                         <h2>Bitcoin Aware</h2>
-                        <p>
-                            Your XBTerminal contains a bitcoin node and does all required payment verifications internally.
-                            Also this means that core Bitcoin advancements like the
-                            <a href="https://bitcointalk.org/index.php?topic=300809.0">Bitcoin Payment Protocol</a>
-                            are to be supported.
-                            </p>
+                        <p>Your XBTerminal contains a full bitcoin node, doing all required payment verification inside the terminal. This also means that advancements like the upcoming Bitcoin Payment Protocol will be supported.</p>
                     </div>
                     <div class="col-sm-4">
                         <div class="advantage-img"><img src="{% static 'img/mid-universe.png' %}"></div>
                         <h2>Universal</h2>
-                        <p>Your XBTerminal will work anywhere in the world that there is an internet connection and
-                            it provides integration with all main payment processors to enable immediate cashouts
-                            in your local currency.</p>
+                        <p>Your XBTerminal will work anywhere in the world that there is an internet connection and integrate with whichever payment processor you choose to enable immediate FIAT cashouts.</p>
                     </div>
                 </div>
             </div>
@@ -106,59 +86,56 @@
                             <div>
                                 <h3>How secure is this payment system?</h3>
                                 <p>
-                                    Chargebacks and payment card frauds are not applicable to Bitcoin, so this system is
+                                    Chargebacks and payment card fraud are not applicable to Bitcoin, so this system is
                                     much more secure and existing fraud percent is virtually none. <br>
-                                    It works like digital cash - once you have received payment it's not possible to fraudulently
-                                    part you with your money.
+                                    It works like digital cash - once you have received payment nobody can take it away from you.
                                 </p>
                             </div>
                             <div>
                                 <h3>What does "NFC enabled" mean?</h3>
-                                <p>This means that it works similar to contactless payment cards (but is not compatible with it).
-                                    NFC stands for Near Field Communication, and it's a way for devices to communicate on-touch.<br>
-                                    Currently
-                                    <a href="http://en.wikipedia.org/wiki/List_of_NFC-enabled_mobile_devices">most of modern android phones</a>
-                                        are equipped with NFC.</p>
+                                <p>NFC stands for Near Field Communication. It is a two way radio communication designed
+                                    to work at very close range, only within few inches, i.e. "on touch". <br>
+                                    This is a system very similar to contactless cards (but not compatible).
+                                    Currently many android phones are equipped with NFC.</p>
                             </div>
                             <div>
-                                <h3>Will you protect me from unpredictable bitcoin exchange rate?</h3>
+                                <h3>Will you protect me from bitcoin unpredictable exchange rate?</h3>
                                 <p>
                                     Yes. Our terminal is integrated with Bitcoin payment processors, which will instantly
                                     convert bitcoins paid to you into your local currency and send it to your bank account
-                                    at the end of the day.<br>
-                                    Available payment processors are BitPay, Cryptopay. If you have any other in mind -
-                                    let us know and we will add it to the mix. <br>
+                                    at the end of the day. <br>
+                                    Available payment processors: BitPay, Cryptopay, BIPS. <br>
                                     We will help you to choose and sign up with the most suitable
                                     payment processor considering your geographical location.
                                 </p>
                             </div>
                             <div>
-                                <h3>Price and delivery time?</h3>
-                                <p>Pre­order units cost £200 GBP each. Deliveries will start in July 2014,
-                                    on the first order first shipped basis.</p>
+                                <h3>So how much does it cost and when can I get it?</h3>
+                                <p>Pre­order units will cost £200 GBP. Delivery will be on a first come first served basis,
+                                    with one month lead time after crowdfunding campaign ending.</p>
                             </div>
                         </div>
                         <div class="col-xs-8 col-xs-offset-2 col-sm-offset-0 col-sm-6 b-facility">
                             <h2><b>Investor</b> FAQ</h2>
                             <div>
                                 <h3>So what do you offer in return for my investment?</h3>
-                                <p>We offer shares in our company. These are NOT "virtual shares", but legally recognized
+                                <p>We offer shares in our company. This is NOT "virtual shares", but legally recognized
                                     equity ownership in our UK registered limited company.</p>
                             </div>
                             <div>
-                                <h3>How much equity you offer and at what price?</h3>
-                                <p> Before we can tell you this, please visit our
+                                <h3>How much equity you offer and what price?</h3>
+                                <p>Before we will be able to tell this to you - please visit our
                                     <a href="https://banktothefuture.com">investment pitch</a> page and agree to crowdinvestment terms and conditions. <br>
                                     Sorry about this inconvenience, unfortunately we are legally required to demand this before pitching to you.</p>
                             </div>
                             <div>
                                 <h3>Who is on the team?</h3>
                                 <p>We are a team of two cofounders, with one non-executive business advisor onboard. <br>
-                                    <a href="{% url 'website:profiles' %}">View team profiles here</a>.</p>
+                                    Check profiles here.</p>
                             </div>
                             <div>
                                 <h3>Did you have any investment prior to this campaign?</h3>
-                                <p> No, we have had no external funding as of now, we have funded everything to date from our own funds.</p>
+                                <p>Yes, we've raised £10000 of seed funding from private investors.</p>
                             </div>
                             <div>
                                 <h3>Can I claim any tax relief on my investment?</h3>
@@ -170,15 +147,6 @@
                             <div>
                                 <h3>Can I invest in XBTerminal with bitcoins?</h3>
                                 <p>Of course! We welcome bitcoin investments as well as usual currencies.</p>
-                            </div>
-                            <div>
-                                <h3>So can I invest right now?</h3>
-                                <p>
-                                    Not yet. We plan to launch the investment campaign at the end of May 2014. <br>
-                                    <a href="javascript:$('form.subscribe-form button[type=submit]').click();">
-                                        Subscribe to our newsletter</a>
-                                    and we will let you know when the time will come. <br> We won't send you any rubbish spam, we promise.
-                                </p>
                             </div>
                         </div>
                     </div>
@@ -197,13 +165,13 @@
                 <div class="row">
                     <div class="col-sm-4">
                         <h2>Newsletters</h2>
-                        <p>Get updated once our investment opportunity opens.</p>
+                        <p>Get updated once our preorder batch or investment opportunity opens.</p>
                         <form class="subscribe-form" action="{% url 'website:subscribe' %}" role="form" method="post">
                             {% csrf_token %}
                             <div class="form-group input-group">
                                 <input type="email" class="form-control" name="email" placeholder="Enter your email address" required>
                                 <span class="input-group-btn">
-                                    <button class="btn btn-default" type="submit"><span class="glyphicon glyphicon-chevron-right"></span></button>
+                                    <button class="btn btn-default" type="submit"><span class="glyphicon glyphicon-chevron-right"></a></button>
                                 </span>
                             </div>
                         </form>
