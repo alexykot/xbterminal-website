@@ -18,6 +18,11 @@ $(function () {
         return false;
     });
 
+    $('.front-terminal-image').fractionSlider({
+        'transitionIn': 'fade',
+        'transitionOut': 'fade',
+    });
+
     $('.terminal button').on('click', function (event) {
         event.preventDefault();
         $.fancybox({
