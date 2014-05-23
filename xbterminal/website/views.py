@@ -218,6 +218,8 @@ def reconciliation(request, number):
         form.save()
         form = SendDailyReconciliationForm(instance=device)
 
+    reconciliation_schedule = device.rectime_set.all()
+
     daily_transaction_info = device.transaction_set.extra({'date': "date(time)"})\
                                                    .values('date', 'fiat_currency')\
                                                    .annotate(count=Count('id'),

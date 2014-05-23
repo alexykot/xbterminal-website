@@ -128,6 +128,15 @@ class Device(models.Model):
         )
 
 
+class ReconciliationTime(models.Model):
+    device = models.ForeignKey(Device, related_name="rectime_set")
+    email = models.EmailField()
+    time = models.TimeField()
+
+    class Meta:
+        ordering = ['time']
+
+
 class Transaction(models.Model):
     device = models.ForeignKey(Device)
     hop_address = models.CharField(max_length=35, validators=[validate_bitcoin])
