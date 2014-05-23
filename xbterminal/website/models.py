@@ -95,10 +95,7 @@ class Device(models.Model):
     serial_number = models.CharField(max_length=50, blank=True, null=True)
     bitcoin_network = models.CharField(max_length=50, blank=True, null=True)
 
-    # reconsiliation options
-    email = models.EmailField(null=True)
-    time = models.TimeField(null=True)
-    date = models.DateField(null=True)
+    last_reconciliation = models.DateTimeField(auto_now_add=True)
 
     # firmware data
     current_firmware = models.ForeignKey("Firmware", related_name='current_for_device_set', blank=True, null=True)

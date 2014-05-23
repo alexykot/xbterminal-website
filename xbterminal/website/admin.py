@@ -6,7 +6,7 @@ from website.forms import DeviceAdminForm
 
 
 class DeviceAdmin(admin.ModelAdmin):
-    readonly_fields = ('key', 'email', 'time', 'date')
+    readonly_fields = ('key', 'last_reconciliation')
     form = DeviceAdminForm
 
 
