@@ -2,7 +2,7 @@ import json
 import datetime
 
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
@@ -11,12 +11,12 @@ from django.conf import settings
 from django.views.generic import UpdateView, ListView, View
 from django.utils.decorators import method_decorator
 from django.core.urlresolvers import reverse, reverse_lazy
-from django.http import Http404
 from django.views.decorators.clickjacking import xframe_options_exempt
+from django.views.decorators.http import require_http_methods
 from django.db.models import Count, Sum
 from django.contrib import messages
 
-from website.models import Device
+from website.models import Device, ReconciliationTime
 from website.forms import ContactForm, MerchantRegistrationForm, ProfileForm, DeviceForm,\
                           SendDailyReconciliationForm, SendReconciliationForm, SubscribeForm
 from website.utils import get_transaction_csv, get_transaction_pdf_archive, send_reconciliation
@@ -202,24 +202,6 @@ def reconciliation(request, number):
 
     device = get_device(user.merchant, number)
 
-    is_post = request.method == 'POST'
-    if 'reset' in request.POST:
-        device.email = device.time = None
-        device.save()
-
-        is_post = False
-
-    form = SendDailyReconciliationForm(
-        request.POST if is_post else None,
-        instance=device
-    )
-
-    if form.is_valid():
-        form.save()
-        form = SendDailyReconciliationForm(instance=device)
-
-    reconciliation_schedule = device.rectime_set.all()
-
     daily_transaction_info = device.transaction_set.extra({'date': "date(time)"})\
                                                    .values('date', 'fiat_currency')\
                                                    .annotate(count=Count('id'),
@@ -228,12 +210,36 @@ def reconciliation(request, number):
                                                              instantfiat_fiat_amount=Sum('instantfiat_fiat_amount'))
 
     return render(request, 'cabinet/reconciliation.html', {
-        'form': form,
+        'form': SendDailyReconciliationForm(),
         'device': device,
         'daily_transaction_info': daily_transaction_info,
         'number': number,
-        'send_form': SendReconciliationForm(initial={'email': user.merchant.contact_email})
+        'send_form': SendReconciliationForm(initial={'email': user.merchant.contact_email}),
+        'reconciliation_schedule': device.rectime_set.all(),
     })
+
+
+@require_http_methods(['POST', 'DELETE'])
+def reconciliation_time(request, number, pk):
+    user = request.user
+    if not hasattr(user, 'merchant'):
+        raise Http404
+    device = get_device(user.merchant, number)
+
+    if request.method == 'POST':
+        # Add time
+        form = SendDailyReconciliationForm(request.POST)
+        if form.is_valid():
+            rectime = form.save(commit=False)
+            device.rectime_set.add(rectime)
+            return redirect('website:reconciliation', number=number)
+    else:
+        # Remove time
+        try:
+            device.rectime_set.get(pk=pk).delete()
+        except ReconciliationTime.DoesNotExist:
+            raise Http404
+        return HttpResponse('')
 
 
 def transactions(request, number, year=None, month=None, day=None):
