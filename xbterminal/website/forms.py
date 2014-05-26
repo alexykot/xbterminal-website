@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm as DjangoAuthenticationForm
 
-from website.models import MerchantAccount, Device
+from website.models import MerchantAccount, Device, ReconciliationTime
 from website.fields import BCAddressField
 from website.widgets import ButtonGroupRadioSelect, PercentWidget, TimeWidget
 
@@ -143,5 +143,5 @@ class SendDailyReconciliationForm(forms.ModelForm):
     time = forms.TimeField(input_formats=['%I:%M %p'], widget=TimeWidget(format='%I:%M %p'))
 
     class Meta:
-        model = Device
-        fields = ('email', 'time')
+        model = ReconciliationTime
+        fields = ['email', 'time']

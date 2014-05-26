@@ -8,24 +8,36 @@
 
 {% block cabinet_content %}
 <h3>{{ device.name }}</h3>
+
 <div class="form-title">send daily reconciliation to email every day at</div>
-<form action="" method="post">
+<form action="{% url 'website:reconciliation_time' number 0 %}" method="POST" class="rectime-add">
     {% csrf_token %}
     <div class="row">
         <div class="col-sm-4">
-            {% bootstrap_field form.email show_label="" %}
+            {% bootstrap_field form.email show_label='' %}
         </div>
-        <div class="col-sm-2">
-            {% bootstrap_field form.time show_label="" %}
+        <div class="col-sm-4">
+            {% bootstrap_field form.time show_label='' %}
         </div>
-        <div class="col-sm-6">
-            <div class="button-group">
-                <button type="submit" class="btn btn-default">Send Daily</button>
-                <button type="submit" class="btn btn-default" name="reset">Clear</button>
-            </div>
+        <div class="col-sm-4">
+            <button type="submit" class="btn btn-default">Add</button>
         </div>
     </div>
 </form>
+
+<table class="table table-striped table-bordered table-responsive">
+    <tr>
+        <th>email</th>
+        <th colspan="2">time</th>
+    </tr>
+    {% for rectime in reconciliation_schedule %}
+    <tr>
+        <td>{{ rectime.email }}</td>
+        <td>{{ rectime.time }}</td>
+        <td><a href="{% url 'website:reconciliation_time' number rectime.pk %}" class="rectime-remove">remove</a></td>
+    </tr>
+    {% endfor %}
+</table>
 
 <div class="form-title">
     daily reconciliation history
@@ -93,7 +105,21 @@ $(document).ready(function(){
         $('#modal input[name=date]').val(date);
         $('#modal').modal();
 
-    })
+    });
+    $(document).on('click', '.rectime-remove', function (event) {
+        event.preventDefault();
+        var button = $(this);
+        var token = $('.rectime-add [name="csrfmiddlewaretoken"]').val();
+        $.ajax({
+            url: button.attr('href'),
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': token
+            }
+        }).done(function (data) {
+            button.closest('tr').remove();
+        });
+    });
 })
 </script>
 {% endblock %}

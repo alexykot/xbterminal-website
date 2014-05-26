@@ -71,8 +71,8 @@ def get_transaction_pdf_archive(transactions, to_file=None):
     return to_file
 
 
-def send_reconciliation(email, device, date):
-    transactions = device.get_transactions_by_date(date)
+def send_reconciliation(recipient, device, rec_range):
+    transactions = device.transaction_set.filter(time__range=rec_range)
 
     mail_text = render_to_string('website/email/reconciliation.txt', {
         'device': device,
@@ -80,22 +80,20 @@ def send_reconciliation(email, device, date):
         'amount': transactions.aggregate(sum=Sum('btc_amount'))['sum']
     })
 
-    formated_date = date.strftime('%d %b %Y')
     email = EmailMessage(
-        'Reconciliation for %s' % formated_date,
+        'Reconciliation for {0} - {1}'.format(
+            rec_range[0].strftime('%d %b %Y %H:%M'),
+            rec_range[1].strftime('%d %b %Y %H:%M')),
         mail_text,
         settings.DEFAULT_FROM_EMAIL,
-        [email]
-    )
+        [recipient])
 
     if transactions:
         csv = get_transaction_csv(transactions)
         csv.seek(0)
-        csv_name = '%s - transactions.csv' % formated_date
-        email.attach(csv_name, csv.read(), 'text/csv')
+        email.attach('transactions.csv', csv.read(), 'text/csv')
 
         archive = get_transaction_pdf_archive(transactions)
-        archive_name = '%s - receipts.zip' % formated_date
-        email.attach(archive_name, archive.getvalue(), 'application/x-zip-compressed')
+        email.attach('receipts.zip', archive.getvalue(), 'application/x-zip-compressed')
 
-    email.send()
+    email.send(fail_silently=False)
