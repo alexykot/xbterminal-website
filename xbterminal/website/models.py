@@ -95,10 +95,7 @@ class Device(models.Model):
     serial_number = models.CharField(max_length=50, blank=True, null=True)
     bitcoin_network = models.CharField(max_length=50, blank=True, null=True)
 
-    # reconsiliation options
-    email = models.EmailField(null=True)
-    time = models.TimeField(null=True)
-    date = models.DateField(null=True)
+    last_reconciliation = models.DateTimeField(auto_now_add=True)
 
     # firmware data
     current_firmware = models.ForeignKey("Firmware", related_name='current_for_device_set', blank=True, null=True)
@@ -126,6 +123,15 @@ class Device(models.Model):
             time__range=(datetime.datetime.combine(date, datetime.time.min),
                          datetime.datetime.combine(date, datetime.time.max))
         )
+
+
+class ReconciliationTime(models.Model):
+    device = models.ForeignKey(Device, related_name="rectime_set")
+    email = models.EmailField()
+    time = models.TimeField()
+
+    class Meta:
+        ordering = ['time']
 
 
 class Transaction(models.Model):

@@ -29,7 +29,6 @@
         </td>
         <td>{{ device.payment_processor_info|default:"--" }}</td>
         <td>
-            <div>{% if device.email and device.time %}sent daily at {{ device.time }} to {{ device.email }}{% endif %}</div>
             <div><a href="{% url 'website:reconciliation' forloop.counter %}">reconciliation</a></div>
         </td>
     </tr>
