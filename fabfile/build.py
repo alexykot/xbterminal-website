@@ -3,6 +3,11 @@ import re
 from fabric.api import env, task, settings, prefix, local
 
 
+@task
+def firmware_dir():
+    env.run("mkdir -p firmware")
+
+
 def pip_version():
     if env.run == local:
         output = env.run("pip --version", capture=True)
@@ -28,4 +33,5 @@ def venv():
 
 @task(default=True)
 def all():
+    firmware_dir()
     venv()
