@@ -4,5 +4,5 @@ transactions to date: {{ rec_datetime|date:"D d M Y" }} {{ rec_datetime|time:"H:
 transactions: {{ transactions.count }}
 total m฿: {{ amount }}
 {% else %}
-No transactions on this date.
+No transactions to date.
 {% endif %}
