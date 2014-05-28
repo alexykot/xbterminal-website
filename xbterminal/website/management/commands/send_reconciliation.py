@@ -12,14 +12,14 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         now = timezone.now()
         for device in Device.objects.all():
-            for item in device.rectime_set.filter(
-                time__range=(device.last_reconciliation.time(), now.time())):                
-                rec_range = (
-                    device.last_reconciliation,
-                    timezone.make_aware(
-                        datetime.datetime.combine(now.date(), item.time),
-                        timezone.utc)
-                )
-                send_reconciliation(item.email, device, rec_range)
-                device.last_reconciliation = rec_range[1]
-                device.save()
+            for item in device.rectime_set.all():  # Ordered by time
+                rec_datetime = timezone.make_aware(
+                    datetime.datetime.combine(now.date(), item.time),
+                    timezone.utc)
+                if device.last_reconciliation < rec_datetime <= now:
+                    send_reconciliation(
+                        item.email,
+                        device,
+                        (device.last_reconciliation, rec_datetime))
+                    device.last_reconciliation = rec_datetime
+                    device.save()

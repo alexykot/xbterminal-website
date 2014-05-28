@@ -1,4 +1,9 @@
-device: {{ device.name }}
-{% if transactions %}transactions: {{ transactions.count }}
-total m฿: {{ amount }}{% else %}No transactions on this date.
+terminal: {{ device.name|safe }}
+report issue date: {{ rec_datetime|date:"d M Y" }} {{ rec_datetime|time:"g:i A" }}
+{% if transactions %}
+transactions to date: {{ transactions.count }}
+total m฿: {{ btc_amount }}
+total GBP: £{{ fiat_amount }}
+{% else %}
+No transactions to date.
 {% endif %}
