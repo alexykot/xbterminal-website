@@ -73,12 +73,14 @@ def get_transaction_pdf_archive(transactions, to_file=None):
 
 def send_reconciliation(recipient, device, rec_range):
     transactions = device.transaction_set.filter(time__range=rec_range)
+    btc_sum = transactions.aggregate(sum=Sum('btc_amount'))['sum']
+    fiat_sum = transactions.aggregate(sum=Sum('fiat_amount'))['sum']
 
     mail_text = render_to_string('website/email/reconciliation.txt', {
         'device': device,
         'transactions': transactions,
-        'btc_amount': transactions.aggregate(sum=Sum('btc_amount'))['sum'],
-        'fiat_amount': transactions.aggregate(sum=Sum('fiat_amount'))['sum'],
+        'btc_amount': btc_sum,
+        'fiat_amount': fiat_sum.quantize(Decimal('0.01')),
         'rec_datetime': rec_range[1],
     })
 
