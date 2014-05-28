@@ -1,4 +1,8 @@
-device: {{ device.name }}
-{% if transactions %}transactions: {{ transactions.count }}
-total m฿: {{ amount }}{% else %}No transactions on this date.
+terminal: {{ device.name|safe }}
+transactions to date: {{ rec_datetime|date:"D d M Y" }} {{ rec_datetime|time:"H:i" }}
+{% if transactions %}
+transactions: {{ transactions.count }}
+total m฿: {{ amount }}
+{% else %}
+No transactions on this date.
 {% endif %}

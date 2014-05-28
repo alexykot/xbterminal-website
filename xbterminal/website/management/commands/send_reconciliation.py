@@ -16,7 +16,7 @@ class Command(BaseCommand):
                 rec_datetime = timezone.make_aware(
                     datetime.datetime.combine(now.date(), item.time),
                     timezone.utc)
-                if rec_datetime > device.last_reconciliation:
+                if device.last_reconciliation < rec_datetime <= now:
                     send_reconciliation(
                         item.email,
                         device,
