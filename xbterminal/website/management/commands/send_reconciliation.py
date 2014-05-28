@@ -10,7 +10,7 @@ from website.utils import send_reconciliation
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        now = timezone.now()
+        now = timezone.localtime(timezone.now())
         for device in Device.objects.all():
             for item in device.rectime_set.all():  # Ordered by time
                 rec_datetime = timezone.make_aware(
