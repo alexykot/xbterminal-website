@@ -186,7 +186,7 @@ class Firmware(models.Model):
     version = models.CharField(max_length=50)
     comment = models.TextField(blank=True)
     added = models.DateField(auto_now_add=True)
-    filename = models.FilePathField(path='/var/firmware')
+    filename = models.FilePathField(path=settings.FIRMWARE_PATH)
 
     def __unicode__(self):
         return 'firmware %s' % self.version

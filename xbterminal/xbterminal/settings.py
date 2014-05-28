@@ -126,6 +126,8 @@ CONSTANCE_CONFIG = {
     'OUR_FEE_SHARE': (0.005, ' '),
 }
 
+FIRMWARE_PATH = os.path.join(BASE_DIR, '..', 'firmware')
+
 # Override default settings
 try:
     from local_settings import *
