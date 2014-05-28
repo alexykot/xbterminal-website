@@ -77,12 +77,13 @@ def send_reconciliation(recipient, device, rec_range):
     mail_text = render_to_string('website/email/reconciliation.txt', {
         'device': device,
         'transactions': transactions,
-        'amount': transactions.aggregate(sum=Sum('btc_amount'))['sum'],
+        'btc_amount': transactions.aggregate(sum=Sum('btc_amount'))['sum'],
+        'fiat_amount': transactions.aggregate(sum=Sum('fiat_amount'))['sum'],
         'rec_datetime': rec_range[1],
     })
 
     email = EmailMessage(
-        'XBTerminal reconciliation, {0}'.format(rec_range[1].strftime('%d %b %Y %H:%M')),
+        'XBTerminal reconciliation report, {0}'.format(rec_range[1].strftime('%d %b %Y')),
         mail_text,
         settings.DEFAULT_FROM_EMAIL,
         [recipient])
