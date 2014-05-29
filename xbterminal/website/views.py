@@ -15,6 +15,7 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.decorators.http import require_http_methods
 from django.db.models import Count, Sum
 from django.contrib import messages
+from django.utils import timezone
 
 from website.models import Device, ReconciliationTime
 from website.forms import ContactForm, MerchantRegistrationForm, ProfileForm, DeviceForm,\
@@ -314,7 +315,21 @@ def send_all_to_email(request, number):
     if form.is_valid():
         email = form.cleaned_data['email']
         date = form.cleaned_data['date']
-        send_reconciliation(email, device, date)
+        # Calculate datetime range
+        now = timezone.localtime(timezone.now())
+        rec_range_beg = timezone.make_aware(
+            datetime.datetime.combine(date, datetime.time.min),
+            timezone.get_current_timezone())
+        if date < now.date:
+            rec_range_end = timezone.make_aware(
+                datetime.datetime.combine(date, datetime.time.max),
+                timezone.get_current_timezone())
+        else:
+            rec_range_end = now
+        send_reconciliation(
+            email,
+            device,
+            (rec_range_beg, rec_range_end))
         messages.success(request, 'Email has been sent successfully.')
     else:
         messages.error(request, 'Error: Invalid email. Please, try again.')
