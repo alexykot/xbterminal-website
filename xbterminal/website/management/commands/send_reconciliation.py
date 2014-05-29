@@ -15,7 +15,7 @@ class Command(BaseCommand):
             for item in device.rectime_set.all():  # Ordered by time
                 rec_datetime = timezone.make_aware(
                     datetime.datetime.combine(now.date(), item.time),
-                    timezone.utc)
+                    timezone.get_current_timezone())
                 if device.last_reconciliation < rec_datetime <= now:
                     send_reconciliation(
                         item.email,
