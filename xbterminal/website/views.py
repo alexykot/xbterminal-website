@@ -320,7 +320,7 @@ def send_all_to_email(request, number):
         rec_range_beg = timezone.make_aware(
             datetime.datetime.combine(date, datetime.time.min),
             timezone.get_current_timezone())
-        if date < now.date:
+        if date < now.date():
             rec_range_end = timezone.make_aware(
                 datetime.datetime.combine(date, datetime.time.max),
                 timezone.get_current_timezone())
