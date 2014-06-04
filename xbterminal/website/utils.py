@@ -79,8 +79,8 @@ def send_reconciliation(recipient, device, rec_range):
     mail_text = render_to_string('website/email/reconciliation.txt', {
         'device': device,
         'transactions': transactions,
-        'btc_amount': btc_sum,
-        'fiat_amount': fiat_sum.quantize(Decimal('0.01')),
+        'btc_amount': 0 if btc_sum is None else btc_sum,
+        'fiat_amount': 0 if fiat_sum is None else fiat_sum,
         'rec_datetime': rec_range[1],
     })
 
