@@ -1,9 +1,10 @@
+{% load website_tags %}
 terminal: {{ device.name|safe }}
 report issue date: {{ rec_datetime|date:"d M Y" }} {{ rec_datetime|time:"g:i A" }}
 {% if transactions %}
 transactions to date: {{ transactions.count }}
-total m฿: {{ btc_amount }}
-total GBP: £{{ fiat_amount }}
+total m฿: {{ btc_amount|scale|floatformat:5 }}
+total GBP: £{{ fiat_amount|floatformat:2 }}
 {% else %}
 No transactions to date.
 {% endif %}
