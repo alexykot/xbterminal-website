@@ -58,11 +58,8 @@ def get_transaction_pdf_archive(transactions, to_file=None):
 
     for transaction in transactions:
         result = generate_pdf(
-            'api/transaction.html', {
-                'transaction': transaction,
-                'STATIC_ROOT': settings.STATIC_ROOT
-            }
-        )
+            'api/transaction.html',
+            {'transaction': transaction})
         archive.writestr('receipt #%s.pdf' % transaction.id, result.getvalue())
         result.close()
 
