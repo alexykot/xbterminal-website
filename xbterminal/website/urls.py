@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, url
 
 
-from views import ProfileView, DeviceView, DeviceList, SubscribeNewsView
+from views import ProfileView, DeviceView, DeviceList, SubscribeNewsView, EnterAmountView
 
 urlpatterns = patterns('website.views',
     url(r'^$', 'landing', name='landing'),
@@ -33,5 +33,6 @@ urlpatterns = patterns('website.views',
     url(r'^device/(?P<number>\d+)/receipts/(?P<year>\d{4})/(?P<month>\d{1,2})/(?P<day>\d{1,2})/$',
         'receipts',
         name='dated_receipts'),
-    url(r'^device/(?P<number>\d+)/send_all_to_email/$', 'send_all_to_email', name='send_all_to_email')
+    url(r'^device/(?P<number>\d+)/send_all_to_email/$', 'send_all_to_email', name='send_all_to_email'),
+    url(r'^device/(?P<number>\d+)/payment/$', EnterAmountView.as_view(), name='enter_amount'),
 )

@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
-from django.views.generic import UpdateView, ListView, View
+from django.views.generic import UpdateView, ListView, View, TemplateView
 from django.utils.decorators import method_decorator
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.views.decorators.clickjacking import xframe_options_exempt
@@ -21,6 +21,8 @@ from website.models import Device, ReconciliationTime
 from website.forms import ContactForm, MerchantRegistrationForm, ProfileForm, DeviceForm,\
                           SendDailyReconciliationForm, SendReconciliationForm, SubscribeForm
 from website.utils import get_transaction_csv, get_transaction_pdf_archive, send_reconciliation
+
+from bitcoin import blockchain
 
 
 def contact(request):
@@ -335,3 +337,28 @@ def send_all_to_email(request, number):
         messages.error(request, 'Error: Invalid email. Please, try again.')
 
     return redirect('website:reconciliation', number)
+
+
+class EnterAmountView(TemplateView):
+    """
+    Payment - first step
+    """
+
+    template_name = "payment/enter_amount.html"
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(EnterAmountView, self).dispatch(*args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(EnterAmountView, self).get_context_data(**kwargs)
+        context['test'] = blockchain.test()
+        context['number'] = self.kwargs.get('number')
+        context['merchant'] = self.request.user.merchant
+        context['device'] = get_device(context['merchant'], context['number'])
+        return context
+
+    def get(self, request, **kwargs):
+        if not hasattr(request.user, 'merchant'):
+            raise Http404
+        return self.render_to_response(self.get_context_data())
