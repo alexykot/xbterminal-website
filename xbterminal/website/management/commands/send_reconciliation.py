@@ -1,4 +1,5 @@
 import datetime
+import itertools
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -12,14 +13,18 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         now = timezone.localtime(timezone.now())
         for device in Device.objects.all():
-            for item in device.rectime_set.all():  # Ordered by time
+            items = device.rectime_set.all()  # Ordered by time
+            for rec_time, group in itertools.groupby(items,
+                                                     lambda i: i.time):
                 rec_datetime = timezone.make_aware(
-                    datetime.datetime.combine(now.date(), item.time),
+                    datetime.datetime.combine(now.date(), rec_time),
                     timezone.get_current_timezone())
                 if device.last_reconciliation < rec_datetime <= now:
-                    send_reconciliation(
-                        item.email,
-                        device,
-                        (device.last_reconciliation, rec_datetime))
+                    # All emails in a group should be sent at the same time
+                    for item in group:
+                        send_reconciliation(
+                            item.email,
+                            device,
+                            (device.last_reconciliation, rec_datetime))
                     device.last_reconciliation = rec_datetime
                     device.save()
