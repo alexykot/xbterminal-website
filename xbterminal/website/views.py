@@ -339,26 +339,43 @@ def send_all_to_email(request, number):
     return redirect('website:reconciliation', number)
 
 
-class EnterAmountView(TemplateView):
+class PaymentView(TemplateView):
+    """
+    Base class
+    """
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not hasattr(request.user, 'merchant'):
+            raise Http404
+        return super(PaymentView, self).dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(PaymentView, self).get_context_data(**kwargs)
+        context['number'] = self.kwargs.get('number')
+        context['merchant'] = self.request.user.merchant
+        context['device'] = get_device(context['merchant'], context['number'])
+        return context
+
+
+class EnterAmountView(PaymentView):
     """
     Payment - first step
     """
 
     template_name = "payment/enter_amount.html"
 
-    @method_decorator(login_required)
-    def dispatch(self, *args, **kwargs):
-        return super(EnterAmountView, self).dispatch(*args, **kwargs)
 
-    def get_context_data(self, **kwargs):
-        context = super(EnterAmountView, self).get_context_data(**kwargs)
-        context['test'] = blockchain.test()
-        context['number'] = self.kwargs.get('number')
-        context['merchant'] = self.request.user.merchant
-        context['device'] = get_device(context['merchant'], context['number'])
-        return context
+class PayBtcView(PaymentView):
+    """
+    Payment - second step
+    """
 
-    def get(self, request, **kwargs):
-        if not hasattr(request.user, 'merchant'):
-            raise Http404
-        return self.render_to_response(self.get_context_data())
+    http_method_names = ['post']
+    template_name = "payment/pay_btc.html"
+
+    def post(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        amount = request.POST['amount']
+        context['amount'] = amount
+        return self.render_to_response(context)
