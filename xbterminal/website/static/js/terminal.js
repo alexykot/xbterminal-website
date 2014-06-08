@@ -37,5 +37,5 @@ $(function () {
         }
     });
 
-    $('.enter-amount [name="amount"]').val('0.00');
+    $('.enter-amount [name="amount"]').val('0.00').focus();
 });

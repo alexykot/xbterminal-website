@@ -1,3 +1,4 @@
+from decimal import Decimal
 import json
 import datetime
 
@@ -22,7 +23,8 @@ from website.forms import ContactForm, MerchantRegistrationForm, ProfileForm, De
                           SendDailyReconciliationForm, SendReconciliationForm, SubscribeForm
 from website.utils import get_transaction_csv, get_transaction_pdf_archive, send_reconciliation
 
-from bitcoin import blockchain
+import bitcoin.average
+import bitcoin.blockchain
 
 
 def contact(request):
@@ -376,6 +378,23 @@ class PayBtcView(PaymentView):
 
     def post(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        amount = request.POST['amount']
-        context['amount'] = amount
+        amount_fiat = Decimal(request.POST['amount'])
+        exchange_rate = bitcoin.average.get_exchange_rate('GBP')
+        amount_btc = amount_fiat / exchange_rate
+        context['amount_fiat'] = amount_fiat.quantize(Decimal('0.00'))
+        context['exchange_rate'] = (exchange_rate * Decimal('0.001')).quantize(Decimal('0.000'))
+        context['amount_mbtc'] = (amount_btc / Decimal('0.001')).quantize(Decimal('0.000'))
+        bc = bitcoin.blockchain.BlockChain(
+            user="root",
+            password="password",
+            host="node.xbterminal.com",
+            port=18332)
+        address = bc.get_fresh_address()
+        payment_request_url = request.build_absolute_uri(
+            reverse('website:payment_request', kwargs={'request_id': address}))  # test
+        context['payment_uri'] = bitcoin.blockchain.construct_bitcoin_uri(address, amount_btc, payment_request_url)
         return self.render_to_response(context)
+
+
+class PaymentRequestView(View):
+    pass
