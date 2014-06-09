@@ -18,3 +18,4 @@ django-picklefield==0.3.1
 pytz>=2014.3
 requests==2.3.0
 python-bitcoinlib==0.1.1
+protobuf==2.5.0

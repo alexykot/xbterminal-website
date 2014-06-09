@@ -25,6 +25,7 @@ from website.utils import get_transaction_csv, get_transaction_pdf_archive, send
 
 import payment.average
 import payment.blockchain
+import payment.protocol
 
 
 def contact(request):
@@ -392,6 +393,9 @@ class PayBtcView(PaymentView):
         address = bc.get_fresh_address()
         payment_request_url = request.build_absolute_uri(
             reverse('website:payment_request', kwargs={'request_id': address}))  # test
+        payment_request = payment.protocol.create_payment_request(
+            [(amount_btc, address)],
+            "https://xbterminal.com")
         context['payment_uri'] = payment.blockchain.construct_bitcoin_uri(address, amount_btc, payment_request_url)
         return self.render_to_response(context)
 
