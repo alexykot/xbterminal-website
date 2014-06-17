@@ -1,9 +1,14 @@
 from decimal import Decimal
 import json
 import datetime
+import logging
+import StringIO
+import uuid
+
+import qrcode
 
 from django.shortcuts import render, redirect
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
@@ -13,12 +18,15 @@ from django.views.generic import UpdateView, ListView, View, TemplateView
 from django.utils.decorators import method_decorator
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.views.decorators.clickjacking import xframe_options_exempt
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.db.models import Count, Sum
 from django.contrib import messages
 from django.utils import timezone
 
-from website.models import Device, ReconciliationTime
+import constance.config
+
+from website.models import Device, ReconciliationTime, PaymentRequest, Transaction
 from website.forms import ContactForm, MerchantRegistrationForm, ProfileForm, DeviceForm,\
                           SendDailyReconciliationForm, SendReconciliationForm, SubscribeForm
 from website.utils import get_transaction_csv, get_transaction_pdf_archive, send_reconciliation
@@ -26,6 +34,8 @@ from website.utils import get_transaction_csv, get_transaction_pdf_archive, send
 import payment.average
 import payment.blockchain
 import payment.protocol
+
+logger = logging.getLogger(__name__)
 
 
 def contact(request):
@@ -369,36 +379,141 @@ class EnterAmountView(PaymentView):
     template_name = "payment/enter_amount.html"
 
 
-class PayBtcView(PaymentView):
+class PaymentInitView(PaymentView):
     """
     Payment - second step
     """
 
     http_method_names = ['post']
-    template_name = "payment/pay_btc.html"
+    template_name = "payment/payment_init.html"
 
-    def post(self, request, *args, **kwargs):
+    def post(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        amount_fiat = Decimal(request.POST['amount'])
-        exchange_rate = payment.average.get_exchange_rate('GBP')
-        amount_btc = amount_fiat / exchange_rate
-        context['amount_fiat'] = amount_fiat.quantize(Decimal('0.00'))
-        context['exchange_rate'] = (exchange_rate * Decimal('0.001')).quantize(Decimal('0.000'))
-        context['amount_mbtc'] = (amount_btc / Decimal('0.001')).quantize(Decimal('0.000'))
-        bc = payment.blockchain.BlockChain(
-            user="root",
-            password="password",
-            host="node.xbterminal.com",
-            network="testnet")
-        address = bc.get_fresh_address()
-        payment_request_url = request.build_absolute_uri(
-            reverse('website:payment_request', kwargs={'request_id': address}))  # test
-        payment_request = payment.protocol.create_payment_request(
-            [(amount_btc, address)],
-            "https://xbterminal.com")
-        context['payment_uri'] = payment.blockchain.construct_bitcoin_uri(address, amount_btc, payment_request_url)
+        device = context['device']
+        amount_fiat = Decimal(self.request.POST['amount'])
+        # Prepare payment request
+        payment_request = payment.prepare_payment(device, amount_fiat)
+        payment_request.save()
+        payment_request_url = self.request.build_absolute_uri(reverse(
+            'website:payment_request',
+            kwargs={'uid': payment_request.uid}))
+        # Create bitcoin uri and QR code
+        payment_uri = payment.blockchain.construct_bitcoin_uri(
+            payment_request.local_address,
+            payment_request.btc_amount,
+            payment_request_url)
+        qr_output = StringIO.StringIO()
+        qr_code = qrcode.make(payment_uri, box_size=4)
+        qr_code.save(qr_output, "PNG")
+        qr_code_src = "data:image/png;base64,{0}".format(
+            qr_output.getvalue().encode("base64"))
+        qr_output.close()
+        # Update context
+        context['fiat_amount'] = payment_request.fiat_amount
+        context['mbtc_amount'] = payment_request.btc_amount / Decimal('0.001')
+        context['exchange_rate'] = payment_request.effective_exchange_rate * Decimal('0.001')
+        context['request_uid'] = payment_request.uid
+        context['payment_uri'] = payment_uri
+        context['qr_code_src'] = qr_code_src
         return self.render_to_response(context)
 
 
 class PaymentRequestView(View):
-    pass
+    """
+    Payment - third step
+    """
+
+    def get(self, *args, **kwargs):
+        try:
+            payment_request = PaymentRequest.objects.get(uid=self.kwargs.get('uid'))
+        except PaymentRequest.DoesNotExist:
+            raise Http404
+        if payment_request.expires < timezone.now():
+            raise Http404
+        payment_response_url = self.request.build_absolute_uri(reverse(
+            'website:payment_response',
+            kwargs={'uid': payment_request.uid}))
+        message = payment.protocol.create_payment_request(
+            payment_request.device.bitcoin_network,
+            [(payment_request.local_address, payment_request.btc_amount)],
+            payment_request.created,
+            payment_request.expires,
+            payment_response_url,
+            "xbterminal.com")
+        response = HttpResponse(message.SerializeToString(),
+                                content_type='application/bitcoin-paymentrequest')
+        response['Content-Transfer-Encoding'] = 'binary'
+        return response
+
+
+class PaymentResponseView(View):
+    """
+    Payment - fourth step
+    """
+
+    @csrf_exempt
+    def dispatch(self, *args, **kwargs):
+        return super(PaymentResponseView, self).dispatch(*args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        content_type = self.request.META.get('CONTENT_TYPE')
+        if content_type != 'application/bitcoin-payment':
+            return HttpResponseBadRequest()
+        message = self.request.body
+        if len(message) > 50000:
+            # Payment messages larger than 50,000 bytes should be rejected by server
+            return HttpResponseBadRequest()
+        try:
+            payment_request = PaymentRequest.objects.get(uid=self.kwargs.get('uid'))
+        except PaymentRequest.DoesNotExist:
+            raise Http404
+        transactions, payment_response = payment.protocol.parse_payment(message)
+        # Validate transactions
+        bc = payment.blockchain.BlockChain(payment_request.device.bitcoin_network)
+        if len(transactions) != 1:
+            return HttpResponseBadRequest()
+        incoming_tx = transactions[0]
+        if not bc.is_valid_transaction(incoming_tx):
+            return HttpResponseBadRequest()
+        # Create transaction
+        transaction = payment.create_transaction(payment_request, incoming_tx)
+        transaction.save()
+        payment_request.transaction = transaction
+        payment_request.save()
+        # Send PaymentACK
+        payment_ack = payment.protocol.create_payment_ack(payment_response)
+        response = HttpResponse(payment_ack.SerializeToString(),
+                                content_type='application/bitcoin-paymentack')
+        response['Content-Transfer-Encoding'] = 'binary'
+        return response
+
+
+class PaymentCheckView(View):
+
+    def get(self, *args, **kwargs):
+        try:
+            payment_request = PaymentRequest.objects.get(uid=self.kwargs.get('uid'))
+        except PaymentRequest.DoesNotExist:
+            raise Http404
+        data = {'paid': int(payment_request.transaction is not None)}
+        response = HttpResponse(json.dumps(data),
+                                content_type='application/json')
+        return response
+
+
+class PaymentSuccessView(PaymentView):
+    """
+    Payment - last step
+    """
+
+    template_name = "payment/payment_success.html"
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        # Get payment request
+        try:
+            payment_request = PaymentRequest.objects.get(uid=self.request.GET.get('request_uid'))
+        except PaymentRequest.DoesNotExist:
+            raise Http404
+        context['transaction'] = payment_request.transaction
+        return self.render_to_response(context)

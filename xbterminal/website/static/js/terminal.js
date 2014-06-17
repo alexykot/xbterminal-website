@@ -22,6 +22,18 @@ var numKeys = {
     105: 9
 };
 
+var paymentCheck = function (checkURL, successURL) {
+    setInterval(function () {
+        $.ajax({
+            url: checkURL
+        }).done(function (data) {
+            if (data.paid === 1) {
+                window.location.href = successURL;
+            }
+        });
+    }, 2000);
+};
+
 $(function () {
 
     $('.enter-amount [name="amount"]').on('keydown', function (event) {
@@ -38,4 +50,10 @@ $(function () {
     });
 
     $('.enter-amount [name="amount"]').val('0.00').focus();
+
+    if ($('.payment-request').length !== 0) {
+        var checkURL = $('.payment-request').data('check-url');
+        var successURL = $('.payment-request').data('success-url');
+        paymentCheck(checkURL, successURL);
+    }
 });

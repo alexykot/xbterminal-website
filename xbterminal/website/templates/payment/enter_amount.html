@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="content">
-    <form class="enter-amount" action="{% url 'website:pay_btc' number %}" method="POST">
+    <form class="enter-amount" action="{% url 'website:payment_init' number %}" method="POST">
         {% csrf_token %}
         <label>amount</label><br>
         <label class="gbp-symbol">£</label>&nbsp;<input type="text" name="amount"><br>

@@ -9,3 +9,5 @@ cert
 config/xbterminal.ini
 config/xbterminal.conf
 *.log
+firmware
+logs

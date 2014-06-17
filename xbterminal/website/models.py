@@ -9,6 +9,7 @@ from django_countries.fields import CountryField
 from django.contrib.sites.models import Site
 
 from website.validators import validate_percent, validate_bitcoin, validate_transaction
+from website.fields import FirmwarePathField
 
 
 class MerchantAccount(models.Model):
@@ -186,7 +187,35 @@ class Firmware(models.Model):
     version = models.CharField(max_length=50)
     comment = models.TextField(blank=True)
     added = models.DateField(auto_now_add=True)
-    filename = models.FilePathField(path=settings.FIRMWARE_PATH)
+    filename = FirmwarePathField(path=settings.FIRMWARE_PATH)
 
     def __unicode__(self):
         return 'firmware %s' % self.version
+
+
+class PaymentRequest(models.Model):
+
+    uid = models.CharField(max_length=32,
+                           editable=False,
+                           unique=True,
+                           default=lambda: uuid.uuid4().hex)
+    device = models.ForeignKey(Device)
+    created = models.DateTimeField()
+    expires = models.DateTimeField()
+
+    # Payment details
+    local_address = models.CharField(max_length=35, validators=[validate_bitcoin])
+    merchant_address = models.CharField(max_length=35, validators=[validate_bitcoin])
+    fee_address = models.CharField(max_length=35, validators=[validate_bitcoin])
+    instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin], null=True)
+    fiat_currency = models.CharField(max_length=3)
+    fiat_amount = models.DecimalField(max_digits=20, decimal_places=8)
+    instantfiat_fiat_amount = models.DecimalField(max_digits=9, decimal_places=2)
+    instantfiat_btc_amount = models.DecimalField(max_digits=18, decimal_places=8)
+    merchant_btc_amount = models.DecimalField(max_digits=18, decimal_places=8)
+    fee_btc_amount = models.DecimalField(max_digits=18, decimal_places=8)
+    btc_amount = models.DecimalField(max_digits=20, decimal_places=8)
+    effective_exchange_rate = models.DecimalField(max_digits=20, decimal_places=8)
+    instantfiat_invoice_id = models.CharField(max_length=255, null=True)
+
+    transaction = models.OneToOneField(Transaction, null=True)

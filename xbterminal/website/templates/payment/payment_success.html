@@ -1,0 +1,14 @@
+{% extends "payment/base.html" %}
+
+{% block content %}
+<div class="content">
+    <div class="payment-success">
+        <b>payment successful</b><br>
+        <a href="{% url 'api:transaction_pdf' transaction.receipt_key %}">view receipt</a>
+    </div>
+    
+    <form class="payment-finish" action="{% url 'website:enter_amount' number %}" method="GET">
+        <button type="submit">Close</button>
+    </form>
+</div>
+{% endblock %}
