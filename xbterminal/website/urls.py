@@ -6,12 +6,11 @@ from views import (
     DeviceView,
     DeviceList,
     SubscribeNewsView,
-    EnterAmountView,
+    PaymentView,
     PaymentInitView,
     PaymentRequestView,
     PaymentResponseView,
-    PaymentCheckView,
-    PaymentSuccessView)
+    PaymentCheckView)
 
 urlpatterns = patterns('website.views',
     url(r'^$', 'landing', name='landing'),
@@ -45,10 +44,9 @@ urlpatterns = patterns('website.views',
         'send_all_to_email',
         name='send_all_to_email'),
 
-    url(r'^terminals/(?P<device_key>[0-9a-fA-F]{32})/pos/enter_amount$', EnterAmountView.as_view(), name='enter_amount'),
+    url(r'^terminals/(?P<device_key>[0-9a-fA-F]{32})/pos$', PaymentView.as_view(), name='payment'),
     url(r'^terminals/(?P<device_key>[0-9a-fA-F]{32})/pos/init$', PaymentInitView.as_view(), name='payment_init'),
     url(r'^payment/(?P<uid>.+)/request$', PaymentRequestView.as_view(), name='payment_request'),
     url(r'^payment/(?P<uid>.+)/response$', PaymentResponseView.as_view(), name='payment_response'),
     url(r'^payment/(?P<uid>.+)/check$', PaymentCheckView.as_view(), name='payment_check'),
-    url(r'^terminals/(?P<device_key>[0-9a-fA-F]{32})/pos/success$', PaymentSuccessView.as_view(), name='payment_success'),
 )

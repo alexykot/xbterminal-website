@@ -10,7 +10,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
-from django.views.generic import UpdateView, ListView, View, TemplateView
+from django.views.generic import UpdateView, ListView, View
+from django.views.generic.base import ContextMixin, TemplateResponseMixin
 from django.utils.decorators import method_decorator
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.views.decorators.clickjacking import xframe_options_exempt
@@ -355,7 +356,7 @@ def send_all_to_email(request, device_key):
     return redirect('website:reconciliation', device.key)
 
 
-class PaymentView(TemplateView):
+class MerchantView(View):
     """
     Base class
     """
@@ -364,10 +365,16 @@ class PaymentView(TemplateView):
     def dispatch(self, request, *args, **kwargs):
         if not hasattr(request.user, 'merchant'):
             raise Http404
-        return super(PaymentView, self).dispatch(request, *args, **kwargs)
+        return super(MerchantView, self).dispatch(request, *args, **kwargs)
+
+
+class DeviceMixin(ContextMixin):
+    """
+    Adds device to the context
+    """
 
     def get_context_data(self, **kwargs):
-        context = super(PaymentView, self).get_context_data(**kwargs)
+        context = super(DeviceMixin, self).get_context_data(**kwargs)
         context['merchant'] = self.request.user.merchant
         try:
             context['device'] = context['merchant'].device_set.get(
@@ -377,30 +384,30 @@ class PaymentView(TemplateView):
         return context
 
 
-class EnterAmountView(PaymentView):
+class PaymentView(TemplateResponseMixin, DeviceMixin, MerchantView):
     """
-    Payment - first step, enter amount
-    """
-
-    template_name = "payment/enter_amount.html"
-
-
-class PaymentInitView(PaymentView):
-    """
-    Payment - second step, prepare payment and show payment uri
+    Online POS
     """
 
-    http_method_names = ['post']
-    template_name = "payment/payment_init.html"
+    template_name = "payment/payment.html"
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+
+class PaymentInitView(DeviceMixin, MerchantView):
+    """
+    Prepare payment and return payment uri
+    """
 
     def post(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        device = context['device']
         form = EnterAmountForm(self.request.POST)
         if not form.is_valid():
             return HttpResponseBadRequest()
         # Prepare payment request
-        payment_request = payment.prepare_payment(device,
+        payment_request = payment.prepare_payment(context['device'],
                                                   form.cleaned_data['amount'])
         payment_request.save()
         payment_request_url = self.request.build_absolute_uri(reverse(
@@ -412,19 +419,26 @@ class PaymentInitView(PaymentView):
             payment_request.btc_amount,
             payment_request_url)
         qr_code_src = generate_qr_code(payment_uri, size=4)
-        # Update context
-        context['fiat_amount'] = payment_request.fiat_amount
-        context['mbtc_amount'] = payment_request.btc_amount / Decimal('0.001')
-        context['exchange_rate'] = payment_request.effective_exchange_rate * Decimal('0.001')
-        context['request_uid'] = payment_request.uid
-        context['payment_uri'] = payment_uri
-        context['qr_code_src'] = qr_code_src
-        return self.render_to_response(context)
+        payment_check_url = self.request.build_absolute_uri(reverse(
+            'website:payment_check',
+            kwargs={'uid': payment_request.uid}))
+        # Return JSON
+        data = {
+            'fiat_amount': float(payment_request.fiat_amount),
+            'mbtc_amount': float(payment_request.btc_amount / Decimal('0.001')),
+            'exchange_rate': float(payment_request.effective_exchange_rate * Decimal('0.001')),
+            'payment_uri': payment_uri,
+            'qr_code_src': qr_code_src,
+            'check_url': payment_check_url,
+        }
+        response = HttpResponse(json.dumps(data),
+                                content_type='application/json')
+        return response
 
 
 class PaymentRequestView(View):
     """
-    Payment - third step, send PaymentRequest
+    Send PaymentRequest (public view)
     """
 
     def get(self, *args, **kwargs):
@@ -452,7 +466,7 @@ class PaymentRequestView(View):
 
 class PaymentResponseView(View):
     """
-    Payment - fourth step, accept and forward payment
+    Accept and forward payment (public view)
     """
 
     @csrf_exempt
@@ -492,38 +506,29 @@ class PaymentResponseView(View):
         return response
 
 
-class PaymentCheckView(View):
+class PaymentCheckView(MerchantView):
+    """
+    Check payment and return receipt
+    """
 
     def get(self, *args, **kwargs):
         try:
             payment_request = PaymentRequest.objects.get(uid=self.kwargs.get('uid'))
         except PaymentRequest.DoesNotExist:
             raise Http404
-        data = {'paid': int(payment_request.transaction is not None)}
+        if payment_request.transaction is None:
+            data = {'paid': 0}
+        else:
+            receipt_url = self.request.build_absolute_uri(reverse(
+                'api:transaction_pdf',
+                kwargs={'key': payment_request.transaction.receipt_key}))
+            qr_code_src = generate_qr_code(receipt_url, size=3)
+            data = {
+                'paid': 1,
+                'message': 'payment successful',
+                'receipt_url': receipt_url,
+                'qr_code_src': qr_code_src,
+            }
         response = HttpResponse(json.dumps(data),
                                 content_type='application/json')
         return response
-
-
-class PaymentSuccessView(PaymentView):
-    """
-    Payment - last step, show receipt
-    """
-
-    template_name = "payment/payment_success.html"
-
-    def get(self, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-        # Get payment request
-        try:
-            payment_request = PaymentRequest.objects.get(uid=self.request.GET.get('request_uid'))
-        except PaymentRequest.DoesNotExist:
-            raise Http404
-        receipt_url = self.request.build_absolute_uri(reverse(
-            'api:transaction_pdf',
-            kwargs={'key': payment_request.transaction.receipt_key}))
-        qr_code_src = generate_qr_code(receipt_url, size=3)
-        # Update context
-        context['receipt_url'] = receipt_url
-        context['qr_code_src'] = qr_code_src
-        return self.render_to_response(context)

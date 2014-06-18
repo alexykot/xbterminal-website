@@ -22,17 +22,57 @@ var numKeys = {
     105: 9
 };
 
-var paymentCheck = function (checkURL, successURL) {
-    setInterval(function () {
+var paymentInit = function (form) {
+    $.ajax({
+        url: form.attr('action'),
+        method: 'POST',
+        data: {
+            amount: form.find('[name="amount"]').val()
+        },
+        headers: {
+            'X-CSRFToken': form.find('[name="csrfmiddlewaretoken"]').val()
+        }
+    }).done(function (data) {
+        form.hide();
+        $('.payment-init').show();
+        $('.fiat-amount').text(data.fiat_amount.toFixed(2));
+        $('.mbtc-amount').text(data.mbtc_amount.toFixed(2));
+        $('.exchange-rate').text(data.exchange_rate.toFixed(3));
+        $('.payment-request').
+            attr('alt', data.payment_uri).
+            attr('src', data.qr_code_src);
+        paymentCheck(data.check_url);
+    });
+};
+
+var currentCheck;
+var paymentCheck = function (checkURL) {
+    currentCheck = setInterval(function () {
         $.ajax({
             url: checkURL
         }).done(function (data) {
             if (data.paid === 1) {
-                window.location.href = successURL;
+                clearInterval(currentCheck);
+                $('.payment-init').hide();
+                $('.payment-success').show();
+                $('.payment-message').text(data.message);
+                $('.payment-receipt').
+                    attr('alt', data.receipt_url).
+                    attr('src', data.qr_code_src);
             }
         });
     }, 2000);
 };
+
+var paymentReset = function () {
+    if (currentCheck) {
+        clearInterval(currentCheck);
+    }
+    $('.enter-amount [name="amount"]').val('0.00');
+    $('.payment-init, .payment-success').hide();
+    $('.enter-amount').show();
+};
+
 
 $(function () {
 
@@ -51,18 +91,19 @@ $(function () {
     });
 
     $('.enter-amount').on('submit', function (event) {
-        // Form validation
-        var amount = parseFloat($(this).find('[name="amount"]').val());
+        event.preventDefault();
+        var form = $(this);
+        var amount = parseFloat(form.find('[name="amount"]').val());
         if (amount < 0.01) {
             return false;
         }
+        paymentInit(form);
+    });
+
+    $('.payment-reset').on('click', function (event) {
+        event.preventDefault();
+        paymentReset();
     });
 
     $('.enter-amount [name="amount"]').val('0.00').focus();
-
-    if ($('.payment-request').length !== 0) {
-        var checkURL = $('.payment-request').data('check-url');
-        var successURL = $('.payment-request').data('success-url');
-        paymentCheck(checkURL, successURL);
-    }
 });

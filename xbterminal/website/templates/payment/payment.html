@@ -1,0 +1,25 @@
+{% extends "payment/base.html" %}
+
+{% block content %}
+<div class="content">
+    <form class="enter-amount" action="{% url 'website:payment_init' device.key %}" method="POST">
+        {% csrf_token %}
+        <label>amount</label><br>
+        <label class="gbp-symbol">£</label>&nbsp;<input type="text" name="amount"><br>
+        <button type="submit">Pay now</button>
+    </form>
+    <div class="payment-init">
+        <div class="amounts">
+            £ <span class="fiat-amount"></span><br>
+            m฿ <span class="mbtc-amount"></span>
+        </div>
+        <div>exchange rate: <span class="exchange-rate"></span></div>
+        <img class="payment-request">
+    </div>
+    <div class="payment-success">
+        <div class="payment-message"></div>
+        <img class="payment-receipt">
+    </div>
+    <button class="payment-reset">Reset</button>
+</div>
+{% endblock %}
