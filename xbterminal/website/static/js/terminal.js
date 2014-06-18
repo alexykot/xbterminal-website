@@ -1,4 +1,5 @@
 var backspace = 8;
+var enter = 13;
 var numKeys = {
     48: 0,
     49: 1,
@@ -40,7 +41,9 @@ $(function () {
         event.preventDefault();
         var currentAmount = parseFloat($(this).val());
         var amount;
-        if (event.which === backspace) {
+        if (event.which === enter) {
+            $(this).closest('form').submit();
+        } else if (event.which === backspace) {
             amount = Math.floor(currentAmount * 10) / 100;
             $(this).val(amount.toFixed(2));
         } else if (event.which in numKeys) {
