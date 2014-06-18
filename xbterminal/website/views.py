@@ -77,6 +77,7 @@ def landing(request):
 def profiles(request):
     return render(request, 'website/profiles.html', {})
 
+
 class SubscribeNewsView(View):
     """
     Subscribe to newsletters (Ajax)
