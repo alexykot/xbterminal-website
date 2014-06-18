@@ -1,5 +1,8 @@
+from decimal import Decimal
+
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm as DjangoAuthenticationForm
+from django.core import validators
 
 from website.models import MerchantAccount, Device, ReconciliationTime
 from website.fields import BCAddressField
@@ -145,3 +148,9 @@ class SendDailyReconciliationForm(forms.ModelForm):
     class Meta:
         model = ReconciliationTime
         fields = ['email', 'time']
+
+
+class EnterAmountForm(forms.Form):
+    amount = forms.DecimalField(max_digits=20,
+                                decimal_places=8,
+                                min_value=Decimal('0.01'))

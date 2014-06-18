@@ -23,8 +23,16 @@ from django.utils import timezone
 import constance.config
 
 from website.models import Device, ReconciliationTime, PaymentRequest, Transaction
-from website.forms import ContactForm, MerchantRegistrationForm, ProfileForm, DeviceForm,\
-                          SendDailyReconciliationForm, SendReconciliationForm, SubscribeForm
+from website.forms import (
+    ContactForm,
+    MerchantRegistrationForm,
+    ProfileForm,
+    DeviceForm,
+    SendDailyReconciliationForm,
+    SendReconciliationForm,
+    SubscribeForm,
+    EnterAmountForm)
+    
 from website.utils import (
     get_transaction_csv,
     get_transaction_pdf_archive,
@@ -390,9 +398,12 @@ class PaymentInitView(PaymentView):
     def post(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         device = context['device']
-        amount_fiat = Decimal(self.request.POST['amount'])
+        form = EnterAmountForm(self.request.POST)
+        if not form.is_valid():
+            return HttpResponseBadRequest()
         # Prepare payment request
-        payment_request = payment.prepare_payment(device, amount_fiat)
+        payment_request = payment.prepare_payment(device,
+                                                  form.cleaned_data['amount'])
         payment_request.save()
         payment_request_url = self.request.build_absolute_uri(reverse(
             'website:payment_request',

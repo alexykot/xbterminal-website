@@ -52,6 +52,14 @@ $(function () {
         }
     });
 
+    $('.enter-amount').on('submit', function (event) {
+        // Form validation
+        var amount = parseFloat($(this).find('[name="amount"]').val());
+        if (amount < 0.01) {
+            return false;
+        }
+    });
+
     $('.enter-amount [name="amount"]').val('0.00').focus();
 
     if ($('.payment-request').length !== 0) {
