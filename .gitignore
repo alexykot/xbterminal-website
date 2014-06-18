@@ -1,9 +1,8 @@
-syntax:glob
 *.pyc
 settings_server.py
 local_settings.py
 venv
-./static
+static
 fabfile/deploy.py
 cert
 .idea/*
