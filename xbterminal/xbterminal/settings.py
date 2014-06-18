@@ -127,7 +127,7 @@ CONTACT_EMAIL_RECIPIENTS = ["info@xbterminal.com"]
 APPEND_SLASH = True
 
 LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/devices/'
+LOGIN_REDIRECT_URL = '/terminals/'
 
 SITE_ID = 1
 

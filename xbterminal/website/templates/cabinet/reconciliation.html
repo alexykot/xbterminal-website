@@ -10,7 +10,7 @@
 <h3>{{ device.name }}</h3>
 
 <div class="form-title">send daily reconciliation to email every day at</div>
-<form action="{% url 'website:reconciliation_time' number 0 %}" method="POST" class="rectime-add">
+<form action="{% url 'website:reconciliation_time' device.key 0 %}" method="POST" class="rectime-add">
     {% csrf_token %}
     <div class="row">
         <div class="col-sm-4">
@@ -34,15 +34,15 @@
     <tr>
         <td>{{ rectime.email }}</td>
         <td>{{ rectime.time }}</td>
-        <td><a href="{% url 'website:reconciliation_time' number rectime.pk %}" class="rectime-remove">remove</a></td>
+        <td><a href="{% url 'website:reconciliation_time' device.key rectime.pk %}" class="rectime-remove">remove</a></td>
     </tr>
     {% endfor %}
 </table>
 
 <div class="form-title">
     daily reconciliation history
-    <a href="{% url 'website:transactions' number %}" class="pull-right">download all transactions</a>
-    <a href="{% url 'website:receipts' number %}" style="clear:both;" class="pull-right">download all receipts</a>
+    <a href="{% url 'website:transactions' device.key %}" class="pull-right">download all transactions</a>
+    <a href="{% url 'website:receipts' device.key %}" style="clear:both;" class="pull-right">download all receipts</a>
 </div>
 <table class="table table-striped table-bordered table-responsive">
     <tr>
@@ -60,9 +60,9 @@
         <td>{{ info.instantfiat_fiat_amount }}</td>
         <td>
             {% with info.date as date %}
-            <a href="{% url 'website:dated_transactions' number=number year=date|date:"Y" month=date|date:"m" day=date|date:"d" %}">download transactions</a>
+            <a href="{% url 'website:dated_transactions' device_key=device.key year=date|date:"Y" month=date|date:"m" day=date|date:"d" %}">download transactions</a>
             <br>
-            <a href="{% url 'website:dated_receipts' number=number year=date|date:"Y" month=date|date:"m" day=date|date:"d" %}">download receipts</a>
+            <a href="{% url 'website:dated_receipts' device_key=device.key year=date|date:"Y" month=date|date:"m" day=date|date:"d" %}">download receipts</a>
             <br>
             <a href="" class="send-all-button" data-date="{{ date|date:'Y-m-d' }}">send all to email</a>
             {% endwith %}
@@ -79,7 +79,7 @@
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
         <h4 class="modal-title">Send all to email</h4>
       </div>
-      <form action="{% url 'website:send_all_to_email' number %}" method="post">
+      <form action="{% url 'website:send_all_to_email' device.key %}" method="post">
           <div class="modal-body">
                 {% csrf_token %}
                 {{ send_form|bootstrap }}

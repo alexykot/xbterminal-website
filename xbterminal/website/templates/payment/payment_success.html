@@ -10,7 +10,7 @@
         src="{{ qr_code_src }}"
         alt="{{ receipt_url }}"
     >
-    <form class="payment-finish" action="{% url 'website:enter_amount' number %}" method="GET">
+    <form class="payment-finish" action="{% url 'website:enter_amount' device.key %}" method="GET">
         <button type="submit">Close</button>
     </form>
 </div>

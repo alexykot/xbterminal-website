@@ -161,19 +161,6 @@ class ProfileView(UpdateView):
         return user.merchant
 
 
-def get_device(merchant, number):
-    if number is not None:
-        try:
-            number = int(number) - 1
-            device = merchant.device_set.all()[number]
-        except IndexError:
-            raise Http404
-    else:
-        device = None
-
-    return device
-
-
 class DeviceView(UpdateView):
     form_class = DeviceForm
     template_name = 'cabinet/device_form.html'
@@ -186,10 +173,10 @@ class DeviceView(UpdateView):
         user = self.request.user
         if not hasattr(user, 'merchant'):
             raise Http404
-
-        number = self.kwargs.get('number')
-        device = get_device(user.merchant, number)
-
+        try:
+            device = user.merchant.device_set.get(key=self.kwargs.get('device_key'))
+        except Device.DoesNotExist:
+            raise Http404
         return device
 
     def form_valid(self, form):
@@ -216,16 +203,17 @@ class DeviceList(ListView):
         user = self.request.user
         if not hasattr(user, 'merchant'):
             raise Http404
-
         return self.request.user.merchant.device_set.all()
 
 
-def reconciliation(request, number):
+def reconciliation(request, device_key):
     user = request.user
     if not hasattr(user, 'merchant'):
         raise Http404
-
-    device = get_device(user.merchant, number)
+    try:
+        device = user.merchant.device_set.get(key=device_key)
+    except Device.DoesNotExist:
+        raise Http404
 
     daily_transaction_info = device.transaction_set.extra({'date': "date(time)"})\
                                                    .values('date', 'fiat_currency')\
@@ -238,18 +226,20 @@ def reconciliation(request, number):
         'form': SendDailyReconciliationForm(),
         'device': device,
         'daily_transaction_info': daily_transaction_info,
-        'number': number,
         'send_form': SendReconciliationForm(initial={'email': user.merchant.contact_email}),
         'reconciliation_schedule': device.rectime_set.all(),
     })
 
 
 @require_http_methods(['POST', 'DELETE'])
-def reconciliation_time(request, number, pk):
+def reconciliation_time(request, device_key, pk):
     user = request.user
     if not hasattr(user, 'merchant'):
         raise Http404
-    device = get_device(user.merchant, number)
+    try:
+        device = user.merchant.device_set.get(key=device_key)
+    except Device.DoesNotExist:
+        raise Http404
 
     if request.method == 'POST':
         # Add time
@@ -257,7 +247,7 @@ def reconciliation_time(request, number, pk):
         if form.is_valid():
             rectime = form.save(commit=False)
             device.rectime_set.add(rectime)
-            return redirect('website:reconciliation', number=number)
+            return redirect('website:reconciliation', device.key)
     else:
         # Remove time
         try:
@@ -267,12 +257,14 @@ def reconciliation_time(request, number, pk):
         return HttpResponse('')
 
 
-def transactions(request, number, year=None, month=None, day=None):
+def transactions(request, device_key, year=None, month=None, day=None):
     user = request.user
     if not hasattr(user, 'merchant'):
         raise Http404
-
-    device = get_device(user.merchant, number)
+    try:
+        device = user.merchant.device_set.get(key=device_key)
+    except Device.DoesNotExist:
+        raise Http404
 
     if year and month and day:
         try:
@@ -295,12 +287,14 @@ def transactions(request, number, year=None, month=None, day=None):
     return response
 
 
-def receipts(request, number, year=None, month=None, day=None):
+def receipts(request, device_key, year=None, month=None, day=None):
     user = request.user
     if not hasattr(user, 'merchant'):
         raise Http404
-
-    device = get_device(user.merchant, number)
+    try:
+        device = user.merchant.device_set.get(key=device_key)
+    except Device.DoesNotExist:
+        raise Http404
 
     if year and month and day:
         try:
@@ -324,14 +318,14 @@ def receipts(request, number, year=None, month=None, day=None):
     return response
 
 
-def send_all_to_email(request, number):
+@require_http_methods(['POST'])
+def send_all_to_email(request, device_key):
     user = request.user
     if not hasattr(user, 'merchant'):
         raise Http404
-
-    device = get_device(user.merchant, number)
-
-    if request.method != 'POST':
+    try:
+        device = user.merchant.device_set.get(key=device_key)
+    except Device.DoesNotExist:
         raise Http404
 
     form = SendReconciliationForm(request.POST)
@@ -358,7 +352,7 @@ def send_all_to_email(request, number):
     else:
         messages.error(request, 'Error: Invalid email. Please, try again.')
 
-    return redirect('website:reconciliation', number)
+    return redirect('website:reconciliation', device.key)
 
 
 class PaymentView(TemplateView):
@@ -374,9 +368,12 @@ class PaymentView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super(PaymentView, self).get_context_data(**kwargs)
-        context['number'] = self.kwargs.get('number')
         context['merchant'] = self.request.user.merchant
-        context['device'] = get_device(context['merchant'], context['number'])
+        try:
+            context['device'] = context['merchant'].device_set.get(
+                key=self.kwargs.get('device_key'))
+        except Device.DoesNotExist:
+            raise Http404
         return context
 
 

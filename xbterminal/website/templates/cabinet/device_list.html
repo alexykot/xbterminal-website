@@ -18,7 +18,7 @@
     </tr>
 {% for device in devices %}
     <tr>
-        <td><a href="{% url 'website:device' forloop.counter %}">{{ device.name }}</a></td>
+        <td><a href="{% url 'website:device' device.key %}">{{ device.name }}</a></td>
         <td>{{ device.comment }}</td>
         <td>
             {% if device.bitcoin_address %}
@@ -29,8 +29,8 @@
         </td>
         <td>{{ device.payment_processor_info|default:"--" }}</td>
         <td>
-            <div><a href="{% url 'website:reconciliation' forloop.counter %}">reconciliation</a></div>
-            <div><a href="{% url 'website:enter_amount' forloop.counter %}">make payment</a></div>
+            <div><a href="{% url 'website:reconciliation' device.key %}">reconciliation</a></div>
+            <div><a href="{% url 'website:enter_amount' device.key %}">make payment</a></div>
         </td>
     </tr>
 {% endfor %}

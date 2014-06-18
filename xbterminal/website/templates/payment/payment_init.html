@@ -12,9 +12,9 @@
         src="{{ qr_code_src }}"
         alt="{{ payment_uri }}"
         data-check-url="{% url 'website:payment_check' request_uid %}"
-        data-success-url="{% url 'website:payment_success' number %}?request_uid={{ request_uid }}"
+        data-success-url="{% url 'website:payment_success' device.key %}?request_uid={{ request_uid }}"
     >
-    <form class="payment-cancel" action="{% url 'website:enter_amount' number %}" method="GET">
+    <form class="payment-cancel" action="{% url 'website:enter_amount' device.key %}" method="GET">
         <button type="submit">Cancel</button>
     </form>
 </div>
