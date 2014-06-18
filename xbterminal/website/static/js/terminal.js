@@ -1,5 +1,4 @@
 var backspace = 8;
-var enter = 13;
 var numKeys = {
     48: 0,
     49: 1,
@@ -38,15 +37,14 @@ var paymentCheck = function (checkURL, successURL) {
 $(function () {
 
     $('.enter-amount [name="amount"]').on('keydown', function (event) {
-        event.preventDefault();
         var currentAmount = parseFloat($(this).val());
         var amount;
-        if (event.which === enter) {
-            $(this).closest('form').submit();
-        } else if (event.which === backspace) {
+        if (event.which === backspace) {
+            event.preventDefault();
             amount = Math.floor(currentAmount * 10) / 100;
             $(this).val(amount.toFixed(2));
         } else if (event.which in numKeys) {
+            event.preventDefault();
             amount = currentAmount * 10 + 0.01 * numKeys[event.which];
             $(this).val(amount.toFixed(2));
         }
