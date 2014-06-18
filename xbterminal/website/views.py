@@ -2,10 +2,6 @@ from decimal import Decimal
 import json
 import datetime
 import logging
-import StringIO
-import uuid
-
-import qrcode
 
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
@@ -29,7 +25,11 @@ import constance.config
 from website.models import Device, ReconciliationTime, PaymentRequest, Transaction
 from website.forms import ContactForm, MerchantRegistrationForm, ProfileForm, DeviceForm,\
                           SendDailyReconciliationForm, SendReconciliationForm, SubscribeForm
-from website.utils import get_transaction_csv, get_transaction_pdf_archive, send_reconciliation
+from website.utils import (
+    get_transaction_csv,
+    get_transaction_pdf_archive,
+    send_reconciliation,
+    generate_qr_code)
 
 import payment.average
 import payment.blockchain
@@ -373,7 +373,7 @@ class PaymentView(TemplateView):
 
 class EnterAmountView(PaymentView):
     """
-    Payment - first step
+    Payment - first step, enter amount
     """
 
     template_name = "payment/enter_amount.html"
@@ -381,7 +381,7 @@ class EnterAmountView(PaymentView):
 
 class PaymentInitView(PaymentView):
     """
-    Payment - second step
+    Payment - second step, prepare payment and show payment uri
     """
 
     http_method_names = ['post']
@@ -402,12 +402,7 @@ class PaymentInitView(PaymentView):
             payment_request.local_address,
             payment_request.btc_amount,
             payment_request_url)
-        qr_output = StringIO.StringIO()
-        qr_code = qrcode.make(payment_uri, box_size=4)
-        qr_code.save(qr_output, "PNG")
-        qr_code_src = "data:image/png;base64,{0}".format(
-            qr_output.getvalue().encode("base64"))
-        qr_output.close()
+        qr_code_src = generate_qr_code(payment_uri, size=4)
         # Update context
         context['fiat_amount'] = payment_request.fiat_amount
         context['mbtc_amount'] = payment_request.btc_amount / Decimal('0.001')
@@ -420,7 +415,7 @@ class PaymentInitView(PaymentView):
 
 class PaymentRequestView(View):
     """
-    Payment - third step
+    Payment - third step, send PaymentRequest
     """
 
     def get(self, *args, **kwargs):
@@ -448,7 +443,7 @@ class PaymentRequestView(View):
 
 class PaymentResponseView(View):
     """
-    Payment - fourth step
+    Payment - fourth step, accept and forward payment
     """
 
     @csrf_exempt
@@ -503,7 +498,7 @@ class PaymentCheckView(View):
 
 class PaymentSuccessView(PaymentView):
     """
-    Payment - last step
+    Payment - last step, show receipt
     """
 
     template_name = "payment/payment_success.html"
@@ -515,5 +510,11 @@ class PaymentSuccessView(PaymentView):
             payment_request = PaymentRequest.objects.get(uid=self.request.GET.get('request_uid'))
         except PaymentRequest.DoesNotExist:
             raise Http404
-        context['transaction'] = payment_request.transaction
+        receipt_url = self.request.build_absolute_uri(reverse(
+            'api:transaction_pdf',
+            kwargs={'key': payment_request.transaction.receipt_key}))
+        qr_code_src = generate_qr_code(receipt_url, size=3)
+        # Update context
+        context['receipt_url'] = receipt_url
+        context['qr_code_src'] = qr_code_src
         return self.render_to_response(context)

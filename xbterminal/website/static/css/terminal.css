@@ -52,11 +52,12 @@ button {
     text-align: right;
 }
 
-.amounts {
-    margin-bottom: 20px;
-}
-
 .amount-fiat,
 .amount-mbtc {
     font-size: 2em;
+}
+
+img.payment-request,
+img.payment-receipt {
+    margin-top: 20px;
 }

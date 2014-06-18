@@ -4,9 +4,12 @@
 <div class="content">
     <div class="payment-success">
         <b>payment successful</b><br>
-        <a href="{% url 'api:transaction_pdf' transaction.receipt_key %}">view receipt</a>
     </div>
-    
+    <img
+        class="payment-receipt"
+        src="{{ qr_code_src }}"
+        alt="{{ receipt_url }}"
+    >
     <form class="payment-finish" action="{% url 'website:enter_amount' number %}" method="GET">
         <button type="submit">Close</button>
     </form>
