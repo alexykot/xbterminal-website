@@ -5,17 +5,15 @@ import datetime
 from decimal import Decimal
 import time
 
-from bitcoin.core import CTransaction
 from bitcoin.wallet import CBitcoinAddress
 
-import constance.config
-
 from django.utils import timezone
+import constance.config
+import django_rq
 
 import payment.average
 import payment.blockchain
 import payment.instantfiat
-import payment.protocol
 
 from website.models import PaymentRequest, Transaction
 
@@ -103,7 +101,29 @@ def prepare_payment(device, fiat_amount):
         created=now,
         expires=now + datetime.timedelta(minutes=10),
         **details)
+    # http://python-rq.org/docs/
+    # https://github.com/ui/django-rq
+    queue = django_rq.get_queue()
+    queue.enqueue_call(func=wait_for_payment,
+                       args=(request,),
+                       timeout=15 * 60)
     return request
+
+
+def wait_for_payment(payment_request):
+    # Connect to bitcoind
+    bc = payment.blockchain.BlockChain(payment_request.device.bitcoin_network)
+    # Check current balance
+    transactions = []
+    while not transactions:
+        now = timezone.localtime(timezone.now())
+        if now > payment_request.expires:
+            return
+        transactions = bc.get_unspent_transactions(
+            CBitcoinAddress(payment_request.local_address))
+        time.sleep(1)
+    incoming_tx_id = validate_payment(payment_request, transactions)
+    # Save somewhere
 
 
 class InvalidPayment(Exception):
@@ -113,25 +133,21 @@ class InvalidPayment(Exception):
         self.error_message = error_message
 
     def __str__(self):
-        print(self.error_message)
         return "Invalid payment: {0}".format(self.error_message)
 
 
-def validate_payment(payment_request, message):
+def validate_payment(payment_request, transactions):
     """
     Accepts:
         payment_request: PaymentRequest instance
-        message: pb2-encoded payment message
+        transactions: list of CTransaction
     Returns:
-        incoming_tx: CTransaction
-        payment_ack: PaymentACK message
+        incoming_tx_id: transaction id
     """
     bc = payment.blockchain.BlockChain(payment_request.device.bitcoin_network)
-    # Decode message
-    decoded_message = payment.protocol.parse_payment(message)
-    if len(decoded_message.transactions) != 1:
+    if len(transactions) != 1:
         raise InvalidPayment('expecting single transaction')
-    incoming_tx = CTransaction.deserialize(decoded_message.transactions[0])
+    incoming_tx = transactions[0]
     # Validate transaction
     if not bc.is_valid_transaction(incoming_tx):
         raise InvalidPayment('invalid transaction')
@@ -140,50 +156,45 @@ def validate_payment(payment_request, message):
     for output in payment.blockchain.get_tx_outputs(incoming_tx):
         if str(output['address']) == payment_request.local_address:
             btc_amount += output['amount']
-    if btc_amount != payment_request.btc_amount:
-        raise InvalidPayment('wrong btc amount')
-    # Create PaymentACK
-    payment_ack = payment.protocol.create_payment_ack(decoded_message)
-    return incoming_tx, payment_ack
+    if btc_amount < payment_request.btc_amount:
+        raise InvalidPayment('insufficient funds')
+    incoming_tx_id = payment.blockchain.get_txid(incoming_tx)
+    return incoming_tx_id
 
 
-def forward_transaction(payment_request, incoming_tx):
+def forward_transaction(payment_request, incoming_tx_id):
     """
     Accepts:
         payment_request: PaymentRequest instance
-        incoming_tx: incoming transaction, CTransaction
+        incoming_tx_id: validated incoming transaction id
     """
     # Connect to bitcoind
     bc = payment.blockchain.BlockChain(payment_request.device.bitcoin_network)
-    # Check current balance
-    while True:
-        current_balance = bc.get_address_balance(
-            CBitcoinAddress(payment_request.local_address))
-        if current_balance >= payment_request.btc_amount:
-            break
+    # Wait for transaction
+    incoming_tx = None
+    while incoming_tx is None:
+        try:
+            incoming_tx = bc.get_raw_transaction(incoming_tx_id)
+        except IndexError as error:
+            pass
         time.sleep(1)
-    if current_balance > payment_request.btc_amount:
-        payment_request.fee_btc_amount += (current_balance - payment_request.btc_amount)
-    # Forward payment
-    outputs = {
-        payment_request.merchant_address: payment_request.merchant_btc_amount,
-        payment_request.fee_address: payment_request.fee_btc_amount,
-        payment_request.instantfiat_address: payment_request.instantfiat_btc_amount,
-    }
-    total = sum(outputs.values()) + BTC_DEFAULT_FEE
     unspent_outputs = bc.get_unspent_outputs(
         CBitcoinAddress(payment_request.local_address))
     total_available = sum(out['amount'] for out in unspent_outputs)
-    if total_available != total:
-        raise Exception
+    excess_amount = max(total_available - payment_request.btc_amount,
+                        BTC_DEC_PLACES)
+    # Forward payment
+    outputs = {
+        payment_request.merchant_address: payment_request.merchant_btc_amount,
+        payment_request.fee_address: payment_request.fee_btc_amount + excess_amount,
+        payment_request.instantfiat_address: payment_request.instantfiat_btc_amount,
+    }
     outgoing_tx = bc.create_raw_transaction(
         [out['outpoint'] for out in unspent_outputs],
         outputs)
     outgoing_tx_signed = bc.sign_raw_transaction(outgoing_tx)
     outgoing_tx_id = bc.send_raw_transaction(outgoing_tx_signed)
-    # Get incoming tx id
-    incoming_tx_id = payment.blockchain.get_txid(incoming_tx)
-    # Save info
+    # Save transaction info
     transaction = Transaction(
         device=payment_request.device,
         hop_address=payment_request.local_address,
@@ -193,11 +204,13 @@ def forward_transaction(payment_request, incoming_tx):
         bitcoin_transaction_id_2=outgoing_tx_id,
         fiat_currency=payment_request.fiat_currency,
         fiat_amount=payment_request.fiat_amount,
-        btc_amount=payment_request.btc_amount,
+        btc_amount=payment_request.btc_amount + excess_amount,
         effective_exchange_rate=payment_request.effective_exchange_rate,
         instantfiat_fiat_amount=payment_request.instantfiat_fiat_amount,
         instantfiat_btc_amount=payment_request.instantfiat_btc_amount,
-        fee_btc_amount=payment_request.fee_btc_amount,
+        fee_btc_amount=payment_request.fee_btc_amount + excess_amount,
         instantfiat_invoice_id=payment_request.instantfiat_invoice_id,
         time=timezone.now())
-    return transaction
+    transaction.save()
+    payment_request.transaction = transaction
+    payment_request.save()

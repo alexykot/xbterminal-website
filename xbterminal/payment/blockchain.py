@@ -4,7 +4,7 @@ import hashlib
 
 import bitcoin
 import bitcoin.rpc
-from bitcoin.core import COIN, b2lx, CTransaction
+from bitcoin.core import COIN, x, b2lx, CTransaction
 from bitcoin.core.serialize import Hash
 from bitcoin.wallet import CBitcoinAddress
 
@@ -57,10 +57,34 @@ class BlockChain(object):
             out['amount'] = Decimal(out['amount']) / COIN
         return txouts
 
+    def get_unspent_transactions(self, address):
+        """
+        Accepts:
+            address: CBitcoinAddress
+        Returns:
+            transactions: list of CTransaction
+        """
+        txouts = self._proxy.listunspent(minconf=0, addrs=[address])
+        transactions = []
+        for out in txouts:
+            txid = b2lx(out['outpoint'].hash)
+            transactions.append(self.get_raw_transaction(txid))
+        return transactions
+
+    def get_raw_transaction(self, transaction_id):
+        """
+        Accepts:
+            transaction_id: hex string
+        Returns:
+            transaction: CTransaction
+        """
+        transaction = self._proxy.getrawtransaction(x(transaction_id))
+        return transaction
+
     def is_valid_transaction(self, transaction):
         """
         Accepts:
-            tx: CTransaction
+            transaction: CTransaction
         Returns:
             boolean
         """

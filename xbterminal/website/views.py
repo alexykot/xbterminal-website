@@ -475,6 +475,11 @@ class PaymentResponseView(View):
         return super(PaymentResponseView, self).dispatch(*args, **kwargs)
 
     def post(self, *args, **kwargs):
+        try:
+            payment_request = PaymentRequest.objects.get(uid=self.kwargs.get('uid'))
+        except PaymentRequest.DoesNotExist:
+            raise Http404
+        # Check and parse message
         content_type = self.request.META.get('CONTENT_TYPE')
         if content_type != 'application/bitcoin-payment':
             return HttpResponseBadRequest()
@@ -483,19 +488,16 @@ class PaymentResponseView(View):
             # Payment messages larger than 50,000 bytes should be rejected by server
             return HttpResponseBadRequest()
         try:
-            payment_request = PaymentRequest.objects.get(uid=self.kwargs.get('uid'))
-        except PaymentRequest.DoesNotExist:
-            raise Http404
-        # Validate payment
-        try:
-            incoming_tx, payment_ack = payment.validate_payment(payment_request, message)
+            transactions, payment_ack = payment.protocol.parse_payment(message)
         except Exception:
             return HttpResponseBadRequest()
-        # Create transaction
-        transaction = payment.forward_transaction(payment_request, incoming_tx)
-        transaction.save()
-        payment_request.transaction = transaction
-        payment_request.save()
+        # Validate payment
+        try:
+            incoming_tx_id = payment.validate_payment(payment_request, transactions)
+        except Exception as error:
+            return HttpResponseBadRequest()
+        # Create outgoing transaction
+        payment.forward_transaction(payment_request, incoming_tx_id)
         # Send PaymentACK
         response = HttpResponse(payment_ack.SerializeToString(),
                                 content_type='application/bitcoin-paymentack')
