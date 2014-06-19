@@ -24,17 +24,23 @@ var numKeys = {
 var maxDigits = 9;
 
 var paymentInit = function (form) {
+    var amountField = form.find('[name="amount"]');
+    if (parseFloat(amountField.val()) < 0.01) {
+        return false;
+    }
+    amountField.attr('disabled', true);
     $.ajax({
         url: form.attr('action'),
         method: 'POST',
         data: {
-            amount: form.find('[name="amount"]').val()
+            amount: amountField.val()
         },
         headers: {
             'X-CSRFToken': form.find('[name="csrfmiddlewaretoken"]').val()
         }
     }).done(function (data) {
         form.hide();
+        amountField.attr('disabled', false);
         $('.payment-init').show();
         $('.fiat-amount').text(data.fiat_amount.toFixed(2));
         $('.mbtc-amount').text(data.mbtc_amount.toFixed(2));
@@ -99,10 +105,6 @@ $(function () {
     $('.enter-amount').on('submit', function (event) {
         event.preventDefault();
         var form = $(this);
-        var amount = parseFloat(form.find('[name="amount"]').val());
-        if (amount < 0.01) {
-            return false;
-        }
         paymentInit(form);
     });
 
