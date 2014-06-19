@@ -60,6 +60,7 @@ var paymentCheck = function (checkURL) {
         }).done(function (data) {
             if (data.paid === 1) {
                 clearInterval(currentCheck);
+                currentCheck = undefined;
                 $('.payment-init').hide();
                 $('.payment-success').show();
                 $('.payment-receipt').
@@ -73,12 +74,14 @@ var paymentCheck = function (checkURL) {
 var paymentReset = function () {
     if (currentCheck) {
         clearInterval(currentCheck);
+        currentCheck = undefined;
     }
-    $('.enter-amount [name="amount"]').val('0.00');
+    $('.enter-amount [name="amount"]').val('0.00').focus();
     $('.payment-init, .payment-success').hide();
     $('.enter-amount').show();
 };
 
+var lastActivity = new Date().getTime();
 
 $(function () {
 
@@ -112,5 +115,15 @@ $(function () {
         paymentReset();
     });
 
-    $('.enter-amount [name="amount"]').val('0.00').focus();
+    $(document).on('keydown mousemove', function (event) {
+        lastActivity = new Date().getTime();
+    });
+
+    // Reset after 15 minutes of inactivity
+    setInterval(function () {
+        var now = new Date().getTime();
+        if (now - lastActivity > 15 * 60 * 1000) {
+            paymentReset();
+        }
+    }, 5000);
 });
