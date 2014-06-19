@@ -1,10 +1,11 @@
 body {
     background-color: #E6E6E6;
     font-family: 'DejaVu Sans', sans;
+    margin: 0;
 }
 
 .container {
-    margin: 0 auto;
+    margin: 10px auto;
     text-align: center;
     width: 800px;
 }
@@ -74,14 +75,14 @@ body {
     margin-bottom: 10px;
 }
 
-.fiat-amount-wrapper {
+.payment-init .fiat-amount-wrapper {
     display: inline-block;
     text-align: left;
     min-width: 180px;
     white-space: nowrap;
 }
 
-.mbtc-amount-wrapper {
+.payment-init .mbtc-amount-wrapper {
     display: inline-block;
     text-align: right;
     min-width: 180px;
@@ -94,7 +95,25 @@ img.payment-receipt {
 }
 
 button {
-    height: 40px;
+    height: 50px;
+    font-size: 1.2em;
     margin-top: 20px;
     width: 120px;
+}
+
+@media screen and (max-width: 768px) {
+    .container {
+        width: 100%;
+    }
+
+    .logo,
+    .testnet-notice,
+    .merchant-info {
+        float: none;
+        width: 100%;
+    }
+
+    .enter-amount .amount-wrapper {
+        width: 240px;
+    }
 }
