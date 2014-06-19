@@ -36,16 +36,32 @@ body {
 
 
 .enter-amount {
-    margin: 50px 0 0;
+    margin-top: 50px;
+}
+
+.enter-amount .amount-label {
+    font-size: 1.2em;
+}
+
+.enter-amount .amount-wrapper {
+    margin: 10px auto 0;
+    padding-right: 6px;
+    position: relative;
+    width: 300px;
 }
 
 .enter-amount .gbp-symbol {
-    font-size: 2.4em;
+    font-size: 3em;
+    left: -40px;
+    position: absolute;
+    width: 40px;
 }
 
 .enter-amount [name="amount"] {
-    font-size: 2em;
+    border: 2px solid #CCC;
+    font-size: 2.4em;
     text-align: right;
+    width: 100%;
 }
 
 .payment-init,
@@ -53,8 +69,23 @@ body {
     display: none;
 }
 
-.amounts {
+.payment-message-1 {
     font-size: 2em;
+    margin-bottom: 10px;
+}
+
+.fiat-amount-wrapper {
+    display: inline-block;
+    text-align: left;
+    min-width: 180px;
+    white-space: nowrap;
+}
+
+.mbtc-amount-wrapper {
+    display: inline-block;
+    text-align: right;
+    min-width: 180px;
+    white-space: nowrap;
 }
 
 img.payment-request,

@@ -524,7 +524,6 @@ class PaymentCheckView(View):
             qr_code_src = generate_qr_code(receipt_url, size=3)
             data = {
                 'paid': 1,
-                'message': 'payment successful',
                 'receipt_url': receipt_url,
                 'qr_code_src': qr_code_src,
             }

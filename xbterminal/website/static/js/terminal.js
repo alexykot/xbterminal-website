@@ -62,7 +62,6 @@ var paymentCheck = function (checkURL) {
                 clearInterval(currentCheck);
                 $('.payment-init').hide();
                 $('.payment-success').show();
-                $('.payment-message').text(data.message);
                 $('.payment-receipt').
                     attr('alt', data.receipt_url).
                     attr('src', data.qr_code_src);
