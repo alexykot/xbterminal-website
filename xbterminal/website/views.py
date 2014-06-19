@@ -486,21 +486,17 @@ class PaymentResponseView(View):
             payment_request = PaymentRequest.objects.get(uid=self.kwargs.get('uid'))
         except PaymentRequest.DoesNotExist:
             raise Http404
-        transactions, payment_response = payment.protocol.parse_payment(message)
-        # Validate transactions
-        bc = payment.blockchain.BlockChain(payment_request.device.bitcoin_network)
-        if len(transactions) != 1:
-            return HttpResponseBadRequest()
-        incoming_tx = transactions[0]
-        if not bc.is_valid_transaction(incoming_tx):
+        # Validate payment
+        try:
+            incoming_tx, payment_ack = payment.validate_payment(payment_request, message)
+        except Exception:
             return HttpResponseBadRequest()
         # Create transaction
-        transaction = payment.create_transaction(payment_request, incoming_tx)
+        transaction = payment.forward_transaction(payment_request, incoming_tx)
         transaction.save()
         payment_request.transaction = transaction
         payment_request.save()
         # Send PaymentACK
-        payment_ack = payment.protocol.create_payment_ack(payment_response)
         response = HttpResponse(payment_ack.SerializeToString(),
                                 content_type='application/bitcoin-paymentack')
         response['Content-Transfer-Encoding'] = 'binary'

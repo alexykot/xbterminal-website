@@ -5,6 +5,7 @@ import datetime
 from decimal import Decimal
 import time
 
+from bitcoin.core import CTransaction
 from bitcoin.wallet import CBitcoinAddress
 
 import constance.config
@@ -14,6 +15,7 @@ from django.utils import timezone
 import payment.average
 import payment.blockchain
 import payment.instantfiat
+import payment.protocol
 
 from website.models import PaymentRequest, Transaction
 
@@ -104,7 +106,48 @@ def prepare_payment(device, fiat_amount):
     return request
 
 
-def create_transaction(payment_request, incoming_tx):
+class InvalidPayment(Exception):
+
+    def __init__(self, error_message):
+        super(InvalidPayment, self).__init__()
+        self.error_message = error_message
+
+    def __str__(self):
+        print(self.error_message)
+        return "Invalid payment: {0}".format(self.error_message)
+
+
+def validate_payment(payment_request, message):
+    """
+    Accepts:
+        payment_request: PaymentRequest instance
+        message: pb2-encoded payment message
+    Returns:
+        incoming_tx: CTransaction
+        payment_ack: PaymentACK message
+    """
+    bc = payment.blockchain.BlockChain(payment_request.device.bitcoin_network)
+    # Decode message
+    decoded_message = payment.protocol.parse_payment(message)
+    if len(decoded_message.transactions) != 1:
+        raise InvalidPayment('expecting single transaction')
+    incoming_tx = CTransaction.deserialize(decoded_message.transactions[0])
+    # Validate transaction
+    if not bc.is_valid_transaction(incoming_tx):
+        raise InvalidPayment('invalid transaction')
+    # Check amount
+    btc_amount = BTC_DEC_PLACES
+    for output in payment.blockchain.get_tx_outputs(incoming_tx):
+        if str(output['address']) == payment_request.local_address:
+            btc_amount += output['amount']
+    if btc_amount != payment_request.btc_amount:
+        raise InvalidPayment('wrong btc amount')
+    # Create PaymentACK
+    payment_ack = payment.protocol.create_payment_ack(decoded_message)
+    return incoming_tx, payment_ack
+
+
+def forward_transaction(payment_request, incoming_tx):
     """
     Accepts:
         payment_request: PaymentRequest instance
@@ -112,8 +155,6 @@ def create_transaction(payment_request, incoming_tx):
     """
     # Connect to bitcoind
     bc = payment.blockchain.BlockChain(payment_request.device.bitcoin_network)
-    # Accept incoming tx
-    # incoming_tx_id = bc.send_raw_transaction(incoming_tx)
     # Check current balance
     while True:
         current_balance = bc.get_address_balance(

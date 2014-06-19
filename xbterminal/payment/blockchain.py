@@ -6,6 +6,7 @@ import bitcoin
 import bitcoin.rpc
 from bitcoin.core import COIN, b2lx, CTransaction
 from bitcoin.core.serialize import Hash
+from bitcoin.wallet import CBitcoinAddress
 
 from django.conf import settings
 
@@ -147,6 +148,24 @@ def get_txid(transaction):
     Calculate transaction id
     Accepts:
         transaction: CTransaction
+    Returns:
+        transaction id
     """
     h = Hash(transaction.serialize())
     return binascii.hexlify(h)
+
+
+def get_tx_outputs(transaction):
+    """
+    Return transaction outputs
+    Accepts:
+        transaction: CTransaction
+    Returns:
+        outputs: list of outputs
+    """
+    outputs = []
+    for output in transaction.vout:
+        amount = Decimal(output.nValue) / COIN
+        address = CBitcoinAddress.from_scriptPubKey(output.scriptPubKey)
+        outputs.append({'amount': amount, 'address': address})
+    return outputs

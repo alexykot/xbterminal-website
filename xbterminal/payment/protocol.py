@@ -1,11 +1,9 @@
 """
 https://github.com/bitcoin/bips/blob/master/bip-0070.mediawiki
 """
-import datetime
 from decimal import Decimal
 import time
 
-from bitcoin.core import CTransaction
 from bitcoin.wallet import CBitcoinAddress
 
 from payment import paymentrequest_pb2
@@ -59,11 +57,7 @@ def create_payment_request(*args):
 def parse_payment(message):
     payment = paymentrequest_pb2.Payment()
     payment.ParseFromString(message)
-    transactions = []
-    for tx_serialized in payment.transactions:
-        tx = CTransaction.deserialize(tx_serialized)
-        transactions.append(tx)
-    return transactions, payment
+    return payment
 
 
 def create_payment_ack(payment):
