@@ -1,5 +1,7 @@
 {% extends "payment/base.html" %}
 
+{% block title %}Online POS{% endblock %}
+
 {% block content %}
 <div class="content">
     <form class="enter-amount" action="{% url 'website:payment_init' device.key %}" method="POST">

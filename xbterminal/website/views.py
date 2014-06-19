@@ -375,18 +375,17 @@ class DeviceMixin(ContextMixin):
 
     def get_context_data(self, **kwargs):
         context = super(DeviceMixin, self).get_context_data(**kwargs)
-        context['merchant'] = self.request.user.merchant
         try:
-            context['device'] = context['merchant'].device_set.get(
+            context['device'] = Device.objects.get(
                 key=self.kwargs.get('device_key'))
         except Device.DoesNotExist:
             raise Http404
         return context
 
 
-class PaymentView(TemplateResponseMixin, DeviceMixin, MerchantView):
+class PaymentView(TemplateResponseMixin, DeviceMixin, View):
     """
-    Online POS
+    Online POS (public view)
     """
 
     template_name = "payment/payment.html"
@@ -396,9 +395,9 @@ class PaymentView(TemplateResponseMixin, DeviceMixin, MerchantView):
         return self.render_to_response(context)
 
 
-class PaymentInitView(DeviceMixin, MerchantView):
+class PaymentInitView(DeviceMixin, View):
     """
-    Prepare payment and return payment uri
+    Prepare payment and return payment uri (public view)
     """
 
     def post(self, *args, **kwargs):
@@ -506,9 +505,9 @@ class PaymentResponseView(View):
         return response
 
 
-class PaymentCheckView(MerchantView):
+class PaymentCheckView(View):
     """
-    Check payment and return receipt
+    Check payment and return receipt (public view)
     """
 
     def get(self, *args, **kwargs):
