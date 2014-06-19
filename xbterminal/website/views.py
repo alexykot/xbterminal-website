@@ -392,7 +392,9 @@ class PaymentView(TemplateResponseMixin, DeviceMixin, View):
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        return self.render_to_response(context)
+        response = self.render_to_response(context)
+        response['X-Frame-Options'] = 'vendhq.com'
+        return response
 
 
 class PaymentInitView(DeviceMixin, View):
