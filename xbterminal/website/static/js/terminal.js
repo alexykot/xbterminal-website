@@ -21,6 +21,7 @@ var numKeys = {
     104: 8,
     105: 9
 };
+var maxDigits = 9;
 
 var paymentInit = function (form) {
     $.ajax({
@@ -78,6 +79,9 @@ $(function () {
 
     $('.enter-amount [name="amount"]').on('keydown', function (event) {
         var currentAmount = parseFloat($(this).val());
+        if (isNaN(currentAmount)) {
+            currentAmount = 0;
+        }
         var amount;
         if (event.which === backspace) {
             event.preventDefault();
@@ -85,8 +89,10 @@ $(function () {
             $(this).val(amount.toFixed(2));
         } else if (event.which in numKeys) {
             event.preventDefault();
-            amount = currentAmount * 10 + 0.01 * numKeys[event.which];
-            $(this).val(amount.toFixed(2));
+            if (currentAmount.toFixed(2).length <= maxDigits) {
+                amount = currentAmount * 10 + 0.01 * numKeys[event.which];
+                $(this).val(amount.toFixed(2));
+            }
         }
     });
 
