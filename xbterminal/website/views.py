@@ -392,7 +392,7 @@ class PaymentView(TemplateResponseMixin, DeviceMixin, View):
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         response = self.render_to_response(context)
-        response['X-Frame-Options'] = 'vendhq.com'
+        response['X-Frame-Options'] = 'ALLOW-FROM vendhq.com'
         return response
 
 
