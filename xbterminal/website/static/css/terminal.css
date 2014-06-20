@@ -65,6 +65,16 @@ body {
     width: 100%;
 }
 
+.enter-amount [name="amount"].error {
+    border: 2px solid red;
+}
+
+.enter-amount .error-message {
+    color: red;
+    display: none;
+    margin-top: 10px;
+}
+
 .payment-init,
 .payment-success {
     display: none;

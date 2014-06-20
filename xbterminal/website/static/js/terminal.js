@@ -25,22 +25,25 @@ var maxDigits = 9;
 
 var paymentInit = function (form) {
     var amountField = form.find('[name="amount"]');
-    if (parseFloat(amountField.val()) < 0.01) {
+    var amount = parseFloat(amountField.val());
+    if (isNaN(amount) || amount < 0.01) {
+        showErrorMessage('invalid amount');
         return false;
     }
+    hideErrorMessage();
     amountField.attr('disabled', true);
     $.ajax({
         url: form.attr('action'),
         method: 'POST',
         data: {
-            amount: amountField.val()
+            amount: amount
         },
         headers: {
             'X-CSRFToken': form.find('[name="csrfmiddlewaretoken"]').val()
         }
     }).done(function (data) {
-        form.hide();
         amountField.attr('disabled', false);
+        form.hide();
         $('.payment-init').show();
         $('.fiat-amount').text(data.fiat_amount.toFixed(2));
         $('.mbtc-amount').text(data.mbtc_amount.toFixed(2));
@@ -50,7 +53,21 @@ var paymentInit = function (form) {
             attr('src', data.qr_code_src);
         $('.payment-reset').text('Cancel');
         paymentCheck(data.check_url);
+    }).fail(function () {
+        showErrorMessage('server error');
     });
+};
+
+var showErrorMessage = function (errorMessage) {
+    $('.error-message').html(errorMessage).show();
+    $('.enter-amount [name="amount"]')
+        .attr('disabled', false)
+        .addClass('error')
+        .focus();
+};
+var hideErrorMessage = function () {
+    $('.error-message').hide();
+    $('.enter-amount [name="amount"]').removeClass('error');
 };
 
 var currentCheck;
@@ -77,6 +94,7 @@ var paymentReset = function () {
         clearInterval(currentCheck);
         currentCheck = undefined;
     }
+    hideErrorMessage();
     $('.enter-amount [name="amount"]')
         .val('0.00')
         .attr('disabled', false)
