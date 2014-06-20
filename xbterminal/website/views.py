@@ -493,11 +493,9 @@ class PaymentResponseView(View):
             return HttpResponseBadRequest()
         # Validate payment
         try:
-            incoming_tx_id = payment.validate_payment(payment_request, transactions)
+            payment.validate_payment(payment_request, transactions)
         except Exception as error:
             return HttpResponseBadRequest()
-        # Create outgoing transaction
-        payment.forward_transaction(payment_request, incoming_tx_id)
         # Send PaymentACK
         response = HttpResponse(payment_ack.SerializeToString(),
                                 content_type='application/bitcoin-paymentack')

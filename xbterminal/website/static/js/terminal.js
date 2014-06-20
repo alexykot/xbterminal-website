@@ -76,7 +76,10 @@ var paymentReset = function () {
         clearInterval(currentCheck);
         currentCheck = undefined;
     }
-    $('.enter-amount [name="amount"]').val('0.00').focus();
+    $('.enter-amount [name="amount"]')
+        .val('0.00')
+        .attr('disabled', false)
+        .focus();
     $('.payment-init, .payment-success').hide();
     $('.enter-amount').show();
 };

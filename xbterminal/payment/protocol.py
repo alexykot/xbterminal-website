@@ -2,12 +2,15 @@
 https://github.com/bitcoin/bips/blob/master/bip-0070.mediawiki
 """
 from decimal import Decimal
+import logging
 import time
 
 from bitcoin.core import CTransaction
 from bitcoin.wallet import CBitcoinAddress
 
 from payment import paymentrequest_pb2
+
+logger = logging.getLogger(__name__)
 
 
 def create_output(address, amount):
@@ -20,7 +23,11 @@ def create_output(address, amount):
     # Convert to satoshis
     output.amount = int(amount / Decimal('0.00000001'))
     # Convert address to script
-    output.script = CBitcoinAddress(address).to_scriptPubKey()
+    try:
+        output.script = CBitcoinAddress(address).to_scriptPubKey()
+    except ValueError:
+        logger.error("Invalid address: {0}".format(address))
+        raise
     return output
 
 

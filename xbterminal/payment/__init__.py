@@ -6,6 +6,7 @@ from decimal import Decimal
 import time
 
 from bitcoin.wallet import CBitcoinAddress
+import rq
 
 from django.utils import timezone
 import constance.config
@@ -101,29 +102,44 @@ def prepare_payment(device, fiat_amount):
         created=now,
         expires=now + datetime.timedelta(minutes=10),
         **details)
-    # http://python-rq.org/docs/
-    # https://github.com/ui/django-rq
-    queue = django_rq.get_queue()
-    queue.enqueue_call(func=wait_for_payment,
-                       args=(request,),
-                       timeout=15 * 60)
+    # Schedule tasks
+    scheduler = django_rq.get_scheduler()
+    scheduler.schedule(
+        scheduled_time=timezone.now(),
+        func=wait_for_payment,
+        args=[request.uid],
+        interval=2,
+        repeat=450,  # Repeat for 15 minutes
+        result_ttl=3600)
+    scheduler.schedule(
+        scheduled_time=timezone.now(),
+        func=wait_for_validation,
+        args=[request.uid],
+        interval=2,
+        repeat=600,  # Repeat for 20 minutes
+        result_ttl=3600)
     return request
 
 
-def wait_for_payment(payment_request):
+def wait_for_payment(payment_request_uid):
+    """
+    Asynchronous task
+    Accepts:
+        payment_request_uid: PaymentRequest unique identifier
+    """
+    # Check current balance
+    payment_request = PaymentRequest.objects.get(uid=payment_request_uid)
+    if payment_request.incoming_tx_id is not None:
+        # Payment already validated, cancel task
+        django_rq.get_scheduler().cancel(rq.get_current_job())
+        return
     # Connect to bitcoind
     bc = payment.blockchain.BlockChain(payment_request.device.bitcoin_network)
-    # Check current balance
-    transactions = []
-    while not transactions:
-        now = timezone.localtime(timezone.now())
-        if now > payment_request.expires:
-            return
-        transactions = bc.get_unspent_transactions(
-            CBitcoinAddress(payment_request.local_address))
-        time.sleep(1)
-    incoming_tx_id = validate_payment(payment_request, transactions)
-    # Save somewhere
+    transactions = bc.get_unspent_transactions(
+        CBitcoinAddress(payment_request.local_address))
+    if transactions:
+        validate_payment(payment_request, transactions)
+        django_rq.get_scheduler().cancel(rq.get_current_job())
 
 
 class InvalidPayment(Exception):
@@ -138,11 +154,11 @@ class InvalidPayment(Exception):
 
 def validate_payment(payment_request, transactions):
     """
+    Validates payment and stores incoming transaction id
+    in PaymentRequest instance
     Accepts:
         payment_request: PaymentRequest instance
         transactions: list of CTransaction
-    Returns:
-        incoming_tx_id: transaction id
     """
     bc = payment.blockchain.BlockChain(payment_request.device.bitcoin_network)
     if len(transactions) != 1:
@@ -158,15 +174,30 @@ def validate_payment(payment_request, transactions):
             btc_amount += output['amount']
     if btc_amount < payment_request.btc_amount:
         raise InvalidPayment('insufficient funds')
-    incoming_tx_id = payment.blockchain.get_txid(incoming_tx)
-    return incoming_tx_id
+    # Save incoming transaction id
+    payment_request.incoming_tx_id = payment.blockchain.get_txid(incoming_tx)
+    payment_request.save()
 
 
-def forward_transaction(payment_request, incoming_tx_id):
+def wait_for_validation(payment_request_uid):
+    """
+    Asynchronous task
+    Accepts:
+        payment_request_uid: PaymentRequest unique identifier
+    """
+    payment_request = PaymentRequest.objects.get(uid=payment_request_uid)
+    if payment_request.incoming_tx_id is not None:
+        django_rq.get_scheduler().cancel(rq.get_current_job())
+        if payment_request.transaction is not None:
+            # Payment already forwarded, skip
+            return
+        forward_transaction(payment_request)
+
+
+def forward_transaction(payment_request):
     """
     Accepts:
         payment_request: PaymentRequest instance
-        incoming_tx_id: validated incoming transaction id
     """
     # Connect to bitcoind
     bc = payment.blockchain.BlockChain(payment_request.device.bitcoin_network)
@@ -174,7 +205,7 @@ def forward_transaction(payment_request, incoming_tx_id):
     incoming_tx = None
     while incoming_tx is None:
         try:
-            incoming_tx = bc.get_raw_transaction(incoming_tx_id)
+            incoming_tx = bc.get_raw_transaction(payment_request.incoming_tx_id)
         except IndexError as error:
             pass
         time.sleep(1)
@@ -200,7 +231,7 @@ def forward_transaction(payment_request, incoming_tx_id):
         hop_address=payment_request.local_address,
         dest_address=payment_request.merchant_address,
         instantfiat_address=payment_request.instantfiat_address,
-        bitcoin_transaction_id_1=incoming_tx_id,
+        bitcoin_transaction_id_1=payment_request.incoming_tx_id,
         bitcoin_transaction_id_2=outgoing_tx_id,
         fiat_currency=payment_request.fiat_currency,
         fiat_amount=payment_request.fiat_amount,
