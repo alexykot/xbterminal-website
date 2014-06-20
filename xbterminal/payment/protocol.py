@@ -23,10 +23,12 @@ def create_output(address, amount):
     # Convert to satoshis
     output.amount = int(amount / Decimal('0.00000001'))
     # Convert address to script
+    address = CBitcoinAddress(address)
     try:
-        output.script = CBitcoinAddress(address).to_scriptPubKey()
+        output.script = address.to_scriptPubKey()
     except ValueError:
-        logger.error("Invalid address: {0}".format(address))
+        logger.error("Invalid address: {0}, nVersion: {1}".format(
+            str(address), str(address.nVersion)))
         raise
     return output
 
