@@ -138,7 +138,7 @@ $(function () {
         paymentReset();
     });
 
-    $(document).on('keydown mousemove', function (event) {
+    $(document).on('keydown click', function (event) {
         lastActivity = new Date().getTime();
     });
 
