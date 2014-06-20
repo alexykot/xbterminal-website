@@ -48,6 +48,7 @@ var paymentInit = function (form) {
         $('.payment-request').
             attr('alt', data.payment_uri).
             attr('src', data.qr_code_src);
+        $('.payment-reset').text('Cancel');
         paymentCheck(data.check_url);
     });
 };
@@ -80,6 +81,7 @@ var paymentReset = function () {
         .val('0.00')
         .attr('disabled', false)
         .focus();
+    $('.payment-reset').text('Reset');
     $('.payment-init, .payment-success').hide();
     $('.enter-amount').show();
 };
