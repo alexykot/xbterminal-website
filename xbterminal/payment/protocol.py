@@ -5,6 +5,7 @@ from decimal import Decimal
 import logging
 import time
 
+import bitcoin
 from bitcoin.core import CTransaction
 from bitcoin.wallet import CBitcoinAddress
 
@@ -23,13 +24,7 @@ def create_output(address, amount):
     # Convert to satoshis
     output.amount = int(amount / Decimal('0.00000001'))
     # Convert address to script
-    address = CBitcoinAddress(address)
-    try:
-        output.script = address.to_scriptPubKey()
-    except ValueError:
-        logger.error("Invalid address: {0}, nVersion: {1}".format(
-            str(address), str(address.nVersion)))
-        raise
+    output.script = CBitcoinAddress(address).to_scriptPubKey()
     return output
 
 
@@ -45,6 +40,7 @@ def create_payment_details(network, outputs, created, expires,
         memo: note that should be displayed to the customer
     """
     details = paymentrequest_pb2.PaymentDetails()
+    bitcoin.SelectParams(network)
     if network == "mainnet":
         details.network = "main"
     elif network == "testnet":

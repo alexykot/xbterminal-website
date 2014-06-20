@@ -40,7 +40,6 @@ from website.utils import (
     send_reconciliation,
     generate_qr_code)
 
-import payment.average
 import payment.blockchain
 import payment.protocol
 

@@ -1,10 +1,9 @@
-import binascii
 from decimal import Decimal
 import hashlib
 
 import bitcoin
 import bitcoin.rpc
-from bitcoin.core import COIN, x, b2lx, CTransaction
+from bitcoin.core import COIN, x, b2x, b2lx, CTransaction
 from bitcoin.core.serialize import Hash
 from bitcoin.wallet import CBitcoinAddress
 
@@ -67,7 +66,7 @@ class BlockChain(object):
         txouts = self._proxy.listunspent(minconf=0, addrs=[address])
         transactions = []
         for out in txouts:
-            txid = b2lx(out['outpoint'].hash)
+            txid = b2x(out['outpoint'].hash)
             transactions.append(self.get_raw_transaction(txid))
         return transactions
 
@@ -106,7 +105,7 @@ class BlockChain(object):
         inputs_ = []
         for outpoint in inputs:
             inputs_.append({
-                'txid': b2lx(outpoint.hash),
+                'txid': b2lx(outpoint.hash),  # b2lx, not b2x
                 'vout': outpoint.n,
             })
         # Convert decimal to float, filter outputs
@@ -118,8 +117,7 @@ class BlockChain(object):
         # Create transaction
         transaction_hex = self._proxy.createrawtransaction(
             inputs_, outputs_)
-        transaction = CTransaction.deserialize(
-            binascii.unhexlify(transaction_hex))
+        transaction = CTransaction.deserialize(x(transaction_hex))
         return transaction
 
     def sign_raw_transaction(self, transaction):
@@ -139,10 +137,10 @@ class BlockChain(object):
         Accepts:
             transaction: CTransaction
         Returns:
-            transaction_id: string
+            transaction_id: hex string
         """
         transaction_id = self._proxy.sendrawtransaction(transaction)
-        return b2lx(transaction_id)
+        return b2x(transaction_id)
 
 
 class InvalidTransaction(Exception):
@@ -173,10 +171,10 @@ def get_txid(transaction):
     Accepts:
         transaction: CTransaction
     Returns:
-        transaction id
+        transaction id (hex)
     """
     h = Hash(transaction.serialize())
-    return binascii.hexlify(h)
+    return b2x(h)
 
 
 def get_tx_outputs(transaction):
