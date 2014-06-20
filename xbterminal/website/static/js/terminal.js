@@ -124,6 +124,16 @@ $(function () {
         lastActivity = new Date().getTime();
     });
 
+    // Change amount field type for Android/Apple devices
+    if (/android|iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase())) {
+        $('.enter-amount [name="amount"]')
+            .attr('type', 'number')
+            .attr('min', '0.00')
+            .attr('max', '9999999.99')
+            .attr('step', '0.01')
+            .attr('pattern', '[0-9]*');
+    }
+
     // Reset after 15 minutes of inactivity
     setInterval(function () {
         var now = new Date().getTime();

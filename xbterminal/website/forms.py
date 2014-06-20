@@ -151,6 +151,6 @@ class SendDailyReconciliationForm(forms.ModelForm):
 
 
 class EnterAmountForm(forms.Form):
-    amount = forms.DecimalField(max_digits=20,
-                                decimal_places=8,
+    amount = forms.DecimalField(max_digits=9,
+                                decimal_places=2,
                                 min_value=Decimal('0.01'))
