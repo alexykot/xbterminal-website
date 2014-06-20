@@ -1,0 +1,14 @@
+[program:rqworker]
+directory=/repo_root/
+command=/repo_root/venv/bin/python /repo_root/xbterminal/manage.py rqworker
+user=xbterminal
+group=xbterminal
+
+[program:rqscheduler]
+directory=/repo_root/
+command=/repo_root/venv/bin/python /repo_root/xbterminal/manage.py rqscheduler --interval=1
+user=xbterminal
+group=xbterminal
+
+[group:xbterminal]
+programs=rqscheduler,rqworker

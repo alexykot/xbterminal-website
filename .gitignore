@@ -8,6 +8,7 @@ cert
 .idea/*
 config/xbterminal.ini
 config/xbterminal.conf
+config/supervisor.ini
 *.log
 firmware
 logs
