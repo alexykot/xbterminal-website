@@ -396,18 +396,25 @@ class PaymentView(TemplateResponseMixin, DeviceMixin, View):
         return response
 
 
-class PaymentInitView(DeviceMixin, View):
+class PaymentInitView(View):
     """
     Prepare payment and return payment uri (public view)
     """
 
+    @csrf_exempt
+    def dispatch(self, *args, **kwargs):
+        return super(PaymentInitView, self).dispatch(*args, **kwargs)
+
     def post(self, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
         form = EnterAmountForm(self.request.POST)
         if not form.is_valid():
             return HttpResponseBadRequest()
         # Prepare payment request
-        payment_request = payment.prepare_payment(context['device'],
+        try:
+            device = Device.objects.get(key=form.cleaned_data['device_key'])
+        except Device.DoesNotExist:
+            raise Http404
+        payment_request = payment.prepare_payment(device,
                                                   form.cleaned_data['amount'])
         payment_request.save()
         payment_request_url = self.request.build_absolute_uri(reverse(

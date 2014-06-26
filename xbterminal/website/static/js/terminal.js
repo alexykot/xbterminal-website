@@ -36,10 +36,8 @@ var paymentInit = function (form) {
         url: form.attr('action'),
         method: 'POST',
         data: {
+            device_key: form.data('device-key'),
             amount: amount
-        },
-        headers: {
-            'X-CSRFToken': form.find('[name="csrfmiddlewaretoken"]').val()
         }
     }).done(function (data) {
         amountField.attr('disabled', false);
