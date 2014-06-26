@@ -6,11 +6,7 @@ from views import (
     DeviceView,
     DeviceList,
     SubscribeNewsView,
-    PaymentView,
-    PaymentInitView,
-    PaymentRequestView,
-    PaymentResponseView,
-    PaymentCheckView)
+    PaymentView)
 
 urlpatterns = patterns('website.views',
     url(r'^$', 'landing', name='landing'),
@@ -45,8 +41,4 @@ urlpatterns = patterns('website.views',
         name='send_all_to_email'),
 
     url(r'^terminals/(?P<device_key>[0-9a-fA-F]{32})/pos$', PaymentView.as_view(), name='payment'),
-    url(r'^payment/init$', PaymentInitView.as_view(), name='payment_init'),
-    url(r'^payment/(?P<uid>.+)/request$', PaymentRequestView.as_view(), name='payment_request'),
-    url(r'^payment/(?P<uid>.+)/response$', PaymentResponseView.as_view(), name='payment_response'),
-    url(r'^payment/(?P<uid>.+)/check$', PaymentCheckView.as_view(), name='payment_check'),
 )

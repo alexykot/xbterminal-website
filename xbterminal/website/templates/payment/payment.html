@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="content">
-    <form class="enter-amount" action="{% url 'website:payment_init' %}" method="POST" data-device-key="{{ device.key }}">
+    <form class="enter-amount" action="{% url 'api:payment_init' %}" method="POST" data-device-key="{{ device.key }}">
         <label class="amount-label">amount</label>
         <div class="amount-wrapper">
             <div class="gbp-symbol">£</div>
