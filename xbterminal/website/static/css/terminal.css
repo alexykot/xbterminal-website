@@ -1,0 +1,129 @@
+body {
+    background-color: #E6E6E6;
+    font-family: 'DejaVu Sans', sans;
+    margin: 0;
+}
+
+.container {
+    margin: 10px auto;
+    text-align: center;
+    width: 800px;
+}
+
+.header:after {
+    clear: both;
+    content: ".";
+    display: block;
+    visibility: hidden;
+}
+
+.logo {
+    float: left;
+    width: 33%;
+}
+
+.testnet-notice {
+    color: #AF1221;
+    float: left;
+    font-weight: bold;
+    width: 33%;
+}
+
+.merchant-info {
+    float: left;
+    font-style: italic;
+    width: 33%;
+}
+
+
+.enter-amount {
+    margin-top: 50px;
+}
+
+.enter-amount .amount-label {
+    font-size: 1.2em;
+}
+
+.enter-amount .amount-wrapper {
+    margin: 10px auto 0;
+    padding-right: 6px;
+    position: relative;
+    width: 300px;
+}
+
+.enter-amount .gbp-symbol {
+    font-size: 3em;
+    left: -40px;
+    position: absolute;
+    width: 40px;
+}
+
+.enter-amount [name="amount"] {
+    border: 2px solid #CCC;
+    font-size: 2.4em;
+    text-align: right;
+    width: 100%;
+}
+
+.enter-amount [name="amount"].error {
+    border: 2px solid red;
+}
+
+.enter-amount .error-message {
+    color: red;
+    display: none;
+    margin-top: 10px;
+}
+
+.payment-init,
+.payment-success {
+    display: none;
+}
+
+.payment-message-1 {
+    font-size: 2em;
+    margin-bottom: 10px;
+}
+
+.payment-init .fiat-amount-wrapper {
+    display: inline-block;
+    text-align: left;
+    min-width: 180px;
+    white-space: nowrap;
+}
+
+.payment-init .mbtc-amount-wrapper {
+    display: inline-block;
+    text-align: right;
+    min-width: 180px;
+    white-space: nowrap;
+}
+
+img.payment-request,
+img.payment-receipt {
+    margin-top: 20px;
+}
+
+button {
+    height: 50px;
+    font-size: 1.2em;
+    margin-top: 20px;
+    width: 120px;
+}
+
+@media screen and (max-width: 768px) {
+    .container {
+        width: 100%;
+    }
+
+    .logo,
+    .testnet-notice,
+    .merchant-info {
+        float: none;
+        width: 100%;
+    }
+
+    .enter-amount .amount-wrapper {
+        width: 240px;
+    }
+}

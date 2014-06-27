@@ -16,3 +16,9 @@ unicodecsv==0.9.4
 -e git+https://github.com/comoga/django-constance.git@987e13f1ae24b419574d09d88097f41b7bd6ffc1#egg=django-constance-dev
 django-picklefield==0.3.1
 pytz>=2014.3
+requests==2.3.0
+python-bitcoinlib==0.1.1
+protobuf==2.5.0
+qrcode==4.0.4
+django-rq==0.6.2
+rq-scheduler==0.5.0

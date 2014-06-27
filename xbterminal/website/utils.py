@@ -3,6 +3,8 @@ import unicodecsv
 from zipfile import ZipFile
 from decimal import Decimal
 
+import qrcode
+
 from django.core.mail import EmailMessage
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -96,3 +98,16 @@ def send_reconciliation(recipient, device, rec_range):
         email.attach('receipts.zip', archive.getvalue(), 'application/x-zip-compressed')
 
     email.send(fail_silently=False)
+
+
+def generate_qr_code(text, size=4):
+    """
+    Generate base64-encoded QR code
+    """
+    qr_output = StringIO()
+    qr_code = qrcode.make(text, box_size=size)
+    qr_code.save(qr_output, "PNG")
+    qr_code_src = "data:image/png;base64,{0}".format(
+        qr_output.getvalue().encode("base64"))
+    qr_output.close()
+    return qr_code_src

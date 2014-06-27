@@ -1,5 +1,8 @@
+from decimal import Decimal
+
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm as DjangoAuthenticationForm
+from django.core.validators import RegexValidator
 
 from website.models import MerchantAccount, Device, ReconciliationTime
 from website.fields import BCAddressField
@@ -145,3 +148,16 @@ class SendDailyReconciliationForm(forms.ModelForm):
     class Meta:
         model = ReconciliationTime
         fields = ['email', 'time']
+
+
+class EnterAmountForm(forms.Form):
+
+    device_key = forms.CharField(
+        validators=[RegexValidator('^[0-9a-fA-F]{32}$')])
+    amount = forms.DecimalField(
+        max_digits=9,
+        decimal_places=2,
+        min_value=Decimal('0.01'))
+    bt_mac = forms.CharField(
+        required=False,
+        validators=[RegexValidator('^[0-9a-fA-F:]{17}$')])

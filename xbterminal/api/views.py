@@ -1,20 +1,29 @@
-# coding=utf-8
+from decimal import Decimal
+import json
 import os
 
 from django.shortcuts import get_object_or_404
 from django.conf import settings
-from django.http import HttpResponse
+from django.core.urlresolvers import reverse
+from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.utils import timezone
-from django.http import Http404
+from django.views.generic import View
+from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.generics import CreateAPIView
 from constance import config
 
-from website.models import Device, Transaction, Firmware
+from website.models import Device, Transaction, Firmware, PaymentOrder
+from website.forms import EnterAmountForm
+from website.utils import generate_qr_code
 from api.serializers import TransactionSerializer
 from api.shotcuts import render_to_pdf
+
+import payment
+import payment.blockchain
+import payment.protocol
 
 
 @api_view(['GET'])
@@ -100,3 +109,153 @@ def firmware_updated(request, key):
     device.save()
 
     return Response()
+
+
+class PaymentInitView(View):
+    """
+    Prepare payment and return payment uri
+    """
+
+    @csrf_exempt
+    def dispatch(self, *args, **kwargs):
+        return super(PaymentInitView, self).dispatch(*args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        form = EnterAmountForm(self.request.POST)
+        if not form.is_valid():
+            return HttpResponseBadRequest()
+        # Prepare payment order
+        try:
+            device = Device.objects.get(key=form.cleaned_data['device_key'])
+        except Device.DoesNotExist:
+            raise Http404
+        payment_order = payment.prepare_payment(device,
+                                                form.cleaned_data['amount'])
+        # Urls
+        if form.cleaned_data['bt_mac']:
+            # Payment with terminal
+            payment_request_url = payment_response_url = 'bt:{mac}'.format(
+                mac=form.cleaned_data['bt_mac'].replace(':', ''))
+        else:
+            payment_request_url = self.request.build_absolute_uri(reverse(
+                'api:payment_request',
+                kwargs={'payment_uid': payment_order.uid}))
+            payment_response_url = self.request.build_absolute_uri(reverse(
+                'api:payment_response',
+                kwargs={'payment_uid': payment_order.uid}))
+        payment_check_url = self.request.build_absolute_uri(reverse(
+            'api:payment_check',
+            kwargs={'payment_uid': payment_order.uid}))
+        # Create payment request
+        payment_order.request = payment.protocol.create_payment_request(
+            payment_order.device.bitcoin_network,
+            [(payment_order.local_address, payment_order.btc_amount)],
+            payment_order.created,
+            payment_order.expires,
+            payment_response_url,
+            "xbterminal.com")
+        payment_order.save()
+        # Create bitcoin uri
+        payment_uri = payment.blockchain.construct_bitcoin_uri(
+            payment_order.local_address,
+            payment_order.btc_amount,
+            payment_request_url)
+        # Return JSON
+        data = {
+            'fiat_amount': float(payment_order.fiat_amount),
+            'mbtc_amount': float(payment_order.btc_amount / Decimal('0.001')),
+            'exchange_rate': float(payment_order.effective_exchange_rate * Decimal('0.001')),
+            'payment_uri': payment_uri,
+            'qr_code_src': generate_qr_code(payment_uri, size=4),
+            'check_url': payment_check_url,
+        }
+        if form.cleaned_data['bt_mac']:
+            # Append payment uid and payment request for terminals
+            data['payment_uid'] = payment_order.uid
+            data['payment_request'] = payment_order.request
+        response = HttpResponse(json.dumps(data),
+                                content_type='application/json')
+        return response
+
+
+class PaymentRequestView(View):
+    """
+    Send PaymentRequest
+    """
+
+    def get(self, *args, **kwargs):
+        try:
+            payment_order = PaymentOrder.objects.get(uid=self.kwargs.get('payment_uid'))
+        except PaymentOrder.DoesNotExist:
+            raise Http404
+        if payment_order.expires < timezone.now():
+            raise Http404
+        response = HttpResponse(payment_order.request,
+                                content_type='application/bitcoin-paymentrequest')
+        response['Content-Transfer-Encoding'] = 'binary'
+        return response
+
+
+class PaymentResponseView(View):
+    """
+    Accept and forward payment
+    """
+
+    @csrf_exempt
+    def dispatch(self, *args, **kwargs):
+        return super(PaymentResponseView, self).dispatch(*args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        try:
+            payment_order = PaymentOrder.objects.get(uid=self.kwargs.get('payment_uid'))
+        except PaymentOrder.DoesNotExist:
+            raise Http404
+        # Check and parse message
+        content_type = self.request.META.get('CONTENT_TYPE')
+        if content_type != 'application/bitcoin-payment':
+            return HttpResponseBadRequest()
+        message = self.request.body
+        if len(message) > 50000:
+            # Payment messages larger than 50,000 bytes should be rejected by server
+            return HttpResponseBadRequest()
+        try:
+            transactions, payment_ack = payment.protocol.parse_payment(message)
+        except Exception:
+            return HttpResponseBadRequest()
+        # Validate payment
+        try:
+            payment.validate_payment(payment_order, transactions)
+        except Exception as error:
+            return HttpResponseBadRequest()
+        # Send PaymentACK
+        response = HttpResponse(payment_ack,
+                                content_type='application/bitcoin-paymentack')
+        response['Content-Transfer-Encoding'] = 'binary'
+        return response
+
+
+class PaymentCheckView(View):
+    """
+    Check payment and return receipt
+    """
+
+    def get(self, *args, **kwargs):
+        try:
+            payment_order = PaymentOrder.objects.get(uid=self.kwargs.get('payment_uid'))
+        except PaymentOrder.DoesNotExist:
+            raise Http404
+        if payment_order.transaction is None:
+            data = {'paid': 0}
+        else:
+            receipt_url = self.request.build_absolute_uri(reverse(
+                'api:transaction_pdf',
+                kwargs={'key': payment_order.transaction.receipt_key}))
+            qr_code_src = generate_qr_code(receipt_url, size=3)
+            data = {
+                'paid': 1,
+                'receipt_url': receipt_url,
+                'qr_code_src': qr_code_src,
+            }
+        response = HttpResponse(json.dumps(data),
+                                content_type='application/json')
+        return response

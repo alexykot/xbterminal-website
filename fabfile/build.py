@@ -1,6 +1,11 @@
 import re
 
-from fabric.api import env, task, settings, prefix, local
+from fabric.api import env, task, settings, prefix, local, lcd
+
+
+@task
+def log_dir():
+    env.run("mkdir -p logs")
 
 
 @task
@@ -31,7 +36,18 @@ def venv():
         env.run("touch venv/bin/activate")
 
 
+@task
+def proto():
+    with lcd("xbterminal/payment"):
+        local("wget -O paymentrequest.proto "
+              "https://raw.githubusercontent.com"
+              "/bitcoin/bips/master/bip-0070/paymentrequest.proto")
+        local("protoc --python_out . "
+              "paymentrequest.proto")
+
+
 @task(default=True)
 def all():
+    log_dir()
     firmware_dir()
     venv()

@@ -22,6 +22,34 @@ SECRET_KEY = '2d$h2q_vukyb190m^6#q)k_rc!+dn8!m5=pc!&e!vckabjqqll'
 DEBUG = False
 TEMPLATE_DEBUG = False
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {
+            'format': '%(asctime)s %(name)s [%(levelname)s] :: %(message)s',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, '..', 'logs', 'django.log'),
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'django.request': {
+            'propagate': True,
+        },
+    },
+    'root': {
+        'handlers': ['file'],
+        'level': 'DEBUG',
+    },
+}
+
+
 ALLOWED_HOSTS = []
 
 
@@ -43,6 +71,7 @@ INSTALLED_APPS = (
     'qrcode',
     'constance',
     'constance.backends.database',
+    'django_rq',
 
     'website',
     'api'
@@ -99,7 +128,7 @@ CONTACT_EMAIL_RECIPIENTS = ["info@xbterminal.com"]
 APPEND_SLASH = True
 
 LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/devices/'
+LOGIN_REDIRECT_URL = '/terminals/'
 
 SITE_ID = 1
 
@@ -126,7 +155,20 @@ CONSTANCE_CONFIG = {
     'OUR_FEE_SHARE': (0.005, ' '),
 }
 
+RQ_QUEUES = {
+    'default': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DB': 1,
+    },
+}
+
 FIRMWARE_PATH = os.path.join(BASE_DIR, '..', 'firmware')
+
+BITCOIND_HOST = "node.xbterminal.com"
+BITCOIND_AUTH = {
+    "testnet": ("root", "password"),
+}
 
 # Override default settings
 try:

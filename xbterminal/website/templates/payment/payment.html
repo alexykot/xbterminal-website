@@ -1,0 +1,31 @@
+{% extends "payment/base.html" %}
+
+{% block title %}Online POS{% endblock %}
+
+{% block content %}
+<div class="content">
+    <form class="enter-amount" action="{% url 'api:payment_init' %}" method="POST" data-device-key="{{ device.key }}">
+        <label class="amount-label">amount</label>
+        <div class="amount-wrapper">
+            <div class="gbp-symbol">£</div>
+            <input type="text" name="amount" value="0.00" autofocus>
+        </div>
+        <div class="error-message"></div>
+        <button type="submit">Pay now</button>
+    </form>
+    <div class="payment-init">
+        <div class="payment-message-1">
+            <div class="fiat-amount-wrapper">£ <span class="fiat-amount"></span></div>
+            <div class="mbtc-amount-wrapper">m฿ <span class="mbtc-amount"></span></div>
+        </div>
+        <div class="payment-message-2">exchange rate: <span class="exchange-rate"></span></div>
+        <img class="payment-request">
+    </div>
+    <div class="payment-success">
+        <div class="payment-message-1">payment successful</div>
+        <div class="payment-message-2">SCAN QR CODE FOR RECEIPT</div>
+        <img class="payment-receipt">
+    </div>
+    <button class="payment-reset">Reset</button>
+</div>
+{% endblock %}
