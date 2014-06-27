@@ -132,12 +132,17 @@ class PaymentInitView(View):
         payment_order = payment.prepare_payment(device,
                                                 form.cleaned_data['amount'])
         # Urls
-        payment_request_url = self.request.build_absolute_uri(reverse(
-            'api:payment_request',
-            kwargs={'payment_uid': payment_order.uid}))
-        payment_response_url = self.request.build_absolute_uri(reverse(
-            'api:payment_response',
-            kwargs={'payment_uid': payment_order.uid}))
+        if form.cleaned_data['bt_mac']:
+            # Payment with terminal
+            payment_request_url = payment_response_url = 'bt:{mac}'.format(
+                mac=form.cleaned_data['bt_mac'])
+        else:
+            payment_request_url = self.request.build_absolute_uri(reverse(
+                'api:payment_request',
+                kwargs={'payment_uid': payment_order.uid}))
+            payment_response_url = self.request.build_absolute_uri(reverse(
+                'api:payment_response',
+                kwargs={'payment_uid': payment_order.uid}))
         payment_check_url = self.request.build_absolute_uri(reverse(
             'api:payment_check',
             kwargs={'payment_uid': payment_order.uid}))
@@ -150,21 +155,24 @@ class PaymentInitView(View):
             payment_response_url,
             "xbterminal.com")
         payment_order.save()
-        # Create bitcoin uri and QR code
+        # Create bitcoin uri
         payment_uri = payment.blockchain.construct_bitcoin_uri(
             payment_order.local_address,
             payment_order.btc_amount,
             payment_request_url)
-        qr_code_src = generate_qr_code(payment_uri, size=4)
         # Return JSON
         data = {
             'fiat_amount': float(payment_order.fiat_amount),
             'mbtc_amount': float(payment_order.btc_amount / Decimal('0.001')),
             'exchange_rate': float(payment_order.effective_exchange_rate * Decimal('0.001')),
             'payment_uri': payment_uri,
-            'qr_code_src': qr_code_src,
+            'qr_code_src': generate_qr_code(payment_uri, size=4),
             'check_url': payment_check_url,
         }
+        if form.cleaned_data['bt_mac']:
+            # Append payment uid and payment request for terminals
+            data['payment_uid'] = payment_order.uid
+            data['payment_request'] = payment_order.request
         response = HttpResponse(json.dumps(data),
                                 content_type='application/json')
         return response

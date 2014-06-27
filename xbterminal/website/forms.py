@@ -158,3 +158,6 @@ class EnterAmountForm(forms.Form):
         max_digits=9,
         decimal_places=2,
         min_value=Decimal('0.01'))
+    bt_mac = forms.CharField(
+        required=False,
+        validators=[RegexValidator('^[0-9a-fA-F:]{17}$')])
