@@ -193,15 +193,17 @@ class Firmware(models.Model):
         return 'firmware %s' % self.version
 
 
-class PaymentRequest(models.Model):
+class PaymentOrder(models.Model):
 
     uid = models.CharField(max_length=32,
                            editable=False,
                            unique=True,
                            default=lambda: uuid.uuid4().hex)
     device = models.ForeignKey(Device)
+    request = models.BinaryField()
     created = models.DateTimeField()
     expires = models.DateTimeField()
+    
 
     # Payment details
     local_address = models.CharField(max_length=35, validators=[validate_bitcoin])
