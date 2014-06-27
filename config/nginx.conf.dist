@@ -25,6 +25,11 @@ server {
     location / {
         uwsgi_pass unix:///tmp/xbterminal.com.sock;
         include uwsgi_params;
+
+        # http://stackoverflow.com/questions/11943491/accessing-django-admin-over-https-behind-nginx
+        # https://docs.djangoproject.com/en/1.6/ref/settings/#secure-proxy-ssl-header
+        # uwsgi_param HTTP_X_FORWARDED_PROTO https;
+        # uwsgi_param UWSGI_SCHEME $scheme;
     }
 
     location /static {
