@@ -135,7 +135,7 @@ class PaymentInitView(View):
         if form.cleaned_data['bt_mac']:
             # Payment with terminal
             payment_request_url = payment_response_url = 'bt:{mac}'.format(
-                mac=form.cleaned_data['bt_mac'])
+                mac=form.cleaned_data['bt_mac'].replace(':', ''))
         else:
             payment_request_url = self.request.build_absolute_uri(reverse(
                 'api:payment_request',
