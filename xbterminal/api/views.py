@@ -131,19 +131,31 @@ class PaymentInitView(View):
             raise Http404
         payment_order = payment.prepare_payment(device,
                                                 form.cleaned_data['amount'])
-        payment_order.save()
+        # Urls
         payment_request_url = self.request.build_absolute_uri(reverse(
             'api:payment_request',
             kwargs={'payment_uid': payment_order.uid}))
+        payment_response_url = self.request.build_absolute_uri(reverse(
+            'api:payment_response',
+            kwargs={'payment_uid': payment_order.uid}))
+        payment_check_url = self.request.build_absolute_uri(reverse(
+            'api:payment_check',
+            kwargs={'payment_uid': payment_order.uid}))
+        # Create payment request
+        payment_order.request = payment.protocol.create_payment_request(
+            payment_order.device.bitcoin_network,
+            [(payment_order.local_address, payment_order.btc_amount)],
+            payment_order.created,
+            payment_order.expires,
+            payment_response_url,
+            "xbterminal.com")
+        payment_order.save()
         # Create bitcoin uri and QR code
         payment_uri = payment.blockchain.construct_bitcoin_uri(
             payment_order.local_address,
             payment_order.btc_amount,
             payment_request_url)
         qr_code_src = generate_qr_code(payment_uri, size=4)
-        payment_check_url = self.request.build_absolute_uri(reverse(
-            'api:payment_check',
-            kwargs={'payment_uid': payment_order.uid}))
         # Return JSON
         data = {
             'fiat_amount': float(payment_order.fiat_amount),
@@ -170,17 +182,7 @@ class PaymentRequestView(View):
             raise Http404
         if payment_order.expires < timezone.now():
             raise Http404
-        payment_response_url = self.request.build_absolute_uri(reverse(
-            'api:payment_response',
-            kwargs={'payment_uid': payment_order.uid}))
-        message = payment.protocol.create_payment_request(
-            payment_order.device.bitcoin_network,
-            [(payment_order.local_address, payment_order.btc_amount)],
-            payment_order.created,
-            payment_order.expires,
-            payment_response_url,
-            "xbterminal.com")
-        response = HttpResponse(message.SerializeToString(),
+        response = HttpResponse(payment_order.request,
                                 content_type='application/bitcoin-paymentrequest')
         response['Content-Transfer-Encoding'] = 'binary'
         return response
@@ -218,7 +220,7 @@ class PaymentResponseView(View):
         except Exception as error:
             return HttpResponseBadRequest()
         # Send PaymentACK
-        response = HttpResponse(payment_ack.SerializeToString(),
+        response = HttpResponse(payment_ack,
                                 content_type='application/bitcoin-paymentack')
         response['Content-Transfer-Encoding'] = 'binary'
         return response

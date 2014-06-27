@@ -57,7 +57,7 @@ def create_payment_request(*args):
     request = paymentrequest_pb2.PaymentRequest()
     details = create_payment_details(*args)
     request.serialized_payment_details = details.SerializeToString()
-    return request
+    return request.SerializeToString()
 
 
 def parse_payment(message):
@@ -80,4 +80,4 @@ def parse_payment(message):
 def create_payment_ack(payment):
     payment_ack = paymentrequest_pb2.PaymentACK()
     payment_ack.payment.CopyFrom(payment)
-    return payment_ack
+    return payment_ack.SerializeToString()
