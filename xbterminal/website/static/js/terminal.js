@@ -82,6 +82,7 @@ var paymentCheck = function (checkURL) {
                 $('.payment-receipt').
                     attr('alt', data.receipt_url).
                     attr('src', data.qr_code_src);
+                $('.payment-reset').text('Reset');
             }
         });
     }, 2000);
