@@ -1,4 +1,5 @@
-var backspace = 8;
+var backspaceKey = 8;
+var escapeKey = 27;
 var numKeys = {
     48: 0,
     49: 1,
@@ -113,7 +114,7 @@ $(function () {
             currentAmount = 0;
         }
         var amount;
-        if (event.which === backspace) {
+        if (event.which === backspaceKey) {
             event.preventDefault();
             amount = Math.floor(currentAmount * 10) / 100;
             $(this).val(amount.toFixed(2));
@@ -135,6 +136,12 @@ $(function () {
     $('.payment-reset').on('click', function (event) {
         event.preventDefault();
         paymentReset();
+    });
+
+    $(document).on('keydown', function (event) {
+        if (event.which === escapeKey) {
+            paymentReset();
+        }
     });
 
     $(document).on('keydown click', function (event) {
