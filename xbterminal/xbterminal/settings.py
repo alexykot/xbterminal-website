@@ -164,7 +164,10 @@ RQ_QUEUES = {
 }
 
 FIRMWARE_PATH = os.path.join(os.path.dirname(BASE_DIR), 'firmware')
+
 CERT_PATH = os.path.join(os.path.dirname(BASE_DIR), 'certs')
+PKI_KEY_FILE = None
+PKI_CERTIFICATES = []
 
 BITCOIND_HOST = "node.xbterminal.com"
 BITCOIND_AUTH = {
