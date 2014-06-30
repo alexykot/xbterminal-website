@@ -119,7 +119,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
 STATIC_URL = '/static/'
-# need to set absolute path, because it use in pdf generating
+# need to set absolute path, because it used in pdf generating
 STATIC_ROOT = os.path.join(BASE_DIR, '..', 'static')
 
 DEFAULT_FROM_EMAIL = "no-reply@xbterminal.com"
@@ -164,6 +164,10 @@ RQ_QUEUES = {
 }
 
 FIRMWARE_PATH = os.path.join(BASE_DIR, '..', 'firmware')
+
+CERT_PATH = os.path.join(BASE_DIR, '..', 'certs')
+PKI_KEY_FILE = None
+PKI_CERTIFICATES = []
 
 BITCOIND_HOST = "node.xbterminal.com"
 BITCOIND_AUTH = {

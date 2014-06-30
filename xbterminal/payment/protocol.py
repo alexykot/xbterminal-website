@@ -4,12 +4,15 @@ https://github.com/bitcoin/bips/blob/master/bip-0070.mediawiki
 from decimal import Decimal
 import logging
 import time
+import os
 
 import bitcoin
 from bitcoin.core import CTransaction
 from bitcoin.wallet import CBitcoinAddress
 
-from payment import paymentrequest_pb2
+from django.conf import settings
+
+from payment import paymentrequest_pb2, x509
 
 logger = logging.getLogger(__name__)
 
@@ -53,10 +56,41 @@ def create_payment_details(network, outputs, created, expires,
     return details
 
 
+def create_pki_data(certificates):
+    """
+    Accepts:
+        certificates: list of DER-encoded certificates
+    """
+    pki_data = paymentrequest_pb2.X509Certificates()
+    for cert in certificates:
+        pki_data.certificate.append(cert)
+    return pki_data.SerializeToString()
+
+
 def create_payment_request(*args):
+    """
+    Accepts:
+        args: arguments for create_payment_details function
+    """
     request = paymentrequest_pb2.PaymentRequest()
     details = create_payment_details(*args)
     request.serialized_payment_details = details.SerializeToString()
+    if settings.PKI_KEY_FILE:
+        # Prepare certificates and private key
+        certificates = []
+        for file_name in settings.PKI_CERTIFICATES:
+            der_data = x509.read_pem_file(
+                os.path.join(settings.CERT_PATH, file_name))
+            certificates.append(der_data)
+        private_key = x509.get_private_key(x509.read_pem_file(
+            os.path.join(settings.CERT_PATH, settings.PKI_KEY_FILE)))
+        # Sign payment request
+        request.pki_type = "x509+sha256"
+        request.pki_data = create_pki_data(certificates)
+        request.signature = ""
+        signature = x509.create_signature(request.SerializeToString(),
+                                          private_key)
+        request.signature = signature
     return request.SerializeToString()
 
 

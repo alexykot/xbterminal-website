@@ -4,7 +4,7 @@ local_settings.py
 venv
 static
 fabfile/deploy.py
-cert
+certs
 .idea/*
 config/xbterminal.ini
 config/xbterminal.conf
