@@ -44,8 +44,8 @@ var paymentInit = function (form) {
         form.hide();
         $('.payment-init').show();
         $('.fiat-amount').text(data.fiat_amount.toFixed(2));
-        $('.mbtc-amount').text(data.mbtc_amount.toFixed(2));
-        $('.exchange-rate').text(data.exchange_rate.toFixed(3));
+        $('.mbtc-amount').text((data.btc_amount * 1000).toFixed(2));
+        $('.exchange-rate').text((data.exchange_rate / 1000).toFixed(3));
         $('.payment-request').
             attr('alt', data.payment_uri).
             attr('src', data.qr_code_src);
