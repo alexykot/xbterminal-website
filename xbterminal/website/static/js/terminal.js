@@ -95,13 +95,13 @@ var paymentReset = function () {
         currentCheck = undefined;
     }
     hideErrorMessage();
+    $('.payment-reset').text('Reset');
+    $('.payment-init, .payment-success').hide();
+    $('.enter-amount').show();
     $('.enter-amount [name="amount"]')
         .val('0.00')
         .attr('disabled', false)
         .focus();
-    $('.payment-reset').text('Reset');
-    $('.payment-init, .payment-success').hide();
-    $('.enter-amount').show();
 };
 
 var lastActivity = new Date().getTime();
@@ -165,4 +165,6 @@ $(function () {
             paymentReset();
         }
     }, 5000);
+
+    $('.enter-amount [name="amount"]').focus();
 });
