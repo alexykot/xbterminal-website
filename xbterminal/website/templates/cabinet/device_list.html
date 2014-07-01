@@ -30,7 +30,7 @@
         <td>{{ device.payment_processor_info|default:"--" }}</td>
         <td>
             <div><a href="{% url 'website:reconciliation' device.key %}">reconciliation</a></div>
-            <div><a href="{% url 'website:payment' device.key %}">make payment</a></div>
+            <div><a href="{% url 'website:payment' device.key %}" target="_blank">online POS</a></div>
         </td>
     </tr>
 {% endfor %}
