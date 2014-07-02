@@ -161,10 +161,14 @@ class PaymentInitView(View):
             payment_order.btc_amount,
             payment_request_url)
         # Return JSON
+        fiat_amount = payment_order.fiat_amount.quantize(Decimal('0.00'))
+        btc_amount = payment_order.btc_amount
+        exchange_rate = payment_order.effective_exchange_rate.\
+            quantize(Decimal('0.000000'))
         data = {
-            'fiat_amount': float(payment_order.fiat_amount),
-            'mbtc_amount': float(payment_order.btc_amount / Decimal('0.001')),
-            'exchange_rate': float(payment_order.effective_exchange_rate * Decimal('0.001')),
+            'fiat_amount': float(fiat_amount),
+            'btc_amount': float(btc_amount),
+            'exchange_rate': float(exchange_rate),
             'payment_uri': payment_uri,
             'qr_code_src': generate_qr_code(payment_uri, size=4),
             'check_url': payment_check_url,
