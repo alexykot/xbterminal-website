@@ -1,4 +1,5 @@
-var backspace = 8;
+var backspaceKey = 8;
+var escapeKey = 27;
 var numKeys = {
     48: 0,
     49: 1,
@@ -82,6 +83,7 @@ var paymentCheck = function (checkURL) {
                 $('.payment-receipt').
                     attr('alt', data.receipt_url).
                     attr('src', data.qr_code_src);
+                $('.payment-reset').text('Clear');
             }
         });
     }, 2000);
@@ -93,13 +95,13 @@ var paymentReset = function () {
         currentCheck = undefined;
     }
     hideErrorMessage();
+    $('.payment-reset').text('Reset');
+    $('.payment-init, .payment-success').hide();
+    $('.enter-amount').show();
     $('.enter-amount [name="amount"]')
         .val('0.00')
         .attr('disabled', false)
         .focus();
-    $('.payment-reset').text('Reset');
-    $('.payment-init, .payment-success').hide();
-    $('.enter-amount').show();
 };
 
 var lastActivity = new Date().getTime();
@@ -112,7 +114,7 @@ $(function () {
             currentAmount = 0;
         }
         var amount;
-        if (event.which === backspace) {
+        if (event.which === backspaceKey) {
             event.preventDefault();
             amount = Math.floor(currentAmount * 10) / 100;
             $(this).val(amount.toFixed(2));
@@ -136,6 +138,12 @@ $(function () {
         paymentReset();
     });
 
+    $(document).on('keydown', function (event) {
+        if (event.which === escapeKey) {
+            paymentReset();
+        }
+    });
+
     $(document).on('keydown click', function (event) {
         lastActivity = new Date().getTime();
     });
@@ -157,4 +165,6 @@ $(function () {
             paymentReset();
         }
     }, 5000);
+
+    $('.enter-amount [name="amount"]').focus();
 });
