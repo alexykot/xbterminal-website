@@ -24,28 +24,6 @@ BTC_DEFAULT_FEE = Decimal('0.00010000')
 BTC_MIN_OUTPUT  = Decimal('0.00005460')
 
 
-def create_invoice(fiat_amount, currency_code,
-                   service_name, api_key, description=""):
-    """
-    Create invoice
-    Accepts:
-        fiat_amount: Decimal
-        currency_code: ISO 4217 code
-        service_name: string
-        api_key: string
-        description: string (optional)
-    """
-    instantfiat_mod = getattr(payment.instantfiat, service_name)
-    invoice_id, btc_amount, address = instantfiat_mod.create_invoice(
-        fiat_amount, currency_code, api_key, description)
-    result = {
-        'instantfiat_invoice_id': invoice_id,
-        'instantfiat_address': address,
-        'instantfiat_btc_amount': btc_amount,
-    }
-    return result
-
-
 def prepare_payment(device, fiat_amount):
     """
     Accepts:
@@ -86,11 +64,11 @@ def prepare_payment(device, fiat_amount):
     if instantfiat_service is not None and instantfiat_share > 0:
         details['instantfiat_fiat_amount'] = (details['fiat_amount'] *
                                               instantfiat_share).quantize(FIAT_DEC_PLACES)
-        instantfiat_data = create_invoice(
-            details['instantfiat_fiat_amount'],
-            details['fiat_currency'],
+        instantfiat_data = payment.instantfiat.create_invoice(
             instantfiat_service,
             device.api_key,
+            details['instantfiat_fiat_amount'],
+            details['fiat_currency'],
             description="Payment to {0}".format(device.merchant.company_name))
         details.update(instantfiat_data)
         exchange_rate = details['instantfiat_fiat_amount'] / details['instantfiat_btc_amount']
