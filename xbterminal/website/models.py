@@ -216,9 +216,11 @@ class PaymentOrder(models.Model):
     instantfiat_btc_amount = models.DecimalField(max_digits=18, decimal_places=8)
     merchant_btc_amount = models.DecimalField(max_digits=18, decimal_places=8)
     fee_btc_amount = models.DecimalField(max_digits=18, decimal_places=8)
+    extra_btc_amount = models.DecimalField(max_digits=18, decimal_places=8, default=0)
     btc_amount = models.DecimalField(max_digits=20, decimal_places=8)
     effective_exchange_rate = models.DecimalField(max_digits=20, decimal_places=8)
     instantfiat_invoice_id = models.CharField(max_length=255, null=True)
 
     incoming_tx_id = models.CharField(max_length=64, validators=[validate_transaction], null=True)
+    outgoing_tx_id = models.CharField(max_length=64, validators=[validate_transaction], null=True)
     transaction = models.OneToOneField(Transaction, null=True)
