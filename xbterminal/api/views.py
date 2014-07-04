@@ -176,7 +176,7 @@ class PaymentInitView(View):
         if form.cleaned_data['bt_mac']:
             # Append payment uid and payment request for terminals
             data['payment_uid'] = payment_order.uid
-            data['payment_request'] = payment_order.request
+            data['payment_request'] = payment_order.request.encode('base64')
         response = HttpResponse(json.dumps(data),
                                 content_type='application/json')
         return response
