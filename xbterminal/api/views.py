@@ -129,8 +129,11 @@ class PaymentInitView(View):
             device = Device.objects.get(key=form.cleaned_data['device_key'])
         except Device.DoesNotExist:
             raise Http404
-        payment_order = payment.prepare_payment(device,
-                                                form.cleaned_data['amount'])
+        try:
+            payment_order = payment.prepare_payment(
+                device, form.cleaned_data['amount'])
+        except payment.blockchain.NetworkError:
+            return HttpResponse(status=500)
         # Urls
         if form.cleaned_data['bt_mac']:
             # Payment with terminal
