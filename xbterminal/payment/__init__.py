@@ -12,9 +12,7 @@ from django.utils import timezone
 import constance.config
 import django_rq
 
-import payment.average
-import payment.blockchain
-import payment.instantfiat
+from payment import average, blockchain, instantfiat
 
 from website.models import PaymentOrder, Transaction
 
@@ -59,9 +57,12 @@ def prepare_payment(device, fiat_amount):
         'instantfiat_invoice_id': None,
     }
     # Connect to bitcoind
-    bc = payment.blockchain.BlockChain(device.bitcoin_network)
+    bc = blockchain.BlockChain(device.bitcoin_network)
     # Addresses
-    details['local_address'] = str(bc.get_new_address())
+    try:
+        details['local_address'] = str(bc.get_new_address())
+    except Exception:
+        raise blockchain.NetworkError
     details['merchant_address'] = device.bitcoin_address
     if device.our_fee_override:
         details['fee_address'] = device.our_fee_override
@@ -75,7 +76,7 @@ def prepare_payment(device, fiat_amount):
     if instantfiat_service is not None and instantfiat_share > 0:
         details['instantfiat_fiat_amount'] = (details['fiat_amount'] *
                                               instantfiat_share).quantize(FIAT_DEC_PLACES)
-        instantfiat_data = payment.instantfiat.create_invoice(
+        instantfiat_data = instantfiat.create_invoice(
             instantfiat_service,
             device.api_key,
             details['instantfiat_fiat_amount'],
@@ -84,7 +85,7 @@ def prepare_payment(device, fiat_amount):
         details.update(instantfiat_data)
         exchange_rate = details['instantfiat_fiat_amount'] / details['instantfiat_btc_amount']
     else:
-        exchange_rate = payment.average.get_exchange_rate(details['fiat_currency'])
+        exchange_rate = average.get_exchange_rate(details['fiat_currency'])
     # Fee
     details['fee_btc_amount'] = (details['fiat_amount'] *
                                  Decimal(constance.config.OUR_FEE_SHARE) /
@@ -128,7 +129,7 @@ def wait_for_payment(payment_order_uid):
         django_rq.get_scheduler().cancel(rq.get_current_job())
         return
     # Connect to bitcoind
-    bc = payment.blockchain.BlockChain(payment_order.device.bitcoin_network)
+    bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
     transactions = bc.get_unspent_transactions(
         CBitcoinAddress(payment_order.local_address))
     if transactions:
@@ -154,7 +155,7 @@ def validate_payment(payment_order, transactions):
         payment_order: PaymentOrder instance
         transactions: list of CTransaction
     """
-    bc = payment.blockchain.BlockChain(payment_order.device.bitcoin_network)
+    bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
     if len(transactions) != 1:
         raise InvalidPayment('expecting single transaction')
     incoming_tx = transactions[0]
@@ -163,13 +164,13 @@ def validate_payment(payment_order, transactions):
         raise InvalidPayment('invalid transaction')
     # Check amount
     btc_amount = BTC_DEC_PLACES
-    for output in payment.blockchain.get_tx_outputs(incoming_tx):
+    for output in blockchain.get_tx_outputs(incoming_tx):
         if str(output['address']) == payment_order.local_address:
             btc_amount += output['amount']
     if btc_amount < payment_order.btc_amount:
         raise InvalidPayment('insufficient funds')
     # Save incoming transaction id
-    payment_order.incoming_tx_id = payment.blockchain.get_txid(incoming_tx)
+    payment_order.incoming_tx_id = blockchain.get_txid(incoming_tx)
     payment_order.save()
 
 
@@ -199,7 +200,7 @@ def forward_transaction(payment_order):
         payment_order: PaymentOrder instance
     """
     # Connect to bitcoind
-    bc = payment.blockchain.BlockChain(payment_order.device.bitcoin_network)
+    bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
     # Wait for transaction
     incoming_tx = None
     while incoming_tx is None:
@@ -233,7 +234,7 @@ def wait_for_exchange(payment_order_uid):
         payment_order_uid: PaymentOrder unique identifier
     """
     payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
-    invoice_paid = payment.instantfiat.is_invoice_paid(
+    invoice_paid = instantfiat.is_invoice_paid(
         payment_order.instantfiat_invoice_id,
         payment_order.device.api_key)
     if invoice_paid:
