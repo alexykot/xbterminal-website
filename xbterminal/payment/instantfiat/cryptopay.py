@@ -17,6 +17,7 @@ def create_invoice(fiat_amount, currency_code, api_key, description):
     payload = {
         'price': float(fiat_amount),
         'currency': currency,
+        'confirmations_count': 0,
         'description': description,
     }
     try:
