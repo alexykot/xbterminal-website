@@ -51,7 +51,7 @@ def create_payment_details(network, outputs, created, expires,
     details.outputs.extend([create_output(ad, am) for ad, am in outputs])
     details.time = int(time.mktime(created.timetuple()))
     details.expires = int(time.mktime(expires.timetuple()))
-    details.memo =  memo
+    details.memo = memo
     details.payment_url = payment_url
     return details
 
@@ -114,4 +114,5 @@ def parse_payment(message):
 def create_payment_ack(payment):
     payment_ack = paymentrequest_pb2.PaymentACK()
     payment_ack.payment.CopyFrom(payment)
+    payment_ack.memo = "ack"
     return payment_ack.SerializeToString()
