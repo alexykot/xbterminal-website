@@ -3,8 +3,9 @@ Payment
 """
 import datetime
 from decimal import Decimal
-import time
+import logging
 
+from bitcoin.rpc import JSONRPCException
 from bitcoin.wallet import CBitcoinAddress
 import rq
 
@@ -15,6 +16,8 @@ import django_rq
 from payment import average, blockchain, instantfiat
 
 from website.models import PaymentOrder, Transaction
+
+logger = logging.getLogger(__name__)
 
 FIAT_DEC_PLACES = Decimal('0.00000000')
 BTC_DEC_PLACES  = Decimal('0.00000000')
@@ -147,21 +150,19 @@ class InvalidPayment(Exception):
         return "Invalid payment: {0}".format(self.error_message)
 
 
-def validate_payment(payment_order, transactions):
+def validate_payment(payment_order, transactions, broadcast=False):
     """
     Validates payment and stores incoming transaction id
     in PaymentOrder instance
     Accepts:
         payment_order: PaymentOrder instance
         transactions: list of CTransaction
+        broadcast: boolean
     """
     bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
     if len(transactions) != 1:
         raise InvalidPayment('expecting single transaction')
     incoming_tx = transactions[0]
-    # Validate transaction
-    if not bc.is_valid_transaction(incoming_tx):
-        raise InvalidPayment('invalid transaction')
     # Check amount
     btc_amount = BTC_DEC_PLACES
     for output in blockchain.get_tx_outputs(incoming_tx):
@@ -169,7 +170,17 @@ def validate_payment(payment_order, transactions):
             btc_amount += output['amount']
     if btc_amount < payment_order.btc_amount:
         raise InvalidPayment('insufficient funds')
+    # Validate transaction
+    try:
+        incoming_tx_signed = bc.sign_raw_transaction(incoming_tx)
+    except blockchain.InvalidTransaction:
+        raise InvalidPayment('invalid transaction')
     # Save incoming transaction id
+    if broadcast:
+        try:
+            bc.send_raw_transaction(incoming_tx_signed)
+        except JSONRPCException as error:
+            logger.exception(error)
     payment_order.incoming_tx_id = blockchain.get_txid(incoming_tx)
     payment_order.save()
 
@@ -202,13 +213,7 @@ def forward_transaction(payment_order):
     # Connect to bitcoind
     bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
     # Wait for transaction
-    incoming_tx = None
-    while incoming_tx is None:
-        try:
-            incoming_tx = bc.get_raw_transaction(payment_order.incoming_tx_id)
-        except IndexError as error:
-            pass
-        time.sleep(1)
+    incoming_tx = bc.get_raw_transaction(payment_order.incoming_tx_id)
     unspent_outputs = bc.get_unspent_outputs(
         CBitcoinAddress(payment_order.local_address))
     total_available = sum(out['amount'] for out in unspent_outputs)
