@@ -88,19 +88,6 @@ class BlockChain(object):
         transaction = self._proxy.getrawtransaction(x(transaction_id))
         return transaction
 
-    def is_valid_transaction(self, transaction):
-        """
-        Accepts:
-            transaction: CTransaction
-        Returns:
-            boolean
-        """
-        result = self._proxy.signrawtransaction(transaction)
-        if result.get('complete') == 1:
-            return True
-        else:
-            return False
-
     def create_raw_transaction(self, inputs, outputs):
         """
         Accepts:
