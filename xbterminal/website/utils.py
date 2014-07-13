@@ -14,7 +14,7 @@ from api.shotcuts import generate_pdf
 
 TRANSACTION_CSV_FIELDS = (
     ('transaction id', 'id'),
-    ('datetime', 'time'),
+    ('datetime', lambda t: t.time.strftime('%d-%b-%Y %l:%M %p')),
     ('device name', lambda t: t.device.name),
     ('amount', 'fiat_amount'),
     ('currency', 'fiat_currency'),
@@ -35,21 +35,22 @@ def get_transaction_csv(transactions, csv_file=None):
     if csv_file is None:
         csv_file = StringIO()
     writer = unicodecsv.writer(csv_file, encoding='utf-8')
-
+    # Write header
     field_name_row = [field[0] for field in TRANSACTION_CSV_FIELDS]
     writer.writerow(field_name_row)
-
+    # Write data
     field_names = [field[1] for field in TRANSACTION_CSV_FIELDS]
     for transaction in transactions:
         row = []
         for field in field_names:
-            value = getattr(transaction, field) if isinstance(field, str) else field(transaction)
+            if isinstance(field, str):
+                value = getattr(transaction, field)
+            else:
+                value = field(transaction)
             if isinstance(value, Decimal):
                 value = '{0:g}'.format(float(value))
             row.append(unicode(value))
-
         writer.writerow(row)
-
     return csv_file
 
 

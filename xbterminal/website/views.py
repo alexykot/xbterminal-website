@@ -27,11 +27,8 @@ from website.forms import (
     SendDailyReconciliationForm,
     SendReconciliationForm,
     SubscribeForm)
-    
-from website.utils import (
-    get_transaction_csv,
-    get_transaction_pdf_archive,
-    send_reconciliation)
+
+from website import utils
 
 
 def contact(request):
@@ -271,7 +268,7 @@ def transactions(request, device_key, year=None, month=None, day=None):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = content_disposition
 
-    get_transaction_csv(transactions, response)
+    utils.get_transaction_csv(transactions, response)
     return response
 
 
@@ -302,7 +299,7 @@ def receipts(request, device_key, year=None, month=None, day=None):
 
     response['Content-Disposition'] = content_disposition
 
-    get_transaction_pdf_archive(transactions, response)
+    utils.get_transaction_pdf_archive(transactions, response)
     return response
 
 
@@ -332,9 +329,8 @@ def send_all_to_email(request, device_key):
                 timezone.get_current_timezone())
         else:
             rec_range_end = now
-        send_reconciliation(
-            email,
-            device,
+        utils.send_reconciliation(
+            email, device,
             (rec_range_beg, rec_range_end))
         messages.success(request, 'Email has been sent successfully.')
     else:
