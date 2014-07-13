@@ -111,7 +111,7 @@ def send_reconciliation(recipient, device, rec_range):
         [recipient])
 
     if transactions:
-        csv = get_transaction_csv(transactions)
+        csv = get_transaction_csv(transactions, short=True)
         csv.seek(0)
         email.attach('transactions.csv', csv.read(), 'text/csv')
 
