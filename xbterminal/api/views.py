@@ -51,6 +51,8 @@ def device(request, key):
         "SERIAL_NUMBER": device.serial_number,
         "BITCOIN_NETWORK": device.bitcoin_network
     }
+    device.last_activity = timezone.now()
+    device.save()
     return Response(response)
 
 
