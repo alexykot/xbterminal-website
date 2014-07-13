@@ -12,8 +12,8 @@ from django.db.models import Sum
 
 from api.shotcuts import generate_pdf
 
-TRANSACTION_CSV_FIELDS = (
-    ('transaction id', 'id'),
+REPORT_FIELDS = [
+    ('ID', 'id'),
     ('datetime', lambda t: t.time.strftime('%d-%b-%Y %l:%M %p')),
     ('device name', lambda t: t.device.name),
     ('amount', 'fiat_amount'),
@@ -27,22 +27,30 @@ TRANSACTION_CSV_FIELDS = (
     ('amount converted BTC', 'instantfiat_btc_amount'),
     ('processor invoice ID', lambda t: t.instantfiat_invoice_id or 'N/A'),
     ('transction bitcoin ID #2', 'bitcoin_transaction_id_2'),
-    ('destination address', 'dest_address')
-)
+    ('destination address', 'dest_address'),
+]
+
+REPORT_FIELDS_SHORT = [
+    ('ID', 'id'),
+    ('datetime', lambda t: t.time.strftime('%d-%b-%Y %l:%M %p')),
+    ('amount', 'fiat_amount'),
+    ('currency', 'fiat_currency'),
+]
 
 
-def get_transaction_csv(transactions, csv_file=None):
+def get_transaction_csv(transactions, csv_file=None, short=False):
     if csv_file is None:
         csv_file = StringIO()
     writer = unicodecsv.writer(csv_file, encoding='utf-8')
+    fields = REPORT_FIELDS_SHORT if short else REPORT_FIELDS
     # Write header
-    field_names = [field[0] for field in TRANSACTION_CSV_FIELDS]
+    field_names = [field[0] for field in fields]
     writer.writerow(field_names)
     # Write data
     totals = {}
     for transaction in transactions:
         row = []
-        for field_name, field_getter in TRANSACTION_CSV_FIELDS:
+        for field_name, field_getter in fields:
             if isinstance(field_getter, str):
                 value = getattr(transaction, field_getter)
             else:
