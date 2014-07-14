@@ -1,7 +1,7 @@
 [uwsgi]
 vhost = true
 plugins = python2
-socket = /tmp/xbterminal.com.sock
+socket = /tmp/xbterminal.io.sock
 chmod-socket = 666
 master = true
 enable-threads = true

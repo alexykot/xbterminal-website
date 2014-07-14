@@ -122,8 +122,8 @@ STATIC_URL = '/static/'
 # need to set absolute path, because it used in pdf generating
 STATIC_ROOT = os.path.join(BASE_DIR, '..', 'static')
 
-DEFAULT_FROM_EMAIL = "no-reply@xbterminal.com"
-CONTACT_EMAIL_RECIPIENTS = ["info@xbterminal.com"]
+DEFAULT_FROM_EMAIL = "no-reply@xbterminal.io"
+CONTACT_EMAIL_RECIPIENTS = ["info@xbterminal.io"]
 
 APPEND_SLASH = True
 
@@ -169,7 +169,7 @@ CERT_PATH = os.path.join(BASE_DIR, '..', 'certs')
 PKI_KEY_FILE = None
 PKI_CERTIFICATES = []
 
-BITCOIND_HOST = "node.xbterminal.com"
+BITCOIND_HOST = "node.xbterminal.io"
 BITCOIND_AUTH = {
     "testnet": ("root", "password"),
 }
