@@ -16,7 +16,7 @@ def create_invoice(fiat_amount, currency_code, api_key, description):
     invoice_url = "https://cryptopay.me/api/v1/invoices/?api_key={0}".format(api_key)
     payload = {
         'price': float(fiat_amount),
-        'currency': currency,
+        'currency': currency_code,
         'confirmations_count': 0,
         'description': description,
     }
