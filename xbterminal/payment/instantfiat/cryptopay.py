@@ -31,7 +31,7 @@ def create_invoice(fiat_amount, currency_code, api_key, description):
     invoice_id = data['uuid']
     btc_amount = (Decimal(data['btc_price']).quantize(payment.BTC_DEC_PLACES) +
                   Decimal('0.00000001'))  # Adding one satoshi to avoid rounding issues
-    address = data['btc_address'],
+    address = data['btc_address']
     logger.debug("cryptopay invoice created")
     return invoice_id, btc_amount, address
 
