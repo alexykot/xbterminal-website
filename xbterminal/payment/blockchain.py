@@ -12,6 +12,14 @@ from django.conf import settings
 import payment
 
 
+class NetworkError(Exception):
+    pass
+
+
+class InvalidTransaction(Exception):
+    pass
+
+
 class BlockChain(object):
 
     def __init__(self, network):
@@ -80,19 +88,6 @@ class BlockChain(object):
         transaction = self._proxy.getrawtransaction(x(transaction_id))
         return transaction
 
-    def is_valid_transaction(self, transaction):
-        """
-        Accepts:
-            transaction: CTransaction
-        Returns:
-            boolean
-        """
-        result = self._proxy.signrawtransaction(transaction)
-        if result.get('complete') == 1:
-            return True
-        else:
-            return False
-
     def create_raw_transaction(self, inputs, outputs):
         """
         Accepts:
@@ -141,10 +136,6 @@ class BlockChain(object):
         """
         transaction_id = self._proxy.sendrawtransaction(transaction)
         return b2x(transaction_id)
-
-
-class InvalidTransaction(Exception):
-    pass
 
 
 def construct_bitcoin_uri(address, amount_btc, request_url):

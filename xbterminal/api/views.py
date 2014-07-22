@@ -1,5 +1,6 @@
 from decimal import Decimal
 import json
+import logging
 import os
 
 from django.shortcuts import get_object_or_404
@@ -24,6 +25,8 @@ from api.shotcuts import render_to_pdf
 import payment
 import payment.blockchain
 import payment.protocol
+
+logger = logging.getLogger(__name__)
 
 
 @api_view(['GET'])
@@ -129,8 +132,11 @@ class PaymentInitView(View):
             device = Device.objects.get(key=form.cleaned_data['device_key'])
         except Device.DoesNotExist:
             raise Http404
-        payment_order = payment.prepare_payment(device,
-                                                form.cleaned_data['amount'])
+        try:
+            payment_order = payment.prepare_payment(
+                device, form.cleaned_data['amount'])
+        except payment.blockchain.NetworkError:
+            return HttpResponse(status=500)
         # Urls
         if form.cleaned_data['bt_mac']:
             # Payment with terminal
@@ -176,7 +182,7 @@ class PaymentInitView(View):
         if form.cleaned_data['bt_mac']:
             # Append payment uid and payment request for terminals
             data['payment_uid'] = payment_order.uid
-            data['payment_request'] = payment_order.request
+            data['payment_request'] = payment_order.request.encode('base64')
         response = HttpResponse(json.dumps(data),
                                 content_type='application/json')
         return response
@@ -217,19 +223,25 @@ class PaymentResponseView(View):
         # Check and parse message
         content_type = self.request.META.get('CONTENT_TYPE')
         if content_type != 'application/bitcoin-payment':
+            logger.warning("PaymentResponseView: wrong content type")
             return HttpResponseBadRequest()
         message = self.request.body
         if len(message) > 50000:
             # Payment messages larger than 50,000 bytes should be rejected by server
+            logger.warning("PaymentResponseView: message is too large")
             return HttpResponseBadRequest()
         try:
             transactions, payment_ack = payment.protocol.parse_payment(message)
-        except Exception:
+        except Exception as error:
+            logger.warning("PaymentResponseView: parser error {0}".\
+                format(error.__class__.__name__))
             return HttpResponseBadRequest()
         # Validate payment
         try:
-            payment.validate_payment(payment_order, transactions)
+            payment.validate_payment(payment_order, transactions, broadcast=True)
         except Exception as error:
+            logger.warning("PaymentResponseView: validation error {0}".\
+                format(error.__class__.__name__))
             return HttpResponseBadRequest()
         # Send PaymentACK
         response = HttpResponse(payment_ack,
