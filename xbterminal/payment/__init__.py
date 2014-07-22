@@ -240,8 +240,9 @@ def wait_for_exchange(payment_order_uid):
     """
     payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
     invoice_paid = instantfiat.is_invoice_paid(
-        payment_order.instantfiat_invoice_id,
-        payment_order.device.api_key)
+        payment_order.device.payment_processor,
+        payment_order.device.api_key,
+        payment_order.instantfiat_invoice_id)
     if invoice_paid:
         django_rq.get_scheduler().cancel(rq.get_current_job())
         if payment_order.transaction is not None:

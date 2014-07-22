@@ -35,6 +35,7 @@ def is_invoice_paid(service_name, api_key, invoice_id):
         api_key: string
         invoice_id: string
     """
-    instantfiat_mod = importlib.import_module(service_name)
+    instantfiat_mod = importlib.import_module(
+        '.' + service_name.lower(), 'payment.instantfiat')
     result = instantfiat_mod.is_invoice_paid(invoice_id, api_key)
     return result
