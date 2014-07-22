@@ -15,7 +15,8 @@ def create_invoice(service_name, api_key,
         api_key: string
         description: string (optional)
     """
-    instantfiat_mod = importlib.import_module(service_name.lower())
+    instantfiat_mod = importlib.import_module(
+        '.' + service_name.lower(), 'payment.instantfiat')
     invoice_id, btc_amount, address = instantfiat_mod.create_invoice(
         fiat_amount, currency_code, api_key, description)
     result = {
