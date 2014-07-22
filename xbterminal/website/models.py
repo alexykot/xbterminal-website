@@ -69,8 +69,8 @@ class Device(models.Model):
     )
     PAYMENT_PROCESSOR_CHOICES = (
         ('BitPay', 'BitPay'),
-        ('BIPS', 'BIPS'),
-        ('CryptoPay', 'CryptoPay')
+        ('CryptoPay', 'CryptoPay'),
+        ('GoCoin', 'GoCoin'),
     )
     merchant = models.ForeignKey(MerchantAccount)
 
