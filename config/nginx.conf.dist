@@ -1,13 +1,13 @@
 #server {
 #    listen 80;
-#    server_name xbterminal.com;
+#    server_name xbterminal.io;
 #    rewrite ^(.*)$ https://$server_name$1 permanent;
 #}
 
 server {
     listen 80;
     # listen 443 ssl;
-    server_name xbterminal.com;
+    server_name xbterminal.io;
     
     # ssl_certificate /repo_root/certs/xbterminal.pem;
     # ssl_certificate_key /repo_root/certs/xbterminal.key;
@@ -19,11 +19,11 @@ server {
     # ssl_session_timeout 5m;
     # ssl_ciphers ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-RC4-SHA:ECDHE-RSA-RC4-SHA:ECDH-ECDSA-RC4-SHA:ECDH-RSA-RC4-SHA:ECDHE-RSA-AES256-SHA:RC4-SHA;
     
-    access_log /var/log/nginx/xbterminal.com_access.log;
-    error_log /var/log/nginx/xbterminal.com_error.log;
+    access_log /var/log/nginx/xbterminal.io_access.log;
+    error_log /var/log/nginx/xbterminal.io_error.log;
 
     location / {
-        uwsgi_pass unix:///tmp/xbterminal.com.sock;
+        uwsgi_pass unix:///tmp/xbterminal.io.sock;
         include uwsgi_params;
 
         # http://stackoverflow.com/questions/11943491/accessing-django-admin-over-https-behind-nginx
