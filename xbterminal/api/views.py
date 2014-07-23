@@ -192,7 +192,7 @@ class PaymentInitView(View):
                 payment_order.local_address,
                 payment_order.btc_amount,
                 payment_request_url)
-            data['qr_code_src'] = generate_qr_code(payment_uri, size=4)
+            data['qr_code_src'] = generate_qr_code(data['payment_uri'], size=4)
         response = HttpResponse(json.dumps(data),
                                 content_type='application/json')
         return response
