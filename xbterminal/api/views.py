@@ -154,7 +154,7 @@ class PaymentInitView(View):
             payment_order.created,
             payment_order.expires,
             payment_response_url,
-            "xbterminal.io")
+            device.merchant.company_name)
         payment_order.save()
         # Prepare json response
         fiat_amount = payment_order.fiat_amount.quantize(Decimal('0.00'))
@@ -177,13 +177,14 @@ class PaymentInitView(View):
                 payment_order.created,
                 payment_order.expires,
                 payment_bluetooth_url,
-                "xbterminal.io")
+                device.merchant.company_name)
             # Append bitcoin uri, payment uid, and payment request
             data['payment_uri'] = payment.blockchain.construct_bitcoin_uri(
                 payment_order.local_address,
                 payment_order.btc_amount,
-                payment_request_url,
-                payment_bluetooth_url)
+                device.merchant.company_name,
+                payment_bluetooth_url,
+                payment_request_url)
             data['payment_uid'] = payment_order.uid
             data['payment_request'] = payment_bluetooth_request.encode('base64')
         else:
@@ -191,6 +192,7 @@ class PaymentInitView(View):
             data['payment_uri'] = payment.blockchain.construct_bitcoin_uri(
                 payment_order.local_address,
                 payment_order.btc_amount,
+                device.merchant.company_name,
                 payment_request_url)
             data['qr_code_src'] = generate_qr_code(data['payment_uri'], size=4)
         response = HttpResponse(json.dumps(data),
