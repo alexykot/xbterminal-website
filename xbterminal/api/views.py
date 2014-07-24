@@ -182,8 +182,8 @@ class PaymentInitView(View):
             data['payment_uri'] = payment.blockchain.construct_bitcoin_uri(
                 payment_order.local_address,
                 payment_order.btc_amount,
-                payment_request_url,
-                payment_bluetooth_url)
+                payment_bluetooth_url,
+                payment_request_url)
             data['payment_uid'] = payment_order.uid
             data['payment_request'] = payment_bluetooth_request.encode('base64')
         else:
