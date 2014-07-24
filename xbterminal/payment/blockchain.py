@@ -1,5 +1,6 @@
 from decimal import Decimal
 import hashlib
+import urllib
 
 import bitcoin
 import bitcoin.rpc
@@ -138,21 +139,27 @@ class BlockChain(object):
         return b2x(transaction_id)
 
 
-def construct_bitcoin_uri(address, amount_btc, request_url):
+def construct_bitcoin_uri(address, amount_btc, name, *request_urls):
     """
     https://github.com/bitcoin/bips/blob/master/bip-0021.mediawiki
     Accepts:
         address: CBitcoinAddress
         amount_btc: Decimal
-        request_url: url, string
+        name: merchant name
+        request_urls: urls, strings
     Returns:
         bitcoin uri: string
     """
     amount_btc = amount_btc.quantize(Decimal('0.00000000'))
-    uri = "bitcoin:{address}?amount={amount}&r={request_url}".format(
-        address=str(address),
-        amount=str(amount_btc),
-        request_url=request_url)
+    uri = "bitcoin:{0}?amount={1}&label={2}&message={3}".format(
+        str(address),
+        str(amount_btc),
+        urllib.quote(name),
+        urllib.quote("Payment to {0}".format(name))
+    )
+    for idx, request_url in enumerate(request_urls):
+        param_name = "r" if idx == 0 else "r{0}".format(idx)
+        uri += "&{0}={1}".format(param_name, request_url)
     return uri
 
 
