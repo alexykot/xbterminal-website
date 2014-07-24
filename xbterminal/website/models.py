@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django_countries.fields import CountryField
 from django.contrib.sites.models import Site
+from django.utils import timezone
 
 from website.validators import validate_percent, validate_bitcoin, validate_transaction
 from website.fields import FirmwarePathField
@@ -96,6 +97,7 @@ class Device(models.Model):
     serial_number = models.CharField(max_length=50, blank=True, null=True)
     bitcoin_network = models.CharField(max_length=50, blank=True, null=True)
 
+    last_activity = models.DateTimeField(null=True)
     last_reconciliation = models.DateTimeField(auto_now_add=True)
 
     # firmware data
@@ -124,6 +126,12 @@ class Device(models.Model):
             time__range=(datetime.datetime.combine(date, datetime.time.min),
                          datetime.datetime.combine(date, datetime.time.max))
         )
+
+    def is_online(self):
+        if self.last_activity is None:
+            return False
+        delta = timezone.now() - self.last_activity
+        return delta < datetime.timedelta(minutes=2)
 
 
 class ReconciliationTime(models.Model):
