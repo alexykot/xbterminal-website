@@ -1,0 +1,158 @@
+@import url(//fonts.googleapis.com/css?family=Roboto:400,300,400italic);
+
+a {
+    cursor: pointer;
+}
+
+#container {
+    font-family: 'Roboto', sans-serif;
+    height: auto;
+    min-height: 100%;
+}
+
+.xlb-btn-primary,
+.xlb-btn-secondary {
+    border: none;
+    color: white;
+    display: block;
+    margin: 0;
+    padding: 4px 8px;
+    width: 100%;
+}
+
+.xlb-btn-primary {
+    background-color: #5DB8FE;
+}
+
+.xlb-btn-secondary {
+    background-color: #3D3D3D;
+}
+
+/* HEADER */
+
+.header {
+    text-align: center;
+}
+
+.logo {
+    line-height: 150px;
+}
+
+.menu-block ul {
+    font-size: 1.5em;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.menu-block li {
+    display: inline-block;
+}
+
+.menu-block a {
+    display: block;
+    width: 100px;
+}
+
+.header .menu-block {
+    line-height: 150px;
+}
+
+.header .menu-block a {
+    color: #888888;
+}
+
+.header .menu-block a:hover {
+    color: white;
+    background-color: #62B9FF;
+    text-decoration: none;
+}
+
+.user-block {
+    background-color: #F0EEEF;
+    height: 150px;
+    position: relative;
+}
+
+.login-form {
+    bottom: 0;
+    font-size: 1.2em;
+    position: absolute;
+    width: 200px;
+}
+
+.login-form label {
+    color: #888;
+    display: block;
+    font-weight: normal;
+    margin: 10px 0;
+}
+
+.login-form input {
+    border: 1px solid #B5B3B4;
+    margin-bottom: 5px;
+    padding: 4px 8px;
+    text-align: center;
+    width: 100%;
+}
+
+.login-form a.register {
+    left: 0;
+    position: absolute;
+    top: 100%;
+    text-decoration: none;
+    z-index: 5;
+}
+
+.logout {
+    bottom: 0;
+    position: absolute;
+    width: 200px;
+}
+
+/* CONTENT */
+
+.content h2 {
+    color: #818181;
+    font-size: 5em;
+    font-weight: 300;
+    margin-top: 60px;
+}
+
+.content h3 {
+    color: #818181;
+    font-size: 2.4em;
+    font-weight: 300;
+    margin-top: 40px;
+}
+
+.content p {
+    color: #818181;
+    font-size: 1.4em;
+    font-weight: 300;
+    margin-top: 40px;
+}
+
+/* FOOTER */
+
+.footer {
+    background-color: #818181;
+    padding-top: 100px;
+    text-align: center;
+}
+
+.footer .menu-block a {
+    color: white;
+    padding: 10px;
+    width: auto;
+}
+
+.footer .menu-block a:hover {
+    color: white;
+}
+
+.copyright {
+    color: white;
+    font-size: 1.2em;
+    margin-top: 50px;
+}

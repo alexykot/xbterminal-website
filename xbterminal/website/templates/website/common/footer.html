@@ -1,20 +1,21 @@
 {% load staticfiles %}
 
-<div id="footer">
-  <div class="container footer-container">
-    <div class="row">
-      <div class="col-xs-8 col-sm-10 col-xs-offset-2 col-sm-offset-1">
-        <div class="row">
-          <div class="col-sm-4 xbt-logo">
-            <a href="/"><img src="{% static 'img/logo-footer.png' %}" alt="XBTerminal"></a>
-          </div>
-          <div class="col-sm-4">
-            <p class="text-muted">XBT Services Ltd</p>
-          </div>
-          <div class="col-sm-4">
-          </div>
+<div class="footer row">
+    <div class="container">
+        <div class="menu-block"><ul>
+            <li><a href="{% url 'website:landing' %}#about-section">about</a></li>
+            <li><a href="{% url 'website:landing' %}#terminal-section">terminal</a></li>
+            <li><a href="{% url 'website:landing' %}#mobile-section">mobile</a></li>
+            <li><a href="{% url 'website:landing' %}#web-section">web</a></li>
+            <li><a>faq's</a></li>
+            <li><a>privacy policy</a></li>
+            <li><a>contact us</a></li>
+        </ul></div>
+        <div class="copyright">Copyright XLB 2014</div>
+        <div class="logo">
+            <a href="{% url 'website:landing' %}">
+                <img src="{% static 'img/xlb-logo.png' %}" alt="XLB">
+            </a>
         </div>
-      </div>
     </div>
-  </div>
 </div>

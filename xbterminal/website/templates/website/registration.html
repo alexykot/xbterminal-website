@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+{% load staticfiles %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/registration.css' %}">
+{% endblock %}
+
+{% block js %}
+<script src="{% static 'js/registration.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="content row">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3">
+                <form id="merchant-form" role="form" action="{% url 'website:registration' %}" method="POST">
+                    <h3>Merchant registration:</h3>
+                    {% csrf_token %}
+                    {% bootstrap_form form %}
+                    {% if form.regtype.value == 'terminal' %}
+                        {% bootstrap_field order_form.quantity %}
+                        <div id="calculation">
+                            £<span id="sum-gbp"></span><br>
+                            <span id="sum-btc"></span> BTC
+                        </div>
+                        {% bootstrap_field order_form.payment_method %}
+                        {% bootstrap_field order_form.delivery_address_differs %}
+                        <div id="delivery-address-group">
+                            {% bootstrap_field order_form.delivery_address %}
+                            {% bootstrap_field order_form.delivery_address1 %}
+                            {% bootstrap_field order_form.delivery_address2 %}
+                            {% bootstrap_field order_form.delivery_town %}
+                            {% bootstrap_field order_form.delivery_county %}
+                            {% bootstrap_field order_form.delivery_post_code %}
+                            {% bootstrap_field order_form.delivery_country %}
+                            {% bootstrap_field order_form.delivery_contact_phone %}
+                        </div>
+                    {% endif %}
+                    <div class="checkbox">
+                        <label><input type="checkbox" required>Terms & Conditions</label>
+                    </div>
+                    <button type="submit" class="btn btn-default">Submit</button>
+                    <img id="loading-image" src="{% static 'img/loading.gif' %}">
+                </form>
+                <div id="error-message" class="alert alert-danger"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

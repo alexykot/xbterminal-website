@@ -13,34 +13,6 @@ from website.validators import validate_percent, validate_bitcoin, validate_tran
 from website.fields import FirmwarePathField
 
 
-class MerchantAccount(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name="merchant", null=True)
-    company_name = models.CharField(max_length=254)
-    business_address = models.CharField(max_length=1000)
-    business_address1 = models.CharField('', max_length=1000, blank=True, default='')
-    business_address2 = models.CharField('', max_length=1000, blank=True, default='')
-    town = models.CharField(max_length=1000)
-    country = CountryField(default='GB')
-    county = models.CharField("State / County", max_length=100, blank=True)
-    post_code = models.CharField(max_length=1000)
-    contact_name = models.CharField(max_length=1000)
-    contact_phone = models.CharField(max_length=1000)
-    contact_email = models.EmailField(unique=True)
-
-    def __unicode__(self):
-        return self.company_name
-
-    def get_first_device_url(self):
-        if not self.device_set.exists():
-            return reverse('website:create_device')
-        return reverse('website:device', kwargs={'number': 1})
-
-    def get_address(self):
-        strings = [self.business_address, self.business_address1, self.business_address2,
-                   self.town, self.county, unicode(self.country.name)]
-        return ', '.join(filter(None, strings))
-
-
 class Language(models.Model):
     name = models.CharField(max_length=50)
     fractional_split = models.CharField(max_length=1, default=".")
@@ -62,26 +34,58 @@ class Currency(models.Model):
         return self.name
 
 
+class MerchantAccount(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name="merchant", null=True)
+    company_name = models.CharField(max_length=254)
+    trading_name = models.CharField(max_length=254, blank=True)
+    business_address = models.CharField(max_length=1000)
+    business_address1 = models.CharField('', max_length=1000, blank=True, default='')
+    business_address2 = models.CharField('', max_length=1000, blank=True, default='')
+    town = models.CharField(max_length=1000)
+    county = models.CharField("State / County", max_length=100, blank=True)
+    post_code = models.CharField(max_length=1000)
+    country = CountryField(default='GB')
+    contact_name = models.CharField(max_length=1000)
+    contact_phone = models.CharField(max_length=1000)
+    contact_email = models.EmailField(unique=True)
+
+    language = models.ForeignKey(Language, default=1)  # by default, English, see fixtures
+    currency = models.ForeignKey(Currency, default=1)  # by default, GBP, see fixtures
+
+    def __unicode__(self):
+        return self.company_name
+
+    def get_address(self):
+        strings = [self.business_address, self.business_address1, self.business_address2,
+                   self.town, self.county, unicode(self.country.name)]
+        return ', '.join(filter(None, strings))
+
+
 class Device(models.Model):
-    PAYMENT_PROCESSING_CHOICES = (
+
+    DEVICE_TYPES = [
+        ('mobile', 'Mobile app'),
+        ('hardware', 'Terminal'),
+        ('web', 'Web app'),
+    ]
+    PAYMENT_PROCESSING_CHOICES = [
         ('keep', 'keep bitcoins'),
         ('partially', 'convert partially'),
-        ('full', 'convert full amount')
-    )
-    PAYMENT_PROCESSOR_CHOICES = (
+        ('full', 'convert full amount'),
+    ]
+    PAYMENT_PROCESSOR_CHOICES = [
         ('BitPay', 'BitPay'),
         ('CryptoPay', 'CryptoPay'),
         ('GoCoin', 'GoCoin'),
-    )
-    merchant = models.ForeignKey(MerchantAccount)
+    ]
 
-    name = models.CharField(max_length=100)
-    language = models.ForeignKey(Language, default=1)  # by default, English, see fixtures
-    currency = models.ForeignKey(Currency, default=1)  # by default, GBP, see fixtures
-    comment = models.CharField(max_length=100, blank=True)
+    merchant = models.ForeignKey(MerchantAccount)
+    device_type = models.CharField(max_length=50, choices=DEVICE_TYPES)
+    name = models.CharField('Your reference', max_length=100)
+
     payment_processing = models.CharField(max_length=50, choices=PAYMENT_PROCESSING_CHOICES, default='keep')
     payment_processor = models.CharField(max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, null=True)
-    api_key = models.CharField(max_length=100, blank=True)
+    api_key = models.CharField(max_length=100)
     percent = models.DecimalField(
         'percent to convert',
         max_digits=4,
@@ -232,3 +236,27 @@ class PaymentOrder(models.Model):
     incoming_tx_id = models.CharField(max_length=64, validators=[validate_transaction], null=True)
     outgoing_tx_id = models.CharField(max_length=64, validators=[validate_transaction], null=True)
     transaction = models.OneToOneField(Transaction, null=True)
+
+
+class Order(models.Model):
+
+    PAYMENT_METHODS = [
+        ('bitcoin', 'Bitcoin'),
+        ('wire', 'Wire transfer'),
+    ]
+
+    merchant = models.ForeignKey(MerchantAccount)
+    quantity = models.IntegerField()
+    payment_method = models.CharField(max_length=50, choices=PAYMENT_METHODS, default='bitcoin')
+
+    delivery_address = models.CharField(max_length=1000, blank=True)
+    delivery_address1 = models.CharField('', max_length=1000, blank=True)
+    delivery_address2 = models.CharField('', max_length=1000, blank=True)
+    delivery_town = models.CharField(max_length=1000, blank=True)
+    delivery_county = models.CharField("Delivery state / county", max_length=100, blank=True)
+    delivery_post_code = models.CharField(max_length=1000, blank=True)
+    delivery_country = CountryField(default='GB', blank=True)
+    delivery_contact_phone = models.CharField(max_length=1000, blank=True)
+
+    def __unicode__(self):
+        return "order #{0}".format(self.id)

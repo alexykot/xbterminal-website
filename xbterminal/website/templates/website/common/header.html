@@ -1,25 +1,38 @@
 {% load staticfiles %}
-<div class="header-line"></div>
 
-<div class="header">
-  <div class="container">
-    <div class="row">
-      <div class="col-xs-8 col-sm-10 col-xs-offset-2 col-sm-offset-1">
+<div class="header row">
+    <div class="container">
         <div class="row">
-          <div class="col-sm-6 xbt-logo">
-            <a href="/"><img src="{% static 'img/logo.png' %}" alt="XBTerminal"/></a>
-          </div>
-          <div class="col-sm-6">
-            <ul class="nav header-menu">
-              {% comment %}<li><a class="header-icon" href="#" title="Phone"><img src="{% static 'img/header-icon-phone.png' %}" alt="Phone"></a></li>{% endcomment %}
-              <li><a class="header-icon" href="mailto:info@xbterminal.com" title="Mail"><img src="{% static 'img/header-icon-mail.png' %}" alt="Mail"></a></li>
-              <li><a class="header-icon" href="https://twitter.com/xbterminal" title="Twitter"><img src="{% static 'img/header-icon-twitter.png' %}" alt="Twitter"></a></li>
-              {% comment %}<li><a class="header-icon" href="#" title="Like"><img src="{% static 'img/header-icon-like.png' %}" alt="Like"></a></li>{% endcomment %}
-              <li><a class="header-icon st_sharethis_custom" href="#" title="Share"><img src="{% static 'img/header-icon-share.png' %}" alt="Share"></a></li>
-            </ul>
-          </div>
+            <div class="logo col-md-3">
+                <a href="{% url 'website:landing' %}">
+                    <img src="{% static 'img/xlb-logo.png' %}" alt="XLB">
+                </a>
+            </div>
+            <div class="menu-block col-md-5"><ul>
+                {% if cabinet %}
+                <li><a href="{% url 'website:devices' %}">terminals</a></li>
+                <li><a href="{% url 'website:profile' %}">profile</a></li>
+                {% else %}
+                <li><a href="{% url 'website:landing' %}#about-section">about</a></li>
+                <li><a href="{% url 'website:landing' %}#terminal-section">terminal</a></li>
+                <li><a href="{% url 'website:landing' %}#mobile-section">mobile</a></li>
+                <li><a href="{% url 'website:landing' %}#web-section">web</a></li>
+                {% endif %}
+            </ul></div>
+            <div class="user-block col-md-4">
+                {% if not user.is_authenticated %}
+                <form class="login-form" action="{% url 'login' %}" method="POST">
+                    <label>merchant login</label>
+                    {% csrf_token %}
+                    <input type="text" name="username" placeholder="username"><br>
+                    <input type="password" name="password" placeholder="password"><br>
+                    <button type="submit" class="xlb-btn-secondary">login</button>
+                    <a class="xlb-btn-primary register" href="{% url 'website:registration' %}">register</a>
+                </form>
+                {% else %}
+                <a class="xlb-btn-secondary logout" href="{% url 'logout' %}">logout</a>
+                {% endif %}
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 </div>

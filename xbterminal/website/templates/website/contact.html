@@ -41,6 +41,8 @@
 {% endblock %}
 
 {% block ready %}
+<script type="text/javascript">
+$(function() {
 $('#loading-img').hide();
 $(document)
     .ajaxStart(function() {
@@ -78,4 +80,6 @@ $(document).on("click","#contact_send",function(){
     }
   })
 });
+});
+</script>
 {% endblock %}

@@ -65,7 +65,6 @@ INSTALLED_APPS = (
     'django.contrib.sites',
 
     'south',
-    'bootstrapform',
     'bootstrap3',
     'rest_framework',
     'qrcode',
@@ -153,6 +152,7 @@ CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
 CONSTANCE_CONFIG = {
     'OUR_FEE_BITCOIN_ADDRESS': ("mqhQfj9e57SNEYWNvULegMWfM9DQ8UGi9b", ' '),
     'OUR_FEE_SHARE': (0.005, ' '),
+    'CRYPTOPAY_API_KEY': ('abcde', 'CryptoPay API key'),
 }
 
 RQ_QUEUES = {

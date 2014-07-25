@@ -1,35 +1,35 @@
-$(document).ready(function(){
-    var paymentProcessing = $('[name=payment_processing]');
-    var paymentProcessor = $('[name=payment_processor]');
-    var percent = $('[name=percent]');
-    var apiKey = $('[name=api_key]');
-    var bitcoinAddress = $('[name=bitcoin_address]');
+var Device = (function () {
+    'use strict';
+    var init = function () {
+        var paymentProcessing = $('[name="payment_processing"]');
+        var percent = $('[name="percent"]');
+        var bitcoinAddress = $('[name="bitcoin_address"]');
 
-    paymentProcessing.change(function(){
-        if ($(this).val() == 'keep'){
-            paymentProcessor.attr('disabled', true);
-            paymentProcessor.parent().addClass('disabled').removeClass('active');
-            percent.attr('disabled', true).val('');
-            $("#slider").slider( "disable" ).slider( "value", 1 );
-            apiKey.attr('disabled', true);
-            bitcoinAddress.attr('disabled', false);
-        }
-        if ($(this).val() == 'partially'){
-            paymentProcessor.attr('disabled', false);
-            paymentProcessor.parent().removeClass('disabled');
-            percent.attr('disabled', false);
-            $("#slider").slider( "enable" );
-            apiKey.attr('disabled', false);
-            bitcoinAddress.attr('disabled', false);
-        }
-        if ($(this).val() == 'full'){
-            paymentProcessor.attr('disabled', false);
-            percent.attr('disabled', true).val('100');
-            $("#slider").slider( "disable" ).slider( "value", 100 );
-            paymentProcessor.parent().removeClass('disabled');
-            apiKey.attr('disabled', false);
-            bitcoinAddress.attr('disabled', true);
-        }
-    });
-    paymentProcessing.filter(':checked').trigger('change');
+        percent.percentWidget();
+
+        paymentProcessing.on('change', function () {
+            var percentSlider = $('#percent-slider');
+            if ($(this).val() == 'keep') {
+                percent.attr('disabled', true).val('');
+                percentSlider.slider('disable').slider('value', 1);
+                bitcoinAddress.attr('disabled', false);
+            } else if ($(this).val() == 'partially') {
+                percent.attr('disabled', false);
+                percentSlider.slider('enable');
+                bitcoinAddress.attr('disabled', false);
+            } else if ($(this).val() == 'full') {
+                percent.attr('disabled', true).val('100');
+                percentSlider.slider('disable').slider('value', 100);
+                bitcoinAddress.attr('disabled', true);
+            }
+        });
+        paymentProcessing.filter(':checked').trigger('change');
+
+    };
+    return {init: init};
+}());
+
+$(function () {
+    PercentWidget.init();
+    Device.init();
 });

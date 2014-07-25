@@ -1,13 +1,11 @@
 from django.contrib import admin
 
-from website.models import (MerchantAccount, Device, Language, Currency, Transaction,
-                            Firmware)
-from website.forms import DeviceAdminForm
+from website import forms, models
 
 
 class DeviceAdmin(admin.ModelAdmin):
     readonly_fields = ('key', 'last_reconciliation')
-    form = DeviceAdminForm
+    form = forms.DeviceAdminForm
 
 
 class TransactionAdmin(admin.ModelAdmin):
@@ -20,9 +18,11 @@ class FirmwareAdmin(admin.ModelAdmin):
     readonly_fields = ('hash',)
 
 
-admin.site.register(MerchantAccount)
-admin.site.register(Device, DeviceAdmin)
-admin.site.register(Language)
-admin.site.register(Currency)
-admin.site.register(Transaction, TransactionAdmin)
-admin.site.register(Firmware, FirmwareAdmin)
+admin.site.register(models.MerchantAccount)
+admin.site.register(models.Device, DeviceAdmin)
+admin.site.register(models.Language)
+admin.site.register(models.Currency)
+admin.site.register(models.Transaction, TransactionAdmin)
+admin.site.register(models.Firmware, FirmwareAdmin)
+admin.site.register(models.PaymentOrder)
+admin.site.register(models.Order)

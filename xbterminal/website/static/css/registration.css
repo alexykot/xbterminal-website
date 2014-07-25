@@ -1,0 +1,25 @@
+#merchant-form {
+    margin-bottom: 10px;
+}
+
+#loading-image,
+#error-message {
+    display: none;
+}
+
+label[for="id_business_address1"],
+label[for="id_business_address2"],
+label[for="id_delivery_address1"],
+label[for="id_delivery_address2"] {
+    display: none;
+}
+
+#delivery-address-group {
+    display: none;
+}
+
+#calculation {
+    color: green;
+    display: none;
+    margin-bottom: 15px;
+}
