@@ -38,9 +38,21 @@ class MerchantRegistrationForm(forms.ModelForm):
         choices=[('default', 'default'), ('terminal', 'terminal')],
         widget=forms.HiddenInput)
 
+    # Used at registration step 2
+    company_name_copy = forms.CharField(
+        label='Company name',
+        required=False,
+        widget=forms.TextInput(attrs={'disabled': 'disabled'}))
+
     class Meta:
         model = MerchantAccount
-        exclude = ['user', 'language', 'currency']
+        exclude = ['user', 'business_address2', 'language', 'currency']
+        labels = {
+            'business_address': 'Trading address',
+            'contact_name': 'Name',
+            'contact_email': 'Email',
+            'contact_phone': 'Phone',
+        }
 
     def save(self, commit=True):
         """
@@ -73,14 +85,16 @@ class TerminalOrderForm(forms.ModelForm):
     Terminal order form
     """
     delivery_address_differs = forms.BooleanField(
-        label="Delivery address differs from business address",
+        label="Deliver to a different address",
         required=False)
 
     class Meta:
         model = Order
-        exclude = ['merchant']
-        labels = {'quantity': 'Amount of terminals to order'}
-        widgets = {'payment_method': forms.RadioSelect}
+        exclude = ['merchant', 'delivery_address2', 'delivery_contact_phone']
+        labels = {'quantity': 'Terminals on order'}
+        widgets = {
+            'payment_method': ButtonGroupRadioSelect,
+        }
 
     def clean(self):
         cleaned_data = super(TerminalOrderForm, self).clean()
@@ -90,13 +104,11 @@ class TerminalOrderForm(forms.ModelForm):
                 'delivery_town',
                 'delivery_post_code',
                 'delivery_country',
-                'delivery_contact_phone',
             ]
-            blank_fields = ', '.join(name for name in required_fields
-                                     if not cleaned_data.get(name))
-            if blank_fields:
-                raise forms.ValidationError(
-                    "This fields are required: {0}".format(blank_fields))
+            for field_name in required_fields:
+                if not cleaned_data.get(field_name):
+                    self._errors[field_name] = self.error_class(
+                        ["This field is required."])
         return cleaned_data
 
     def save(self, merchant, commit=True):
@@ -106,7 +118,6 @@ class TerminalOrderForm(forms.ModelForm):
             # Copy address fields from merchant instance
             instance.delivery_address = merchant.business_address
             instance.delivery_address1 = merchant.business_address1
-            instance.delivery_address2 = merchant.business_address2
             instance.delivery_town = merchant.town
             instance.delivery_county = merchant.county
             instance.delivery_post_code = merchant.post_code

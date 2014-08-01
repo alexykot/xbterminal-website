@@ -50,7 +50,7 @@ class RegistrationView(TemplateResponseMixin, View):
         regtype = self.request.GET.get('regtype', 'default')
         context = {
             'form': forms.MerchantRegistrationForm(initial={'regtype': regtype}),
-            'order_form': forms.TerminalOrderForm(),
+            'order_form': forms.TerminalOrderForm(initial={'quantity': 1}),
         }
         return self.render_to_response(context)
 
@@ -59,7 +59,7 @@ class RegistrationView(TemplateResponseMixin, View):
         if not form.is_valid():
             response = {
                 'result': 'error',
-                'errors': str(form.errors),
+                'errors': form.errors,
             }
             return HttpResponse(json.dumps(response),
                                 content_type='application/json')
@@ -69,7 +69,7 @@ class RegistrationView(TemplateResponseMixin, View):
             if not order_form.is_valid():
                 response = {
                     'result': 'error',
-                    'errors': str(order_form.errors),
+                    'errors': order_form.errors,
                 }
                 return HttpResponse(json.dumps(response),
                                     content_type='application/json')
@@ -85,7 +85,7 @@ class RegistrationView(TemplateResponseMixin, View):
         else:
             response = {
                 'result': 'ok',
-                'next': reverse('website:terminals'),
+                'next': reverse('website:devices'),
             }
         login(self.request, merchant.user)
         return HttpResponse(json.dumps(response),

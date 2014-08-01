@@ -1,9 +1,14 @@
+#step {
+    color: #ccc;
+}
+
 #merchant-form {
     margin-bottom: 10px;
 }
 
+#registration-step-2,
 #loading-image,
-#error-message {
+#error-messages {
     display: none;
 }
 
@@ -20,6 +25,6 @@ label[for="id_delivery_address2"] {
 
 #calculation {
     color: green;
-    display: none;
+    font-size: 1.2em;
     margin-bottom: 15px;
 }
