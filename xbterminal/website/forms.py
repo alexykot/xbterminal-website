@@ -136,12 +136,16 @@ class AuthenticationForm(DjangoAuthenticationForm):
 
 
 class ProfileForm(forms.ModelForm):
+
     class Meta:
         model = MerchantAccount
-        fields = ['company_name',
-                  'business_address', 'business_address1', 'business_address2',
-                  'town', 'country', 'post_code']
-
+        exclude = ['user', 'business_address2', 'language', 'currency']
+        labels = {
+            'business_address': 'Trading address',
+            'contact_name': 'Name',
+            'contact_email': 'Email',
+            'contact_phone': 'Phone',
+        }
 
 class DeviceForm(forms.ModelForm):
 
