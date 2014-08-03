@@ -40,10 +40,6 @@ a {
     z-index: 10;
 }
 
-.header.fixed {
-    position: fixed;
-}
-
 .logo {
     line-height: 150px;
 }
@@ -81,22 +77,21 @@ a {
 
 .user-block {
     background-color: #F0EEEF;
+    font-size: 1.2em;
     height: 150px;
     position: relative;
 }
 
-.login-form {
-    bottom: 0;
-    font-size: 1.2em;
-    position: absolute;
+.login-form-title {
+    color: #888;
+    margin: 7px 0;
     width: 200px;
 }
 
-.login-form label {
-    color: #888;
-    display: block;
-    font-weight: normal;
-    margin: 10px 0;
+.login-form {
+    bottom: 0;
+    position: absolute;
+    width: 200px;
 }
 
 .login-form input {
@@ -107,11 +102,18 @@ a {
     width: 100%;
 }
 
-.login-form a.register {
-    left: 0;
+.login {
+    bottom: 0;
+    display: none;
+    position: absolute;
+    width: 200px;
+}
+
+.register {
     position: absolute;
     top: 100%;
     text-decoration: none;
+    width: 200px;
     z-index: 5;
 }
 
@@ -119,6 +121,34 @@ a {
     bottom: 0;
     position: absolute;
     width: 200px;
+}
+
+/* STICKY HEADER */
+
+.header-fixed {
+    border-bottom: 1px solid #F0EEEF;
+    position: fixed;
+}
+
+.header-fixed .user-block {
+    height: 75px;
+}
+
+.header-fixed .logo,
+.header-fixed .menu-block {
+    line-height: 75px;
+}
+
+.header-fixed .login-form-title {
+    margin: 10px 0;
+}
+
+.header-fixed .login-form {
+    display: none;
+}
+
+.header-fixed .login {
+    display: block;
 }
 
 /* CONTENT */

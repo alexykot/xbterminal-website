@@ -15,9 +15,9 @@ var Landing = (function () {
         $(window).on('scroll', function () {
             var navHeight = $('.header').height();
             if ($(window).scrollTop() > navHeight) {
-                $('.header').addClass('fixed');
+                $('.header').addClass('header-fixed');
             } else {
-                $('.header').removeClass('fixed');
+                $('.header').removeClass('header-fixed');
             }
         });
 
