@@ -13,8 +13,9 @@ logger = logging.getLogger(__name__)
 
 
 def create_invoice(fiat_amount, currency_code, api_key, description):
-    invoice_url = "https://cryptopay.me/api/v1/invoices/?api_key={0}".format(api_key)
+    invoice_url = "https://cryptopay.me/api/v1/invoices"
     payload = {
+        'api_key': api_key,
         'price': float(fiat_amount),
         'currency': currency_code,
         'confirmations_count': 0,
