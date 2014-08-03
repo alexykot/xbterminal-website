@@ -14,7 +14,7 @@ var Registration = (function () {
 
     var calculateSum = function () {
         var quantity = $('#id_quantity').val();
-        var price = 200.00;
+        var price = $('#calculation').data('price');
         var sumGBP = quantity * price;
         var sumBTC = sumGBP / exchangeRate * 1000;
         $('#sum-gbp').text(sumGBP.toFixed(2));

@@ -91,8 +91,8 @@
                             <a id="previous-step" class="btn btn-default">Back</a>
                         {% elif form.regtype.value == 'terminal' %}
                             {% bootstrap_field order_form.quantity %}
-                            <div id="calculation">
-                                £<span id="sum-gbp"></span> GBP /  ฿<span id="sum-mbtc"></span> mBTC
+                            <div id="calculation" data-price="{{ order_form.terminal_price }}">
+                                £<span id="sum-gbp"></span> GBP / ฿<span id="sum-mbtc"></span> mBTC
                             </div>
                             {% bootstrap_field order_form.payment_method %}
                             <label class="control-label">Billing and delivery address</label>

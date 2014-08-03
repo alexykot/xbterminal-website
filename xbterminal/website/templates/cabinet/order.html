@@ -1,15 +1,32 @@
 {% extends "cabinet/base.html" %}
-{% load staticfiles %}
-
-{% block css %}
-<link rel="stylesheet" href="{% static 'css/order.css' %}">
-{% endblock %}
+{% load qr_tags %}
 
 {% block cabinet_content %}
-<h3>Order details:</h3>
-<div id="order-details">
-    <span>Quantity: {{ order.quantity }}</span><br>
-    <span>Payment method: {{ order.payment_method }}</span><br>
-    <span>Sum: 0</span>
+<h3>Order details</h3>
+<table id="order-details" class="table table-condensed table-bordered">
+    <tr>
+        <td>Quantity</td>
+        <td>{{ order.quantity }}</td>
+    </tr>
+    <tr>
+        <td>Payment method</td>
+        <td>{{ order.payment_method }}</td>
+    </tr>
+    <tr>
+        <td>Total</td>
+        <td>£{{ order.fiat_amount }} GBP / ฿{{ order.instantfiat_btc_amount }} mBTC</td>
+    </tr>
+    <tr>
+        <td>Delivery address</td>
+        <td>{{ order.get_delivery_address|join:'<br>' }}</td>
+    </tr>
+</table>
+<div id="payment-info">
+    {% if order.payment_method == 'bitcoin' %}
+        {% qr_from_text bitcoin_uri 'm' %}
+    {% elif order.payment_method == 'wire' %}
+        <div>Invoice will be sent to your email <b>{{ order.merchant.contact_email }}</b>.</div>
+        <a class="btn btn-primary">Confirm order</a>
+    {% endif %}
 </div>
 {% endblock %}

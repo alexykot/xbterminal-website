@@ -8,6 +8,10 @@ from django.core.mail import send_mail
 from django.core.validators import RegexValidator
 from django.template.loader import render_to_string
 
+from constance import config
+
+from payment.instantfiat import cryptopay
+
 from website.models import MerchantAccount, Device, ReconciliationTime, Order
 from website.fields import BCAddressField
 from website.widgets import ButtonGroupRadioSelect, PercentWidget, TimeWidget
@@ -90,11 +94,22 @@ class TerminalOrderForm(forms.ModelForm):
 
     class Meta:
         model = Order
-        exclude = ['merchant', 'delivery_address2', 'delivery_contact_phone']
+        exclude = [
+            'merchant',
+            'fiat_amount',
+            'delivery_address2',
+            'delivery_contact_phone',
+            'instantfiat_invoice_id',
+            'instantfiat_btc_amount',
+            'instantfiat_address',
+        ]
         labels = {'quantity': 'Terminals on order'}
         widgets = {
             'payment_method': ButtonGroupRadioSelect,
         }
+
+    def terminal_price(self):
+        return config.TERMINAL_PRICE
 
     def clean(self):
         cleaned_data = super(TerminalOrderForm, self).clean()
@@ -114,6 +129,7 @@ class TerminalOrderForm(forms.ModelForm):
     def save(self, merchant, commit=True):
         instance = super(TerminalOrderForm, self).save(commit=False)
         instance.merchant = merchant
+        instance.fiat_amount = instance.quantity * self.terminal_price()
         if not self.cleaned_data.get('delivery_address_differs'):
             # Copy address fields from merchant instance
             instance.delivery_address = merchant.business_address
@@ -123,6 +139,16 @@ class TerminalOrderForm(forms.ModelForm):
             instance.delivery_post_code = merchant.post_code
             instance.delivery_country = merchant.country
             instance.delivery_contact_phone = merchant.contact_phone
+        if instance.payment_method == "bitcoin":
+            # Create invoice
+            instantfiat_result = cryptopay.create_invoice(
+                instance.fiat_amount,
+                merchant.currency.name,
+                config.CRYPTOPAY_API_KEY,
+                "terminals")
+            instance.instantfiat_invoice_id = instantfiat_result[0]
+            instance.instantfiat_btc_amount = instantfiat_result[1]
+            instance.instantfiat_address = instantfiat_result[2]
         if commit:
             instance.save()
         return instance

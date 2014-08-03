@@ -1,5 +1,6 @@
 #device-form,
 #profile-form,
-.create-device-button {
+.create-device-button,
+#payment-info {
     margin-bottom: 10px;
 }

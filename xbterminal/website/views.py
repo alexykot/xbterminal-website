@@ -18,6 +18,8 @@ from django.db.models import Count, Sum
 from django.contrib import messages
 from django.utils import timezone
 
+from payment.blockchain import construct_bitcoin_uri
+
 from website.models import Device, ReconciliationTime
 from website.forms import (
     ContactForm,
@@ -121,6 +123,11 @@ class OrderPaymentView(TemplateResponseMixin, CabinetView):
             models.Order,
             pk=self.kwargs.get('pk'),
             merchant=self.request.user.merchant)
+        if context['order'].payment_method == 'bitcoin':
+            context['bitcoin_uri'] = construct_bitcoin_uri(
+                context['order'].instantfiat_address,
+                context['order'].instantfiat_btc_amount,
+                "xbterminal.io")
         return self.render_to_response(context)
 
 
