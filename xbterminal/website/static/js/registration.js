@@ -98,6 +98,25 @@ var Registration = (function () {
 
     var validator;
     var setUpValidator = function () {
+        $.validator.addMethod('emailUnique', function (value, element) {
+            var isValid;
+            $.ajax({
+                type: 'GET',
+                url: '/registration/validate/',
+                data: {email: value},
+                beforeSend: function () {
+                    $('#loading-image').show();
+                },
+                success: function (data) {
+                    isValid = data.email;
+                },
+                complete: function () {
+                    $('#loading-image').hide();
+                },
+                async: false
+            });
+            return isValid;
+        }, 'Merchant account with this Contact email already exists.');
         validator = $('#merchant-form').validate({
             showErrors: function (errorMap, errorList) {
                 var formErrors = {};
@@ -110,6 +129,9 @@ var Registration = (function () {
             onfocusout: false,
             onkeyup: false,
             onclick: false
+        });
+        $('[name="contact_email"]').rules('add', {
+            emailUnique: true
         });
         $('[name="terms"]').rules('add', {
             required: true,

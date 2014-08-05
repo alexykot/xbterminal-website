@@ -94,6 +94,22 @@ class RegistrationView(TemplateResponseMixin, View):
                             content_type='application/json')
 
 
+class RegValidationView(View):
+    """
+    Helper view for server-side validation
+    """
+    def get(self, *args, **kwargs):
+        email = self.request.GET.get('email')
+        try:
+            models.MerchantAccount.objects.get(contact_email=email)
+        except models.MerchantAccount.DoesNotExist:
+            response = {'email': True}
+        else:
+            response = {'email': False}
+        return HttpResponse(json.dumps(response),
+                            content_type='application/json')
+
+
 class CabinetView(ContextMixin, View):
     """
     Base class for cabinet views
