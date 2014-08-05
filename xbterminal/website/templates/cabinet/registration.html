@@ -24,7 +24,10 @@
                 {% csrf_token %}
                 {% bootstrap_field form.regtype %}
                 {% if form.regtype.value == 'default' %}
-                    {% bootstrap_field form.contact_name %}
+                    <div class="row">
+                        <div class="col-md-6">{% bootstrap_field form.contact_first_name %}</div>
+                        <div class="col-md-6">{% bootstrap_field form.contact_last_name %}</div>
+                    </div>
                     <div class="row">
                         <div class="col-md-6">{% bootstrap_field form.contact_email %}</div>
                         <div class="col-md-6">{% bootstrap_field form.company_name %}</div>
@@ -34,7 +37,10 @@
                         <div class="col-md-6"><a href="{% url 'website:landing' %}" class="btn btn-default">Cancel</a></div>
                     </div>
                 {% elif form.regtype.value == 'terminal' %}
-                    {% bootstrap_field form.contact_name %}
+                    <div class="row">
+                        <div class="col-md-6">{% bootstrap_field form.contact_first_name %}</div>
+                        <div class="col-md-6">{% bootstrap_field form.contact_last_name %}</div>
+                    </div>
                     <div class="row">
                         <div class="col-md-6">{% bootstrap_field form.contact_email %}</div>
                         <div class="col-md-6">{% bootstrap_field form.contact_phone %}</div>

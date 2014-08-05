@@ -7,7 +7,10 @@
         <h3>Merchant profile</h3>
         <form id="profile-form" action="" method="post">
             {% csrf_token %}
-            {% bootstrap_field form.contact_name %}
+            <div class="row">
+                <div class="col-md-6">{% bootstrap_field form.contact_first_name %}</div>
+                <div class="col-md-6">{% bootstrap_field form.contact_last_name %}</div>
+            </div>
             <div class="row">
                 <div class="col-md-6">{% bootstrap_field form.contact_email %}</div>
                 <div class="col-md-6">{% bootstrap_field form.contact_phone %}</div>

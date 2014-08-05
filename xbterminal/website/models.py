@@ -46,7 +46,8 @@ class MerchantAccount(models.Model):
     county = models.CharField("State / County", max_length=100, blank=True)
     post_code = models.CharField(max_length=1000)
     country = CountryField(default='GB')
-    contact_name = models.CharField(max_length=1000)
+    contact_first_name = models.CharField(max_length=1000)
+    contact_last_name = models.CharField(max_length=1000)
     contact_phone = models.CharField(max_length=1000)
     contact_email = models.EmailField(unique=True)
 

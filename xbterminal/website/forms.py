@@ -53,7 +53,8 @@ class MerchantRegistrationForm(forms.ModelForm):
         exclude = ['user', 'business_address2', 'language', 'currency']
         labels = {
             'business_address': 'Trading address',
-            'contact_name': 'Name',
+            'contact_first_name': 'First name',
+            'contact_last_name': 'Last name',
             'contact_email': 'Email',
             'contact_phone': 'Phone',
         }
@@ -170,7 +171,8 @@ class ProfileForm(forms.ModelForm):
         exclude = ['user', 'business_address2', 'language', 'currency']
         labels = {
             'business_address': 'Trading address',
-            'contact_name': 'Name',
+            'contact_first_name': 'First name',
+            'contact_last_name': 'Last name',
             'contact_email': 'Email',
             'contact_phone': 'Phone',
         }
