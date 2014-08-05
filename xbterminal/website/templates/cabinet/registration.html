@@ -1,0 +1,159 @@
+{% extends "cabinet/base.html" %}
+{% load bootstrap3 %}
+{% load staticfiles %}
+
+{% block js %}
+<script src="{% static 'lib/jquery.validate.min.js' %}"></script>
+<script src="{% static 'js/registration.js' %}"></script>
+{% endblock %}
+
+{% block cabinet_content %}
+<div class="row">
+    <div class="col-md-10 col-md-offset-1">
+        <div class="clearfix">
+            {% if form.regtype.value == 'default' %}
+                <h3 class="pull-left">Merchant registration</h3>
+                <h3 id="step" class="pull-right">step <span>1</span> of 2</h3>
+            {% elif form.regtype.value == 'terminal' %}
+                <h3 class="pull-left">Terminal order</h3>
+                <h3 id="step" class="pull-right">step <span>1</span> of 3</h3>
+            {% endif %}
+        </div>
+        <form id="merchant-form" role="form" action="{% url 'website:registration' %}" method="POST">
+            <div id="registration-step-1">
+                {% csrf_token %}
+                {% bootstrap_field form.regtype %}
+                {% if form.regtype.value == 'default' %}
+                    {% bootstrap_field form.contact_name %}
+                    <div class="row">
+                        <div class="col-md-6">{% bootstrap_field form.contact_email %}</div>
+                        <div class="col-md-6">{% bootstrap_field form.company_name %}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6"><a id="continue-step-2" class="btn btn-default pull-right">Continue</a></div>
+                        <div class="col-md-6"><a href="{% url 'website:landing' %}" class="btn btn-default">Cancel</a></div>
+                    </div>
+                {% elif form.regtype.value == 'terminal' %}
+                    {% bootstrap_field form.contact_name %}
+                    <div class="row">
+                        <div class="col-md-6">{% bootstrap_field form.contact_email %}</div>
+                        <div class="col-md-6">{% bootstrap_field form.contact_phone %}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">{% bootstrap_field form.company_name %}</div>
+                        <div class="col-md-6">{% bootstrap_field form.trading_name %}</div>
+                    </div>
+                    {% bootstrap_field form.business_address %}
+                    {% bootstrap_field form.business_address1 %}
+                    <div class="row">
+                        <div class="col-md-6">{% bootstrap_field form.town %}</div>
+                        <div class="col-md-6">{% bootstrap_field form.post_code %}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">{% bootstrap_field form.county %}</div>
+                        <div class="col-md-6">{% bootstrap_field form.country %}</div>
+                    </div>
+                    <div class="checkbox">
+                        <label for="id_terms"><input id="id_terms" name="terms" type="checkbox">I agree to XLB <a>Terms & Conditions</a> of use</label>
+                    </div>
+                    <a id="continue-step-2" class="btn btn-default">Continue</a>
+                    <a href="{% url 'website:landing' %}" class="btn btn-default">Cancel</a>
+                {% endif %}
+            </div>
+            <div id="registration-step-2">
+                {% if form.regtype.value == 'default' %}
+                    <div class="row">
+                        <div class="col-md-6">{% bootstrap_field form.company_name_copy %}</div>
+                        <div class="col-md-6">{% bootstrap_field form.trading_name %}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">{% bootstrap_field form.contact_phone %}</div>
+                    </div>
+                    {% bootstrap_field form.business_address %}
+                    {% bootstrap_field form.business_address1 %}
+                    <div class="row">
+                        <div class="col-md-6">{% bootstrap_field form.town %}</div>
+                        <div class="col-md-6">{% bootstrap_field form.post_code %}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">{% bootstrap_field form.county %}</div>
+                        <div class="col-md-6">{% bootstrap_field form.country %}</div>
+                    </div>
+                    <div class="checkbox">
+                        <label for="id_terms"><input id="id_terms" name="terms" type="checkbox">I agree to XLB <a>Terms & Conditions</a> of use</label>
+                    </div>
+                    <button type="submit" class="btn btn-default">Create account</button>
+                    <a id="back-step-1" class="btn btn-default">Back</a>
+                    <img id="loading-image" src="{% static 'img/loading.gif' %}">
+                {% elif form.regtype.value == 'terminal' %}
+                    {% bootstrap_field order_form.quantity %}
+                    <div id="calculation" data-price="{{ order_form.terminal_price }}"></div>
+                    {% bootstrap_field order_form.payment_method %}
+                    <label class="control-label">Billing and delivery address</label>
+                    <div id="delivery-address-preview"></div>
+                    {% bootstrap_field order_form.delivery_address_differs %}
+                    <div id="delivery-address-group">
+                        {% bootstrap_field order_form.delivery_address %}
+                        {% bootstrap_field order_form.delivery_address1 %}
+                        <div class="row">
+                            <div class="col-md-6">{% bootstrap_field order_form.delivery_town %}</div>
+                            <div class="col-md-6">{% bootstrap_field order_form.delivery_post_code %}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">{% bootstrap_field order_form.delivery_county %}</div>
+                            <div class="col-md-6">{% bootstrap_field order_form.delivery_country %}</div>
+                        </div>
+                    </div>
+                    <a id="continue-step-3" class="btn btn-default">Continue</a>
+                    <a id="back-step-1" class="btn btn-default">Back</a>
+                {% endif %}
+            </div>
+            {% if form.regtype.value == 'terminal' %}
+            <div id="registration-step-3">
+                <table id="order-details">
+                    <tr>
+                        <td class="od-label">Quantity on order</td>
+                        <td id="od-quantity"></td>
+                        <td colspan="2">&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td class="od-label">Billing address</td>
+                        <td id="od-billing-address"></td>
+                        <td class="od-label">Delivery address</td>
+                        <td id="od-delivery-address"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">&nbsp;</td>
+                        <td class="od-label">Subtotal</td>
+                        <td id="od-subtotal"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">&nbsp;</td>
+                        <td class="od-label">VAT</td>
+                        <td id="od-vat"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">&nbsp;</td>
+                        <td class="od-label">Total</td>
+                        <td id="od-total"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">&nbsp;</td>
+                        <td class="od-label">Payment method</td>
+                        <td id="od-payment-method"></td>
+                    </tr>
+                </table>
+                <div class="row">
+                    <div class="col-md-6"><button type="submit" class="btn btn-default pull-right">Confirm and pay</button></div>
+                    <div class="col-md-6">
+                        <a id="back-step-2" class="btn btn-default">Back</a>
+                        <img id="loading-image" src="{% static 'img/loading.gif' %}">
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </form>
+        <div id="error-messages" class="alert alert-danger"></div>
+    </div>
+</div>
+{% endblock %}

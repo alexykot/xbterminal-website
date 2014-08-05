@@ -46,7 +46,7 @@ class RegistrationView(TemplateResponseMixin, View):
     """
     Registration page
     """
-    template_name = "website/registration.html"
+    template_name = "cabinet/registration.html"
 
     def get(self, *args, **kwargs):
         regtype = self.request.GET.get('regtype', 'default')

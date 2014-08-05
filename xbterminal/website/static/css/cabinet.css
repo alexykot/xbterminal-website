@@ -1,8 +1,40 @@
-#device-form,
-#profile-form,
-.create-device-button {
+.header {
+    border-bottom: 1px solid #F0EEEF;
+}
+
+/* Registration */
+
+#step {
+    color: #ccc;
+}
+
+#merchant-form {
     margin-bottom: 10px;
 }
+
+#registration-step-2,
+#registration-step-3,
+#loading-image,
+#error-messages {
+    display: none;
+}
+
+label[for="id_business_address1"],
+label[for="id_delivery_address1"] {
+    display: none;
+}
+
+#delivery-address-group {
+    display: none;
+}
+
+#calculation {
+    color: green;
+    font-size: 1.2em;
+    margin-bottom: 15px;
+}
+
+/* Order */
 
 #order-details {
     margin-bottom: 20px;
@@ -22,4 +54,12 @@
 #payment-bitcoin {
     margin-bottom: 10px;
     text-align: center;
+}
+
+/* Other pages */
+
+#device-form,
+#profile-form,
+.create-device-button {
+    margin-bottom: 10px;
 }
