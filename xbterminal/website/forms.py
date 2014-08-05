@@ -96,11 +96,12 @@ class TerminalOrderForm(forms.ModelForm):
         model = Order
         exclude = [
             'merchant',
-            'fiat_amount',
+            'created',
+            'fiat_total_amount',
             'delivery_address2',
             'delivery_contact_phone',
             'instantfiat_invoice_id',
-            'instantfiat_btc_amount',
+            'instantfiat_btc_total_amount',
             'instantfiat_address',
         ]
         labels = {'quantity': 'Terminals on order'}
@@ -108,6 +109,7 @@ class TerminalOrderForm(forms.ModelForm):
             'payment_method': ButtonGroupRadioSelect,
         }
 
+    @property
     def terminal_price(self):
         return config.TERMINAL_PRICE
 
@@ -129,7 +131,7 @@ class TerminalOrderForm(forms.ModelForm):
     def save(self, merchant, commit=True):
         instance = super(TerminalOrderForm, self).save(commit=False)
         instance.merchant = merchant
-        instance.fiat_amount = instance.quantity * self.terminal_price()
+        instance.fiat_total_amount = instance.quantity * self.terminal_price * 1.2
         if not self.cleaned_data.get('delivery_address_differs'):
             # Copy address fields from merchant instance
             instance.delivery_address = merchant.business_address
@@ -142,12 +144,12 @@ class TerminalOrderForm(forms.ModelForm):
         if instance.payment_method == "bitcoin":
             # Create invoice
             instantfiat_result = cryptopay.create_invoice(
-                instance.fiat_amount,
+                instance.fiat_total_amount,
                 merchant.currency.name,
                 config.CRYPTOPAY_API_KEY,
                 "terminals")
             instance.instantfiat_invoice_id = instantfiat_result[0]
-            instance.instantfiat_btc_amount = instantfiat_result[1]
+            instance.instantfiat_btc_total_amount = instantfiat_result[1]
             instance.instantfiat_address = instantfiat_result[2]
         if commit:
             instance.save()

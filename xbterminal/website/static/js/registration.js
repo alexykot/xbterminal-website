@@ -7,18 +7,31 @@ var Registration = (function () {
             url: 'https://cryptopay.me/api/v1/rates',
             success: function (data) {
                 exchangeRate = data.GBP;
-                calculateSum();
+                calculateSubTotal();
             }
         });
     };
 
-    var calculateSum = function () {
-        var quantity = $('#id_quantity').val();
+    var subTotal_GBP, subTotal_mBTC;
+    var formatAmounts = function (amount_GBP, amount_mBTC) {
+        var gbp = '£<span class="gbp">'
+            + amount_GBP.toFixed(2)
+            + '</span> GBP';
+        if ($('[name="payment_method"]:checked').val() == 'bitcoin') {
+            var mbtc = '฿<span class="mbtc">'
+                + amount_mBTC.toFixed(5)
+                + '</span> mBTC';
+            return gbp + ' / ' + mbtc;
+        } else {
+            return gbp;
+        }
+    };
+    var calculateSubTotal = function () {
+        var quantity = $('[name="quantity"]').val();
         var price = $('#calculation').data('price');
-        var sumGBP = quantity * price;
-        var sumBTC = sumGBP / exchangeRate * 1000;
-        $('#sum-gbp').text(sumGBP.toFixed(2));
-        $('#sum-mbtc').text(sumBTC.toFixed(2));
+        subTotal_GBP = quantity * price;
+        subTotal_mBTC = subTotal_GBP / exchangeRate * 1000;
+        $('#calculation').html(formatAmounts(subTotal_GBP, subTotal_mBTC));
     };
 
     var showErrors = function (formErrors) {
@@ -37,88 +50,127 @@ var Registration = (function () {
         $('#error-messages').empty().hide();
     };
 
-    var getTradingAddress = function () {
-        var addressFieldNames = [
-            'business_address',
-            'business_address1',
-            'town',
-            'post_code',
-            'county',
-        ]
+    var billingAddressFields = [
+        'company_name',
+        'business_address',
+        'business_address1',
+        'town',
+        'post_code',
+        'county',
+        'country'
+    ];
+    var deliveryAddressFields = [
+        'company_name',
+        'delivery_address',
+        'delivery_address1',
+        'delivery_town',
+        'delivery_post_code',
+        'delivery_county',
+        'delivery_country'
+    ];
+    var getAddress = function (addressFieldNames) {
         var result = [];
         $.each(addressFieldNames, function (i, fieldName) {
-            var fieldValue = $('[name="' + fieldName + '"]').val();
+            var field = $('[name="' + fieldName + '"]');
+            var fieldValue;
+            if (field.prop('tagName') == 'SELECT') {
+                var option = field.find('option[value="' + field.val() + '"]');
+                fieldValue = option.text();
+            } else {
+                fieldValue = field.val();
+            }
             if (fieldValue) {
                 result.push(fieldValue);
             }
         });
-        var countryCode = $('[name="country"]').val();
-        var countryOption = $('[name="country"] option[value="' + countryCode + '"]');
-        result.push(countryOption.text());
         return result;
     };
-
-    var validateRegistrationStep1 = function () {
-        var form = $('#merchant-form');
-        var formErrors = {};
-        // Pre-validation
-        var regtype = form.find('[name="regtype"]').val();
-        if (regtype == 'default') {
-            $('[name="company_name_copy"]').val($('[name="company_name"]').val());
-        } else if (regtype == 'terminal') {
-            if (!$('#terms').is(':checked')) {
-                alert('Please accept terms & conditions');
-                return false;
-            }
-            $('#delivery-address-preview').html(getTradingAddress().join('<br>'));
+    var getBillingAddress = function () {
+        return getAddress(billingAddressFields);
+    };
+    var getDeliveryAddress = function () {
+        if ($('[name="delivery_address_differs"]').prop('checked')) {
+            return getAddress(deliveryAddressFields);
+        } else {
+            return getAddress(billingAddressFields);
         }
-        // Validation
-        var validator = form.validate({
+    };
+
+    var validator;
+    var setUpValidator = function () {
+        validator = $('#merchant-form').validate({
             showErrors: function (errorMap, errorList) {
+                var formErrors = {};
                 for (var fieldName in errorMap) {
                     formErrors[fieldName] = [errorMap[fieldName]];
                 }
+                showErrors(formErrors);
             },
             onsubmit: false,
             onfocusout: false,
             onkeyup: false,
             onclick: false
         });
-        if (validator.form()) {
-            clearErrors();
-            return true;
-        } else {
-            showErrors(formErrors);
-            return false;
-        }
+        $('[name="terms"]').rules('add', {
+            required: true,
+            messages: {
+                required: 'Please accept terms & conditions'
+            }
+        });
     };
 
     var init = function () {
-        $('#next-step').on('click', function () {
-            if (validateRegistrationStep1()) {
+        $('#continue-step-2').on('click', function () {
+            if (validator.form()) {
+                clearErrors();
                 $('#registration-step-1').hide();
                 $('#registration-step-2').show();
                 $('#step span').text('2');
+                var regtype = $('[name="regtype"]').val();
+                if (regtype == 'default') {
+                    $('[name="company_name_copy"]').val($('[name="company_name"]').val());
+                } else if (regtype == 'terminal') {
+                    $('#delivery-address-preview').html(getBillingAddress().join('<br>'));
+                }
             }
         });
-        $('#previous-step').on('click', function () {
+        $('#continue-step-3').on('click', function () {
+            if (validator.form()) {
+                clearErrors();
+                $('#registration-step-2').hide();
+                $('#registration-step-3').show();
+                $('#step span').text('3');
+                $('#od-quantity').text($('[name="quantity"]').val());
+                $('#od-billing-address').html(getBillingAddress().join('<br>'));
+                $('#od-delivery-address').html(getDeliveryAddress().join('<br>'));
+                $('#od-subtotal').html(formatAmounts(subTotal_GBP, subTotal_mBTC));
+                $('#od-vat').html(formatAmounts(subTotal_GBP * 0.2, subTotal_mBTC * 0.2));
+                $('#od-total').html(formatAmounts(subTotal_GBP * 1.2, subTotal_mBTC * 1.2));
+                $('#od-payment-method').text($('[name="payment_method"]:checked').val());
+            }
+        });
+        $('#back-step-1').on('click', function () {
             $('#registration-step-2').hide();
             $('#registration-step-1').show();
             $('#step span').text('1');
         });
+        $('#back-step-2').on('click', function () {
+            $('#registration-step-3').hide();
+            $('#registration-step-2').show();
+            $('#step span').text('2');
+        });
 
-        $('#id_delivery_address_differs').on('click', function () {
+        $('[name="delivery_address_differs"]').on('click', function () {
             $('#delivery-address-group').toggle();
         });
 
-        $('#id_quantity').on('change', function () {
-            calculateSum();
+        $('[name="quantity"], [name="payment_method"]').on('change', function () {
+            calculateSubTotal();
         });
 
         $('#merchant-form').on('submit', function (event) {
             event.preventDefault();
-            if (!$('#terms').is(':checked')) {
-                alert('Please accept terms & conditions');
+            if (!validator.form()) {
                 return false;
             }
             clearErrors();
@@ -142,6 +194,7 @@ var Registration = (function () {
         });
 
         getExchangeRate();
+        setUpValidator();
     };
     return {init: init};
 }());

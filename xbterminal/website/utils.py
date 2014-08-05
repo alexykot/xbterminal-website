@@ -10,7 +10,9 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.db.models import Sum
 
-from api.shotcuts import generate_pdf
+from constance import config
+
+from api.shortcuts import generate_pdf
 
 REPORT_FIELDS = [
     ('ID', 'id'),
@@ -132,3 +134,20 @@ def generate_qr_code(text, size=4):
         qr_output.getvalue().encode("base64"))
     qr_output.close()
     return qr_code_src
+
+
+def send_invoice(order):
+    message_text = render_to_string(
+        "website/email/order.txt",
+        {'order': order})
+    message = EmailMessage(
+        "Order",
+        message_text,
+        settings.DEFAULT_FROM_EMAIL,
+        [order.merchant.contact_email])
+    pdf = generate_pdf("pdf/invoice.html", {
+        'order': order,
+        'terminal_price': config.TERMINAL_PRICE,
+    })
+    message.attach('invoice.pdf', pdf.getvalue(), 'application/pdf')
+    message.send(fail_silently=False)

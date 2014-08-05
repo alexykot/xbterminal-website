@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import uuid
 import datetime
+from decimal import Decimal
 
 from django.db import models
 from django.conf import settings
@@ -246,9 +247,10 @@ class Order(models.Model):
     ]
 
     merchant = models.ForeignKey(MerchantAccount)
+    created = models.DateTimeField(auto_now_add=True)
     quantity = models.IntegerField()
     payment_method = models.CharField(max_length=50, choices=PAYMENT_METHODS, default='bitcoin')
-    fiat_amount = models.DecimalField(max_digits=20, decimal_places=8)
+    fiat_total_amount = models.DecimalField(max_digits=20, decimal_places=8)
 
     delivery_address = models.CharField(max_length=1000, blank=True)
     delivery_address1 = models.CharField('', max_length=1000, blank=True)
@@ -260,19 +262,28 @@ class Order(models.Model):
     delivery_contact_phone = models.CharField(max_length=1000, blank=True)
 
     instantfiat_invoice_id = models.CharField(max_length=255, null=True)
-    instantfiat_btc_amount = models.DecimalField(max_digits=18, decimal_places=8, null=True)
+    instantfiat_btc_total_amount = models.DecimalField(max_digits=18, decimal_places=8, null=True)
     instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin], null=True)
 
     def __unicode__(self):
         return "order #{0}".format(self.id)
 
-    def get_delivery_address(self):
-        values = [
-            self.delivery_address,
-            self.delivery_address1,
-            self.delivery_town,
-            self.delivery_post_code,
-            self.delivery_county,
-            self.delivery_country,
-        ]
-        return [val for val in values if val]
+    @property
+    def fiat_amount(self):
+        return self.fiat_total_amount / Decimal(1.2)
+
+    @property
+    def fiat_vat_amount(self):
+        return self.fiat_amount * Decimal(0.2)
+
+    @property
+    def instantfiat_btc_amount(self):
+        return self.instantfiat_btc_total_amount / Decimal(1.2)
+
+    @property
+    def instantfiat_btc_vat_amount(self):
+        return self.instantfiat_btc_amount * Decimal(0.2)
+
+    @property
+    def invoice_due_date(self):
+        return self.created + datetime.timedelta(days=14)

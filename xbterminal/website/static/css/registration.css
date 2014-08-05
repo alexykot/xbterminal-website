@@ -7,15 +7,14 @@
 }
 
 #registration-step-2,
+#registration-step-3,
 #loading-image,
 #error-messages {
     display: none;
 }
 
 label[for="id_business_address1"],
-label[for="id_business_address2"],
-label[for="id_delivery_address1"],
-label[for="id_delivery_address2"] {
+label[for="id_delivery_address1"] {
     display: none;
 }
 
@@ -27,4 +26,19 @@ label[for="id_delivery_address2"] {
     color: green;
     font-size: 1.2em;
     margin-bottom: 15px;
+}
+
+#order-details {
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+#order-details td {
+    padding: 4px 8px;
+    vertical-align: top;
+}
+
+.od-label {
+    font-weight: bold;
+    text-align: right;
 }

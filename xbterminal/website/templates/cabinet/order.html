@@ -1,32 +1,33 @@
 {% extends "cabinet/base.html" %}
-{% load qr_tags %}
+{% load qr_tags website_tags %}
 
 {% block cabinet_content %}
 <h3>Order details</h3>
-<table id="order-details" class="table table-condensed table-bordered">
-    <tr>
-        <td>Quantity</td>
-        <td>{{ order.quantity }}</td>
-    </tr>
-    <tr>
-        <td>Payment method</td>
-        <td>{{ order.payment_method }}</td>
-    </tr>
-    <tr>
-        <td>Total</td>
-        <td>£{{ order.fiat_amount }} GBP / ฿{{ order.instantfiat_btc_amount }} mBTC</td>
-    </tr>
-    <tr>
-        <td>Delivery address</td>
-        <td>{{ order.get_delivery_address|join:'<br>' }}</td>
-    </tr>
-</table>
-<div id="payment-info">
-    {% if order.payment_method == 'bitcoin' %}
+<div class="row">
+    <div class="col-md-5" id="payment-bitcoin">
         {% qr_from_text bitcoin_uri 'm' %}
-    {% elif order.payment_method == 'wire' %}
-        <div>Invoice will be sent to your email <b>{{ order.merchant.contact_email }}</b>.</div>
-        <a class="btn btn-primary">Confirm order</a>
-    {% endif %}
+        <div>to pay &nbsp; ฿{{ order.instantfiat_btc_total_amount|scale|floatformat:5 }} mBTC</div>
+        <a href="{{ bitcoin_uri }}">{{ order.instantfiat_address }}</a>
+    </div>
+    <div class="col-md-7">
+        <table id="order-details">
+            <tr>
+                <td class="od-label">Quantity on order</td>
+                <td>{{ order.quantity }}</td>
+            </tr>
+            <tr>
+                <td class="od-label">Subtotal</td>
+                <td>£{{ order.fiat_amount|floatformat:2 }} GBP / ฿{{ order.instantfiat_btc_amount|scale|floatformat:5 }} mBTC</td>
+            </tr>
+            <tr>
+                <td class="od-label">VAT</td>
+                <td>£{{ order.fiat_vat_amount|floatformat:2 }} GBP / ฿{{ order.instantfiat_btc_vat_amount|scale|floatformat:5 }} mBTC</td>
+            </tr>
+            <tr>
+                <td class="od-label">Total</td>
+                <td>£{{ order.fiat_total_amount|floatformat:2 }} GBP / ฿{{ order.instantfiat_btc_total_amount|scale|floatformat:5 }} mBTC</td>
+            </tr>
+        </table>
+    </div>
 </div>
 {% endblock %}

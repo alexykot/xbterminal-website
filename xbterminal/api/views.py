@@ -20,7 +20,7 @@ from website.models import Device, Transaction, Firmware, PaymentOrder
 from website.forms import EnterAmountForm
 from website.utils import generate_qr_code
 from api.serializers import TransactionSerializer
-from api.shotcuts import render_to_pdf
+from api.shortcuts import render_to_pdf
 
 import payment
 import payment.blockchain

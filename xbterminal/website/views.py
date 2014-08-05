@@ -118,17 +118,20 @@ class OrderPaymentView(TemplateResponseMixin, CabinetView):
     template_name = "cabinet/order.html"
 
     def get(self, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-        context['order'] = get_object_or_404(
-            models.Order,
-            pk=self.kwargs.get('pk'),
-            merchant=self.request.user.merchant)
-        if context['order'].payment_method == 'bitcoin':
+        order = get_object_or_404(models.Order,
+                                  pk=self.kwargs.get('pk'),
+                                  merchant=self.request.user.merchant)
+        if order.payment_method == 'bitcoin':
+            context = self.get_context_data(**kwargs)
+            context['order'] = order
             context['bitcoin_uri'] = construct_bitcoin_uri(
                 context['order'].instantfiat_address,
-                context['order'].instantfiat_btc_amount,
+                context['order'].instantfiat_btc_total_amount,
                 "xbterminal.io")
-        return self.render_to_response(context)
+            return self.render_to_response(context)
+        elif order.payment_method == 'wire':
+            utils.send_invoice(order)
+            return redirect(reverse('website:devices'))
 
 
 class DeviceList(TemplateResponseMixin, CabinetView):
