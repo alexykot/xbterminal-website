@@ -7,12 +7,13 @@
 
 {% block js %}
 <script src="{% static 'lib/scrollspy.js' %}"></script>
+<script src="{% static 'lib/jquery.stellar.min.js' %}"></script>
 <script src="{% static 'js/landing.js' %}"></script>
 {% endblock %}
 
 {% block content %}
 <div class="content row">
-    <div class="image-section" id="about-section">
+    <div class="image-section" id="about-section" data-stellar-background-ratio="0.5">
         <div class="container">
             <div class="row">
                 <div class="col-md-6" id="about-image">
@@ -38,7 +39,7 @@
             </div>
         </div>
     </div>
-    <div class="image-section" id="terminal-section">
+    <div class="image-section" id="terminal-section" data-stellar-background-ratio="0.5">
         <div class="container">
             <div id="terminal-image">
                 <img src="{% static 'img/xlb-terminal.png' %}" alt="image">
@@ -58,7 +59,7 @@
             <h3>Join the mailing list</h3>
         </div>
     </div>
-    <div class="image-section" id="mobile-section">
+    <div class="image-section" id="mobile-section" data-stellar-background-ratio="0.5">
         <div class="container">
             <div id="mobile-image">
                 <img src="{% static 'img/xlb-mobile.png' %}" alt="image">
@@ -73,7 +74,7 @@
             <h3>Download today</h3>
         </div>
     </div>
-    <div class="image-section" id="web-section">
+    <div class="image-section" id="web-section" data-stellar-background-ratio="0.5">
         <div class="container">
             <div id="web-image">
                 <img src="{% static 'img/xlb-web.png' %}" alt="image">

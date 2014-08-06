@@ -13,11 +13,16 @@ var Landing = (function () {
 
     var init = function () {
         $(window).on('scroll', function () {
-            var navHeight = $('.header').height();
+            var header = $('.header');
+            var navHeight = header.height();
             if ($(window).scrollTop() > navHeight) {
-                $('.header').addClass('header-fixed');
+                if (!header.hasClass('header-fixed')) {
+                    header.hide().addClass('header-fixed').fadeIn();
+                }
             } else {
-                $('.header').removeClass('header-fixed');
+                if (header.hasClass('header-fixed')) {
+                    header.removeClass('header-fixed');
+                }
             }
         });
 
@@ -28,6 +33,11 @@ var Landing = (function () {
             makeLinkActive($(this).attr('id'));
         });
         sections.scrollSpy();
+
+        $.stellar({
+            horizontalScrolling: false,
+            verticalOffset: -150
+        });
 
     };
     return {init: init};

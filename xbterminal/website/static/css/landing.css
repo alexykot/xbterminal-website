@@ -6,6 +6,10 @@
 }
 
 .image-section {
+    background-attachment: fixed;
+    background-color: black;
+    background-position: center top;
+    background-repeat: repeat;
     overflow: hidden;
     text-align: center;
 }
@@ -13,7 +17,7 @@
 /* About */
 
 #about-section {
-    background: black url(../img/xlb-about-bg.png) center repeat-x;
+    background-image: url(../img/xlb-about-bg.png);
     height: 666px;
 }
 
@@ -83,7 +87,7 @@
 /* Terminal */
 
 #terminal-section {
-    background: black url(../img/xlb-terminal-bg.png) center repeat-x;
+    background-image: url(../img/xlb-terminal-bg.png);
     height: 732px;
 }
 
@@ -128,7 +132,7 @@
 /* Mobile */
 
 #mobile-section {
-    background: black url(../img/xlb-mobile-bg.png) center repeat-x;
+    background-image: url(../img/xlb-mobile-bg.png);
     height: 665px;
 }
 
@@ -147,7 +151,7 @@
 /* Web */
 
 #web-section {
-    background: black url(../img/xlb-web-bg.png) center repeat-x;
+    background-image: url(../img/xlb-web-bg.png);
     height: 663px;
 }
 
