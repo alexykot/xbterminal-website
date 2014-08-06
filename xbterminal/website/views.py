@@ -11,7 +11,7 @@ from django.conf import settings
 from django.views.generic import View
 from django.views.generic.base import ContextMixin, TemplateResponseMixin
 from django.utils.decorators import method_decorator
-from django.core.urlresolvers import reverse, reverse_lazy
+from django.core.urlresolvers import resolve, reverse, reverse_lazy
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.decorators.http import require_http_methods
 from django.db.models import Count, Sum
@@ -125,7 +125,7 @@ class CabinetView(ContextMixin, View):
 
     def get_context_data(self, **kwargs):
         context = super(CabinetView, self).get_context_data(**kwargs)
-        context['cabinet'] = True
+        context['cabinet_page'] = resolve(self.request.path_info).url_name
         return context
 
 

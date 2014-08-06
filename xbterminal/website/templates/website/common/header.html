@@ -9,9 +9,9 @@
                 </a>
             </div>
             <div class="menu-block col-md-5"><ul>
-                {% if cabinet %}
-                <li><a href="{% url 'website:devices' %}">terminals</a></li>
-                <li><a href="{% url 'website:profile' %}">profile</a></li>
+                {% if cabinet_page %}
+                <li><a href="{% url 'website:devices' %}" {% if cabinet_page == 'devices' %}class="active"{% endif %}>terminals</a></li>
+                <li><a href="{% url 'website:profile' %}" {% if cabinet_page == 'profile' %}class="active"{% endif %}>profile</a></li>
                 {% else %}
                 <li><a href="{% url 'website:landing' %}#about-section">about</a></li>
                 <li><a href="{% url 'website:landing' %}#terminal-section">terminal</a></li>

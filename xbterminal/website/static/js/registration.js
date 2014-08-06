@@ -55,8 +55,8 @@ var Registration = (function () {
         'business_address',
         'business_address1',
         'town',
-        'post_code',
         'county',
+        'post_code',
         'country'
     ];
     var deliveryAddressFields = [
@@ -64,8 +64,8 @@ var Registration = (function () {
         'delivery_address',
         'delivery_address1',
         'delivery_town',
-        'delivery_post_code',
         'delivery_county',
+        'delivery_post_code',
         'delivery_country'
     ];
     var getAddress = function (addressFieldNames) {
@@ -122,8 +122,8 @@ var Registration = (function () {
         }, 'Merchant account with this contact email already exists. <a href="/login">Login</a>.');
 
         $.validator.addMethod('phone', function (value, element) {
-            return this.optional(element) || /^[0-9\s-()+]{5,20}$/.test(value);
-        }, 'Please enter a valid phone.');
+            return this.optional(element) || /^[0-9\s-+()]{5,20}$/.test(value);
+        }, 'Please enter a valid phone number.');
 
         $.validator.addMethod('postCode', function (value, element) {
             return this.optional(element) || /^[a-zA-Z0-9\s-+]{2,10}$/.test(value);

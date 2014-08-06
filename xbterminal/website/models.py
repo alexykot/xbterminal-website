@@ -10,7 +10,12 @@ from django_countries.fields import CountryField
 from django.contrib.sites.models import Site
 from django.utils import timezone
 
-from website.validators import validate_percent, validate_bitcoin, validate_transaction
+from website.validators import (
+    validate_phone,
+    validate_post_code,
+    validate_percent,
+    validate_bitcoin,
+    validate_transaction)
 from website.fields import FirmwarePathField
 
 
@@ -44,11 +49,11 @@ class MerchantAccount(models.Model):
     business_address2 = models.CharField('', max_length=255, blank=True, default='')
     town = models.CharField(max_length=64)
     county = models.CharField("State / County", max_length=128, blank=True)
-    post_code = models.CharField(max_length=32)
+    post_code = models.CharField(max_length=32, validators=[validate_post_code])
     country = CountryField(default='GB')
     contact_first_name = models.CharField(max_length=255)
     contact_last_name = models.CharField(max_length=255)
-    contact_phone = models.CharField(max_length=32)
+    contact_phone = models.CharField(max_length=32, validators=[validate_phone])
     contact_email = models.EmailField(unique=True)
 
     language = models.ForeignKey(Language, default=1)  # by default, English, see fixtures
@@ -258,7 +263,7 @@ class Order(models.Model):
     delivery_address2 = models.CharField('', max_length=255, blank=True)
     delivery_town = models.CharField(max_length=64, blank=True)
     delivery_county = models.CharField(max_length=128, blank=True)
-    delivery_post_code = models.CharField(max_length=32, blank=True)
+    delivery_post_code = models.CharField(max_length=32, blank=True, validators=[validate_post_code])
     delivery_country = CountryField(default='GB', blank=True)
     delivery_contact_phone = models.CharField(max_length=32, blank=True)
 

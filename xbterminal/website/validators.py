@@ -87,3 +87,13 @@ def validate_bitcoin(value):
 def validate_transaction(value):
     if re.match(r"^[0-9A-Fa-f]{64}$", value) is None:
         raise ValidationError('Invalid Bitcoin transaction.')
+
+
+def validate_phone(value):
+    if re.match(r"^[0-9\s\-+()]{5,20}$", value) is None:
+        raise ValidationError('Please enter a valid phone number.')
+
+
+def validate_post_code(value):
+    if re.match(r"^[a-zA-Z0-9\s\-+]{2,10}$", value) is None:
+        raise ValidationError('Please enter a valid post code.')
