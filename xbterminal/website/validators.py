@@ -90,7 +90,7 @@ def validate_transaction(value):
 
 
 def validate_phone(value):
-    if re.match(r"^[0-9\s\-+()]{5,20}$", value) is None:
+    if re.match(r"^[0-9\s\-+().]{5,20}$", value) is None:
         raise ValidationError('Please enter a valid phone number.')
 
 

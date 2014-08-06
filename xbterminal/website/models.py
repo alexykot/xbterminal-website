@@ -62,10 +62,17 @@ class MerchantAccount(models.Model):
     def __unicode__(self):
         return self.company_name
 
-    def get_address(self):
-        strings = [self.business_address, self.business_address1, self.business_address2,
-                   self.town, self.county, unicode(self.country.name)]
-        return ', '.join(filter(None, strings))
+    @property
+    def billing_address(self):
+        strings = [
+            self.business_address,
+            self.business_address1,
+            self.town,
+            self.county,
+            self.post_code,
+            self.country.name,
+        ]
+        return [s for s in strings if s]
 
 
 class Device(models.Model):
@@ -249,7 +256,7 @@ class Order(models.Model):
 
     PAYMENT_METHODS = [
         ('bitcoin', 'Bitcoin'),
-        ('wire', 'Wire transfer'),
+        ('wire', 'Bank wire transfer'),
     ]
 
     merchant = models.ForeignKey(MerchantAccount)

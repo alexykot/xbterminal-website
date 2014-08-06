@@ -119,10 +119,10 @@ var Registration = (function () {
                 async: false
             });
             return isValid;
-        }, 'Merchant account with this contact email already exists. <a href="/login">Login</a>.');
+        }, 'Merchant account with this contact email already exists. Please <a href="/login">login</a> or <a>reset your password</a>.');
 
         $.validator.addMethod('phone', function (value, element) {
-            return this.optional(element) || /^[0-9\s-+()]{5,20}$/.test(value);
+            return this.optional(element) || /^[0-9\s-+().]{5,20}$/.test(value);
         }, 'Please enter a valid phone number.');
 
         $.validator.addMethod('postCode', function (value, element) {
@@ -160,7 +160,8 @@ var Registration = (function () {
     };
 
     var init = function () {
-        $('#continue-step-2').on('click', function () {
+        $('#continue-step-2').on('click', function (event) {
+            event.preventDefault();
             if (validator.form()) {
                 clearErrors();
                 $('#registration-step-1').hide();
@@ -174,7 +175,8 @@ var Registration = (function () {
                 }
             }
         });
-        $('#continue-step-3').on('click', function () {
+        $('#continue-step-3').on('click', function (event) {
+            event.preventDefault();
             if (validator.form()) {
                 clearErrors();
                 $('#registration-step-2').hide();
@@ -186,15 +188,17 @@ var Registration = (function () {
                 $('#od-subtotal').html(formatAmounts(subTotal_GBP, subTotal_mBTC));
                 $('#od-vat').html(formatAmounts(subTotal_GBP * 0.2, subTotal_mBTC * 0.2));
                 $('#od-total').html(formatAmounts(subTotal_GBP * 1.2, subTotal_mBTC * 1.2));
-                $('#od-payment-method').text($('[name="payment_method"]:checked').val());
+                $('#od-payment-method').text($('[name="payment_method"]:checked').parent().text());
             }
         });
-        $('#back-step-1').on('click', function () {
+        $('#back-step-1').on('click', function (event) {
+            event.preventDefault();
             $('#registration-step-2').hide();
             $('#registration-step-1').show();
             $('#step span').text('1');
         });
-        $('#back-step-2').on('click', function () {
+        $('#back-step-2').on('click', function (event) {
+            event.preventDefault();
             $('#registration-step-3').hide();
             $('#registration-step-2').show();
             $('#step span').text('2');

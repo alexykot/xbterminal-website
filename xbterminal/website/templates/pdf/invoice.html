@@ -73,8 +73,8 @@
         <tr>
             <td colspan="8">
                 +44 (0) 20 8123 8185<br>
-                info@xbterminal.com<br>
-                https://xbterminal.com
+                info@xbterminal.io<br>
+                https://xbterminal.io
             </td>
         </tr>
         <tr>
@@ -87,8 +87,8 @@
         </tr>
         <tr>
             <td colspan="3" rowspan="2">
-                {{ order.merchant.contact_name }}<br>
-                {{ order.merchant.company_name }}
+                {{ order.merchant.company_name }}<br>
+                {{ order.merchant.billing_address|join:', ' }}
             </td>
             <td colspan="4">&nbsp;</td>
             <td class="center">£{{ order.fiat_amount|floatformat:2 }}</td>
@@ -110,7 +110,7 @@
             <td colspan="4" class="border top">XBTerminal Bitcoin POS Terminal<br><br><br><br></td>
             <td class="border center top">{{ order.quantity }}</td>
             <td class="border center top">£{{ terminal_price|floatformat:2 }}</td>
-            <td class="border center top">20.0% S</td>
+            <td class="border center top">20.0%</td>
             <td class="border right top">£{{ order.fiat_amount|floatformat:2 }}</td>
         </tr>
         <tr>

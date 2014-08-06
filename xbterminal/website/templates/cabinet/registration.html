@@ -33,7 +33,7 @@
                         <div class="col-md-6">{% bootstrap_field form.company_name_copy %}</div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6"><a id="continue-step-2" class="btn btn-default pull-right">Continue</a></div>
+                        <div class="col-md-6"><a href="#" id="continue-step-2" class="btn btn-default pull-right">Continue</a></div>
                         <div class="col-md-6"><a href="{% url 'website:landing' %}" class="btn">Cancel</a></div>
                     </div>
                 {% elif form.regtype.value == 'terminal' %}
@@ -59,11 +59,13 @@
                         <div class="col-md-6">{% bootstrap_field form.county %}</div>
                         <div class="col-md-6">{% bootstrap_field form.country %}</div>
                     </div>
-                    <div class="checkbox">
-                        <label for="id_terms"><input id="id_terms" name="terms" type="checkbox">I agree to XLB <a>Terms & Conditions</a> of use</label>
+                    <div class="checkbox text-center">
+                        <label for="id_terms"><input id="id_terms" name="terms" type="checkbox">I agree to XLB <a href="#">Terms & Conditions</a> of use</label>
                     </div>
-                    <a id="continue-step-2" class="btn btn-default">Continue</a>
-                    <a href="{% url 'website:landing' %}" class="btn">Cancel</a>
+                    <div class="row">
+                        <div class="col-md-6"><a href="#" id="continue-step-2" class="btn btn-default pull-right">Continue</a></div>
+                        <div class="col-md-6"><a href="{% url 'website:landing' %}" class="btn">Cancel</a></div>
+                    </div>
                 {% endif %}
             </div>
             <div id="registration-step-2">
@@ -85,12 +87,16 @@
                         <div class="col-md-6">{% bootstrap_field form.county %}</div>
                         <div class="col-md-6">{% bootstrap_field form.country %}</div>
                     </div>
-                    <div class="checkbox">
-                        <label for="id_terms"><input id="id_terms" name="terms" type="checkbox">I agree to XLB <a>Terms & Conditions</a> of use</label>
+                    <div class="checkbox text-center">
+                        <label for="id_terms"><input id="id_terms" name="terms" type="checkbox">I agree to XLB <a href="#">Terms & Conditions</a> of use</label>
                     </div>
-                    <button type="submit" class="btn btn-default">Create account</button>
-                    <a id="back-step-1" class="btn">Back</a>
-                    <img id="loading-image" src="{% static 'img/loading.gif' %}">
+                    <div class="row">
+                        <div class="col-md-6"><button type="submit" class="btn btn-default pull-right">Create account</button></div>
+                        <div class="col-md-6">
+                            <a href="#" id="back-step-1" class="btn">Back</a>
+                            <img id="loading-image" src="{% static 'img/loading.gif' %}">
+                        </div>
+                    </div>
                 {% elif form.regtype.value == 'terminal' %}
                     <div class="row">
                         <div class="col-md-4">{% bootstrap_field order_form.quantity %}</div>
@@ -117,8 +123,10 @@
                             <div class="col-md-6">{% bootstrap_field order_form.delivery_country %}</div>
                         </div>
                     </div>
-                    <a id="continue-step-3" class="btn btn-default">Continue</a>
-                    <a id="back-step-1" class="btn">Back</a>
+                    <div class="row">
+                        <div class="col-md-6"><a href="#" id="continue-step-3" class="btn btn-default pull-right">Continue</a></div>
+                        <div class="col-md-6"><a href="#" id="back-step-1" class="btn">Back</a></div>
+                    </div>
                 {% endif %}
             </div>
             {% if form.regtype.value == 'terminal' %}
@@ -159,7 +167,7 @@
                 <div class="row">
                     <div class="col-md-6"><button type="submit" class="btn btn-default pull-right">Confirm and pay</button></div>
                     <div class="col-md-6">
-                        <a id="back-step-2" class="btn">Back</a>
+                        <a href="#" id="back-step-2" class="btn">Back</a>
                         <img id="loading-image" src="{% static 'img/loading.gif' %}">
                     </div>
                 </div>

@@ -159,8 +159,8 @@ html, body {
 .content {
     height: auto;
     min-height: 100%;
-    margin-bottom: -250px;
-    padding-bottom: 250px;
+    margin-bottom: -170px;
+    padding-bottom: 170px;
 }
 
 .content h2 {
@@ -188,7 +188,7 @@ html, body {
 
 .footer-1 {
     background-color: #818181;
-    padding-top: 90px;
+    padding-top: 10px;
     text-align: center;
 }
 
