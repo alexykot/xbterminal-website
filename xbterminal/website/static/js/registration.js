@@ -99,6 +99,9 @@ var Registration = (function () {
     var validator;
     var setUpValidator = function () {
         $.validator.addMethod('emailUnique', function (value, element) {
+            if (this.optional(element)) {
+                return true;
+            }
             var isValid;
             $.ajax({
                 type: 'GET',
@@ -117,6 +120,12 @@ var Registration = (function () {
             });
             return isValid;
         }, 'Merchant account with this Contact email already exists.');
+        $.validator.addMethod('phone', function (value, element) {
+            return this.optional(element) || /^[0-9\s-()+]{5,20}$/.test(value);
+        }, 'Please enter a valid phone.');
+        $.validator.addMethod('postCode', function (value, element) {
+            return this.optional(element) || /^[a-zA-Z0-9\s-+]{2,10}$/.test(value);
+        }, 'Please enter a valid post code.');
         validator = $('#merchant-form').validate({
             showErrors: function (errorMap, errorList) {
                 var formErrors = {};
@@ -132,6 +141,12 @@ var Registration = (function () {
         });
         $('[name="contact_email"]').rules('add', {
             emailUnique: true
+        });
+        $('[name="contact_phone"]').rules('add', {
+            phone: true
+        });
+        $('[name="post_code"]').rules('add', {
+            postCode: true
         });
         $('[name="terms"]').rules('add', {
             required: true,
