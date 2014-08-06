@@ -2,6 +2,10 @@
     border-bottom: 1px solid #F0EEEF;
 }
 
+.content {
+    padding-top: 60px;
+}
+
 /* Registration */
 
 #step {
@@ -22,6 +26,12 @@
 label[for="id_business_address1"],
 label[for="id_delivery_address1"] {
     display: none;
+}
+
+label[for="id_trading_name"]:after,
+label[for="id_county"]:after {
+    color: #ccc;
+    content: " (optional)";
 }
 
 #delivery-address-group {

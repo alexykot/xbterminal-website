@@ -150,7 +150,7 @@ var Registration = (function () {
                 $('#step span').text('2');
                 var regtype = $('[name="regtype"]').val();
                 if (regtype == 'default') {
-                    $('[name="company_name_copy"]').val($('[name="company_name"]').val());
+                    $('[name="company_name"]').val($('[name="company_name_copy"]').val());
                 } else if (regtype == 'terminal') {
                     $('#delivery-address-preview').html(getBillingAddress().join('<br>'));
                 }

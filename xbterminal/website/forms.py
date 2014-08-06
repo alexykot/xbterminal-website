@@ -42,21 +42,18 @@ class MerchantRegistrationForm(forms.ModelForm):
         choices=[('default', 'default'), ('terminal', 'terminal')],
         widget=forms.HiddenInput)
 
-    # Used at registration step 2
-    company_name_copy = forms.CharField(
-        label='Company name',
-        required=False,
-        widget=forms.TextInput(attrs={'disabled': 'disabled'}))
+    # Used at registration step 1
+    company_name_copy = forms.CharField(label='Company name')
 
     class Meta:
         model = MerchantAccount
         exclude = ['user', 'business_address2', 'language', 'currency']
         labels = {
             'business_address': 'Trading address',
+            'post_code': 'Post code/Zip code',
             'contact_first_name': 'First name',
             'contact_last_name': 'Last name',
             'contact_email': 'Email',
-            'contact_phone': 'Phone',
         }
 
     def save(self, commit=True):
