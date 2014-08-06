@@ -257,7 +257,7 @@ class Order(models.Model):
     delivery_address1 = models.CharField('', max_length=255, blank=True)
     delivery_address2 = models.CharField('', max_length=255, blank=True)
     delivery_town = models.CharField(max_length=64, blank=True)
-    delivery_county = models.CharField("Delivery state / county", max_length=128, blank=True)
+    delivery_county = models.CharField(max_length=128, blank=True)
     delivery_post_code = models.CharField(max_length=32, blank=True)
     delivery_country = CountryField(default='GB', blank=True)
     delivery_contact_phone = models.CharField(max_length=32, blank=True)

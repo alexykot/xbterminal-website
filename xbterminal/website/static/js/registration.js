@@ -42,7 +42,7 @@ var Registration = (function () {
             var fieldItem = $('<li/>').text(fieldLabel).appendTo(fieldList);
             var fieldErrorList = $('<ul/>').appendTo(fieldItem);
             $.each(formErrors[fieldName], function (i, error) {
-                $('<li/>').text(error).appendTo(fieldErrorList);
+                $('<li/>').html(error).appendTo(fieldErrorList);
             });
         }
     };
@@ -119,13 +119,16 @@ var Registration = (function () {
                 async: false
             });
             return isValid;
-        }, 'Merchant account with this Contact email already exists.');
+        }, 'Merchant account with this contact email already exists. <a href="/login">Login</a>.');
+
         $.validator.addMethod('phone', function (value, element) {
             return this.optional(element) || /^[0-9\s-()+]{5,20}$/.test(value);
         }, 'Please enter a valid phone.');
+
         $.validator.addMethod('postCode', function (value, element) {
             return this.optional(element) || /^[a-zA-Z0-9\s-+]{2,10}$/.test(value);
         }, 'Please enter a valid post code.');
+
         validator = $('#merchant-form').validate({
             showErrors: function (errorMap, errorList) {
                 var formErrors = {};
@@ -134,25 +137,25 @@ var Registration = (function () {
                 }
                 showErrors(formErrors);
             },
+            rules: {
+                company_name_copy: 'required',
+                contact_email: 'emailUnique',
+                contact_phone: 'phone',
+                post_code: 'postCode',
+                delivery_post_code: 'postCode',
+                quantity: {
+                    number: true,
+                    min: 1
+                },
+                terms: 'required'
+            },
+            messages: {
+                terms: 'Please accept terms & conditions.'
+            },
             onsubmit: false,
             onfocusout: false,
             onkeyup: false,
             onclick: false
-        });
-        $('[name="contact_email"]').rules('add', {
-            emailUnique: true
-        });
-        $('[name="contact_phone"]').rules('add', {
-            phone: true
-        });
-        $('[name="post_code"]').rules('add', {
-            postCode: true
-        });
-        $('[name="terms"]').rules('add', {
-            required: true,
-            messages: {
-                required: 'Please accept terms & conditions'
-            }
         });
     };
 
@@ -201,7 +204,31 @@ var Registration = (function () {
             $('#delivery-address-group').toggle();
         });
 
-        $('[name="quantity"], [name="payment_method"]').on('change', function () {
+        $('#quantity-plus').on('click', function (event) {
+            var field = $('[name="quantity"]');
+            var currentValue = parseInt(field.val());
+            if (isNaN(currentValue)) {
+                field.val(1);
+            } else {
+                field.val(currentValue + 1);
+            }
+            field.change();
+        });
+        $('#quantity-minus').on('click', function (event) {
+            var field = $('[name="quantity"]');
+            var currentValue = parseInt(field.val());
+            if (isNaN(currentValue) || currentValue == 1) {
+                field.val(1);
+            } else {
+                field.val(currentValue - 1);
+            }
+            field.change();
+        });
+
+        $('[name="payment_method"]').on('change', function () {
+            calculateSubTotal();
+        });
+        $('[name="quantity"]').on('input change', function () {
             calculateSubTotal();
         });
 

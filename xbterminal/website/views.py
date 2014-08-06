@@ -50,6 +50,8 @@ class RegistrationView(TemplateResponseMixin, View):
 
     def get(self, *args, **kwargs):
         regtype = self.request.GET.get('regtype', 'default')
+        if self.request.user.is_authenticated():
+            return redirect(reverse('website:devices'))
         context = {
             'form': forms.MerchantRegistrationForm(initial={'regtype': regtype}),
             'order_form': forms.TerminalOrderForm(initial={'quantity': 1}),

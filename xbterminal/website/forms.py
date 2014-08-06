@@ -43,7 +43,9 @@ class MerchantRegistrationForm(forms.ModelForm):
         widget=forms.HiddenInput)
 
     # Used at registration step 1
-    company_name_copy = forms.CharField(label='Company name')
+    company_name_copy = forms.CharField(
+        label='Company name',
+        required=False)
 
     class Meta:
         model = MerchantAccount
@@ -102,8 +104,15 @@ class TerminalOrderForm(forms.ModelForm):
             'instantfiat_btc_total_amount',
             'instantfiat_address',
         ]
-        labels = {'quantity': 'Terminals on order'}
+        labels = {
+            'quantity': 'Terminals on order',
+            'delivery_town': 'Town',
+            'delivery_post_code': 'Post code/Zip code',
+            'delivery_county': 'State / County',
+            'delivery_country': 'Country',
+        }
         widgets = {
+            'quantity': forms.TextInput,
             'payment_method': ButtonGroupRadioSelect,
         }
 

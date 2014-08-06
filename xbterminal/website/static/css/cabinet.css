@@ -34,14 +34,31 @@ label[for="id_county"]:after {
     content: " (optional)";
 }
 
-#delivery-address-group {
-    display: none;
+#quantity-plus,
+#quantity-minus {
+    display: inline-block;
+    font-size: 1.6em;
+    line-height: 34px;
+    margin-right: 4px;
+    padding: 0;
+    text-align: center;
+    text-decoration: none;
+    width: 34px;
 }
 
 #calculation {
     color: green;
-    font-size: 1.2em;
-    margin-bottom: 15px;
+    font-size: 1.4em;
+    margin-bottom: 30px;
+}
+
+#id_payment_method {
+    margin-bottom: 30px;
+}
+
+#delivery-address-group {
+    display: none;
+    margin-bottom: 30px;
 }
 
 /* Order */

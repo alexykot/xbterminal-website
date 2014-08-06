@@ -92,7 +92,14 @@
                     <a id="back-step-1" class="btn">Back</a>
                     <img id="loading-image" src="{% static 'img/loading.gif' %}">
                 {% elif form.regtype.value == 'terminal' %}
-                    {% bootstrap_field order_form.quantity %}
+                    <div class="row">
+                        <div class="col-md-4">{% bootstrap_field order_form.quantity %}</div>
+                        <div class="col-md-8">
+                            <label>&nbsp;</label><br>
+                            <a id="quantity-plus" class="xlb-btn-primary">+</a>
+                            <a id="quantity-minus" class="xlb-btn-secondary">-</a>
+                        </div>
+                    </div>
                     <div id="calculation" data-price="{{ order_form.terminal_price }}"></div>
                     {% bootstrap_field order_form.payment_method %}
                     <label class="control-label">Billing and delivery address</label>
