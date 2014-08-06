@@ -52,11 +52,12 @@
             <h3>XLB is the fast</h3>
             <p>Lorem ipsum</p>
             <a id="terminal-pre-order" class="xlb-btn-primary" href="{% url 'website:registration' %}?regtype=terminal">pre order today</a>
-            <form id="terminal-subscribe-form">
-                <input type="email" placeholder="your email"><!--
+            <form id="terminal-subscribe-form" action="{% url 'website:subscribe' %}" method="POST">
+                {% csrf_token %}
+                <input type="email" name="email" placeholder="your email"><!--
                 --><button type="submit" class="xlb-btn-secondary">submit</button>
             </form>
-            <h3>Join the mailing list</h3>
+            <h3 id="terminal-subscribe-message">Join the mailing list</h3>
         </div>
     </div>
     <div class="image-section" id="mobile-section" data-stellar-background-ratio="0.5">

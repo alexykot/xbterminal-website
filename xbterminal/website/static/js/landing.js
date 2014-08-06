@@ -12,6 +12,23 @@ var Landing = (function () {
     };
 
     var init = function () {
+        $('#terminal-subscribe-form').on('submit', function (event) {
+            event.preventDefault();
+            var form = $(this);
+            var formMessage = $('#terminal-subscribe-message');
+            $.ajax({
+                type: 'POST',
+                url: form.attr('action'),
+                data: form.serialize()
+            }).done(function (data) {
+                if (data.errors) {
+                    formMessage.text('Error!');
+                } else {
+                    formMessage.text('Thank you for joining our mailing list!');
+                }
+            });
+        });
+
         $(window).on('scroll', function () {
             var header = $('.header');
             var navHeight = header.height();

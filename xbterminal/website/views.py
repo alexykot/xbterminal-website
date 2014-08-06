@@ -26,8 +26,7 @@ from website.forms import (
     ProfileForm,
     DeviceForm,
     SendDailyReconciliationForm,
-    SendReconciliationForm,
-    SubscribeForm)
+    SendReconciliationForm)
 
 from website import forms, models, utils
 
@@ -420,12 +419,10 @@ class SubscribeNewsView(View):
     """
     Subscribe to newsletters (Ajax)
     """
-    http_method_names = ['post']
-
-    def post(self, request, *args, **kwargs):
-        form = SubscribeForm(request.POST)
+    def post(self, *args, **kwargs):
+        form = forms.SubscribeForm(self.request.POST)
         if form.is_valid():
-            subscriber_email = form.data['email']
+            subscriber_email = form.cleaned_data['email']
             text = render_to_string(
                 "website/email/subscription.txt",
                 {'subscriber_email': subscriber_email})
@@ -435,9 +432,11 @@ class SubscribeNewsView(View):
                 settings.DEFAULT_FROM_EMAIL,
                 settings.CONTACT_EMAIL_RECIPIENTS,
                 fail_silently=False)
-            return HttpResponse("")
+            response = {}
         else:
-            raise Http404
+            response = {'errors': form.errors}
+        return HttpResponse(json.dumps(response),
+                            content_type='application/json')
 
 
 @xframe_options_exempt
