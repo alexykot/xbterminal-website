@@ -196,6 +196,7 @@ var Registration = (function () {
         });
         $('#back-step-1').on('click', function (event) {
             event.preventDefault();
+            $('#registration-step-3').hide();
             $('#registration-step-2').hide();
             $('#registration-step-1').show();
             $('#step span').text('1');
@@ -257,8 +258,11 @@ var Registration = (function () {
                 if (data.result === 'ok') {
                     window.location.href = data.next;
                 } else {
+                    $('#back-step-1').click();
                     showErrors(data.errors);
                 }
+            }).fail(function () {
+                alert('Server error!');
             }).always(function () {
                 $('#loading-image').hide();
             });

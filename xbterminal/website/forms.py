@@ -1,4 +1,5 @@
 from decimal import Decimal
+import smtplib
 
 from django import forms
 from django.conf import settings
@@ -58,26 +59,35 @@ class MerchantRegistrationForm(forms.ModelForm):
             'contact_email': 'Email',
         }
 
+    def clean(self):
+        cleaned_data = super(MerchantRegistrationForm, self).clean()
+        self._password = get_user_model().objects.make_random_password()
+        # Send email
+        mail_text = render_to_string("website/email/registration.txt", {
+            'email': cleaned_data['contact_email'],
+            'password': self._password,
+        })
+        try:
+            send_mail("Registration on xbterminal.io",
+                      mail_text,
+                      settings.DEFAULT_FROM_EMAIL,
+                      [cleaned_data['contact_email']],
+                      fail_silently=False)
+        except smtplib.SMTPRecipientsRefused as error:
+            self._errors['contact_email'] = self.error_class(['Invalid email.'])
+        return cleaned_data
+
     def save(self, commit=True):
         """
         Create django user and merchant account
         """
         assert commit  # Always commit
         instance = super(MerchantRegistrationForm, self).save(commit=False)
-        user_model = get_user_model()
-        password = user_model.objects.make_random_password()
-        email = self.cleaned_data['contact_email']
-        # Send email
-        mail_text = render_to_string(
-            "website/email/registration.txt",
-            {'email': email, 'password': password})
-        send_mail("Registration on xbterminal.io",
-                  mail_text,
-                  settings.DEFAULT_FROM_EMAIL,
-                  [email],
-                  fail_silently=False)
         # Create new user
-        user = user_model.objects.create_user(email, email, password)
+        user = get_user_model().objects.create_user(
+            self.cleaned_data['contact_email'],
+            self.cleaned_data['contact_email'],
+            self._password)
         user.backend = 'django.contrib.auth.backends.ModelBackend'
         instance.user = user
         instance.save()
