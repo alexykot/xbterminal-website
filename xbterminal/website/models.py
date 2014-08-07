@@ -82,6 +82,14 @@ class Device(models.Model):
         ('hardware', 'Terminal'),
         ('web', 'Web app'),
     ]
+    DEVICE_STATUSES = [
+        ('preordered', 'Preordered'),
+        ('dispatched', 'Dispatched'),
+        ('delivered', 'Delivered'),
+        ('active', 'Online'),
+        ('suspended', 'Suspended'),
+        ('disposed', 'Disposed'),
+    ]
     PAYMENT_PROCESSING_CHOICES = [
         ('keep', 'keep bitcoins'),
         ('partially', 'convert partially'),
@@ -95,6 +103,7 @@ class Device(models.Model):
 
     merchant = models.ForeignKey(MerchantAccount)
     device_type = models.CharField(max_length=50, choices=DEVICE_TYPES)
+    status = models.CharField(max_length=50, choices=DEVICE_STATUSES, default='active')
     name = models.CharField('Your reference', max_length=100)
 
     payment_processing = models.CharField(max_length=50, choices=PAYMENT_PROCESSING_CHOICES, default='keep')

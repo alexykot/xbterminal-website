@@ -148,6 +148,14 @@ class OrderPaymentView(TemplateResponseMixin, CabinetView):
             return self.render_to_response(context)
         elif order.payment_method == 'wire':
             utils.send_invoice(order)
+            # Create devices
+            for idx in range(order.quantity):
+                device = models.Device(
+                    device_type='hardware',
+                    status='preordered',
+                    name='Terminal #{0}'.format(idx + 1),
+                    merchant=order.merchant)
+                device.save()
             return redirect(reverse('website:devices'))
 
 
