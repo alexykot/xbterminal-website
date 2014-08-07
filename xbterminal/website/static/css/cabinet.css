@@ -34,8 +34,7 @@ input:-ms-input-placeholder {
 
 #registration-step-2,
 #registration-step-3,
-#loading-image,
-#error-messages {
+#loading-image {
     display: none;
 }
 

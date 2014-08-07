@@ -34,20 +34,23 @@ var Registration = (function () {
         $('#calculation').html(formatAmounts(subTotal_GBP, subTotal_mBTC));
     };
 
-    var showErrors = function (formErrors) {
-        var errorMessages = $('#error-messages').empty().show();
-        var fieldList = $('<ul/>').appendTo(errorMessages);
-        for (var fieldName in formErrors) {
-            var fieldLabel = $('label[for="id_' + fieldName + '"]').text();
-            var fieldItem = $('<li/>').text(fieldLabel).appendTo(fieldList);
-            var fieldErrorList = $('<ul/>').appendTo(fieldItem);
-            $.each(formErrors[fieldName], function (i, error) {
-                $('<li/>').html(error).appendTo(fieldErrorList);
-            });
-        }
-    };
     var clearErrors = function () {
-        $('#error-messages').empty().hide();
+        $('.form-group')
+            .removeClass('has-error')
+            .removeClass('has-success')
+            .find('.help-block').remove();
+    };
+    var showErrors = function (formErrors) {
+        clearErrors();
+        $('.form-group').addClass('has-success');
+        for (var fieldName in formErrors) {
+            var formGroup = $('[name="' + fieldName + '"]').closest('.form-group');
+            formGroup.removeClass('has-success').addClass('has-error');
+            $('<div/>', {
+                class: 'help-block',
+                html: formErrors[fieldName].join('<br>')
+            }).appendTo(formGroup);
+        }
     };
 
     var billingAddressFields = [

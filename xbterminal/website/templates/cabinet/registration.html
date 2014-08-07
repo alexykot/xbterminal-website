@@ -59,8 +59,10 @@
                         <div class="col-md-6">{% bootstrap_field form.county %}</div>
                         <div class="col-md-6">{% bootstrap_field form.country %}</div>
                     </div>
-                    <div class="checkbox text-center">
-                        <label for="id_terms"><input id="id_terms" name="terms" type="checkbox">I agree to XLB <a href="#">Terms & Conditions</a> of use</label>
+                    <div class="form-group text-center">
+                        <div class="checkbox">
+                            <label for="id_terms"><input id="id_terms" name="terms" type="checkbox">I agree to XLB <a href="#">Terms & Conditions</a> of use</label>
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6"><a href="#" id="continue-step-2" class="btn btn-default pull-right">Continue</a></div>
@@ -87,8 +89,10 @@
                         <div class="col-md-6">{% bootstrap_field form.county %}</div>
                         <div class="col-md-6">{% bootstrap_field form.country %}</div>
                     </div>
-                    <div class="checkbox text-center">
-                        <label for="id_terms"><input id="id_terms" name="terms" type="checkbox">I agree to XLB <a href="#">Terms & Conditions</a> of use</label>
+                    <div class="form-group text-center">
+                        <div class="checkbox">
+                            <label for="id_terms"><input id="id_terms" name="terms" type="checkbox">I agree to XLB <a href="#">Terms & Conditions</a> of use</label>
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6"><button type="submit" class="btn btn-default pull-right">Create account</button></div>
@@ -174,7 +178,6 @@
             </div>
             {% endif %}
         </form>
-        <div id="error-messages" class="alert alert-danger"></div>
     </div>
 </div>
 {% endblock %}
