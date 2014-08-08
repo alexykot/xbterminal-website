@@ -5,8 +5,9 @@ from decimal import Decimal
 
 import qrcode
 
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, EmailMultiAlternatives
 from django.conf import settings
+from django.utils.html import strip_tags
 from django.template.loader import render_to_string
 from django.db.models import Sum
 
@@ -94,32 +95,33 @@ def get_transaction_pdf_archive(transactions, to_file=None):
 
 
 def send_reconciliation(recipient, device, rec_range):
+    """
+    Send reconciliation email
+    """
     transactions = device.transaction_set.filter(time__range=rec_range)
     btc_sum = transactions.aggregate(sum=Sum('btc_amount'))['sum']
     fiat_sum = transactions.aggregate(sum=Sum('fiat_amount'))['sum']
 
-    mail_text = render_to_string('website/email/reconciliation.txt', {
+    html_content = render_to_string('website/email/reconciliation.html', {
         'device': device,
         'transactions': transactions,
         'btc_amount': 0 if btc_sum is None else btc_sum,
         'fiat_amount': 0 if fiat_sum is None else fiat_sum,
         'rec_datetime': rec_range[1],
     })
-
-    email = EmailMessage(
+    text_content = strip_tags(html_content)
+    email = EmailMultiAlternatives(
         'XBTerminal reconciliation report, {0}'.format(rec_range[1].strftime('%d %b %Y')),
-        mail_text,
+        text_content,
         settings.DEFAULT_FROM_EMAIL,
         [recipient])
-
+    email.attach_alternative(html_content, 'text/html')
     if transactions:
         csv = get_transaction_csv(transactions, short=True)
         csv.seek(0)
         email.attach('transactions.csv', csv.read(), 'text/csv')
-
         archive = get_transaction_pdf_archive(transactions)
         email.attach('receipts.zip', archive.getvalue(), 'application/x-zip-compressed')
-
     email.send(fail_silently=False)
 
 

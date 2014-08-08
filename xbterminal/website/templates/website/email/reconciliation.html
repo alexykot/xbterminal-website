@@ -1,0 +1,17 @@
+{% load website_tags %}
+<p>
+terminal: {{ device.name|safe }}<br>
+report issue date: {{ rec_datetime|date:"d M Y" }} {{ rec_datetime|time:"g:i A" }}<br>
+{% if transactions %}
+transactions to date: {{ transactions.count }}<br>
+total m฿: {{ btc_amount|scale|floatformat:5 }}<br>
+total GBP: £{{ fiat_amount|floatformat:2 }}
+{% else %}
+No transactions to date.
+{% endif %}
+</p>
+<p>
+---------------------------------<br>
+Have problems reading this report or need help with your terminal?<br>
+Contact us at <a href="mailto:support@xbterminal.io">support@xbterminal.io</a>.
+</p>
