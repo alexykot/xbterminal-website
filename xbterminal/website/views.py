@@ -265,18 +265,24 @@ class UpdateProfileView(TemplateResponseMixin, CabinetView):
 
 
 class ReconciliationView(DeviceMixin, TemplateResponseMixin, CabinetView):
+    """
+    Reconciliation page
+    """
     template_name = "cabinet/reconciliation.html"
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         context['form'] = forms.SendDailyReconciliationForm()
-        context['daily_transaction_info'] = context['device'].transaction_set.\
-                                    extra({'date': "date(time)"}).\
-                                    values('date', 'fiat_currency').\
-                                    annotate(count=Count('id'),
-                                             btc_amount=Sum('btc_amount'),
-                                             fiat_amount=Sum('fiat_amount'),
-                                             instantfiat_fiat_amount=Sum('instantfiat_fiat_amount'))
+        context['daily_transaction_info'] = context['device'].\
+            transaction_set.\
+            extra({'date': "date(time)"}).\
+            values('date', 'fiat_currency').\
+            annotate(
+                count=Count('id'),
+                btc_amount=Sum('btc_amount'),
+                fiat_amount=Sum('fiat_amount'),
+                instantfiat_fiat_amount=Sum('instantfiat_fiat_amount')).\
+            order_by('-date')
         context['send_form'] = forms.SendReconciliationForm(
             initial={'email': self.request.user.merchant.contact_email})
         return self.render_to_response(context)
