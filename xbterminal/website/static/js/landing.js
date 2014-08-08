@@ -27,7 +27,7 @@ var Landing = (function () {
                 if (data.errors) {
                     formMessage.text('Error!');
                 } else {
-                    form.hide();
+                    form.css('visibility', 'hidden');
                     formMessage.text('Thank you for joining our mailing list!');
                 }
             }).always(function () {
