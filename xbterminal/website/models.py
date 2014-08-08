@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
-import uuid
 import datetime
 from decimal import Decimal
+import uuid
 
 from django.db import models
 from django.conf import settings
@@ -108,7 +107,7 @@ class Device(models.Model):
 
     payment_processing = models.CharField(max_length=50, choices=PAYMENT_PROCESSING_CHOICES, default='keep')
     payment_processor = models.CharField(max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, null=True)
-    api_key = models.CharField(max_length=100)
+    api_key = models.CharField(max_length=255)
     percent = models.DecimalField(
         'percent to convert',
         max_digits=4,
