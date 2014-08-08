@@ -58,6 +58,7 @@ var Landing = (function () {
         sections.scrollSpy();
 
         skrollr.init({
+            smoothScrolling: false,
             forceHeight: false
         });
     };
