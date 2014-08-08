@@ -82,8 +82,9 @@
             <a id="terminal-pre-order" class="xlb-btn-primary" href="{% url 'website:registration' %}?regtype=terminal">pre order today</a>
             <form id="terminal-subscribe-form" action="{% url 'website:subscribe' %}" method="POST">
                 {% csrf_token %}
-                <input type="email" name="email" placeholder="your email"><!--
+                <input type="email" name="email" placeholder="your email" required><!--
                 --><button type="submit" class="xlb-btn-secondary">submit</button>
+                <img class="loading-image" src="{% static 'img/loading.gif' %}">
             </form>
             <h3 id="terminal-subscribe-message">Join the mailing list</h3>
         </div>

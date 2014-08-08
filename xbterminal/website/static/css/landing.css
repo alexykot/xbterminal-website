@@ -148,6 +148,10 @@
     width: auto;
 }
 
+.loading-image {
+    display: none;
+}
+
 
 /* Mobile */
 

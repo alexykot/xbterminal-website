@@ -19,13 +19,19 @@ var Landing = (function () {
             $.ajax({
                 type: 'POST',
                 url: form.attr('action'),
-                data: form.serialize()
+                data: form.serialize(),
+                beforeSend: function () {
+                    form.find('.loading-image').show();
+                }
             }).done(function (data) {
                 if (data.errors) {
                     formMessage.text('Error!');
                 } else {
+                    form.hide();
                     formMessage.text('Thank you for joining our mailing list!');
                 }
+            }).always(function () {
+                form.find('.loading-image').hide();
             });
         });
 
@@ -51,9 +57,7 @@ var Landing = (function () {
         });
         sections.scrollSpy();
 
-        var s = skrollr.init({
-            smoothScrolling: true,
-            smoothScrollingDuration: 20,
+        skrollr.init({
             forceHeight: false
         });
     };
