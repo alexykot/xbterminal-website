@@ -2,6 +2,8 @@ import datetime
 from decimal import Decimal
 import uuid
 
+from bitcoin import base58
+
 from django.db import models
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -74,6 +76,11 @@ class MerchantAccount(models.Model):
         return [s for s in strings if s]
 
 
+def device_key_gen():
+    bts = uuid.uuid4().bytes
+    return base58.encode(bts)[:8]
+
+
 class Device(models.Model):
 
     DEVICE_TYPES = [
@@ -118,7 +125,7 @@ class Device(models.Model):
     )
     bitcoin_address = models.CharField('bitcoin address to send to', max_length=100, blank=True)
 
-    key = models.CharField(max_length=32, editable=False, unique=True, default=lambda: uuid.uuid4().hex)
+    key = models.CharField(max_length=32, editable=False, unique=True, default=device_key_gen)
 
     serial_number = models.CharField(max_length=50, blank=True, null=True)
     bitcoin_network = models.CharField(max_length=50, blank=True, null=True)
