@@ -51,11 +51,11 @@ var Landing = (function () {
         });
         sections.scrollSpy();
 
-        $.stellar({
-            horizontalScrolling: false,
-            verticalOffset: -150
+        var s = skrollr.init({
+            smoothScrolling: true,
+            smoothScrollingDuration: 20,
+            forceHeight: false
         });
-
     };
     return {init: init};
 }());

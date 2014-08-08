@@ -6,9 +6,7 @@
 }
 
 .image-section {
-    background-attachment: fixed;
     background-color: black;
-    background-position: center top;
     background-repeat: repeat;
     overflow: hidden;
     text-align: center;
@@ -86,9 +84,17 @@
 
 /* Terminal */
 
+#terminal-section-wrapper {
+    height: 2000px;
+    position: relative;
+    margin-bottom: 732px;
+}
+
 #terminal-section {
     background-image: url(../img/xlb-terminal-bg.png);
     height: 732px;
+    position: absolute;
+    width: 100%;
 }
 
 #terminal-image {
@@ -101,6 +107,20 @@
     position: absolute;
     right: 0;
     top: 113px;
+}
+
+#terminal-screen {
+    background-image: url(../img/xlb-terminal-screens.png);
+    background-repeat: no-repeat;
+    background-position: center 0px;
+    height: 411px;
+    margin: 0 auto;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 159px;
+    width: 658px;
+    z-index: 3;
 }
 
 #terminal-pre-order {
