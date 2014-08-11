@@ -18,6 +18,7 @@ from payment.instantfiat import cryptopay
 from website.models import User, MerchantAccount, Device, ReconciliationTime, Order
 from website.fields import BCAddressField
 from website.widgets import ButtonGroupRadioSelect, PercentWidget, TimeWidget
+from website.validators import validate_bitcoin_address
 
 
 class UserCreationForm(DjangoUserCreationForm):
@@ -209,8 +210,6 @@ class ProfileForm(forms.ModelForm):
 
 class DeviceForm(forms.ModelForm):
 
-    bitcoin_address = BCAddressField(required=False)
-
     class Meta:
         model = Device
         fields = [
@@ -246,38 +245,37 @@ class DeviceForm(forms.ModelForm):
 
         return percent
 
-    def clean_bitcoin_address(self):
-        payment_processing = self.cleaned_data['payment_processing']
-        bitcoin_address = self.cleaned_data['bitcoin_address']
-
+    def clean(self):
+        cleaned_data = super(DeviceForm, self).clean()
+        payment_processing = cleaned_data['payment_processing']
+        bitcoin_address = cleaned_data['bitcoin_address']
         if payment_processing in ['keep', 'partially'] and not bitcoin_address:
-            raise forms.ValidationError('This field is required.')
-
-        if bitcoin_address and self.instance:
-            bitcoin_network = self.instance.bitcoin_network
-            if bitcoin_network == 'mainnet' and bitcoin_address[0] not in ['1', '3']:
-                raise forms.ValidationError('This field must starts with "1" or "3".')
-            if bitcoin_network == 'testnet' and bitcoin_address[0] not in ['n', 'm']:
-                raise forms.ValidationError('This field must starts with "n" or "m" on testnet.')
-
-        return bitcoin_address
+            self._errors['bitcoin_address'] = self.error_class(["This field is required."])
+        if self.instance and bitcoin_address:
+            try:
+                validate_bitcoin_address(bitcoin_address,
+                                         network=self.instance.bitcoin_network)
+            except forms.ValidationError as error:
+                self._errors['bitcoin_address'] = self.error_class(error.messages)
+        return cleaned_data
 
 
 class DeviceAdminForm(forms.ModelForm):
+
     class Meta:
         model = Device
 
     def clean(self):
         cleaned_data = super(DeviceAdminForm, self).clean()
-        bitcoin_address = cleaned_data['bitcoin_address']
-        bitcoin_network = cleaned_data['bitcoin_network']
-
-        if bitcoin_address:
-            if bitcoin_network == 'mainnet' and bitcoin_address[0] not in ['1', '3']:
-                raise forms.ValidationError('This field must starts with "1" or "3" on mainnet.')
-            if bitcoin_network == 'testnet' and bitcoin_address[0] not in ['n', 'm']:
-                raise forms.ValidationError('This field must starts with "n" or "m" on testnet.')
-
+        addresses = ['bitcoin_address', 'our_fee_override']
+        network = cleaned_data['bitcoin_network']
+        for address in addresses:
+            try:
+                if cleaned_data[address]:
+                    validate_bitcoin_address(cleaned_data[address],
+                                             network=network)
+            except forms.ValidationError as error:
+                self._errors[address] = self.error_class(error.messages)
         return cleaned_data
 
 

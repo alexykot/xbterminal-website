@@ -16,7 +16,7 @@ from website.validators import (
     validate_phone,
     validate_post_code,
     validate_percent,
-    validate_bitcoin,
+    validate_bitcoin_address,
     validate_transaction)
 from website.fields import FirmwarePathField
 
@@ -156,6 +156,10 @@ class Device(models.Model):
         ('CryptoPay', 'CryptoPay'),
         ('GoCoin', 'GoCoin'),
     ]
+    BITCOIN_NETWORKS = [
+        ('mainnet', 'Main'),
+        ('testnet', 'Testnet'),
+    ]
 
     merchant = models.ForeignKey(MerchantAccount)
     device_type = models.CharField(max_length=50, choices=DEVICE_TYPES)
@@ -163,8 +167,8 @@ class Device(models.Model):
     name = models.CharField('Your reference', max_length=100)
 
     payment_processing = models.CharField(max_length=50, choices=PAYMENT_PROCESSING_CHOICES, default='keep')
-    payment_processor = models.CharField(max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, null=True)
-    api_key = models.CharField(max_length=255)
+    payment_processor = models.CharField(max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, blank=True, null=True)
+    api_key = models.CharField(max_length=255, blank=True)
     percent = models.DecimalField(
         'percent to convert',
         max_digits=4,
@@ -178,9 +182,9 @@ class Device(models.Model):
     key = models.CharField(max_length=32, editable=False, unique=True, default=device_key_gen)
 
     serial_number = models.CharField(max_length=50, blank=True, null=True)
-    bitcoin_network = models.CharField(max_length=50, blank=True, null=True)
+    bitcoin_network = models.CharField(max_length=50, choices=BITCOIN_NETWORKS, default='mainnet')
 
-    last_activity = models.DateTimeField(null=True)
+    last_activity = models.DateTimeField(blank=True, null=True)
     last_reconciliation = models.DateTimeField(auto_now_add=True)
 
     # firmware data
@@ -228,9 +232,9 @@ class ReconciliationTime(models.Model):
 
 class Transaction(models.Model):
     device = models.ForeignKey(Device)
-    hop_address = models.CharField(max_length=35, validators=[validate_bitcoin])
-    dest_address = models.CharField(max_length=35, validators=[validate_bitcoin], blank=True, null=True)
-    instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin], blank=True, null=True)
+    hop_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
+    dest_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], blank=True, null=True)
+    instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], blank=True, null=True)
     bitcoin_transaction_id_1 = models.CharField(max_length=64, validators=[validate_transaction])
     bitcoin_transaction_id_2 = models.CharField(max_length=64, validators=[validate_transaction])
     fiat_currency = models.CharField(max_length=3)
@@ -297,10 +301,10 @@ class PaymentOrder(models.Model):
     
 
     # Payment details
-    local_address = models.CharField(max_length=35, validators=[validate_bitcoin])
-    merchant_address = models.CharField(max_length=35, validators=[validate_bitcoin])
-    fee_address = models.CharField(max_length=35, validators=[validate_bitcoin])
-    instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin], null=True)
+    local_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
+    merchant_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
+    fee_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
+    instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], null=True)
     fiat_currency = models.CharField(max_length=3)
     fiat_amount = models.DecimalField(max_digits=20, decimal_places=8)
     instantfiat_fiat_amount = models.DecimalField(max_digits=9, decimal_places=2)
@@ -341,7 +345,7 @@ class Order(models.Model):
 
     instantfiat_invoice_id = models.CharField(max_length=255, null=True)
     instantfiat_btc_total_amount = models.DecimalField(max_digits=18, decimal_places=8, null=True)
-    instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin], null=True)
+    instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], null=True)
 
     def __unicode__(self):
         return "order #{0}".format(self.id)
