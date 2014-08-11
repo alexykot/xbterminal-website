@@ -1,4 +1,5 @@
 from cStringIO import StringIO
+import os
 import unicodecsv
 from zipfile import ZipFile
 from decimal import Decimal
@@ -138,13 +139,17 @@ def send_reconciliation(recipient, device, rec_range):
     if transactions:
         csv = get_transaction_csv(transactions, short=True)
         csv.seek(0)
-        email.attach(get_transactions_filename(device, rec_range[1]),
-                     csv.read(),
-                     "text/csv")
+        csv_data = csv.read()
+        csv_filename = get_transactions_filename(device, rec_range[1])
+        with open(os.path.join(settings.REPORTS_PATH, csv_filename), 'w') as f:
+            f.write(csv_data)
+        email.attach(csv_filename, csv_data, "text/csv")
         archive = get_transaction_pdf_archive(transactions)
-        email.attach(get_receipts_filename(device, rec_range[1]),
-                     archive.getvalue(),
-                     "application/x-zip-compressed")
+        archive_data = archive.getvalue()
+        archive_filename = get_receipts_filename(device, rec_range[1])
+        email.attach(archive_filename, archive_data, "application/x-zip-compressed")
+        with open(os.path.join(settings.REPORTS_PATH, archive_filename), 'wb') as f:
+            f.write(archive_data)
     email.send(fail_silently=False)
 
 

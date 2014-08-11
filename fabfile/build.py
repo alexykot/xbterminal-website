@@ -4,13 +4,10 @@ from fabric.api import env, task, settings, prefix, local, lcd
 
 
 @task
-def log_dir():
+def dirs():
     env.run("mkdir -p logs")
-
-
-@task
-def firmware_dir():
     env.run("mkdir -p firmware")
+    env.run("mkdir -p reports")
 
 
 def pip_version():
@@ -48,6 +45,5 @@ def proto():
 
 @task(default=True)
 def all():
-    log_dir()
-    firmware_dir()
+    dirs()
     venv()

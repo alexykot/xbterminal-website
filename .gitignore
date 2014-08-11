@@ -12,3 +12,4 @@ config/supervisor.ini
 *.log
 firmware
 logs
+/reports
