@@ -458,7 +458,7 @@ def landing_faq(request):
     return render(request, 'website/faq.html', {})
 
 
-class PaymentView(TemplateResponseMixin, DeviceMixin, CabinetView):
+class PaymentView(TemplateResponseMixin, View):
     """
     Online POS (public view)
     """
@@ -466,7 +466,8 @@ class PaymentView(TemplateResponseMixin, DeviceMixin, CabinetView):
     template_name = "payment/payment.html"
 
     def get(self, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-        response = self.render_to_response(context)
+        device = get_object_or_404(
+            models.Device, key=self.kwargs.get('device_key'))
+        response = self.render_to_response({'device': device})
         response['X-Frame-Options'] = 'ALLOW-FROM vendhq.com'
         return response

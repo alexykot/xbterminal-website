@@ -151,7 +151,8 @@ EMAIL_USE_TLS = True
 
 CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
 CONSTANCE_CONFIG = {
-    'OUR_FEE_BITCOIN_ADDRESS': ("mqhQfj9e57SNEYWNvULegMWfM9DQ8UGi9b", ' '),
+    'OUR_FEE_MAINNET_ADDRESS': ("mqhQfj9e57SNEYWNvULegMWfM9DQ8UGi9b", 'Bitcoin address'),
+    'OUR_FEE_TESTNET_ADDRESS': ("mqhQfj9e57SNEYWNvULegMWfM9DQ8UGi9b", 'Bitcoin address'),
     'OUR_FEE_SHARE': (0.005, ' '),
     'CRYPTOPAY_API_KEY': ('abcde', 'CryptoPay API key'),
     'TERMINAL_PRICE': (200, 'Terminal price'),
