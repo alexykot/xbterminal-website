@@ -20,6 +20,7 @@ from website.models import PaymentOrder, Transaction
 logger = logging.getLogger(__name__)
 
 FIAT_DEC_PLACES = Decimal('0.00000000')
+FIAT_MIN_OUTPUT = Decimal('0.01000000')
 BTC_DEC_PLACES  = Decimal('0.00000000')
 BTC_DEFAULT_FEE = Decimal('0.00010000')
 BTC_MIN_OUTPUT  = Decimal('0.00005460')
@@ -72,23 +73,33 @@ def prepare_payment(device, fiat_amount):
     else:
         details['fee_address'] = constance.config.OUR_FEE_BITCOIN_ADDRESS
     # Exchange service
-    details['fiat_currency'] = device.currency.name
+    details['fiat_currency'] = device.merchant.currency.name
     details['fiat_amount'] = fiat_amount.quantize(FIAT_DEC_PLACES)
-    instantfiat_service = device.payment_processor
-    instantfiat_share = Decimal(device.percent / 100 if device.percent else 0)
-    if instantfiat_service is not None and instantfiat_share > 0:
-        details['instantfiat_fiat_amount'] = (details['fiat_amount'] *
-                                              instantfiat_share).quantize(FIAT_DEC_PLACES)
+    assert details['fiat_amount'] >= FIAT_MIN_OUTPUT
+    details['instantfiat_fiat_amount'] = (details['fiat_amount'] *
+                                          Decimal(device.percent / 100 if device.percent else 0)
+                                          ).quantize(FIAT_DEC_PLACES)
+    if details['instantfiat_fiat_amount'] >= FIAT_MIN_OUTPUT:
         instantfiat_data = instantfiat.create_invoice(
-            instantfiat_service,
+            device.payment_processor,
             device.api_key,
             details['instantfiat_fiat_amount'],
             details['fiat_currency'],
             description="Payment to {0}".format(device.merchant.company_name))
         details.update(instantfiat_data)
+        assert details['instantfiat_btc_amount'] >= BTC_MIN_OUTPUT
         exchange_rate = details['instantfiat_fiat_amount'] / details['instantfiat_btc_amount']
     else:
+        details['instantfiat_fiat_amount'] = FIAT_DEC_PLACES
         exchange_rate = average.get_exchange_rate(details['fiat_currency'])
+    # Validate addresses
+    for address_field in ['local_address', 'merchant_address',
+                          'fee_address', 'instantfiat_address']:
+        address = details[address_field]
+        if address:
+            error_message = blockchain.validate_bitcoin_address(
+                address, device.bitcoin_network)
+        assert error_message is None
     # Fee
     details['fee_btc_amount'] = (details['fiat_amount'] *
                                  Decimal(constance.config.OUR_FEE_SHARE) /
@@ -98,7 +109,8 @@ def prepare_payment(device, fiat_amount):
     # Merchant
     details['merchant_btc_amount'] = ((details['fiat_amount'] - details['instantfiat_fiat_amount']) /
                                       exchange_rate).quantize(BTC_DEC_PLACES)
-    if 0 < details['merchant_btc_amount'] < BTC_MIN_OUTPUT:
+    assert details['merchant_btc_amount'] >= 0
+    if details['merchant_btc_amount'] < BTC_MIN_OUTPUT:
         details['merchant_btc_amount'] = BTC_MIN_OUTPUT
     # Total
     details['btc_amount'] = (details['merchant_btc_amount'] +

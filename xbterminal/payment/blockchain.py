@@ -189,3 +189,26 @@ def get_tx_outputs(transaction):
         address = CBitcoinAddress.from_scriptPubKey(output.scriptPubKey)
         outputs.append({'amount': amount, 'address': address})
     return outputs
+
+
+def validate_bitcoin_address(address, network):
+    """
+    Validate address
+    Accepts:
+        address: string
+        network: mainnet or testnet
+    Returns:
+        error: error message
+    """
+    try:
+        address = CBitcoinAddress(address)
+    except:
+        return "Invalid bitcoin address."
+    if network is None:
+        return None
+    elif network == "mainnet":
+        prefixes = bitcoin.MainParams.BASE58_PREFIXES.values()
+    elif network == "testnet":
+        prefixes = bitcoin.TestNetParams.BASE58_PREFIXES.values()
+    if address.nVersion not in prefixes:
+        return "Invalid address for network {0}.".format(network)

@@ -26,16 +26,30 @@ def validate_post_code(value):
         raise ValidationError('Please enter a valid post code.')
 
 
-def validate_bitcoin_address(address, network=None):
+def _validate_bitcoin_address(address, network):
+    """
+    Validate address
+    Accepts:
+        address: string
+        network: mainnet or testnet
+    Returns:
+        error: error message
+    """
     try:
         address = CBitcoinAddress(address)
     except:
-        raise ValidationError("Invalid bitcoin address.")
+        return "Invalid bitcoin address."
     if network is None:
-        return
+        return None
     elif network == "mainnet":
         prefixes = bitcoin.MainParams.BASE58_PREFIXES.values()
     elif network == "testnet":
         prefixes = bitcoin.TestNetParams.BASE58_PREFIXES.values()
     if address.nVersion not in prefixes:
-        raise ValidationError("Invalid address for network {0}.".format(network))
+        return "Invalid address for network {0}.".format(network)
+
+
+def validate_bitcoin_address(address, network=None):
+    error_message = _validate_bitcoin_address(address, network)
+    if error_message is not None:
+        raise ValidationError(error_message)
