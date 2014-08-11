@@ -89,6 +89,7 @@ ROOT_URLCONF = 'xbterminal.urls'
 
 WSGI_APPLICATION = 'xbterminal.wsgi.application'
 
+AUTH_USER_MODEL = 'website.User'
 
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases

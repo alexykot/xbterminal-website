@@ -4,7 +4,9 @@ import smtplib
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import AuthenticationForm as DjangoAuthenticationForm
+from django.contrib.auth.forms import (
+    UserCreationForm as DjangoUserCreationForm,
+    UserChangeForm as DjangoUserChangeForm)
 from django.core.mail import send_mail
 from django.core.validators import RegexValidator
 from django.template.loader import render_to_string
@@ -13,9 +15,29 @@ from constance import config
 
 from payment.instantfiat import cryptopay
 
-from website.models import MerchantAccount, Device, ReconciliationTime, Order
+from website.models import User, MerchantAccount, Device, ReconciliationTime, Order
 from website.fields import BCAddressField
 from website.widgets import ButtonGroupRadioSelect, PercentWidget, TimeWidget
+
+
+class UserCreationForm(DjangoUserCreationForm):
+
+    def __init__(self, *args, **kargs):
+        super(UserCreationForm, self).__init__(*args, **kargs)
+        del self.fields['username']
+
+    class Meta:
+        model = User
+
+
+class UserChangeForm(DjangoUserChangeForm):
+
+    def __init__(self, *args, **kargs):
+        super(UserChangeForm, self).__init__(*args, **kargs)
+        del self.fields['username']
+
+    class Meta:
+        model = User
 
 
 class ContactForm(forms.Form):
@@ -85,7 +107,6 @@ class MerchantRegistrationForm(forms.ModelForm):
         instance = super(MerchantRegistrationForm, self).save(commit=False)
         # Create new user
         user = get_user_model().objects.create_user(
-            self.cleaned_data['contact_email'],
             self.cleaned_data['contact_email'],
             self._password)
         user.backend = 'django.contrib.auth.backends.ModelBackend'
@@ -171,13 +192,6 @@ class TerminalOrderForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
-
-
-class AuthenticationForm(DjangoAuthenticationForm):
-
-    def __init__(self, *args, **kwargs):
-        super(AuthenticationForm, self).__init__(*args, **kwargs)
-        self.fields['username'].label = 'Email'
 
 
 class ProfileForm(forms.ModelForm):

@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 
 from website import forms, models
 
@@ -18,6 +19,27 @@ class FirmwareAdmin(admin.ModelAdmin):
     readonly_fields = ('hash',)
 
 
+class UserAdmin(UserAdmin):
+    fieldsets = (
+        (None, {'fields': ('email', 'password')}),
+        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser',
+                                       'groups', 'user_permissions')}),
+        ('Important dates', {'fields': ('last_login', 'date_joined')}),
+    )
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('email', 'password1', 'password2')}
+        ),
+    )
+    form = forms.UserChangeForm
+    add_form = forms.UserCreationForm
+    list_display = ('email', 'is_staff')
+    search_fields = ('email',)
+    ordering = ('email',)
+
+
+admin.site.register(models.User, UserAdmin)
 admin.site.register(models.MerchantAccount)
 admin.site.register(models.Device, DeviceAdmin)
 admin.site.register(models.Language)

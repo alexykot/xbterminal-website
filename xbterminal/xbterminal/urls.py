@@ -1,18 +1,12 @@
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
 
-from website.forms import AuthenticationForm
-
-
 admin.autodiscover()
 
 urlpatterns = patterns('',
     url(r'^login/$',
         'django.contrib.auth.views.login',
-        {
-            'template_name': 'cabinet/login.html',
-            'authentication_form': AuthenticationForm,
-        },
+        {'template_name': 'cabinet/login.html'},
         name='login'),
     url(r'^logout/$',
         'django.contrib.auth.views.logout',

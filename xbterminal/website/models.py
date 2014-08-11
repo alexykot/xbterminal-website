@@ -8,6 +8,7 @@ from django.db import models
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django_countries.fields import CountryField
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.contrib.sites.models import Site
 from django.utils import timezone
 
@@ -18,6 +19,55 @@ from website.validators import (
     validate_bitcoin,
     validate_transaction)
 from website.fields import FirmwarePathField
+
+
+class UserManager(BaseUserManager):
+
+    def _create_user(self, email, password, is_staff, is_superuser):
+        """
+        Creates and saves a User with the given email and password.
+        """
+        if not email:
+            raise ValueError('The given email must be set')
+        user = self.model(email=self.normalize_email(email),
+                          is_staff=is_staff,
+                          is_superuser=is_superuser)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_user(self, email, password=None):
+        return self._create_user(email, password, False, False)
+
+    def create_superuser(self, email, password):
+        return self._create_user(email, password, True, True)
+
+
+class User(AbstractBaseUser, PermissionsMixin):
+
+    email = models.EmailField(max_length=254, unique=True)
+
+    is_staff = models.BooleanField(
+        'staff status',
+        default=False,
+        help_text='Designates whether the user can log into this admin site.')
+    is_active = models.BooleanField(
+        'active',
+        default=True,
+        help_text='Designates whether this user should be treated as active. Unselect this instead of deleting accounts.')
+
+    date_joined = models.DateTimeField(default=timezone.now)
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
+
+    objects = UserManager()
+
+    def get_full_name(self):
+        return self.email
+
+    def get_short_name(self):
+        return self.email
 
 
 class Language(models.Model):
@@ -55,7 +105,7 @@ class MerchantAccount(models.Model):
     contact_first_name = models.CharField(max_length=255)
     contact_last_name = models.CharField(max_length=255)
     contact_phone = models.CharField(max_length=32, validators=[validate_phone])
-    contact_email = models.EmailField(unique=True)
+    contact_email = models.EmailField(max_length=254, unique=True)
 
     language = models.ForeignKey(Language, default=1)  # by default, English, see fixtures
     currency = models.ForeignKey(Currency, default=1)  # by default, GBP, see fixtures
@@ -169,7 +219,7 @@ class Device(models.Model):
 
 class ReconciliationTime(models.Model):
     device = models.ForeignKey(Device, related_name="rectime_set")
-    email = models.EmailField()
+    email = models.EmailField(max_length=254)
     time = models.TimeField()
 
     class Meta:
