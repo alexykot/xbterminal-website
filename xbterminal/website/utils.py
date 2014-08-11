@@ -8,6 +8,7 @@ import qrcode
 from django.core.mail import EmailMessage, EmailMultiAlternatives
 from django.conf import settings
 from django.utils.html import strip_tags
+from django.utils.text import get_valid_filename
 from django.template.loader import render_to_string
 from django.db.models import Sum
 
@@ -94,6 +95,24 @@ def get_transaction_pdf_archive(transactions, to_file=None):
     return to_file
 
 
+def get_transactions_filename(device, date=None):
+    s = "XBTerminal transactions, {0}".format(
+        device.merchant.company_name)
+    if date is not None:
+        s += ", {0}".format(date.strftime('%d %b %Y'))
+    s += ".csv"
+    return get_valid_filename(s)
+
+
+def get_receipts_filename(device, date=None):
+    s = "XBTerminal receipts, {0}".format(
+        device.merchant.company_name)
+    if date is not None:
+        s += ", {0}".format(date.strftime('%d %b %Y'))
+    s += ".zip"
+    return get_valid_filename(s)
+
+
 def send_reconciliation(recipient, device, rec_range):
     """
     Send reconciliation email
@@ -119,9 +138,13 @@ def send_reconciliation(recipient, device, rec_range):
     if transactions:
         csv = get_transaction_csv(transactions, short=True)
         csv.seek(0)
-        email.attach('transactions.csv', csv.read(), 'text/csv')
+        email.attach(get_transactions_filename(device, rec_range[1]),
+                     csv.read(),
+                     "text/csv")
         archive = get_transaction_pdf_archive(transactions)
-        email.attach('receipts.zip', archive.getvalue(), 'application/x-zip-compressed')
+        email.attach(get_receipts_filename(device, rec_range[1]),
+                     archive.getvalue(),
+                     "application/x-zip-compressed")
     email.send(fail_silently=False)
 
 

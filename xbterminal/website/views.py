@@ -331,12 +331,12 @@ class TransactionsView(DeviceMixin, CabinetView):
             except ValueError:
                 raise Http404
             transactions = context['device'].get_transactions_by_date(date)
-            content_disposition = 'attachment; filename="{0} device transactions {1}.csv"'.\
-                format(context['device'].name, date.strftime('%d %b %Y'))
+            content_disposition = 'attachment; filename="{0}"'.format(
+                utils.get_transactions_filename(context['device'], date))
         else:
             transactions = context['device'].transaction_set.all()
-            content_disposition = 'attachment; filename="{0} device transactions.csv"'.\
-                format(context['device'].name)
+            content_disposition = 'attachment; filename="{0}"'.format(
+                utils.get_transactions_filename(context['device']))
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = content_disposition
         utils.get_transaction_csv(transactions, response)
@@ -358,12 +358,12 @@ class ReceiptsView(DeviceMixin, CabinetView):
             except ValueError:
                 raise Http404
             transactions = context['device'].get_transactions_by_date(date)
-            content_disposition = 'attachment; filename="{0} device receipts {1}.zip"'.\
-                format(context['device'].name, date.strftime('%d %b %Y'))
+            content_disposition = 'attachment; filename="{0}"'.format(
+                utils.get_receipts_filename(context['device'], date))
         else:
             transactions = context['device'].transaction_set.all()
-            content_disposition = 'attachment; filename="{0} device receipts.zip"'.\
-                format(context['device'].name)
+            content_disposition = 'attachment; filename="{0}"'.format(
+                utils.get_receipts_filename(context['device']))
         response = HttpResponse(content_type='application/x-zip-compressed')
         response['Content-Disposition'] = content_disposition
         utils.get_transaction_pdf_archive(transactions, response)
