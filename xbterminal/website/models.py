@@ -12,6 +12,8 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.contrib.sites.models import Site
 from django.utils import timezone
 
+from constance import config
+
 from website.validators import (
     validate_phone,
     validate_post_code,
@@ -219,6 +221,15 @@ class Device(models.Model):
             return False
         delta = timezone.now() - self.last_activity
         return delta < datetime.timedelta(minutes=2)
+
+    @property
+    def our_fee_address(self):
+        if self.our_fee_override:
+            return self.our_fee_override
+        if self.bitcoin_network == 'mainnet':
+            return config.OUR_FEE_MAINNET_ADDRESS
+        elif self.bitcoin_network == 'testnet':
+            return config.OUR_FEE_TESTNET_ADDRESS
 
 
 class ReconciliationTime(models.Model):

@@ -68,10 +68,7 @@ def prepare_payment(device, fiat_amount):
     except Exception:
         raise blockchain.NetworkError
     details['merchant_address'] = device.bitcoin_address
-    if device.our_fee_override:
-        details['fee_address'] = device.our_fee_override
-    else:
-        details['fee_address'] = constance.config.OUR_FEE_BITCOIN_ADDRESS
+    details['fee_address'] = device.our_fee_address
     # Exchange service
     details['fiat_currency'] = device.merchant.currency.name
     details['fiat_amount'] = fiat_amount.quantize(FIAT_DEC_PLACES)
