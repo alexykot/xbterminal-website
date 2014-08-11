@@ -41,9 +41,9 @@ def create_invoice(fiat_amount, currency_code, api_key, description):
         data = response.json()
     except (requests.exceptions.RequestException, ValueError):
         raise
-    invoice_id = data['id'],
-    btc_amount = Decimal(data['price']).quantize(payment.BTC_DEC_PLACES),
-    address = data['payment_address'],
+    invoice_id = data['id']
+    btc_amount = Decimal(data['price']).quantize(payment.BTC_DEC_PLACES)
+    address = data['payment_address']
     logger.debug('gocoin invoice created')
     return invoice_id, btc_amount, address
 
