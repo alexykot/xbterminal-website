@@ -458,7 +458,7 @@ def landing_faq(request):
     return render(request, 'website/faq.html', {})
 
 
-class PaymentView(TemplateResponseMixin, DeviceMixin, View):
+class PaymentView(TemplateResponseMixin, DeviceMixin, CabinetView):
     """
     Online POS (public view)
     """

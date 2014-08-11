@@ -1,9 +1,8 @@
 import re
 
-import bitcoin
-from bitcoin.wallet import CBitcoinAddress
-
 from django.core.exceptions import ValidationError
+
+from payment import blockchain
 
 
 def validate_percent(value):
@@ -26,30 +25,7 @@ def validate_post_code(value):
         raise ValidationError('Please enter a valid post code.')
 
 
-def _validate_bitcoin_address(address, network):
-    """
-    Validate address
-    Accepts:
-        address: string
-        network: mainnet or testnet
-    Returns:
-        error: error message
-    """
-    try:
-        address = CBitcoinAddress(address)
-    except:
-        return "Invalid bitcoin address."
-    if network is None:
-        return None
-    elif network == "mainnet":
-        prefixes = bitcoin.MainParams.BASE58_PREFIXES.values()
-    elif network == "testnet":
-        prefixes = bitcoin.TestNetParams.BASE58_PREFIXES.values()
-    if address.nVersion not in prefixes:
-        return "Invalid address for network {0}.".format(network)
-
-
 def validate_bitcoin_address(address, network=None):
-    error_message = _validate_bitcoin_address(address, network)
+    error_message = blockchain.validate_bitcoin_address(address, network)
     if error_message is not None:
         raise ValidationError(error_message)

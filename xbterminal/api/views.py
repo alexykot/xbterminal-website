@@ -22,7 +22,7 @@ from website.utils import generate_qr_code
 from api.serializers import TransactionSerializer
 from api.shortcuts import render_to_pdf
 
-import payment
+import payment.tasks
 import payment.blockchain
 import payment.protocol
 
@@ -34,9 +34,9 @@ def device(request, key):
     device = get_object_or_404(Device, key=key)
     response = {
         "MERCHANT_BITCOIN_ADDRESS": device.bitcoin_address,
-        "MERCHANT_CURRENCY": device.currency.name,
-        "MERCHANT_CURRENCY_SIGN_POSTFIX": device.currency.postfix,
-        "MERCHANT_CURRENCY_SIGN_PREFIX": device.currency.prefix,
+        "MERCHANT_CURRENCY": device.merchant.currency.name,
+        "MERCHANT_CURRENCY_SIGN_POSTFIX": device.merchant.currency.postfix,
+        "MERCHANT_CURRENCY_SIGN_PREFIX": device.merchant.currency.prefix,
         "MERCHANT_DEVICE_NAME": device.name,
         "MERCHANT_INSTANTFIAT_API_KEY": device.api_key,
         "MERCHANT_INSTANTFIAT_EXCHANGE_SERVICE": device.payment_processor,
@@ -46,8 +46,8 @@ def device(request, key):
         "MERCHANT_TRANSACTION_DESCRIPTION": "Payment to %s" % device.merchant.company_name,
         "OUR_FEE_BITCOIN_ADDRESS": device.our_fee_override if device.our_fee_override else config.OUR_FEE_BITCOIN_ADDRESS,
         "OUR_FEE_SHARE": config.OUR_FEE_SHARE,
-        "OUTPUT_DEC_FRACTIONAL_SPLIT": device.language.fractional_split,
-        "OUTPUT_DEC_THOUSANDS_SPLIT": device.language.thousands_split,
+        "OUTPUT_DEC_FRACTIONAL_SPLIT": device.merchant.language.fractional_split,
+        "OUTPUT_DEC_THOUSANDS_SPLIT": device.merchant.language.thousands_split,
         "SERIAL_NUMBER": device.serial_number,
         "BITCOIN_NETWORK": device.bitcoin_network
     }
@@ -135,7 +135,7 @@ class PaymentInitView(View):
         except Device.DoesNotExist:
             raise Http404
         try:
-            payment_order = payment.prepare_payment(
+            payment_order = payment.tasks.prepare_payment(
                 device, form.cleaned_data['amount'])
         except payment.blockchain.NetworkError:
             return HttpResponse(status=500)
@@ -252,7 +252,7 @@ class PaymentResponseView(View):
             return HttpResponseBadRequest()
         # Validate payment
         try:
-            payment.validate_payment(payment_order, transactions, broadcast=True)
+            payment.tasks.validate_payment(payment_order, transactions, broadcast=True)
         except Exception as error:
             logger.warning("PaymentResponseView: validation error {0}".\
                 format(error.__class__.__name__))
