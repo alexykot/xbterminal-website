@@ -3,7 +3,6 @@ from django.forms.widgets import ChoiceFieldRenderer, RadioChoiceInput, Renderer
 from django.utils.encoding import force_text
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.html import escapejs
 
 
 class ButtonGroupChoiceInput(RadioChoiceInput):
@@ -49,30 +48,14 @@ class ButtonGroupRadioSelect(RendererMixin, Select):
 
 
 class PercentWidget(TextInput):
-    def render(self, name, value, attrs=None):
-        rendered = super(PercentWidget, self).render(name, value, attrs=attrs)
-        return rendered + mark_safe(u'<script type="text/javascript">'
-                                    '$(document).ready(function(){'
-                                        '$("#id_%s").percentWidget();'
-                                    '})'
-                                    '</script>' % escapejs(name))
 
     class Media:
-        js = ('jquery-ui/slider.min.js',
-              'js/percentWidget.js')
-        css = {'all': ("https://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css",)}
+        js = ['lib/jquery-ui.min.js', 'js/percent_widget.js']
+        css = {'all': ['lib/jquery-ui.min.css']}
 
 
 class TimeWidget(TimeInput):
-    def render(self, name, value, attrs=None):
-        rendered = super(TimeWidget, self).render(name, value, attrs=attrs)
-        return rendered + mark_safe(u'<script type="text/javascript">'
-                                    '$(document).ready(function(){'
-                                        '$("#id_%s").ptTimeSelect();'
-                                    '})'
-                                    '</script>' % escapejs(name))
 
     class Media:
-        js = ('jquery.ptTimeSelect/jquery.ptTimeSelect.js',)
-        css = {'all': ("https://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css",
-                       "jquery.ptTimeSelect/jquery.ptTimeSelect.css")}
+        js = ['lib/jquery.ptTimeSelect.js']
+        css = {'all': ['lib/jquery-ui.min.css', 'lib/jquery.ptTimeSelect.css']}

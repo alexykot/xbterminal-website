@@ -1,44 +1,73 @@
-# -*- coding: utf-8 -*-
-import uuid
 import datetime
+from decimal import Decimal
+import uuid
+
+from bitcoin import base58
 
 from django.db import models
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django_countries.fields import CountryField
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.contrib.sites.models import Site
 from django.utils import timezone
 
-from website.validators import validate_percent, validate_bitcoin, validate_transaction
+from website.validators import (
+    validate_phone,
+    validate_post_code,
+    validate_percent,
+    validate_bitcoin_address,
+    validate_transaction)
 from website.fields import FirmwarePathField
 
 
-class MerchantAccount(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name="merchant", null=True)
-    company_name = models.CharField(max_length=254)
-    business_address = models.CharField(max_length=1000)
-    business_address1 = models.CharField('', max_length=1000, blank=True, default='')
-    business_address2 = models.CharField('', max_length=1000, blank=True, default='')
-    town = models.CharField(max_length=1000)
-    country = CountryField(default='GB')
-    county = models.CharField("State / County", max_length=100, blank=True)
-    post_code = models.CharField(max_length=1000)
-    contact_name = models.CharField(max_length=1000)
-    contact_phone = models.CharField(max_length=1000)
-    contact_email = models.EmailField(unique=True)
+class UserManager(BaseUserManager):
 
-    def __unicode__(self):
-        return self.company_name
+    def _create_user(self, email, password, is_staff, is_superuser):
+        """
+        Creates and saves a User with the given email and password.
+        """
+        if not email:
+            raise ValueError('The given email must be set')
+        user = self.model(email=self.normalize_email(email),
+                          is_staff=is_staff,
+                          is_superuser=is_superuser)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
 
-    def get_first_device_url(self):
-        if not self.device_set.exists():
-            return reverse('website:create_device')
-        return reverse('website:device', kwargs={'number': 1})
+    def create_user(self, email, password=None):
+        return self._create_user(email, password, False, False)
 
-    def get_address(self):
-        strings = [self.business_address, self.business_address1, self.business_address2,
-                   self.town, self.county, unicode(self.country.name)]
-        return ', '.join(filter(None, strings))
+    def create_superuser(self, email, password):
+        return self._create_user(email, password, True, True)
+
+
+class User(AbstractBaseUser, PermissionsMixin):
+
+    email = models.EmailField(max_length=254, unique=True)
+
+    is_staff = models.BooleanField(
+        'staff status',
+        default=False,
+        help_text='Designates whether the user can log into this admin site.')
+    is_active = models.BooleanField(
+        'active',
+        default=True,
+        help_text='Designates whether this user should be treated as active. Unselect this instead of deleting accounts.')
+
+    date_joined = models.DateTimeField(default=timezone.now)
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
+
+    objects = UserManager()
+
+    def get_full_name(self):
+        return self.email
+
+    def get_short_name(self):
+        return self.email
 
 
 class Language(models.Model):
@@ -62,26 +91,84 @@ class Currency(models.Model):
         return self.name
 
 
+class MerchantAccount(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name="merchant", null=True)
+    company_name = models.CharField(max_length=255)
+    trading_name = models.CharField(max_length=255, blank=True)
+    business_address = models.CharField(max_length=255)
+    business_address1 = models.CharField('', max_length=255, blank=True, default='')
+    business_address2 = models.CharField('', max_length=255, blank=True, default='')
+    town = models.CharField(max_length=64)
+    county = models.CharField("State / County", max_length=128, blank=True)
+    post_code = models.CharField(max_length=32, validators=[validate_post_code])
+    country = CountryField(default='GB')
+    contact_first_name = models.CharField(max_length=255)
+    contact_last_name = models.CharField(max_length=255)
+    contact_phone = models.CharField(max_length=32, validators=[validate_phone])
+    contact_email = models.EmailField(max_length=254, unique=True)
+
+    language = models.ForeignKey(Language, default=1)  # by default, English, see fixtures
+    currency = models.ForeignKey(Currency, default=1)  # by default, GBP, see fixtures
+
+    def __unicode__(self):
+        return self.company_name
+
+    @property
+    def billing_address(self):
+        strings = [
+            self.business_address,
+            self.business_address1,
+            self.town,
+            self.county,
+            self.post_code,
+            self.country.name,
+        ]
+        return [s for s in strings if s]
+
+
+def device_key_gen():
+    bts = uuid.uuid4().bytes
+    return base58.encode(bts)[:8]
+
+
 class Device(models.Model):
-    PAYMENT_PROCESSING_CHOICES = (
+
+    DEVICE_TYPES = [
+        ('mobile', 'Mobile app'),
+        ('hardware', 'Terminal'),
+        ('web', 'Web app'),
+    ]
+    DEVICE_STATUSES = [
+        ('preordered', 'Preordered'),
+        ('dispatched', 'Dispatched'),
+        ('delivered', 'Delivered'),
+        ('active', 'Online'),
+        ('suspended', 'Suspended'),
+        ('disposed', 'Disposed'),
+    ]
+    PAYMENT_PROCESSING_CHOICES = [
         ('keep', 'keep bitcoins'),
         ('partially', 'convert partially'),
-        ('full', 'convert full amount')
-    )
-    PAYMENT_PROCESSOR_CHOICES = (
+        ('full', 'convert full amount'),
+    ]
+    PAYMENT_PROCESSOR_CHOICES = [
         ('BitPay', 'BitPay'),
         ('CryptoPay', 'CryptoPay'),
         ('GoCoin', 'GoCoin'),
-    )
-    merchant = models.ForeignKey(MerchantAccount)
+    ]
+    BITCOIN_NETWORKS = [
+        ('mainnet', 'Main'),
+        ('testnet', 'Testnet'),
+    ]
 
-    name = models.CharField(max_length=100)
-    language = models.ForeignKey(Language, default=1)  # by default, English, see fixtures
-    currency = models.ForeignKey(Currency, default=1)  # by default, GBP, see fixtures
-    comment = models.CharField(max_length=100, blank=True)
+    merchant = models.ForeignKey(MerchantAccount)
+    device_type = models.CharField(max_length=50, choices=DEVICE_TYPES)
+    status = models.CharField(max_length=50, choices=DEVICE_STATUSES, default='active')
+    name = models.CharField('Your reference', max_length=100)
+
     payment_processing = models.CharField(max_length=50, choices=PAYMENT_PROCESSING_CHOICES, default='keep')
-    payment_processor = models.CharField(max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, null=True)
-    api_key = models.CharField(max_length=100, blank=True)
+    payment_processor = models.CharField(max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, blank=True, null=True)
+    api_key = models.CharField(max_length=255, blank=True)
     percent = models.DecimalField(
         'percent to convert',
         max_digits=4,
@@ -92,12 +179,12 @@ class Device(models.Model):
     )
     bitcoin_address = models.CharField('bitcoin address to send to', max_length=100, blank=True)
 
-    key = models.CharField(max_length=32, editable=False, unique=True, default=lambda: uuid.uuid4().hex)
+    key = models.CharField(max_length=32, editable=False, unique=True, default=device_key_gen)
 
     serial_number = models.CharField(max_length=50, blank=True, null=True)
-    bitcoin_network = models.CharField(max_length=50, blank=True, null=True)
+    bitcoin_network = models.CharField(max_length=50, choices=BITCOIN_NETWORKS, default='mainnet')
 
-    last_activity = models.DateTimeField(null=True)
+    last_activity = models.DateTimeField(blank=True, null=True)
     last_reconciliation = models.DateTimeField(auto_now_add=True)
 
     # firmware data
@@ -136,7 +223,7 @@ class Device(models.Model):
 
 class ReconciliationTime(models.Model):
     device = models.ForeignKey(Device, related_name="rectime_set")
-    email = models.EmailField()
+    email = models.EmailField(max_length=254)
     time = models.TimeField()
 
     class Meta:
@@ -145,9 +232,9 @@ class ReconciliationTime(models.Model):
 
 class Transaction(models.Model):
     device = models.ForeignKey(Device)
-    hop_address = models.CharField(max_length=35, validators=[validate_bitcoin])
-    dest_address = models.CharField(max_length=35, validators=[validate_bitcoin], blank=True, null=True)
-    instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin], blank=True, null=True)
+    hop_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
+    dest_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], blank=True, null=True)
+    instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], blank=True, null=True)
     bitcoin_transaction_id_1 = models.CharField(max_length=64, validators=[validate_transaction])
     bitcoin_transaction_id_2 = models.CharField(max_length=64, validators=[validate_transaction])
     fiat_currency = models.CharField(max_length=3)
@@ -214,10 +301,10 @@ class PaymentOrder(models.Model):
     
 
     # Payment details
-    local_address = models.CharField(max_length=35, validators=[validate_bitcoin])
-    merchant_address = models.CharField(max_length=35, validators=[validate_bitcoin])
-    fee_address = models.CharField(max_length=35, validators=[validate_bitcoin])
-    instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin], null=True)
+    local_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
+    merchant_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
+    fee_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
+    instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], null=True)
     fiat_currency = models.CharField(max_length=3)
     fiat_amount = models.DecimalField(max_digits=20, decimal_places=8)
     instantfiat_fiat_amount = models.DecimalField(max_digits=9, decimal_places=2)
@@ -232,3 +319,53 @@ class PaymentOrder(models.Model):
     incoming_tx_id = models.CharField(max_length=64, validators=[validate_transaction], null=True)
     outgoing_tx_id = models.CharField(max_length=64, validators=[validate_transaction], null=True)
     transaction = models.OneToOneField(Transaction, null=True)
+
+
+class Order(models.Model):
+
+    PAYMENT_METHODS = [
+        ('bitcoin', 'Bitcoin'),
+        ('wire', 'Bank wire transfer'),
+    ]
+
+    merchant = models.ForeignKey(MerchantAccount)
+    created = models.DateTimeField(auto_now_add=True)
+    quantity = models.IntegerField()
+    payment_method = models.CharField(max_length=50, choices=PAYMENT_METHODS, default='bitcoin')
+    fiat_total_amount = models.DecimalField(max_digits=20, decimal_places=8)
+
+    delivery_address = models.CharField(max_length=255, blank=True)
+    delivery_address1 = models.CharField('', max_length=255, blank=True)
+    delivery_address2 = models.CharField('', max_length=255, blank=True)
+    delivery_town = models.CharField(max_length=64, blank=True)
+    delivery_county = models.CharField(max_length=128, blank=True)
+    delivery_post_code = models.CharField(max_length=32, blank=True, validators=[validate_post_code])
+    delivery_country = CountryField(default='GB', blank=True)
+    delivery_contact_phone = models.CharField(max_length=32, blank=True)
+
+    instantfiat_invoice_id = models.CharField(max_length=255, null=True)
+    instantfiat_btc_total_amount = models.DecimalField(max_digits=18, decimal_places=8, null=True)
+    instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], null=True)
+
+    def __unicode__(self):
+        return "order #{0}".format(self.id)
+
+    @property
+    def fiat_amount(self):
+        return self.fiat_total_amount / Decimal(1.2)
+
+    @property
+    def fiat_vat_amount(self):
+        return self.fiat_amount * Decimal(0.2)
+
+    @property
+    def instantfiat_btc_amount(self):
+        return self.instantfiat_btc_total_amount / Decimal(1.2)
+
+    @property
+    def instantfiat_btc_vat_amount(self):
+        return self.instantfiat_btc_amount * Decimal(0.2)
+
+    @property
+    def invoice_due_date(self):
+        return self.created + datetime.timedelta(days=14)

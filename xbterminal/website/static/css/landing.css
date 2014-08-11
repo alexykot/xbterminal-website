@@ -1,0 +1,208 @@
+/* Common */
+
+.text-section {
+    text-align: center;
+    padding: 40px 0;
+}
+
+.image-section {
+    background-color: black;
+    background-repeat: repeat;
+    overflow: hidden;
+    text-align: center;
+}
+
+/* About */
+
+#about-section {
+    background-image: url(../img/xlb-about-bg.png);
+    height: 666px;
+}
+
+#about-image,
+#about-text {
+    position: relative;
+}
+
+#about-image img {
+    border: none;
+    position: absolute;
+    top: 74px;
+    right: 60px;
+    z-index: 3;
+}
+
+#about-text span {
+    background-color: #5DB8FE;
+    color: white;
+    display: block;
+    font-style: italic;
+    margin-left: -200px;
+    padding-left: 200px;
+    position: absolute;
+    text-align: left;
+    width: 640px;
+}
+
+#about-line1 {
+    font-size: 3.8em;
+    line-height: 50px;
+    padding-top: 30px;
+    top: 250px;
+}
+
+#about-line2 {
+    font-size: 2.4em;
+    padding-bottom: 30px;
+    padding-top: 5px;
+    top: 330px;
+    width: 640px;
+}
+
+.three-ways {
+    height: 140px;
+    margin: 80px 0 -40px;
+    overflow: hidden;
+}
+
+.three-ways a {
+    background-color: #3D3D3D;
+    border-radius: 50%;
+    color: white;
+    display: inline-block;
+    font-size: 2.2em;
+    margin: 0 10px;
+    padding-top: 80px;
+    height: 280px;
+    text-decoration: none;
+    width: 280px;
+}
+
+.three-ways a:hover {
+    background-color: #62B9FF;
+}
+
+/* Terminal */
+
+#terminal-section-wrapper {
+    height: 2000px;
+    position: relative;
+    margin-bottom: 732px;
+}
+
+#terminal-section {
+    background-image: url(../img/xlb-terminal-bg.png);
+    height: 732px;
+    position: absolute;
+    width: 100%;
+}
+
+#terminal-image {
+    position: relative;
+}
+
+#terminal-image img {
+    left: 0;
+    margin: 0 auto;
+    position: absolute;
+    right: 0;
+    top: 113px;
+}
+
+#terminal-screen {
+    background-image: url(../img/xlb-terminal-screens.png);
+    background-repeat: no-repeat;
+    background-position: center 0px;
+    height: 411px;
+    margin: 0 auto;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 159px;
+    width: 658px;
+    z-index: 3;
+}
+
+#terminal-pre-order {
+    font-size: 2.4em;
+    margin: 40px auto;
+    padding: 10px;
+    text-decoration: none;
+    width: 360px;
+}
+
+#terminal-subscribe-form {
+    font-size: 2em;
+    margin-top: 80px;
+}
+
+#terminal-subscribe-form input {
+    border: 1px solid #B5B3B4;
+    margin: 0;
+    padding: 6px 10px;
+}
+
+#terminal-subscribe-form button[type="submit"] {
+    display: inline-block;
+    padding: 7px 30px;
+    width: auto;
+}
+
+.loading-image {
+    display: none;
+}
+
+
+/* Mobile */
+
+#mobile-section {
+    background-image: url(../img/xlb-mobile-bg.png);
+    height: 665px;
+}
+
+#mobile-image {
+    position: relative;
+}
+
+#mobile-image img {
+    left: 0;
+    margin: 0 auto;
+    position: absolute;
+    right: 0;
+    top: 81px;
+}
+
+/* Web */
+
+#web-section {
+    background-image: url(../img/xlb-web-bg.png);
+    height: 663px;
+}
+
+#web-image {
+    position: relative;
+}
+
+#web-image img {
+    left: 0;
+    margin: 0 auto;
+    position: absolute;
+    right: 0;
+    top: 150px;
+}
+
+#web-set-up {
+    font-size: 2.4em;
+    margin: 40px auto;
+    padding: 10px;
+    text-decoration: none;
+    width: 360px;
+}
+
+/* Footer */
+
+#social {
+    background-color: #EBEBEB;
+    line-height: 200px;
+    text-align: center;
+}

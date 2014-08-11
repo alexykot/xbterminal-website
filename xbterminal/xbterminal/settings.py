@@ -65,7 +65,6 @@ INSTALLED_APPS = (
     'django.contrib.sites',
 
     'south',
-    'bootstrapform',
     'bootstrap3',
     'rest_framework',
     'qrcode',
@@ -90,6 +89,7 @@ ROOT_URLCONF = 'xbterminal.urls'
 
 WSGI_APPLICATION = 'xbterminal.wsgi.application'
 
+AUTH_USER_MODEL = 'website.User'
 
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
@@ -153,6 +153,8 @@ CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
 CONSTANCE_CONFIG = {
     'OUR_FEE_BITCOIN_ADDRESS': ("mqhQfj9e57SNEYWNvULegMWfM9DQ8UGi9b", ' '),
     'OUR_FEE_SHARE': (0.005, ' '),
+    'CRYPTOPAY_API_KEY': ('abcde', 'CryptoPay API key'),
+    'TERMINAL_PRICE': (200, 'Terminal price'),
 }
 
 RQ_QUEUES = {
@@ -162,6 +164,8 @@ RQ_QUEUES = {
         'DB': 1,
     },
 }
+
+REPORTS_PATH = os.path.join(BASE_DIR, '..', 'reports')
 
 FIRMWARE_PATH = os.path.join(BASE_DIR, '..', 'firmware')
 

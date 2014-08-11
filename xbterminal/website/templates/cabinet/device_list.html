@@ -1,28 +1,22 @@
 {% extends "cabinet/base.html" %}
-{% load bootstrap staticfiles %}
-
-{% block cabinet_nav %}
-{% include 'cabinet/inclusions/nav.html' with DEVICES_ACTIVE='True' %}
-{% endblock %}
 
 {% block cabinet_content %}
-<div class="device-create-button"><a class="btn btn-default" href="{% url 'website:create_device' %}">Create</a></div>
-
+<div class="create-device-button">
+    <a class="btn btn-default" href="{% url 'website:create_device' %}">Create</a>
+</div>
 <table class="table table-striped table-bordered table-responsive">
     <tr>
         <th>Name</th>
-        <th>Comment</th>
         <th>Receiving address</th>
         <th>Payment processor</th>
         <th>Actions</th>
     </tr>
-{% for device in devices %}
+    {% for device in devices %}
     <tr>
         <td>
             <a href="{% url 'website:device' device.key %}">{{ device.name }}</a>
             {% if device.is_online %}<div class="device-online" title="device online">•</div>{% endif %}
         </td>
-        <td>{{ device.comment }}</td>
         <td>
             {% if device.bitcoin_address %}
                 {{ device.bitcoin_address|slice:":6" }}...{{ device.bitcoin_address|slice:"-6:" }}
@@ -36,6 +30,6 @@
             <div><a href="{% url 'website:payment' device.key %}" target="_blank">online POS</a></div>
         </td>
     </tr>
-{% endfor %}
+    {% endfor %}
 </table>
 {% endblock %}

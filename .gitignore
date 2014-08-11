@@ -2,7 +2,7 @@
 settings_server.py
 local_settings.py
 venv
-static
+/static
 fabfile/deploy.py
 certs
 .idea/*
@@ -12,3 +12,4 @@ config/supervisor.ini
 *.log
 firmware
 logs
+/reports

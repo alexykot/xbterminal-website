@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"> 
+    <style type="text/css">
+        body {
+            font-family: Arial,Helvetica,sans-serif;
+            font-size: 12px;
+            line-height: 1.1;
+        }
+        @page {
+            margin: 3cm 1cm 1cm;
+        }
+        table {
+            width: 100%;
+        }
+        td {
+            padding: 2px;
+            vertical-align: middle;
+        }
+        .border {
+            border: 1px solid black;
+        }
+        .center {
+            text-align: center;
+        }
+        .right {
+            text-align: right;
+        }
+        .top {
+            vertical-align: top;
+        }
+        .h1 {
+            font-size: 2em;
+        }
+        .h2 {
+            font-size: 1.4em;
+        }
+        .h3 {
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <table cellpadding="0" border="0">
+        <tr>
+            <td colspan="4" class="h1">XBTerminal Ltd</td>
+            <td colspan="4" class="h1 right">Invoice</td>
+        </tr>
+        <tr>
+            <td colspan="6" rowspan="4" valign="top">
+                Kemp House<br>
+                152 City Road<br>
+                London<br>
+                EC1V 2NX<br>
+                United Kingdom
+            </td>
+            <td class="h3 border center">Date</td>
+            <td class="h3 border center">Invoice No.</td>
+        </tr>
+        <tr>
+            <td class="center">{{ order.created|date:'d/m/Y' }}</td>
+            <td class="center">{{ order.id }}</td>
+        </tr>
+        <tr>
+            <td class="h3 border center">Terms</td>
+            <td class="h3 border center">Due Date</td>
+        </tr>
+        <tr>
+            <td class="center">Due on receipt</td>
+            <td class="center">{{ order.invoice_due_date|date:'d/m/Y' }}</td>
+        </tr>
+        <tr>
+            <td colspan="8">
+                +44 (0) 20 8123 8185<br>
+                info@xbterminal.io<br>
+                https://xbterminal.io
+            </td>
+        </tr>
+        <tr>
+            <td colspan="8"><br></td>
+        </tr>
+        <tr>
+            <td colspan="3" class="h3 border">Invoice To</td>
+            <td colspan="4">&nbsp;</td>
+            <td class="h3 border center">Amount Due</td>
+        </tr>
+        <tr>
+            <td colspan="3" rowspan="2">
+                {{ order.merchant.company_name }}<br>
+                {{ order.merchant.billing_address|join:', ' }}
+            </td>
+            <td colspan="4">&nbsp;</td>
+            <td class="center">£{{ order.fiat_amount|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td colspan="5">&nbsp;</td>
+        </tr>
+        <tr>
+            <td colspan="8"><br></td>
+        </tr>
+        <tr>
+            <td colspan="4" class="h3 border">Activity</td>
+            <td class="h3 border center">Quantity</td>
+            <td class="h3 border center">Rate</td>
+            <td width="20%" class="h3 border center">VAT</td>
+            <td width="20%" class="h3 border right">Amount (GBP)</td>
+        </tr>
+        <tr>
+            <td colspan="4" class="border top">XBTerminal Bitcoin POS Terminal<br><br><br><br></td>
+            <td class="border center top">{{ order.quantity }}</td>
+            <td class="border center top">£{{ terminal_price|floatformat:2 }}</td>
+            <td class="border center top">20.0%</td>
+            <td class="border right top">£{{ order.fiat_amount|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td colspan="5">&nbsp;</td>
+            <td colspan="2" class="h3 border right">SubTotal</td>
+            <td class="border right">£{{ order.fiat_amount|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td colspan="5">&nbsp;</td>
+            <td colspan="2" class="h3 border right">VAT Total</td>
+            <td class="border right">£{{ order.fiat_vat_amount|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td colspan="5">&nbsp;</td>
+            <td colspan="2" class="h3 border right">Total</td>
+            <td class="border right">£{{ order.fiat_total_amount|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td colspan="8"><br></td>
+        </tr>
+        <tr>
+            <td colspan="8" class="h2">VAT Registration No:</td>
+        </tr>
+        <tr>
+            <td colspan="8"><br></td>
+        </tr>
+        <tr>
+            <td colspan="8" class="h2">Payment details:</td>
+        </tr>
+        <tr>
+            <td colspan="8">
+                IBAN: PL27 1090 2851 0000 0001 2372 0021<br>
+                SWIFT: WBKPPLPPXXX<br>
+                Account name: XBTerminal Ltd<br>
+                Account registered address: ul. Solec 81B, Lok A-51, 00-382, Warsaw, Poland
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -1,16 +1,21 @@
 from cStringIO import StringIO
+import os
 import unicodecsv
 from zipfile import ZipFile
 from decimal import Decimal
 
 import qrcode
 
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, EmailMultiAlternatives
 from django.conf import settings
+from django.utils.html import strip_tags
+from django.utils.text import get_valid_filename
 from django.template.loader import render_to_string
 from django.db.models import Sum
 
-from api.shotcuts import generate_pdf
+from constance import config
+
+from api.shortcuts import generate_pdf
 
 REPORT_FIELDS = [
     ('ID', 'id'),
@@ -91,33 +96,60 @@ def get_transaction_pdf_archive(transactions, to_file=None):
     return to_file
 
 
+def get_transactions_filename(device, date=None):
+    s = "XBTerminal transactions, {0}".format(
+        device.merchant.company_name)
+    if date is not None:
+        s += ", {0}".format(date.strftime('%d %b %Y'))
+    s += ".csv"
+    return get_valid_filename(s)
+
+
+def get_receipts_filename(device, date=None):
+    s = "XBTerminal receipts, {0}".format(
+        device.merchant.company_name)
+    if date is not None:
+        s += ", {0}".format(date.strftime('%d %b %Y'))
+    s += ".zip"
+    return get_valid_filename(s)
+
+
 def send_reconciliation(recipient, device, rec_range):
+    """
+    Send reconciliation email
+    """
     transactions = device.transaction_set.filter(time__range=rec_range)
     btc_sum = transactions.aggregate(sum=Sum('btc_amount'))['sum']
     fiat_sum = transactions.aggregate(sum=Sum('fiat_amount'))['sum']
 
-    mail_text = render_to_string('website/email/reconciliation.txt', {
+    html_content = render_to_string('website/email/reconciliation.html', {
         'device': device,
         'transactions': transactions,
         'btc_amount': 0 if btc_sum is None else btc_sum,
         'fiat_amount': 0 if fiat_sum is None else fiat_sum,
         'rec_datetime': rec_range[1],
     })
-
-    email = EmailMessage(
+    text_content = strip_tags(html_content)
+    email = EmailMultiAlternatives(
         'XBTerminal reconciliation report, {0}'.format(rec_range[1].strftime('%d %b %Y')),
-        mail_text,
+        text_content,
         settings.DEFAULT_FROM_EMAIL,
         [recipient])
-
+    email.attach_alternative(html_content, 'text/html')
     if transactions:
         csv = get_transaction_csv(transactions, short=True)
         csv.seek(0)
-        email.attach('transactions.csv', csv.read(), 'text/csv')
-
+        csv_data = csv.read()
+        csv_filename = get_transactions_filename(device, rec_range[1])
+        with open(os.path.join(settings.REPORTS_PATH, csv_filename), 'w') as f:
+            f.write(csv_data)
+        email.attach(csv_filename, csv_data, "text/csv")
         archive = get_transaction_pdf_archive(transactions)
-        email.attach('receipts.zip', archive.getvalue(), 'application/x-zip-compressed')
-
+        archive_data = archive.getvalue()
+        archive_filename = get_receipts_filename(device, rec_range[1])
+        email.attach(archive_filename, archive_data, "application/x-zip-compressed")
+        with open(os.path.join(settings.REPORTS_PATH, archive_filename), 'wb') as f:
+            f.write(archive_data)
     email.send(fail_silently=False)
 
 
@@ -132,3 +164,20 @@ def generate_qr_code(text, size=4):
         qr_output.getvalue().encode("base64"))
     qr_output.close()
     return qr_code_src
+
+
+def send_invoice(order):
+    message_text = render_to_string(
+        "website/email/order.txt",
+        {'order': order})
+    message = EmailMessage(
+        "Order",
+        message_text,
+        settings.DEFAULT_FROM_EMAIL,
+        [order.merchant.contact_email])
+    pdf = generate_pdf("pdf/invoice.html", {
+        'order': order,
+        'terminal_price': config.TERMINAL_PRICE,
+    })
+    message.attach('invoice.pdf', pdf.getvalue(), 'application/pdf')
+    message.send(fail_silently=False)

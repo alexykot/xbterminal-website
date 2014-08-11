@@ -1,0 +1,218 @@
+@import url(//fonts.googleapis.com/css?family=Roboto:400,300,400italic);
+
+a {
+    cursor: pointer;
+}
+
+html, body {
+    height: 100%;
+}
+
+#container {
+    font-family: 'Roboto', sans-serif;
+    height: 100%;
+    padding-top: 150px;
+}
+
+.xlb-btn-primary,
+.xlb-btn-secondary {
+    border: none;
+    color: white;
+    display: block;
+    margin: 0;
+    padding: 4px 8px;
+    width: 100%;
+}
+
+.xlb-btn-primary {
+    background-color: #5DB8FE;
+}
+
+.xlb-btn-secondary {
+    background-color: #3D3D3D;
+}
+
+/* HEADER */
+
+.header {
+    background-color: white;
+    position: absolute;
+    text-align: center;
+    top: 0;
+    width: 100%;
+    z-index: 10;
+}
+
+.logo {
+    line-height: 150px;
+}
+
+.menu-block ul {
+    font-size: 1.5em;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.menu-block li {
+    display: inline-block;
+}
+
+.menu-block a {
+    display: block;
+    width: 100px;
+}
+
+.header .menu-block {
+    line-height: 150px;
+}
+
+.header .menu-block a {
+    color: #888888;
+}
+
+.header .menu-block a:hover,
+.header .menu-block a.active {
+    color: white;
+    background-color: #62B9FF;
+    text-decoration: none;
+}
+
+.user-block {
+    background-color: #F0EEEF;
+    font-size: 1.2em;
+    height: 150px;
+    position: relative;
+}
+
+.login-form-title {
+    color: #888;
+    margin: 7px 0;
+    width: 200px;
+}
+
+.login-form {
+    bottom: 0;
+    position: absolute;
+    width: 200px;
+}
+
+.login-form input {
+    border: 1px solid #B5B3B4;
+    margin-bottom: 5px;
+    padding: 4px 8px;
+    text-align: center;
+    width: 100%;
+}
+
+.login {
+    bottom: 0;
+    display: none;
+    position: absolute;
+    width: 200px;
+}
+
+.register {
+    position: absolute;
+    top: 100%;
+    text-decoration: none;
+    width: 200px;
+    z-index: 5;
+}
+
+.logout {
+    bottom: 0;
+    position: absolute;
+    width: 200px;
+}
+
+/* STICKY HEADER */
+
+.header-fixed {
+    border-bottom: 1px solid #F0EEEF;
+    position: fixed;
+}
+
+.header-fixed .user-block {
+    height: 75px;
+}
+
+.header-fixed .logo,
+.header-fixed .menu-block {
+    line-height: 75px;
+}
+
+.header-fixed .login-form-title {
+    margin: 10px 0;
+}
+
+.header-fixed .login-form {
+    display: none;
+}
+
+.header-fixed .login {
+    display: block;
+}
+
+/* CONTENT */
+
+.content {
+    height: auto;
+    min-height: 100%;
+    margin-bottom: -170px;
+    padding-bottom: 170px;
+}
+
+.content h2 {
+    color: #818181;
+    font-size: 5em;
+    font-weight: 300;
+    margin-top: 60px;
+}
+
+.content h3 {
+    color: #818181;
+    font-size: 2.4em;
+    font-weight: 300;
+    margin-top: 40px;
+}
+
+.content p {
+    color: #818181;
+    font-size: 1.4em;
+    font-weight: 300;
+    margin-top: 40px;
+}
+
+/* FOOTER */
+
+.footer-1 {
+    background-color: #818181;
+    padding-top: 10px;
+    text-align: center;
+}
+
+.footer-1 .menu-block {
+    line-height: 80px;
+}
+
+.footer-1 .menu-block a {
+    color: white;
+    padding: 0 10px;
+    width: auto;
+}
+
+.footer-1 .menu-block a:hover {
+    color: white;
+}
+
+.copyright {
+    color: white;
+    font-size: 1.2em;
+    line-height: 80px;
+}
+
+.footer-2 {
+    background-color: #666;
+    text-align: center;
+}

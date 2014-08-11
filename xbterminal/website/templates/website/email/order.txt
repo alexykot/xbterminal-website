@@ -1,0 +1,5 @@
+{% if order.payment_method == 'bitcoin' %}
+Payment successful. {{ order.quantity }} terminals preordered.
+{% elif order.payment_method == 'wire' %}
+Thank you for your order. Your invoice for preorder of {{ order.quantity }} terminals attached.
+{% endif %}

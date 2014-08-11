@@ -1,7 +1,7 @@
 from django import forms
 from django.db import models
 
-from website.validators import validate_bitcoin
+from website.validators import validate_bitcoin_address
 
 from south.modelsinspector import add_introspection_rules
 
@@ -16,7 +16,7 @@ class BCAddressField(forms.CharField):
         if value in self.empty_values and not self.required:
             return
 
-        validate_bitcoin(value)
+        validate_bitcoin_address(value)
 
 
 class FirmwarePathField(models.FilePathField):

@@ -1,34 +1,403 @@
 import json
 import datetime
 
-from django.shortcuts import render, redirect
-from django.http import HttpResponse, Http404
-from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404, render, redirect
+from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
-from django.views.generic import UpdateView, ListView, View
+from django.views.generic import View
 from django.views.generic.base import ContextMixin, TemplateResponseMixin
 from django.utils.decorators import method_decorator
-from django.core.urlresolvers import reverse, reverse_lazy
+from django.core.urlresolvers import resolve, reverse, reverse_lazy
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.decorators.http import require_http_methods
 from django.db.models import Count, Sum
 from django.contrib import messages
 from django.utils import timezone
 
+from payment.blockchain import construct_bitcoin_uri
+
 from website.models import Device, ReconciliationTime
 from website.forms import (
     ContactForm,
-    MerchantRegistrationForm,
     ProfileForm,
     DeviceForm,
     SendDailyReconciliationForm,
-    SendReconciliationForm,
-    SubscribeForm)
+    SendReconciliationForm)
 
-from website import utils
+from website import forms, models, utils
+
+
+class LandingView(TemplateResponseMixin, View):
+    """
+    Landing page
+    """
+    template_name = "website/landing.html"
+
+    def get(self, *args, **kwargs):
+        return self.render_to_response({})
+
+
+class RegistrationView(TemplateResponseMixin, View):
+    """
+    Registration page
+    """
+    template_name = "cabinet/registration.html"
+
+    def get(self, *args, **kwargs):
+        regtype = self.request.GET.get('regtype', 'default')
+        if self.request.user.is_authenticated():
+            return redirect(reverse('website:devices'))
+        context = {
+            'form': forms.MerchantRegistrationForm(initial={'regtype': regtype}),
+            'order_form': forms.TerminalOrderForm(initial={'quantity': 1}),
+        }
+        return self.render_to_response(context)
+
+    def post(self, *args, **kwags):
+        form = forms.MerchantRegistrationForm(self.request.POST)
+        if not form.is_valid():
+            response = {
+                'result': 'error',
+                'errors': form.errors,
+            }
+            return HttpResponse(json.dumps(response),
+                                content_type='application/json')
+        regtype = form.cleaned_data['regtype']
+        if regtype == 'terminal':
+            order_form = forms.TerminalOrderForm(self.request.POST)
+            if not order_form.is_valid():
+                response = {
+                    'result': 'error',
+                    'errors': order_form.errors,
+                }
+                return HttpResponse(json.dumps(response),
+                                    content_type='application/json')
+        else:
+            order_form = None
+        merchant = form.save()
+        if order_form is not None:
+            order = order_form.save(merchant)
+            response = {
+                'result': 'ok',
+                'next': reverse('website:order', kwargs={'pk': order.pk}),
+            }
+        else:
+            response = {
+                'result': 'ok',
+                'next': reverse('website:devices'),
+            }
+        login(self.request, merchant.user)
+        return HttpResponse(json.dumps(response),
+                            content_type='application/json')
+
+
+class RegValidationView(View):
+    """
+    Helper view for server-side validation
+    """
+    def get(self, *args, **kwargs):
+        email = self.request.GET.get('email')
+        try:
+            models.MerchantAccount.objects.get(contact_email=email)
+        except models.MerchantAccount.DoesNotExist:
+            response = {'email': True}
+        else:
+            response = {'email': False}
+        return HttpResponse(json.dumps(response),
+                            content_type='application/json')
+
+
+class CabinetView(ContextMixin, View):
+    """
+    Base class for cabinet views
+    """
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not hasattr(request.user, 'merchant'):
+            raise Http404
+        return super(CabinetView, self).dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(CabinetView, self).get_context_data(**kwargs)
+        context['cabinet_page'] = resolve(self.request.path_info).url_name
+        return context
+
+
+class OrderPaymentView(TemplateResponseMixin, CabinetView):
+    """
+    Terminal order page
+    """
+    template_name = "cabinet/order.html"
+
+    def get(self, *args, **kwargs):
+        order = get_object_or_404(models.Order,
+                                  pk=self.kwargs.get('pk'),
+                                  merchant=self.request.user.merchant)
+        if order.payment_method == 'bitcoin':
+            context = self.get_context_data(**kwargs)
+            context['order'] = order
+            context['bitcoin_uri'] = construct_bitcoin_uri(
+                context['order'].instantfiat_address,
+                context['order'].instantfiat_btc_total_amount,
+                "xbterminal.io")
+            return self.render_to_response(context)
+        elif order.payment_method == 'wire':
+            utils.send_invoice(order)
+            # Create devices
+            for idx in range(order.quantity):
+                device = models.Device(
+                    device_type='hardware',
+                    status='preordered',
+                    name='Terminal #{0}'.format(idx + 1),
+                    merchant=order.merchant)
+                device.save()
+            return redirect(reverse('website:devices'))
+
+
+class DeviceList(TemplateResponseMixin, CabinetView):
+    """
+    Device list page
+    """
+    template_name = "cabinet/device_list.html"
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['devices'] = self.request.user.merchant.device_set.all()
+        return self.render_to_response(context)
+
+
+class CreateDeviceView(TemplateResponseMixin, CabinetView):
+    """
+    Add terminal page
+    """
+    template_name = "cabinet/device_form.html"
+
+    def get(self, *args, **kwargs):
+        device_types = dict(models.Device.DEVICE_TYPES)
+        device_type = self.request.GET.get('device_type', 'hardware')
+        if device_type not in device_types:
+            return HttpResponseBadRequest('')
+        count = self.request.user.merchant.device_set.count()
+        context = self.get_context_data(**kwargs)
+        context['form'] = forms.DeviceForm(initial={
+            'device_type': device_type,
+            'name': '{0} #{1}'.format(device_types[device_type], count + 1),
+        })
+        return self.render_to_response(context)
+
+    def post(self, *args, **kwargs):
+        form = forms.DeviceForm(self.request.POST)
+        if form.is_valid():
+            device = form.save(commit=False)
+            device.merchant = self.request.user.merchant
+            device.save()
+            return redirect(reverse('website:devices'))
+        else:
+            context = self.get_context_data(**kwargs)
+            context['form'] = form
+            return self.render_to_response(context)
+
+
+class DeviceMixin(ContextMixin):
+    """
+    Adds device to the context
+    """
+
+    def get_context_data(self, **kwargs):
+        context = super(DeviceMixin, self).get_context_data(**kwargs)
+        try:
+            context['device'] = self.request.user.merchant.device_set.get(
+                key=self.kwargs.get('device_key'))
+        except Device.DoesNotExist:
+            raise Http404
+        return context
+
+
+class UpdateDeviceView(DeviceMixin, TemplateResponseMixin, CabinetView):
+    """
+    Update device
+    """
+    template_name = "cabinet/device_form.html"
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['form'] = forms.DeviceForm(instance=context['device'])
+        return self.render_to_response(context)
+
+    def post(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        form = forms.DeviceForm(self.request.POST,
+                                instance=context['device'])
+        if form.is_valid():
+            device = form.save()
+            return redirect(reverse('website:devices'))
+        else:
+            context['form'] = form
+            return self.render_to_response(context)
+
+
+class UpdateProfileView(TemplateResponseMixin, CabinetView):
+    """
+    Update profile
+    """
+    template_name = "cabinet/profile_form.html"
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['form'] = forms.ProfileForm(instance=self.request.user.merchant)
+        return self.render_to_response(context)
+
+    def post(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        form = forms.ProfileForm(self.request.POST,
+                                 instance=self.request.user.merchant)
+        if form.is_valid():
+            device = form.save()
+            return redirect(reverse('website:profile'))
+        else:
+            context['form'] = form
+            return self.render_to_response(context)
+
+
+class ReconciliationView(DeviceMixin, TemplateResponseMixin, CabinetView):
+    """
+    Reconciliation page
+    """
+    template_name = "cabinet/reconciliation.html"
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['form'] = forms.SendDailyReconciliationForm()
+        context['daily_transaction_info'] = context['device'].\
+            transaction_set.\
+            extra({'date': "date(time)"}).\
+            values('date', 'fiat_currency').\
+            annotate(
+                count=Count('id'),
+                btc_amount=Sum('btc_amount'),
+                fiat_amount=Sum('fiat_amount'),
+                instantfiat_fiat_amount=Sum('instantfiat_fiat_amount')).\
+            order_by('-date')
+        context['send_form'] = forms.SendReconciliationForm(
+            initial={'email': self.request.user.merchant.contact_email})
+        return self.render_to_response(context)
+
+
+class ReconciliationTimeView(DeviceMixin, CabinetView):
+    """
+    Edit reconciliation schedule
+    """
+    def post(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        # Add time
+        form = forms.SendDailyReconciliationForm(self.request.POST)
+        if form.is_valid():
+            rectime = form.save(commit=False)
+            context['device'].rectime_set.add(rectime)
+            return redirect('website:reconciliation',
+                            context['device'].key)
+        else:
+            return HttpResponse('')
+
+    def delete(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        # Remove time
+        try:
+            context['device'].rectime_set.get(
+                pk=self.kwargs.get('pk')).delete()
+        except models.ReconciliationTime.DoesNotExist:
+            raise Http404
+        return HttpResponse('')
+
+
+class TransactionsView(DeviceMixin, CabinetView):
+    """
+    Download transactions as csv file
+    """
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        year = self.kwargs.get('year')
+        month = self.kwargs.get('month')
+        day = self.kwargs.get('day')
+        if year and month and day:
+            try:
+                date = datetime.date(int(year), int(month), int(day))
+            except ValueError:
+                raise Http404
+            transactions = context['device'].get_transactions_by_date(date)
+            content_disposition = 'attachment; filename="{0}"'.format(
+                utils.get_transactions_filename(context['device'], date))
+        else:
+            transactions = context['device'].transaction_set.all()
+            content_disposition = 'attachment; filename="{0}"'.format(
+                utils.get_transactions_filename(context['device']))
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = content_disposition
+        utils.get_transaction_csv(transactions, response)
+        return response
+
+
+class ReceiptsView(DeviceMixin, CabinetView):
+    """
+    Download receipts
+    """
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        year = self.kwargs.get('year')
+        month = self.kwargs.get('month')
+        day = self.kwargs.get('day')
+        if year and month and day:
+            try:
+                date = datetime.date(int(year), int(month), int(day))
+            except ValueError:
+                raise Http404
+            transactions = context['device'].get_transactions_by_date(date)
+            content_disposition = 'attachment; filename="{0}"'.format(
+                utils.get_receipts_filename(context['device'], date))
+        else:
+            transactions = context['device'].transaction_set.all()
+            content_disposition = 'attachment; filename="{0}"'.format(
+                utils.get_receipts_filename(context['device']))
+        response = HttpResponse(content_type='application/x-zip-compressed')
+        response['Content-Disposition'] = content_disposition
+        utils.get_transaction_pdf_archive(transactions, response)
+        return response
+
+
+class SendAllToEmailView(DeviceMixin, CabinetView):
+    """
+    Send transactions and receipts to email
+    """
+    def post(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        form = SendReconciliationForm(self.request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            date = form.cleaned_data['date']
+            # Calculate datetime range
+            now = timezone.localtime(timezone.now())
+            rec_range_beg = timezone.make_aware(
+                datetime.datetime.combine(date, datetime.time.min),
+                timezone.get_current_timezone())
+            if date < now.date():
+                rec_range_end = timezone.make_aware(
+                    datetime.datetime.combine(date, datetime.time.max),
+                    timezone.get_current_timezone())
+            else:
+                rec_range_end = now
+            utils.send_reconciliation(
+                email, context['device'],
+                (rec_range_beg, rec_range_end))
+            messages.success(self.request, 'Email has been sent successfully.')
+        else:
+            messages.error(self.request, 'Error: Invalid email. Please, try again.')
+        return redirect('website:reconciliation', context['device'].key)
 
 
 def contact(request):
@@ -56,9 +425,6 @@ def contact(request):
     return render(request, 'website/contact.html', {'form': form})
 
 
-def landing(request):
-    return render(request, 'website/landing.html', {})
-
 def profiles(request):
     return render(request, 'website/profiles.html', {})
 
@@ -67,12 +433,10 @@ class SubscribeNewsView(View):
     """
     Subscribe to newsletters (Ajax)
     """
-    http_method_names = ['post']
-
-    def post(self, request, *args, **kwargs):
-        form = SubscribeForm(request.POST)
+    def post(self, *args, **kwargs):
+        form = forms.SubscribeForm(self.request.POST)
         if form.is_valid():
-            subscriber_email = form.data['email']
+            subscriber_email = form.cleaned_data['email']
             text = render_to_string(
                 "website/email/subscription.txt",
                 {'subscriber_email': subscriber_email})
@@ -82,9 +446,11 @@ class SubscribeNewsView(View):
                 settings.DEFAULT_FROM_EMAIL,
                 settings.CONTACT_EMAIL_RECIPIENTS,
                 fail_silently=False)
-            return HttpResponse("")
+            response = {}
         else:
-            raise Http404
+            response = {'errors': form.errors}
+        return HttpResponse(json.dumps(response),
+                            content_type='application/json')
 
 
 @xframe_options_exempt
@@ -92,281 +458,7 @@ def landing_faq(request):
     return render(request, 'website/faq.html', {})
 
 
-def merchant(request):
-    if request.method == 'POST':
-        form = MerchantRegistrationForm(request.POST)
-        if form.is_valid():
-            UserModel = get_user_model()
-            password = UserModel.objects.make_random_password()
-            email = form.data['contact_email']
-            user = UserModel.objects.create_user(email, email, password)
-
-            merchant = form.save(commit=False)
-            merchant.user = user
-            merchant.save()
-
-            mail_text = render_to_string('website/email/registration.txt',
-                                         {'email': email, 'password': password})
-            send_mail(
-                "registration on xbterminal.com",
-                mail_text,
-                settings.DEFAULT_FROM_EMAIL,
-                [email],
-                fail_silently=False
-            )
-
-            to_response = {
-                'result': 'ok'
-            }
-        else:
-            to_response = {
-                'result': 'error',
-                'errors': form.errors
-            }
-        return HttpResponse(json.dumps(to_response), content_type='application/json')
-    else:
-        form = MerchantRegistrationForm()
-
-    return render(request, 'website/merchant.html', {'form': form})
-
-
-class ProfileView(UpdateView):
-    form_class = ProfileForm
-    template_name = 'cabinet/profile_form.html'
-    success_url = reverse_lazy('website:profile')
-
-    @method_decorator(login_required)
-    def dispatch(self, *args, **kwargs):
-        return super(ProfileView, self).dispatch(*args, **kwargs)
-
-    def get_object(self):
-        user = self.request.user
-        if not hasattr(user, 'merchant'):
-            raise Http404
-        return user.merchant
-
-
-class DeviceView(UpdateView):
-    form_class = DeviceForm
-    template_name = 'cabinet/device_form.html'
-
-    @method_decorator(login_required)
-    def dispatch(self, *args, **kwargs):
-        return super(DeviceView, self).dispatch(*args, **kwargs)
-
-    def get_object(self):
-        user = self.request.user
-        if not hasattr(user, 'merchant'):
-            raise Http404
-        try:
-            device = user.merchant.device_set.get(key=self.kwargs.get('device_key'))
-        except Device.DoesNotExist:
-            raise Http404
-        return device
-
-    def form_valid(self, form):
-        device = form.save(commit=False)
-        device.merchant = self.request.user.merchant
-        device.save()
-        self.object = device
-        return super(DeviceView, self).form_valid(form)
-
-    def get_success_url(self):
-        return reverse('website:devices')
-
-    def get_context_data(self, **kwargs):
-        kwargs['current_device'] = self.object
-        return super(DeviceView, self).get_context_data(**kwargs)
-
-
-class DeviceList(ListView):
-    model = Device
-    template_name = 'cabinet/device_list.html'
-    context_object_name = 'devices'
-
-    def get_queryset(self):
-        user = self.request.user
-        if not hasattr(user, 'merchant'):
-            raise Http404
-        return self.request.user.merchant.device_set.all()
-
-
-def reconciliation(request, device_key):
-    user = request.user
-    if not hasattr(user, 'merchant'):
-        raise Http404
-    try:
-        device = user.merchant.device_set.get(key=device_key)
-    except Device.DoesNotExist:
-        raise Http404
-
-    daily_transaction_info = device.transaction_set.extra({'date': "date(time)"})\
-                                                   .values('date', 'fiat_currency')\
-                                                   .annotate(count=Count('id'),
-                                                             btc_amount=Sum('btc_amount'),
-                                                             fiat_amount=Sum('fiat_amount'),
-                                                             instantfiat_fiat_amount=Sum('instantfiat_fiat_amount'))
-
-    return render(request, 'cabinet/reconciliation.html', {
-        'form': SendDailyReconciliationForm(),
-        'device': device,
-        'daily_transaction_info': daily_transaction_info,
-        'send_form': SendReconciliationForm(initial={'email': user.merchant.contact_email}),
-        'reconciliation_schedule': device.rectime_set.all(),
-    })
-
-
-@require_http_methods(['POST', 'DELETE'])
-def reconciliation_time(request, device_key, pk):
-    user = request.user
-    if not hasattr(user, 'merchant'):
-        raise Http404
-    try:
-        device = user.merchant.device_set.get(key=device_key)
-    except Device.DoesNotExist:
-        raise Http404
-
-    if request.method == 'POST':
-        # Add time
-        form = SendDailyReconciliationForm(request.POST)
-        if form.is_valid():
-            rectime = form.save(commit=False)
-            device.rectime_set.add(rectime)
-            return redirect('website:reconciliation', device.key)
-    else:
-        # Remove time
-        try:
-            device.rectime_set.get(pk=pk).delete()
-        except ReconciliationTime.DoesNotExist:
-            raise Http404
-        return HttpResponse('')
-
-
-def transactions(request, device_key, year=None, month=None, day=None):
-    user = request.user
-    if not hasattr(user, 'merchant'):
-        raise Http404
-    try:
-        device = user.merchant.device_set.get(key=device_key)
-    except Device.DoesNotExist:
-        raise Http404
-
-    if year and month and day:
-        try:
-            date = datetime.date(int(year), int(month), int(day))
-        except ValueError:
-            raise Http404
-
-        transactions = device.get_transactions_by_date(date)
-        cd_template = 'attachment; filename="%s device transactions %s.csv"'
-        content_disposition = cd_template % (device.name, date.strftime('%d %b %Y'))
-    else:
-        transactions = device.transaction_set.all()
-        cd_template = 'attachment; filename="%s device transactions.csv"'
-        content_disposition = cd_template % device.name
-
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = content_disposition
-
-    utils.get_transaction_csv(transactions, response)
-    return response
-
-
-def receipts(request, device_key, year=None, month=None, day=None):
-    user = request.user
-    if not hasattr(user, 'merchant'):
-        raise Http404
-    try:
-        device = user.merchant.device_set.get(key=device_key)
-    except Device.DoesNotExist:
-        raise Http404
-
-    if year and month and day:
-        try:
-            date = datetime.date(int(year), int(month), int(day))
-        except ValueError:
-            raise Http404
-
-        transactions = device.get_transactions_by_date(date)
-        cd_template = 'attachment; filename="%s device receipts %s.zip"'
-        content_disposition = cd_template % (device.name, date.strftime('%d %b %Y'))
-    else:
-        transactions = device.transaction_set.all()
-        cd_template = 'attachment; filename="%s device receipts.zip"'
-        content_disposition = cd_template % device.name
-
-    response = HttpResponse(content_type='application/x-zip-compressed')
-
-    response['Content-Disposition'] = content_disposition
-
-    utils.get_transaction_pdf_archive(transactions, response)
-    return response
-
-
-@require_http_methods(['POST'])
-def send_all_to_email(request, device_key):
-    user = request.user
-    if not hasattr(user, 'merchant'):
-        raise Http404
-    try:
-        device = user.merchant.device_set.get(key=device_key)
-    except Device.DoesNotExist:
-        raise Http404
-
-    form = SendReconciliationForm(request.POST)
-
-    if form.is_valid():
-        email = form.cleaned_data['email']
-        date = form.cleaned_data['date']
-        # Calculate datetime range
-        now = timezone.localtime(timezone.now())
-        rec_range_beg = timezone.make_aware(
-            datetime.datetime.combine(date, datetime.time.min),
-            timezone.get_current_timezone())
-        if date < now.date():
-            rec_range_end = timezone.make_aware(
-                datetime.datetime.combine(date, datetime.time.max),
-                timezone.get_current_timezone())
-        else:
-            rec_range_end = now
-        utils.send_reconciliation(
-            email, device,
-            (rec_range_beg, rec_range_end))
-        messages.success(request, 'Email has been sent successfully.')
-    else:
-        messages.error(request, 'Error: Invalid email. Please, try again.')
-
-    return redirect('website:reconciliation', device.key)
-
-
-class MerchantView(View):
-    """
-    Base class
-    """
-
-    @method_decorator(login_required)
-    def dispatch(self, request, *args, **kwargs):
-        if not hasattr(request.user, 'merchant'):
-            raise Http404
-        return super(MerchantView, self).dispatch(request, *args, **kwargs)
-
-
-class DeviceMixin(ContextMixin):
-    """
-    Adds device to the context
-    """
-
-    def get_context_data(self, **kwargs):
-        context = super(DeviceMixin, self).get_context_data(**kwargs)
-        try:
-            context['device'] = Device.objects.get(
-                key=self.kwargs.get('device_key'))
-        except Device.DoesNotExist:
-            raise Http404
-        return context
-
-
-class PaymentView(TemplateResponseMixin, DeviceMixin, View):
+class PaymentView(TemplateResponseMixin, DeviceMixin, CabinetView):
     """
     Online POS (public view)
     """
