@@ -17,13 +17,16 @@
             {% elif form.regtype.value == 'terminal' %}
                 <h3 class="pull-left">Terminal order</h3>
                 <h3 id="step" class="pull-right">step <span>1</span> of 3</h3>
+            {% elif form.regtype.value == 'web' %}
+                <h3 class="pull-left">Online POS registration</h3>
+                <h3 id="step" class="pull-right">step <span>1</span> of 2</h3>
             {% endif %}
         </div>
         <form id="merchant-form" role="form" action="{% url 'website:registration' %}" method="POST">
             <div id="registration-step-1">
                 {% csrf_token %}
                 {% bootstrap_field form.regtype %}
-                {% if form.regtype.value == 'default' %}
+                {% if form.regtype.value == 'default' or form.regtype.value == 'web' %}
                     <div class="row">
                         <div class="col-md-6">{% bootstrap_field form.contact_first_name %}</div>
                         <div class="col-md-6">{% bootstrap_field form.contact_last_name %}</div>
@@ -71,7 +74,7 @@
                 {% endif %}
             </div>
             <div id="registration-step-2">
-                {% if form.regtype.value == 'default' %}
+                {% if form.regtype.value == 'default' or form.regtype.value == 'web' %}
                     <div class="row">
                         <div class="col-md-6">{% bootstrap_field form.company_name %}</div>
                         <div class="col-md-6">{% bootstrap_field form.trading_name %}</div>

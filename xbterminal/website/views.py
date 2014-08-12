@@ -76,16 +76,33 @@ class RegistrationView(TemplateResponseMixin, View):
                 }
                 return HttpResponse(json.dumps(response),
                                     content_type='application/json')
-        else:
-            order_form = None
         merchant = form.save()
-        if order_form is not None:
+        if regtype == 'default':
+            response = {
+                'result': 'ok',
+                'next': reverse('website:devices'),
+            }
+        elif regtype == 'terminal':
             order = order_form.save(merchant)
+            # Create devices
+            for idx in range(order.quantity):
+                device = models.Device(
+                    device_type='hardware',
+                    status='preordered',
+                    name='Terminal #{0}'.format(idx + 1),
+                    merchant=merchant)
+                device.save()
             response = {
                 'result': 'ok',
                 'next': reverse('website:order', kwargs={'pk': order.pk}),
             }
-        else:
+        elif regtype == 'web':
+            device = models.Device(
+                device_type='web',
+                status='active',
+                name='Web POS #1',
+                merchant=merchant)
+            device.save()
             response = {
                 'result': 'ok',
                 'next': reverse('website:devices'),
@@ -148,14 +165,6 @@ class OrderPaymentView(TemplateResponseMixin, CabinetView):
             return self.render_to_response(context)
         elif order.payment_method == 'wire':
             utils.send_invoice(order)
-            # Create devices
-            for idx in range(order.quantity):
-                device = models.Device(
-                    device_type='hardware',
-                    status='preordered',
-                    name='Terminal #{0}'.format(idx + 1),
-                    merchant=order.merchant)
-                device.save()
             return redirect(reverse('website:devices'))
 
 

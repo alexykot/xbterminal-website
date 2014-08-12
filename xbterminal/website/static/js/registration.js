@@ -171,7 +171,7 @@ var Registration = (function () {
                 $('#registration-step-2').show();
                 $('#step span').text('2');
                 var regtype = $('[name="regtype"]').val();
-                if (regtype == 'default') {
+                if (regtype == 'default' || regtype == 'web') {
                     $('[name="company_name"]').val($('[name="company_name_copy"]').val());
                 } else if (regtype == 'terminal') {
                     $('#delivery-address-preview').html(getBillingAddress().join('<br>'));
