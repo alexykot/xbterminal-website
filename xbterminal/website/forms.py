@@ -90,14 +90,16 @@ class MerchantRegistrationForm(forms.ModelForm):
             'email': cleaned_data['contact_email'],
             'password': self._password,
         })
-        try:
-            send_mail("Registration on xbterminal.io",
-                      mail_text,
-                      settings.DEFAULT_FROM_EMAIL,
-                      [cleaned_data['contact_email']],
-                      fail_silently=False)
-        except smtplib.SMTPRecipientsRefused as error:
-            self._errors['contact_email'] = self.error_class(['Invalid email.'])
+        if not self._errors:
+            try:
+                send_mail("Registration on xbterminal.io",
+                        mail_text,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [cleaned_data['contact_email']],
+                        fail_silently=False)
+            except smtplib.SMTPRecipientsRefused as error:
+                self._errors['contact_email'] = self.error_class(['Invalid email.'])
+                del cleaned_data['contact_email']
         return cleaned_data
 
     def save(self, commit=True):
@@ -165,6 +167,7 @@ class TerminalOrderForm(forms.ModelForm):
                 if not cleaned_data.get(field_name):
                     self._errors[field_name] = self.error_class(
                         ["This field is required."])
+                    del cleaned_data[field_name]
         return cleaned_data
 
     def save(self, merchant, commit=True):
@@ -251,12 +254,14 @@ class DeviceForm(forms.ModelForm):
         bitcoin_address = cleaned_data['bitcoin_address']
         if payment_processing in ['keep', 'partially'] and not bitcoin_address:
             self._errors['bitcoin_address'] = self.error_class(["This field is required."])
+            del cleaned_data['bitcoin_address']
         if self.instance and bitcoin_address:
             try:
                 validate_bitcoin_address(bitcoin_address,
                                          network=self.instance.bitcoin_network)
             except forms.ValidationError as error:
                 self._errors['bitcoin_address'] = self.error_class(error.messages)
+                del cleaned_data['bitcoin_address']
         return cleaned_data
 
 
@@ -276,6 +281,7 @@ class DeviceAdminForm(forms.ModelForm):
                                              network=network)
             except forms.ValidationError as error:
                 self._errors[address] = self.error_class(error.messages)
+                del cleaned_data[address]
         return cleaned_data
 
 
