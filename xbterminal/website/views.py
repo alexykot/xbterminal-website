@@ -67,6 +67,16 @@ class ContactView(TemplateResponseMixin, View):
             return self.render_to_response({'form': form})
 
 
+class PrivacyPolicyView(TemplateResponseMixin, View):
+    """
+    Privacy policy page
+    """
+    template_name = "website/privacy.html"
+
+    def get(self, *args, **kwargs):
+        return self.render_to_response({})
+
+
 class RegistrationView(TemplateResponseMixin, View):
     """
     Registration page
