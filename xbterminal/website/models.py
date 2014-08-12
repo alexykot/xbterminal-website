@@ -128,7 +128,7 @@ class MerchantAccount(models.Model):
         return [s for s in strings if s]
 
 
-def device_key_gen():
+def gen_device_key():
     bts = uuid.uuid4().bytes
     return base58.encode(bts)[:8]
 
@@ -181,7 +181,7 @@ class Device(models.Model):
     )
     bitcoin_address = models.CharField('bitcoin address to send to', max_length=100, blank=True)
 
-    key = models.CharField(max_length=32, editable=False, unique=True, default=device_key_gen)
+    key = models.CharField(max_length=32, editable=False, unique=True, default=gen_device_key)
 
     serial_number = models.CharField(max_length=50, blank=True, null=True)
     bitcoin_network = models.CharField(max_length=50, choices=BITCOIN_NETWORKS, default='mainnet')
@@ -332,6 +332,11 @@ class PaymentOrder(models.Model):
     transaction = models.OneToOneField(Transaction, null=True)
 
 
+def gen_payment_reference():
+    bts = uuid.uuid4().bytes
+    return base58.encode(bts)[:10].upper()
+
+
 class Order(models.Model):
 
     PAYMENT_METHODS = [
@@ -357,6 +362,8 @@ class Order(models.Model):
     instantfiat_invoice_id = models.CharField(max_length=255, null=True)
     instantfiat_btc_total_amount = models.DecimalField(max_digits=18, decimal_places=8, null=True)
     instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], null=True)
+
+    payment_reference = models.CharField(max_length=10, unique=True, editable=False, default=gen_payment_reference)
 
     def __unicode__(self):
         return "order #{0}".format(self.id)
