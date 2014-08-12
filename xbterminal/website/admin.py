@@ -19,6 +19,10 @@ class FirmwareAdmin(admin.ModelAdmin):
     readonly_fields = ('hash',)
 
 
+class OrderAdmin(admin.ModelAdmin):
+    readonly_fields = ['payment_reference']
+
+
 class UserAdmin(UserAdmin):
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
@@ -47,4 +51,4 @@ admin.site.register(models.Currency)
 admin.site.register(models.Transaction, TransactionAdmin)
 admin.site.register(models.Firmware, FirmwareAdmin)
 admin.site.register(models.PaymentOrder)
-admin.site.register(models.Order)
+admin.site.register(models.Order, OrderAdmin)
