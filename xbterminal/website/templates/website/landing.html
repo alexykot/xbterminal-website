@@ -33,10 +33,13 @@
     </div>
     <div class="text-section">
         <div class="container">
-            <h2>Bitcoin payments for all</h2>
-            <h3>XBTerminal is the fast simple and cost effective way for your business to start accepting bitcoin today</h3>
-            <p>Lorem ipsum</p>
-            <h3>Three easy ways to accept digital currency</h3>
+            <h2>Bitcoin payments made easy.</h2>
+            <h3>XBTerminal is the fast, simple and cost effective way for your business to start accepting bitcoin today.</h3>
+            <p>Our unique and innovative solutions allow you accept Bitcoin in a safe and risk free way. You are in control
+                of the payment process whether you want to keep the Bitcoins or receive local currency. Through our seamless
+                payment gateway integration we can <b>guarantee</b> a local currency return back to your business bank account.
+                </p>
+            <h3>Three easy ways to accept digital currency.</h3>
             <div class="three-ways">
                 <a href="{% url 'website:landing' %}#terminal-section">terminal</a>
                 <a href="{% url 'website:landing' %}#mobile-section">mobile</a>
@@ -77,8 +80,17 @@
     <div class="text-section">
         <div class="container">
             <h2>XBTerminal</h2>
-            <h3>XLB is the fast</h3>
-            <p>Lorem ipsum</p>
+            <h3>XBTerminal is the only hardware Bitcoin POS product which can guarantee the local currency return on your sales. </h3>
+            <p>The XBTerminal is our first generation Bitcoin Point of Sale device. It is simple and intuitive to operate
+                for all your staff. Customers may pay from any mobile Bitcoin wallet by NFC or QR code, payment from offline
+                mobile devices is supported by bluetooth. Transactions are sent directly to our servers for fast verification
+                allowing you to accept Bitcoin without delays at your point of sale. Our payment processor integration means
+                that even though you can accept Bitcoin, you don’t need to worry about exchanging it or selling it for local
+                currency, it can be converted instantly at the point of sale. This solution best suits brick and mortar retail
+                establishments with a fixed point of sale and multiple staff.
+                <br> <small>*Wifi required for operation.</small>
+            </p>
+
             <a id="terminal-pre-order" class="xlb-btn-primary" href="{% url 'website:registration' %}?regtype=terminal">pre order today</a>
             <form id="terminal-subscribe-form" action="{% url 'website:subscribe' %}" method="POST">
                 {% csrf_token %}
@@ -103,10 +115,16 @@
     </div>
     <div class="text-section">
         <div class="container">
-            <h2>XLB Mobile</h2>
-            <h3>XLB is the fast</h3>
-            <p>Lorem ipsum</p>
-            <h3>Download today</h3>
+            <h2>XBT Mobile</h2>
+            <h3>XBT Mobile allows you to Start Accepting Bitcoin now with no upfront costs and the same great features
+                as our dedicated hardware.</h3>
+            <p>Our mobile app is just as easy to operate as our hardware product. Customers may pay from any mobile
+                Bitcoin wallet by NFC (Android only) or QR code, payment from offline mobile devices is supported by
+                Bluetooth (Android only). The payment process is fast and secure, replicating the features of our
+                dedicated hardware allowing you to dip your toe into the Bitcoin world without any upfront costs.
+                This solution best suits merchants without a fixed point of sale like pop-up or street traders, it’s
+                also a great starting point before deciding if you want a dedicated device for your business.</p>
+            <h3>Coming really soon.</h3>
         </div>
     </div>
     <div
@@ -123,16 +141,21 @@
     </div>
     <div class="text-section">
         <div class="container">
-            <h2>XLB Online</h2>
-            <h3>XLB is the fast</h3>
-            <p>Lorem ipsum</p>
+            <h2>XBT Online POS</h2>
+            <h3>XBT Online allows you to Start Accepting Bitcoin Now with no upfront costs and is accessible on
+                any web-connected device.</h3>
+            <p>Our web app is just as easy to operate as our hardware product. Customers may pay from any mobile Bitcoin
+                wallet by QR code.  The payment process is fast and secure, replicating the features of our dedicated
+                hardware allowing you to dip your toe into the Bitcoin world without any upfront costs. This solution best
+                suits merchants who already have a computer or tablet based system who cannot for whatever reason run
+                the mobile application.</p>
             <a id="web-set-up" class="xlb-btn-primary" href="{% url 'website:registration' %}?regtype=web">set up</a>
         </div>
     </div>
     <div id="social">
-        <a href="https://twitter.com/xbterminal"><img src="{% static 'img/soc-twitter.png' %}" alt="twitter"></a>
-        <a><img src="{% static 'img/soc-facebook.png' %}" alt="facebook"></a>
-        <a><img src="{% static 'img/soc-google.png' %}" alt="google"></a>
+        <a href="https://twitter.com/xbterminal" target="_blank"><img src="{% static 'img/soc-twitter.png' %}" alt="twitter"></a>
+        <a target="_blank"><img src="{% static 'img/soc-facebook.png' %}" alt="facebook"></a>
+        <a target="_blank"><img src="{% static 'img/soc-google.png' %}" alt="google"></a>
     </div>
 </div>
 {% endblock %}
