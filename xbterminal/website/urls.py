@@ -10,7 +10,7 @@ urlpatterns = patterns('website.views',
     url(r'^order/(?P<pk>\d+)/$', views.OrderPaymentView.as_view(), name='order'),
     url(r'^profiles/$', 'profiles', name='profiles'),
     url(r'^subscribe/$', SubscribeNewsView.as_view(), name='subscribe'),
-    url(r'^contact/$', 'contact', name='contact'),
+    url(r'^contact/$', views.ContactView.as_view(), name='contact'),
     url(r'^faq/$', 'landing_faq', name='landing_faq'),
     url(r'^profile/$', views.UpdateProfileView.as_view(), name='profile'),
 

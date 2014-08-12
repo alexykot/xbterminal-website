@@ -22,7 +22,6 @@ from payment.blockchain import construct_bitcoin_uri
 
 from website.models import Device, ReconciliationTime
 from website.forms import (
-    ContactForm,
     ProfileForm,
     DeviceForm,
     SendDailyReconciliationForm,
@@ -39,6 +38,33 @@ class LandingView(TemplateResponseMixin, View):
 
     def get(self, *args, **kwargs):
         return self.render_to_response({})
+
+
+class ContactView(TemplateResponseMixin, View):
+    """
+    Contact form
+    """
+    template_name = "website/contact.html"
+
+    def get(self, *args, **kwargs):
+        form = forms.ContactForm()
+        return self.render_to_response({'form': form})
+
+    def post(self, *args, **kwargs):
+        form = forms.ContactForm(self.request.POST)
+        if form.is_valid():
+            mail_text = render_to_string(
+                'website/email/contact.txt',
+                form.cleaned_data)
+            send_mail(
+                "message from xbterminal.com",
+                mail_text,
+                settings.DEFAULT_FROM_EMAIL,
+                settings.CONTACT_EMAIL_RECIPIENTS,
+                fail_silently=False)
+            return self.render_to_response({})
+        else:
+            return self.render_to_response({'form': form})
 
 
 class RegistrationView(TemplateResponseMixin, View):
@@ -407,31 +433,6 @@ class SendAllToEmailView(DeviceMixin, CabinetView):
         else:
             messages.error(self.request, 'Error: Invalid email. Please, try again.')
         return redirect('website:reconciliation', context['device'].key)
-
-
-def contact(request):
-    if request.method == 'POST':
-        form = ContactForm(request.POST)
-        if form.is_valid():
-            mail_text = render_to_string('website/email/contact.txt', form.cleaned_data)
-
-            send_mail(
-                "message from xbterminal.com",
-                mail_text,
-                settings.DEFAULT_FROM_EMAIL,
-                settings.CONTACT_EMAIL_RECIPIENTS,
-                fail_silently=False
-            )
-            return HttpResponse(json.dumps({'result': 'ok'}), content_type='application/json')
-        else:
-            to_response = {
-                'result': 'error',
-                'errors': form.errors
-            }
-            return HttpResponse(json.dumps(to_response), content_type='application/json')
-    else:
-        form = ContactForm()
-    return render(request, 'website/contact.html', {'form': form})
 
 
 def profiles(request):

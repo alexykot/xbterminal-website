@@ -1,84 +1,20 @@
-{% extends "base.html" %}
+{% extends "cabinet/base.html" %}
+{% load bootstrap3 staticfiles %}
 
-{% block content %}
-<section class="content">
-  <div class="container">
-    <div class="row">
-      <div class="col-sm-10 col-sm-offset-1">
-        <div class="row">
-          <div class="col-sm-6 col-sm-offset-3" id="contact_view">
-            <h3>Contact form:</h3>
-            <form role="form" action="{% url 'website:contact' %}" method="post" id="contact_form">
-              {% csrf_token %}
-              {{ form }}
-              <button type="button" id="contact_send" class="btn btn-default pull-right">Send</button>
-              <img id="loading-img" class="pull-right" src="{% static 'img/loading.gif' %}">
-            </form>
-          </div>
-        </div>
-      </div>
+{% block cabinet_content %}
+<div class="row">
+    <div class="col-md-8 col-md-offset-2">
+        {% if form %}
+        <h3>Contact form:</h3>
+        <form id="contact-form" role="form" action="{% url 'website:contact' %}" method="POST">
+            {% csrf_token %}
+            {% bootstrap_form form %}
+            <button type="submit" class="btn btn-default">Send</button>
+            <img id="loading-image" src="{% static 'img/loading.gif' %}">
+        </form>
+        {% else %}
+        <h3>Thanks!</h3><p class="lead">We will contact you as soon as possible</p>
+        {% endif %}
     </div>
-  </div>
-</section>
-{% endblock %}
-
-{% block js %}
-<script src="{% static 'js/handlebars-v1.1.2.js' %}" type="text/javascript"></script>
-{% verbatim %}
-<script id="entry-template" type="text/x-handlebars-template">
-<div id="alert" class="alert alert-danger alert-dismissable">
-  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-  <strong>Warning!</strong>
-  <ul>
-  {{#each hb_message}}
-  <li>{{this}}</li>
-  {{/each}}
-</ul>
 </div>
-</script>
-{% endverbatim %}
-{% endblock %}
-
-{% block ready %}
-<script type="text/javascript">
-$(function() {
-$('#loading-img').hide();
-$(document)
-    .ajaxStart(function() {
-        $('#loading-img').show();
-    })
-    .ajaxStop(function() {
-        $('#loading-img').hide();
-    });
-$(".alert").alert();
-$(document).on("click","#contact_send",function(){
-  console.log("fire!");
-  $.ajax({
-    type: 'POST',
-    url: {% url 'website:contact' %},
-    data: $('#contact_form').serialize(),
-    success: function(data) {
-      if(data.result == 'ok') {
-        $('#contact_view').empty();
-        $('#contact_view').html("<h3>Thanks!</h3><p class='lead'>We will contact you as soon as possible</p>");
-      }
-      else {
-        var err_msg = [];
-        var errors = data.errors;
-        for(var x in Object.keys(errors)) {
-          var field = Object.keys(errors)[x];
-          err_msg.push(field.replace('_',' ') + " - " + errors[field].join(","));
-        };
-        var source   = $("#entry-template").html();
-        var template = Handlebars.compile(source);
-        var context = {"hb_message": err_msg}
-        var html    = template(context);
-        $('#alert').remove();
-        $('#contact_view').prepend(html);
-      }
-    }
-  })
-});
-});
-</script>
 {% endblock %}
