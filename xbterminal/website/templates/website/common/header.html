@@ -5,10 +5,10 @@
         <div class="row">
             <div class="logo col-md-3">
                 <a href="{% url 'website:landing' %}">
-                    <img src="{% static 'img/xlb-logo.png' %}" alt="XLB">
+                    <img src="{% static 'img/xbt-logo.png' %}" alt="XBTerminal">
                 </a>
             </div>
-            <div class="menu-block col-md-5"><ul>
+            <div class="menu-block col-md-6"><ul>
                 {% if cabinet_page %}
                 <li><a href="{% url 'website:devices' %}" {% if cabinet_page == 'devices' %}class="active"{% endif %}>terminals</a></li>
                 <li><a href="{% url 'website:profile' %}" {% if cabinet_page == 'profile' %}class="active"{% endif %}>profile</a></li>
@@ -19,7 +19,7 @@
                 <li><a href="{% url 'website:landing' %}#web-section">web</a></li>
                 {% endif %}
             </ul></div>
-            <div class="user-block col-md-4">
+            <div class="user-block col-md-3">
                 {% if not user.is_authenticated %}
                 <div class="login-form-title">merchant login</div>
                 <form class="login-form" action="{% url 'login' %}" method="POST">

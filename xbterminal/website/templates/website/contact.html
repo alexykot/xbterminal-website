@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load bootstrap staticfiles %}
 
 {% block content %}
 <section class="content">
@@ -11,7 +10,7 @@
             <h3>Contact form:</h3>
             <form role="form" action="{% url 'website:contact' %}" method="post" id="contact_form">
               {% csrf_token %}
-              {{ form|bootstrap }}
+              {{ form }}
               <button type="button" id="contact_send" class="btn btn-default pull-right">Send</button>
               <img id="loading-img" class="pull-right" src="{% static 'img/loading.gif' %}">
             </form>
