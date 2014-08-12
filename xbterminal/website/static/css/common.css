@@ -32,6 +32,13 @@ html, body {
     background-color: #3D3D3D;
 }
 
+[data-toggle="buttons"] > .btn > input[type="radio"] {
+    top: 0;
+    right: 0;
+    margin: 0;
+    visibility: hidden;
+}
+
 /* HEADER */
 
 .header {
