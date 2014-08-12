@@ -6,6 +6,7 @@ from views import SubscribeNewsView
 urlpatterns = patterns('website.views',
     url(r'^$', views.LandingView.as_view(), name='landing'),
     url(r'^privacy/$', views.PrivacyPolicyView.as_view(), name='privacy'),
+    url(r'^terms/$', views.TermsConditionsView.as_view(), name='terms'),
     url(r'^contact/$', views.ContactView.as_view(), name='contact'),
     url(r'^registration/$', views.RegistrationView.as_view(), name='registration'),
     url(r'^registration/validate/$', views.RegValidationView.as_view(), name='reg_validation'),

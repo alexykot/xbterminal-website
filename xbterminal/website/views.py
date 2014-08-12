@@ -77,6 +77,16 @@ class PrivacyPolicyView(TemplateResponseMixin, View):
         return self.render_to_response({})
 
 
+class TermsConditionsView(TemplateResponseMixin, View):
+    """
+    Terms & Conditions page
+    """
+    template_name = "website/tc.html"
+
+    def get(self, *args, **kwargs):
+        return self.render_to_response({})
+
+
 class RegistrationView(TemplateResponseMixin, View):
     """
     Registration page
