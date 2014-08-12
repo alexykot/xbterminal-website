@@ -15,7 +15,7 @@
 /* About */
 
 #about-section {
-    background-image: url(../img/xlb-about-bg.png);
+    background-image: url(../img/xlb-about-bg-lg.jpg);
     height: 666px;
 }
 
@@ -91,7 +91,7 @@
 }
 
 #terminal-section {
-    background-image: url(../img/xlb-terminal-bg.png);
+    background-image: url(../img/xlb-terminal-bg-lg.jpg);
     height: 732px;
     position: absolute;
     width: 100%;
@@ -156,7 +156,7 @@
 /* Mobile */
 
 #mobile-section {
-    background-image: url(../img/xlb-mobile-bg.png);
+    background-image: url(../img/xlb-mobile-bg-lg.jpg);
     height: 665px;
 }
 
@@ -175,7 +175,7 @@
 /* Web */
 
 #web-section {
-    background-image: url(../img/xlb-web-bg.png);
+    background-image: url(../img/xlb-web-bg-lg.jpg);
     height: 663px;
 }
 
