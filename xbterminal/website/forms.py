@@ -13,7 +13,7 @@ from django.template.loader import render_to_string
 
 from constance import config
 
-from payment.instantfiat import cryptopay
+from payment.instantfiat import gocoin
 
 from website.models import User, MerchantAccount, Device, ReconciliationTime, Order
 from website.fields import BCAddressField
@@ -158,6 +158,21 @@ class TerminalOrderForm(forms.ModelForm):
     def terminal_price(self):
         return config.TERMINAL_PRICE
 
+    @property
+    def exchange_rate(self):
+        """
+        Get exchange rate from GoCoin
+        Returns:
+            exchange rate: Decimal
+        """
+        result = gocoin.create_invoice(
+            config.TERMINAL_PRICE,
+            'GBP',
+            config.GOCOIN_API_KEY,
+            'exchange rate')
+        exchange_rate = result[1] / Decimal(config.TERMINAL_PRICE)
+        return float(exchange_rate)
+
     def clean(self):
         cleaned_data = super(TerminalOrderForm, self).clean()
         if cleaned_data.get('delivery_address_differs'):
@@ -189,11 +204,11 @@ class TerminalOrderForm(forms.ModelForm):
             instance.delivery_contact_phone = merchant.contact_phone
         if instance.payment_method == "bitcoin":
             # Create invoice
-            instantfiat_result = cryptopay.create_invoice(
+            instantfiat_result = gocoin.create_invoice(
                 instance.fiat_total_amount,
                 merchant.currency.name,
-                config.CRYPTOPAY_API_KEY,
-                "terminals")
+                config.GOCOIN_API_KEY,
+                'terminals')
             instance.instantfiat_invoice_id = instantfiat_result[0]
             instance.instantfiat_btc_total_amount = instantfiat_result[1]
             instance.instantfiat_address = instantfiat_result[2]
