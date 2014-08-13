@@ -1,10 +1,14 @@
 {% extends "cabinet/base.html" %}
-{% load qr_tags website_tags %}
+{% load qr_tags website_tags staticfiles %}
+
+{% block js %}
+<script src="{% static 'js/order.js' %}"></script>
+{% endblock %}
 
 {% block cabinet_content %}
 <h3>Order details</h3>
 <div class="row">
-    <div class="col-md-5" id="payment-bitcoin">
+    <div class="col-md-5" id="payment-bitcoin" data-check-url="{{ check_url }}">
         {% qr_from_text bitcoin_uri 'm' %}
         <div>to pay &nbsp; ฿{{ order.instantfiat_btc_total_amount|scale|floatformat:5 }} mBTC</div>
         <a href="{{ bitcoin_uri }}">{{ order.instantfiat_address }}</a>

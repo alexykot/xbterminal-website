@@ -208,10 +208,28 @@ class OrderPaymentView(TemplateResponseMixin, CabinetView):
                 context['order'].instantfiat_address,
                 context['order'].instantfiat_btc_total_amount,
                 "xbterminal.io")
+            context['check_url'] = reverse('website:order_check',
+                                           kwargs={'pk': order.pk})
             return self.render_to_response(context)
         elif order.payment_method == 'wire':
             utils.send_invoice(order)
             return redirect(reverse('website:devices'))
+
+
+class OrderCheckView(CabinetView):
+    """
+    Check payment
+    """
+    def get(self, *args, **kwargs):
+        order = get_object_or_404(models.Order,
+                                  pk=self.kwargs.get('pk'),
+                                  merchant=self.request.user.merchant)
+        if order.payment_status == 'unpaid':
+            data = {'paid': 0}
+        else:
+            data = {'paid': 1, 'next': reverse('website:devices')}
+        return HttpResponse(json.dumps(data),
+                            content_type='application/json')
 
 
 class DeviceList(TemplateResponseMixin, CabinetView):

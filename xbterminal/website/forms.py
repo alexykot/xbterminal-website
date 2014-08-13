@@ -139,6 +139,8 @@ class TerminalOrderForm(forms.ModelForm):
             'instantfiat_invoice_id',
             'instantfiat_btc_total_amount',
             'instantfiat_address',
+            'payment_reference',
+            'payment_status',
         ]
         labels = {
             'quantity': 'Terminals on order',
@@ -177,6 +179,7 @@ class TerminalOrderForm(forms.ModelForm):
         return cleaned_data
 
     def save(self, merchant, commit=True):
+        assert commit  # Always commit
         instance = super(TerminalOrderForm, self).save(commit=False)
         instance.merchant = merchant
         instance.fiat_total_amount = instance.quantity * self.terminal_price * 1.2
@@ -189,12 +192,9 @@ class TerminalOrderForm(forms.ModelForm):
             instance.delivery_post_code = merchant.post_code
             instance.delivery_country = merchant.country
             instance.delivery_contact_phone = merchant.contact_phone
+        instance.save()
         if instance.payment_method == "bitcoin":
-            (instance.instantfiat_invoice_id,
-             instance.instantfiat_btc_total_amount,
-             instance.instantfiat_address) = preorder.create_invoice(instance.fiat_total_amount)
-        if commit:
-            instance.save()
+            preorder.create_invoice(instance)
         return instance
 
 
