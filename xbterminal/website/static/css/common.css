@@ -14,8 +14,8 @@ html, body {
     padding-top: 150px;
 }
 
-.xlb-btn-primary,
-.xlb-btn-secondary {
+.xbt-btn-primary,
+.xbt-btn-secondary {
     border: none;
     color: white;
     display: block;
@@ -24,11 +24,11 @@ html, body {
     width: 100%;
 }
 
-.xlb-btn-primary {
+.xbt-btn-primary {
     background-color: #5DB8FE;
 }
 
-.xlb-btn-secondary {
+.xbt-btn-secondary {
     background-color: #3D3D3D;
 }
 
@@ -70,7 +70,12 @@ html, body {
     width: 100px;
 }
 
+.header .logo {
+    background-color: white;
+}
+
 .header .menu-block {
+    background-color: white;
     line-height: 150px;
 }
 
@@ -90,6 +95,16 @@ html, body {
     font-size: 1.2em;
     height: 150px;
     position: relative;
+}
+
+.user-block-bg {
+    background-color: #F0EEEF;
+    height: 100%;
+    left: 50%;
+    position: absolute;
+    top: 0;
+    width: 50%;
+    z-index: -1;
 }
 
 .login-form-title {

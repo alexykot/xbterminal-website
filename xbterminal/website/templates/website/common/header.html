@@ -5,7 +5,7 @@
         <div class="row">
             <div class="logo col-md-3">
                 <a href="{% url 'website:landing' %}">
-                    <img src="{% static 'img/xbt-logo.png' %}" alt="XBTerminal">
+                    <img src="{% static 'img/xbt_logo.png' %}" alt="XBTerminal">
                 </a>
             </div>
             <div class="menu-block col-md-6"><ul>
@@ -26,14 +26,15 @@
                     {% csrf_token %}
                     <input type="text" name="username" placeholder="username"><br>
                     <input type="password" name="password" placeholder="password"><br>
-                    <button type="submit" class="xlb-btn-secondary">login</button>
+                    <button type="submit" class="xbt-btn-secondary">login</button>
                 </form>
-                <a class="xlb-btn-secondary login" href="{% url 'login' %}">login</a>
-                <a class="xlb-btn-primary register" href="{% url 'website:registration' %}">register</a>
+                <a class="xbt-btn-secondary login" href="{% url 'login' %}">login</a>
+                <a class="xbt-btn-primary register" href="{% url 'website:registration' %}">register</a>
                 {% else %}
-                <a class="xlb-btn-secondary logout" href="{% url 'logout' %}">logout</a>
+                <a class="xbt-btn-secondary logout" href="{% url 'logout' %}">logout</a>
                 {% endif %}
             </div>
         </div>
     </div>
+    <div class="user-block-bg"></div>
 </div>

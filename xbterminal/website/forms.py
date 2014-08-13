@@ -11,9 +11,7 @@ from django.core.mail import send_mail
 from django.core.validators import RegexValidator
 from django.template.loader import render_to_string
 
-from constance import config
-
-from payment.instantfiat import cryptopay
+from payment import preorder
 
 from website.models import User, MerchantAccount, Device, ReconciliationTime, Order
 from website.fields import BCAddressField
@@ -141,6 +139,8 @@ class TerminalOrderForm(forms.ModelForm):
             'instantfiat_invoice_id',
             'instantfiat_btc_total_amount',
             'instantfiat_address',
+            'payment_reference',
+            'payment_status',
         ]
         labels = {
             'quantity': 'Terminals on order',
@@ -156,7 +156,11 @@ class TerminalOrderForm(forms.ModelForm):
 
     @property
     def terminal_price(self):
-        return config.TERMINAL_PRICE
+        return preorder.get_terminal_price()
+
+    @property
+    def exchange_rate(self):
+        return preorder.get_exchange_rate()
 
     def clean(self):
         cleaned_data = super(TerminalOrderForm, self).clean()
@@ -175,6 +179,7 @@ class TerminalOrderForm(forms.ModelForm):
         return cleaned_data
 
     def save(self, merchant, commit=True):
+        assert commit  # Always commit
         instance = super(TerminalOrderForm, self).save(commit=False)
         instance.merchant = merchant
         instance.fiat_total_amount = instance.quantity * self.terminal_price * 1.2
@@ -187,18 +192,9 @@ class TerminalOrderForm(forms.ModelForm):
             instance.delivery_post_code = merchant.post_code
             instance.delivery_country = merchant.country
             instance.delivery_contact_phone = merchant.contact_phone
+        instance.save()
         if instance.payment_method == "bitcoin":
-            # Create invoice
-            instantfiat_result = cryptopay.create_invoice(
-                instance.fiat_total_amount,
-                merchant.currency.name,
-                config.CRYPTOPAY_API_KEY,
-                "terminals")
-            instance.instantfiat_invoice_id = instantfiat_result[0]
-            instance.instantfiat_btc_total_amount = instantfiat_result[1]
-            instance.instantfiat_address = instantfiat_result[2]
-        if commit:
-            instance.save()
+            preorder.create_invoice(instance)
         return instance
 
 

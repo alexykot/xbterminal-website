@@ -343,6 +343,10 @@ class Order(models.Model):
         ('bitcoin', 'Bitcoin'),
         ('wire', 'Bank wire transfer'),
     ]
+    PAYMENT_STATUSES = [
+        ('unpaid', 'unpaid'),
+        ('paid', 'paid'),
+    ]
 
     merchant = models.ForeignKey(MerchantAccount)
     created = models.DateTimeField(auto_now_add=True)
@@ -364,6 +368,7 @@ class Order(models.Model):
     instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], null=True)
 
     payment_reference = models.CharField(max_length=10, unique=True, editable=False, default=gen_payment_reference)
+    payment_status = models.CharField(max_length=50, choices=PAYMENT_STATUSES, default='unpaid')
 
     def __unicode__(self):
         return "order #{0}".format(self.id)

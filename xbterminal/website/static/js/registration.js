@@ -1,17 +1,6 @@
 var Registration = (function () {
     'use strict';
 
-    var exchangeRate;
-    var getExchangeRate = function () {
-        $.ajax({
-            url: 'https://cryptopay.me/api/v1/rates',
-            success: function (data) {
-                exchangeRate = data.GBP;
-                calculateSubTotal();
-            }
-        });
-    };
-
     var subTotal_GBP, subTotal_mBTC;
     var formatAmounts = function (amount_GBP, amount_mBTC) {
         var gbp = '£<span class="gbp">'
@@ -27,10 +16,11 @@ var Registration = (function () {
         }
     };
     var calculateSubTotal = function () {
-        var quantity = $('[name="quantity"]').val();
-        var price = $('#calculation').data('price');
+        var quantity = parseInt($('[name="quantity"]').val());
+        var price = parseFloat($('#calculation').data('price'));
+        var exchangeRate = parseFloat($('#calculation').data('exchange-rate'));
         subTotal_GBP = quantity * price;
-        subTotal_mBTC = subTotal_GBP / exchangeRate * 1000;
+        subTotal_mBTC = subTotal_GBP * exchangeRate * 1000;
         $('#calculation').html(formatAmounts(subTotal_GBP, subTotal_mBTC));
     };
 
@@ -268,7 +258,7 @@ var Registration = (function () {
             });
         });
 
-        getExchangeRate();
+        calculateSubTotal();
         setUpValidator();
     };
     return {init: init};

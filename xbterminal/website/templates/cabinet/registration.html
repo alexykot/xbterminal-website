@@ -113,7 +113,7 @@
                             <a id="quantity-minus" class="xlb-btn-secondary">-</a>
                         </div>
                     </div>
-                    <div id="calculation" data-price="{{ order_form.terminal_price }}"></div>
+                    <div id="calculation" data-price="{{ order_form.terminal_price }}" data-exchange-rate="{{ order_form.exchange_rate }}"></div>
                     {% bootstrap_field order_form.payment_method %}
                     <label class="control-label">Billing and delivery address</label>
                     <div id="delivery-address-preview"></div>

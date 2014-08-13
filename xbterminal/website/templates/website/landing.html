@@ -22,7 +22,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-6" id="about-image">
-                    <img src="{% static 'img/xlb-about.png' %}" alt="image">
+                    <img src="{% static 'img/l_about.png' %}" alt="image">
                 </div>
                 <div class="col-md-6" id="about-text">
                     <span id="about-line1">meet the future</span>
@@ -60,7 +60,7 @@
         >
             <div class="container">
                 <div id="terminal-image">
-                    <img src="{% static 'img/xlb-terminal.png' %}" alt="image">
+                    <img src="{% static 'img/l_terminal.png' %}" alt="image">
                     <div
                         id="terminal-screen"
                         data-anchor-target="#terminal-section-wrapper"
@@ -91,11 +91,11 @@
                 <br> <small>*Wifi required for operation.</small>
             </p>
 
-            <a id="terminal-pre-order" class="xlb-btn-primary" href="{% url 'website:registration' %}?regtype=terminal">pre order today</a>
+            <a id="terminal-pre-order" class="xbt-btn-primary" href="{% url 'website:registration' %}?regtype=terminal">pre order today</a>
             <form id="terminal-subscribe-form" action="{% url 'website:subscribe' %}" method="POST">
                 {% csrf_token %}
                 <input type="email" name="email" placeholder="your email" required><!--
-                --><button type="submit" class="xlb-btn-secondary">submit</button>
+                --><button type="submit" class="xbt-btn-secondary">submit</button>
                 <img class="loading-image" src="{% static 'img/loading.gif' %}">
             </form>
             <h3 id="terminal-subscribe-message">Join the mailing list</h3>
@@ -109,7 +109,7 @@
     >
         <div class="container">
             <div id="mobile-image">
-                <img src="{% static 'img/xlb-mobile.png' %}" alt="image">
+                <img src="{% static 'img/l_mobile.png' %}" alt="image">
             </div>
         </div>
     </div>
@@ -142,7 +142,7 @@
     >
         <div class="container">
             <div id="web-image">
-                <img src="{% static 'img/xlb-web.png' %}" alt="image">
+                <img src="{% static 'img/l_web.png' %}" alt="image">
             </div>
         </div>
     </div>
@@ -156,13 +156,13 @@
                 hardware allowing you to dip your toe into the Bitcoin world without any upfront costs. This solution best
                 suits merchants who already have a computer or tablet based system who cannot for whatever reason run
                 the mobile application.</p>
-            <a id="web-set-up" class="xlb-btn-primary" href="{% url 'website:registration' %}?regtype=web">set up</a>
+            <a id="web-set-up" class="xbt-btn-primary" href="{% url 'website:registration' %}?regtype=web">set up</a>
         </div>
     </div>
     <div id="social">
-        <a href="https://twitter.com/xbterminal" target="_blank"><img src="{% static 'img/soc-twitter.png' %}" alt="twitter"></a>
-        <a target="_blank"><img src="{% static 'img/soc-facebook.png' %}" alt="facebook"></a>
-        <a target="_blank"><img src="{% static 'img/soc-google.png' %}" alt="google"></a>
+        <a href="https://twitter.com/xbterminal" target="_blank"><img src="{% static 'img/soc_twitter.png' %}" alt="twitter"></a>
+        <a target="_blank"><img src="{% static 'img/soc_facebook.png' %}" alt="facebook"></a>
+        <a target="_blank"><img src="{% static 'img/soc_google.png' %}" alt="google"></a>
     </div>
 </div>
 {% endblock %}

@@ -13,13 +13,11 @@ from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.generics import CreateAPIView
 from constance import config
 
 from website.models import Device, Transaction, Firmware, PaymentOrder
 from website.forms import EnterAmountForm
 from website.utils import generate_qr_code
-from api.serializers import TransactionSerializer
 from api.shortcuts import render_to_pdf
 
 import payment.tasks
@@ -54,11 +52,6 @@ def device(request, key):
     device.last_activity = timezone.now()
     device.save()
     return Response(response)
-
-
-class CreateTransaction(CreateAPIView):
-    model = Transaction
-    serializer_class = TransactionSerializer
 
 
 def transaction_pdf(request, key):

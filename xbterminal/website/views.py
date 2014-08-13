@@ -208,10 +208,28 @@ class OrderPaymentView(TemplateResponseMixin, CabinetView):
                 context['order'].instantfiat_address,
                 context['order'].instantfiat_btc_total_amount,
                 "xbterminal.io")
+            context['check_url'] = reverse('website:order_check',
+                                           kwargs={'pk': order.pk})
             return self.render_to_response(context)
         elif order.payment_method == 'wire':
             utils.send_invoice(order)
             return redirect(reverse('website:devices'))
+
+
+class OrderCheckView(CabinetView):
+    """
+    Check payment
+    """
+    def get(self, *args, **kwargs):
+        order = get_object_or_404(models.Order,
+                                  pk=self.kwargs.get('pk'),
+                                  merchant=self.request.user.merchant)
+        if order.payment_status == 'unpaid':
+            data = {'paid': 0}
+        else:
+            data = {'paid': 1, 'next': reverse('website:devices')}
+        return HttpResponse(json.dumps(data),
+                            content_type='application/json')
 
 
 class DeviceList(TemplateResponseMixin, CabinetView):
@@ -455,10 +473,6 @@ class SendAllToEmailView(DeviceMixin, CabinetView):
         return redirect('website:reconciliation', context['device'].key)
 
 
-def profiles(request):
-    return render(request, 'website/profiles.html', {})
-
-
 class SubscribeNewsView(View):
     """
     Subscribe to newsletters (Ajax)
@@ -481,11 +495,6 @@ class SubscribeNewsView(View):
             response = {'errors': form.errors}
         return HttpResponse(json.dumps(response),
                             content_type='application/json')
-
-
-@xframe_options_exempt
-def landing_faq(request):
-    return render(request, 'website/faq.html', {})
 
 
 class PaymentView(TemplateResponseMixin, View):
