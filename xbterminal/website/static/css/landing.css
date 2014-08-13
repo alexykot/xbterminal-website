@@ -15,7 +15,7 @@
 /* About */
 
 #about-section {
-    background-image: url(../img/xlb-about-bg-lg.jpg);
+    background-image: url(../img/l_about_bg.jpg);
     height: 666px;
 }
 
@@ -91,7 +91,7 @@
 }
 
 #terminal-section {
-    background-image: url(../img/xlb-terminal-bg-lg.jpg);
+    background-image: url(../img/l_terminal_bg.jpg);
     height: 732px;
     position: absolute;
     width: 100%;
@@ -110,7 +110,7 @@
 }
 
 #terminal-screen {
-    background-image: url(../img/xlb-terminal-screens.png);
+    background-image: url(../img/l_terminal_screens.png);
     background-repeat: no-repeat;
     background-position: center 0px;
     height: 411px;
@@ -156,7 +156,7 @@
 /* Mobile */
 
 #mobile-section {
-    background-image: url(../img/xlb-mobile-bg-lg.jpg);
+    background-image: url(../img/l_mobile_bg.jpg);
     height: 665px;
 }
 
@@ -179,7 +179,7 @@
 /* Web */
 
 #web-section {
-    background-image: url(../img/xlb-web-bg-lg.jpg);
+    background-image: url(../img/l_web_bg.jpg);
     height: 663px;
 }
 

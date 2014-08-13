@@ -473,10 +473,6 @@ class SendAllToEmailView(DeviceMixin, CabinetView):
         return redirect('website:reconciliation', context['device'].key)
 
 
-def profiles(request):
-    return render(request, 'website/profiles.html', {})
-
-
 class SubscribeNewsView(View):
     """
     Subscribe to newsletters (Ajax)
@@ -499,11 +495,6 @@ class SubscribeNewsView(View):
             response = {'errors': form.errors}
         return HttpResponse(json.dumps(response),
                             content_type='application/json')
-
-
-@xframe_options_exempt
-def landing_faq(request):
-    return render(request, 'website/faq.html', {})
 
 
 class PaymentView(TemplateResponseMixin, View):
