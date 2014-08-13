@@ -154,8 +154,8 @@ CONSTANCE_CONFIG = {
     'OUR_FEE_MAINNET_ADDRESS': ("1A94FgxtCUxAk7EbyaV2mS5cPcTixwZKBi", 'Bitcoin address'),
     'OUR_FEE_TESTNET_ADDRESS': ("mqhQfj9e57SNEYWNvULegMWfM9DQ8UGi9b", 'Bitcoin address'),
     'OUR_FEE_SHARE': (0.005, ' '),
-    'CRYPTOPAY_API_KEY': ('abcde', 'CryptoPay API key'),
-    'GOCOIN_API_KEY': ('', 'GoCoin API key'),
+    'CRYPTOPAY_API_KEY': ('', 'CryptoPay API key'),
+    'GOCOIN_API_KEY': ('', 'GoCoin Merchant ID : API key'),
     'TERMINAL_PRICE': (200.00, 'Terminal price'),
 }
 
