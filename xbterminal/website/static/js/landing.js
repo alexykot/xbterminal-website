@@ -61,6 +61,11 @@ var Landing = (function () {
             smoothScrolling: false,
             forceHeight: false
         });
+
+        $('#mobile-downloads a').on('click', function (event) {
+            event.preventDefault();
+            alert('Application is under appstore review, please check back soon.');
+        });
     };
     return {init: init};
 }());
