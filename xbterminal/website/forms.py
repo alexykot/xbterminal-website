@@ -11,9 +11,7 @@ from django.core.mail import send_mail
 from django.core.validators import RegexValidator
 from django.template.loader import render_to_string
 
-from constance import config
-
-from payment.instantfiat import gocoin
+from payment import preorder
 
 from website.models import User, MerchantAccount, Device, ReconciliationTime, Order
 from website.fields import BCAddressField
@@ -156,22 +154,11 @@ class TerminalOrderForm(forms.ModelForm):
 
     @property
     def terminal_price(self):
-        return config.TERMINAL_PRICE
+        return preorder.get_terminal_price()
 
     @property
     def exchange_rate(self):
-        """
-        Get exchange rate from GoCoin
-        Returns:
-            exchange rate: Decimal
-        """
-        result = gocoin.create_invoice(
-            config.TERMINAL_PRICE,
-            'GBP',
-            config.GOCOIN_API_KEY,
-            'exchange rate')
-        exchange_rate = result[1] / Decimal(config.TERMINAL_PRICE)
-        return float(exchange_rate)
+        return preorder.get_exchange_rate()
 
     def clean(self):
         cleaned_data = super(TerminalOrderForm, self).clean()
@@ -203,15 +190,9 @@ class TerminalOrderForm(forms.ModelForm):
             instance.delivery_country = merchant.country
             instance.delivery_contact_phone = merchant.contact_phone
         if instance.payment_method == "bitcoin":
-            # Create invoice
-            instantfiat_result = gocoin.create_invoice(
-                instance.fiat_total_amount,
-                merchant.currency.name,
-                config.GOCOIN_API_KEY,
-                'terminals')
-            instance.instantfiat_invoice_id = instantfiat_result[0]
-            instance.instantfiat_btc_total_amount = instantfiat_result[1]
-            instance.instantfiat_address = instantfiat_result[2]
+            (instance.instantfiat_invoice_id,
+             instance.instantfiat_btc_total_amount,
+             instance.instantfiat_address) = preorder.create_invoice(instance.fiat_total_amount)
         if commit:
             instance.save()
         return instance
