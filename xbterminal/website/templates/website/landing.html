@@ -22,7 +22,9 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-6" id="about-image">
-                    <img src="{% static 'img/l_about.png' %}" alt="image">
+                    <div class="section-image-wrapper">
+                        <img src="{% static 'img/l_about.png' %}" alt="image">
+                    </div>
                 </div>
                 <div class="col-md-6" id="about-text">
                     <span id="about-line1">meet the future</span>
@@ -40,7 +42,7 @@
                 payment gateway integration we can <b>guarantee</b> a local currency return back to your business bank account.
                 </p>
             <h3>Three easy ways to accept digital currency.</h3>
-            <div class="three-ways">
+            <div id="three-ways">
                 <a href="{% url 'website:landing' %}#terminal-section">terminal</a>
                 <a href="{% url 'website:landing' %}#mobile-section">mobile</a>
                 <a href="{% url 'website:landing' %}#web-section">online</a>
@@ -60,19 +62,21 @@
         >
             <div class="container">
                 <div id="terminal-image">
-                    <img src="{% static 'img/l_terminal.png' %}" alt="image">
-                    <div
-                        id="terminal-screen"
-                        data-anchor-target="#terminal-section-wrapper"
-                        data-76-top-top="background-position[begin]: center 0px;"
-                        data--124-top-top="background-position[begin]: center -411px;"
-                        data--324-top-top="background-position[begin]: center -822px;"
-                        data--524-top-top="background-position[begin]: center -1233px;"
-                        data--724-top-top="background-position[begin]: center -1644px;"
-                        data--924-top-top="background-position[begin]: center -2055px;"
-                        data--1124-top-top="background-position[begin]: center -2466px;"
-                        data--1324-top-top="background-position[end]: center -2877px;"
-                    ></div>
+                    <div class="section-image-wrapper">
+                        <img src="{% static 'img/l_terminal.png' %}" alt="image">
+                        <div
+                            id="terminal-screen"
+                            data-anchor-target="#terminal-section-wrapper"
+                            data-76-top-top="background-position[begin]: center 0px;"
+                            data--124-top-top="background-position[begin]: center -411px;"
+                            data--324-top-top="background-position[begin]: center -822px;"
+                            data--524-top-top="background-position[begin]: center -1233px;"
+                            data--724-top-top="background-position[begin]: center -1644px;"
+                            data--924-top-top="background-position[begin]: center -2055px;"
+                            data--1124-top-top="background-position[begin]: center -2466px;"
+                            data--1324-top-top="background-position[end]: center -2877px;"
+                        ></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -109,7 +113,9 @@
     >
         <div class="container">
             <div id="mobile-image">
-                <img src="{% static 'img/l_mobile.png' %}" alt="image">
+                <div class="section-image-wrapper">
+                    <img src="{% static 'img/l_mobile.png' %}" alt="image">
+                </div>
             </div>
         </div>
     </div>
@@ -125,10 +131,10 @@
                 This solution best suits merchants without a fixed point of sale like pop-up or street traders, it’s
                 also a great starting point before deciding if you want a dedicated device for your business.</p>
             <div class="row" id="mobile-downloads">
-                <div class="col-md-6 text-right">
+                <div class="col-md-6" id="mobile-app-store">
                     <a><img src="{% static 'img/app_store.png' %}"></a>
                 </div>
-                <div class="col-md-6 text-left">
+                <div class="col-md-6" id="mobile-google-play">
                     <a><img src="{% static 'img/google_play.png' %}"></a>
                 </div>
             </div>
@@ -142,7 +148,9 @@
     >
         <div class="container">
             <div id="web-image">
-                <img src="{% static 'img/l_web.png' %}" alt="image">
+                <div class="section-image-wrapper">
+                    <img src="{% static 'img/l_web.png' %}" alt="image">
+                </div>
             </div>
         </div>
     </div>

@@ -1,7 +1,7 @@
 var Landing = (function () {
     'use strict';
     var makeLinkActive = function (sectionId) {
-        $('.header .menu-block a').each(function () {
+        $('.header .navbar-nav a').each(function () {
             var link = $(this);
             if (link.attr('href') == '/#' + sectionId) {
                 link.addClass('active');
@@ -57,9 +57,20 @@ var Landing = (function () {
         });
         sections.scrollSpy();
 
-        skrollr.init({
-            smoothScrolling: false,
-            forceHeight: false
+        if ($(window).width() > 767) {
+            skrollr.init({
+                smoothScrolling: false,
+                forceHeight: false,
+                mobileCheck: function () {
+                    return false;
+                }
+            });
+        }
+
+        $(window).on('resize', function () {
+            if ($(window).width() <= 767) {
+                skrollr.init().destroy();
+            }
         });
 
         $('#mobile-downloads a').on('click', function (event) {

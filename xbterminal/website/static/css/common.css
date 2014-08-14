@@ -44,7 +44,6 @@ html, body {
 .header {
     background-color: white;
     position: absolute;
-    text-align: center;
     top: 0;
     width: 100%;
     z-index: 10;
@@ -67,41 +66,48 @@ html, body {
     margin-left: 10px;
 }
 
-.logo {
-    line-height: 150px;
+.header .navbar,
+.header .navbar-default {
+    background-color: transparent;
+    border: none;
+    margin: 0;
 }
 
-.menu-block ul {
-    font-size: 1.5em;
-    list-style-type: none;
-    margin: 0;
+.header .navbar-header {
+    text-align: center;
+    width: 25%;
+}
+
+.header .navbar-brand {
+    float: none;
+    font-size: inherit;
+    height: auto;
+    line-height: 150px;
     padding: 0;
 }
 
-.menu-block li {
-    display: inline-block;
+.header .navbar-nav {
+    background-color: white;
+    font-size: 1.5em;
+    text-align: center;
+    width: 50%;
 }
 
-.menu-block a {
+.header .navbar-nav > li {
+    display: inline-block;
+    float: none;
+}
+
+.header .navbar-nav > li > a {
     display: block;
+    color: #888888;
+    line-height: 150px;
+    padding: 0;
     width: 100px;
 }
 
-.header .logo {
-    background-color: white;
-}
-
-.header .menu-block {
-    background-color: white;
-    line-height: 150px;
-}
-
-.header .menu-block a {
-    color: #888888;
-}
-
-.header .menu-block a:hover,
-.header .menu-block a.active {
+.header .navbar-nav > li > a:hover,
+.header .navbar-nav > li > a.active {
     color: white;
     background-color: #62B9FF;
     text-decoration: none;
@@ -109,9 +115,12 @@ html, body {
 
 .user-block {
     background-color: #F0EEEF;
+    float: left;
     font-size: 1.2em;
     height: 150px;
+    margin-left: 15px;
     position: relative;
+    text-align: center;
 }
 
 .user-block-bg {
@@ -176,8 +185,8 @@ html, body {
     height: 75px;
 }
 
-.header-fixed .logo,
-.header-fixed .menu-block {
+.header-fixed .navbar-brand,
+.header-fixed .navbar-nav > li > a {
     line-height: 75px;
 }
 
@@ -231,17 +240,26 @@ html, body {
     text-align: center;
 }
 
-.footer-1 .menu-block {
+.footer-menu {
+    font-size: 1.5em;
     line-height: 80px;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
 }
 
-.footer-1 .menu-block a {
+.footer-menu li {
+    display: inline-block;
+}
+
+.footer-menu a {
     color: white;
+    display: block;
     padding: 0 10px;
     width: auto;
 }
 
-.footer-1 .menu-block a:hover {
+.footer-menu a:hover {
     color: white;
 }
 
@@ -254,4 +272,86 @@ html, body {
 .footer-2 {
     background-color: #666;
     text-align: center;
+}
+
+.footer-logo {
+    line-height: 150px;
+}
+
+.footer-logo img {
+    max-width: 100%;
+}
+
+/* MOBILE VIEW */
+
+@media (max-width: 991px) {
+    #container {
+        padding-top: 75px;
+    }
+
+    .header {
+        position: fixed;
+    }
+    .header .navbar-brand {
+        line-height: 75px;
+    }
+    .header .navbar-nav {
+        width: auto;
+    }
+    .header .navbar-nav > li > a {
+        line-height: 75px;
+    }
+
+    .header .user-block,
+    .header-fixed .user-block {
+        background-color: white;
+        font-size: 1.5em;
+        height: 75px;
+        margin: 0;
+    }
+    .user-block-bg {
+        display: none;
+    }
+    .login-form-title,
+    .login-form,
+    .register {
+        display: none;
+    }
+    .login,
+    .logout {
+        display: block;
+        line-height: 75px;
+        margin: 0 auto;
+        padding: 0;
+        position: static;
+        width: 100px;
+    }
+}
+
+@media (max-width: 767px) {
+
+    .header .navbar-header {
+        text-align: left;
+        width: auto;
+    }
+
+    .header .navbar-nav > li {
+        display: block;
+    }
+    .header .navbar-nav > li > a,
+    .login,
+    .logout {
+        line-height: 30px;
+        width: 100%;
+    }
+
+    .header .user-block {
+        float: none;
+        height: 30px;
+        margin: 0 -15px 10px;
+    }
+
+    .content h2 {
+        font-size: 4.5em;
+    }
 }
