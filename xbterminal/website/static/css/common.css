@@ -50,6 +50,23 @@ html, body {
     z-index: 10;
 }
 
+#cookie-notice {
+    background-color: #5A5A5A;
+    color: white;
+    display: none;
+    font-weight: bold;
+    padding: 5px;
+    width: 100%;
+    z-index: 11;
+}
+
+#cookie-notice button {
+    background-color: #282828;
+    border: none;
+    border-radius: 3px;
+    margin-left: 10px;
+}
+
 .logo {
     line-height: 150px;
 }
