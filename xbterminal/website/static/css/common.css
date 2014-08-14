@@ -255,3 +255,37 @@ html, body {
     background-color: #666;
     text-align: center;
 }
+
+/* MOBILE VIEW */
+
+@media (max-width: 991px) {
+
+    .header .logo,
+    .header .menu-block {
+        line-height: 75px;
+    }
+    .header .user-block,
+    .header-fixed .user-block {
+        background-color: white;
+        height: 30px;
+    }
+    .user-block-bg {
+        display: none;
+    }
+    .login-form-title,
+    .login-form,
+    .register {
+        display: none;
+    }
+    .login,
+    .logout {
+        display: block;
+        line-height: 30px;
+        margin: 0 auto;
+        max-width: 100%;
+        padding: 0;
+        position: static;
+        width: 400px;
+    }
+
+}

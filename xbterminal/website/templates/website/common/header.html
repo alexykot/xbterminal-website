@@ -14,13 +14,13 @@
             </div>
             <div class="menu-block col-md-6"><ul>
                 {% if cabinet_page %}
-                <li><a href="{% url 'website:devices' %}" {% if cabinet_page == 'devices' %}class="active"{% endif %}>terminals</a></li>
-                <li><a href="{% url 'website:profile' %}" {% if cabinet_page == 'profile' %}class="active"{% endif %}>profile</a></li>
+                <li><a href="{% url 'website:devices' %}" {% if cabinet_page == 'devices' %}class="active"{% endif %}>terminals</a></li><!--
+                --><li><a href="{% url 'website:profile' %}" {% if cabinet_page == 'profile' %}class="active"{% endif %}>profile</a></li>
                 {% else %}
-                <li><a href="{% url 'website:landing' %}#about-section">about</a></li>
-                <li><a href="{% url 'website:landing' %}#terminal-section">terminal</a></li>
-                <li><a href="{% url 'website:landing' %}#mobile-section">mobile</a></li>
-                <li><a href="{% url 'website:landing' %}#web-section">web</a></li>
+                <li><a href="{% url 'website:landing' %}#about-section">about</a></li><!--
+                --><li><a href="{% url 'website:landing' %}#terminal-section">terminal</a></li><!--
+                --><li><a href="{% url 'website:landing' %}#mobile-section">mobile</a></li><!--
+                --><li><a href="{% url 'website:landing' %}#web-section">web</a></li>
                 {% endif %}
             </ul></div>
             <div class="user-block col-md-3">
