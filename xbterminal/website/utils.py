@@ -171,13 +171,14 @@ def send_invoice(order):
         "website/email/order.txt",
         {'order': order})
     message = EmailMessage(
-        "Order",
+        "Your XBTerminal Pre-Order",
         message_text,
         settings.DEFAULT_FROM_EMAIL,
         [order.merchant.contact_email])
-    pdf = generate_pdf("pdf/invoice.html", {
-        'order': order,
-        'terminal_price': config.TERMINAL_PRICE,
-    })
-    message.attach('invoice.pdf', pdf.getvalue(), 'application/pdf')
+    if order.payment_method == 'wire':
+        pdf = generate_pdf("pdf/invoice.html", {
+            'order': order,
+            'terminal_price': config.TERMINAL_PRICE,
+        })
+        message.attach('invoice.pdf', pdf.getvalue(), 'application/pdf')
     message.send(fail_silently=False)

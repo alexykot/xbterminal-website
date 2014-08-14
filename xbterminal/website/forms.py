@@ -94,7 +94,7 @@ class MerchantRegistrationForm(forms.ModelForm):
         })
         if not self._errors:
             try:
-                send_mail("Registration on xbterminal.io",
+                send_mail("Registration for XBTerminal.io",
                         mail_text,
                         settings.DEFAULT_FROM_EMAIL,
                         [cleaned_data['contact_email']],
