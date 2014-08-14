@@ -1,7 +1,7 @@
 var Landing = (function () {
     'use strict';
     var makeLinkActive = function (sectionId) {
-        $('.header .menu-block a').each(function () {
+        $('.header .navbar-nav a').each(function () {
             var link = $(this);
             if (link.attr('href') == '/#' + sectionId) {
                 link.addClass('active');

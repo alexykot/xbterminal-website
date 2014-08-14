@@ -6,39 +6,47 @@
         <button type="button">Got it</button>
     </div>
     <div class="container">
-        <div class="row">
-            <div class="logo col-md-3">
-                <a href="{% url 'website:landing' %}">
+        <nav class="navbar navbar-default" role="navigation">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a href="{% url 'website:landing' %}" class="navbar-brand">
                     <img src="{% static 'img/xbt_logo.png' %}" alt="XBTerminal">
                 </a>
             </div>
-            <div class="menu-block col-md-6"><ul>
-                {% if cabinet_page %}
-                <li><a href="{% url 'website:devices' %}" {% if cabinet_page == 'devices' %}class="active"{% endif %}>terminals</a></li><!--
-                --><li><a href="{% url 'website:profile' %}" {% if cabinet_page == 'profile' %}class="active"{% endif %}>profile</a></li>
-                {% else %}
-                <li><a href="{% url 'website:landing' %}#about-section">about</a></li><!--
-                --><li><a href="{% url 'website:landing' %}#terminal-section">terminal</a></li><!--
-                --><li><a href="{% url 'website:landing' %}#mobile-section">mobile</a></li><!--
-                --><li><a href="{% url 'website:landing' %}#web-section">web</a></li>
-                {% endif %}
-            </ul></div>
-            <div class="user-block col-md-3">
-                {% if not user.is_authenticated %}
-                <div class="login-form-title">merchant login</div>
-                <form class="login-form" action="{% url 'login' %}" method="POST">
-                    {% csrf_token %}
-                    <input type="text" name="username" placeholder="username"><br>
-                    <input type="password" name="password" placeholder="password"><br>
-                    <button type="submit" class="xbt-btn-secondary">login</button>
-                </form>
-                <a class="xbt-btn-secondary login" href="{% url 'login' %}">login</a>
-                <a class="xbt-btn-primary register" href="{% url 'website:registration' %}">register</a>
-                {% else %}
-                <a class="xbt-btn-secondary logout" href="{% url 'logout' %}">logout</a>
-                {% endif %}
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    {% if cabinet_page %}
+                    <li><a href="{% url 'website:devices' %}" {% if cabinet_page == 'devices' %}class="active"{% endif %}>terminals</a></li><!--
+                    --><li><a href="{% url 'website:profile' %}" {% if cabinet_page == 'profile' %}class="active"{% endif %}>profile</a></li>
+                    {% else %}
+                    <li><a href="{% url 'website:landing' %}#about-section">about</a></li><!--
+                    --><li><a href="{% url 'website:landing' %}#terminal-section">terminal</a></li><!--
+                    --><li><a href="{% url 'website:landing' %}#mobile-section">mobile</a></li><!--
+                    --><li><a href="{% url 'website:landing' %}#web-section">web</a></li>
+                    {% endif %}
+                </ul>
+                <div class="user-block">
+                    {% if not user.is_authenticated %}
+                    <div class="login-form-title">merchant login</div>
+                    <form class="login-form" action="{% url 'login' %}" method="POST">
+                        {% csrf_token %}
+                        <input type="text" name="username" placeholder="username"><br>
+                        <input type="password" name="password" placeholder="password"><br>
+                        <button type="submit" class="xbt-btn-secondary">login</button>
+                    </form>
+                    <a class="xbt-btn-secondary login" href="{% url 'login' %}">login</a>
+                    <a class="xbt-btn-primary register" href="{% url 'website:registration' %}">register</a>
+                    {% else %}
+                    <a class="xbt-btn-secondary logout" href="{% url 'logout' %}">logout</a>
+                    {% endif %}
+                </div>
             </div>
-        </div>
+        </nav>
     </div>
     <div class="user-block-bg"></div>
 </div>
