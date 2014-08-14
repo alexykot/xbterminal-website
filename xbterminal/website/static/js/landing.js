@@ -59,7 +59,10 @@ var Landing = (function () {
 
         skrollr.init({
             smoothScrolling: false,
-            forceHeight: false
+            forceHeight: false,
+            mobileCheck: function () {
+                return false;
+            }
         });
 
         $('#mobile-downloads a').on('click', function (event) {

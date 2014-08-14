@@ -256,13 +256,25 @@ html, body {
     text-align: center;
 }
 
+.footer-2 .logo img {
+    max-width: 100%;
+}
+
 /* MOBILE VIEW */
 
 @media (max-width: 991px) {
-
     .header .logo,
-    .header .menu-block {
-        line-height: 75px;
+    .header .menu-block,
+    .header-fixed .menu-block {
+        line-height: 30px;
+    }
+    .header .logo img {
+        height: 30px;
+    }
+    .header .menu-block li,
+    .header .menu-block a {
+        max-width: 100%;
+        width: 400px;
     }
     .header .user-block,
     .header-fixed .user-block {

@@ -140,6 +140,7 @@
 #terminal-pre-order {
     font-size: 2.4em;
     margin: 40px auto;
+    max-width: 100%;
     padding: 10px;
     text-decoration: none;
     width: 360px;
@@ -153,6 +154,7 @@
 #terminal-subscribe-form input {
     border: 1px solid #B5B3B4;
     margin: 0;
+    max-width: 100%;
     padding: 6px 10px;
 }
 
@@ -219,6 +221,7 @@
 #web-set-up {
     font-size: 2.4em;
     margin: 40px auto;
+    max-width: 100%;
     padding: 10px;
     text-decoration: none;
     width: 360px;
