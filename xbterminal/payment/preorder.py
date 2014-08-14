@@ -8,6 +8,7 @@ from payment.instantfiat import gocoin
 from payment.tasks import run_periodic_task
 
 from website.models import Order
+from website.utils import send_invoice
 
 
 def get_terminal_price():
@@ -59,3 +60,4 @@ def wait_for_payment(order_id):
         django_rq.get_scheduler().cancel(rq.get_current_job())
         order.payment_status = 'paid'
         order.save()
+        send_invoice(order)

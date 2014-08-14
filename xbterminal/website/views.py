@@ -481,15 +481,20 @@ class SubscribeNewsView(View):
         form = forms.SubscribeForm(self.request.POST)
         if form.is_valid():
             subscriber_email = form.cleaned_data['email']
-            text = render_to_string(
-                "website/email/subscription.txt",
-                {'subscriber_email': subscriber_email})
-            send_mail(
-                "Subscription to newsletters",
-                text,
+            email1 = utils.create_html_message(
+                "XBTerminal newsletter confirmation",
+                "website/email/subscription.html",
+                {},
                 settings.DEFAULT_FROM_EMAIL,
-                settings.CONTACT_EMAIL_RECIPIENTS,
-                fail_silently=False)
+                [subscriber_email])
+            email1.send(fail_silently=False)
+            email2 = utils.create_html_message(
+                "Subscription to newsletters",
+                "website/email/subscription.html",
+                {'subscriber_email': subscriber_email},
+                settings.DEFAULT_FROM_EMAIL,
+                settings.CONTACT_EMAIL_RECIPIENTS)
+            email2.send(fail_silently=False)
             response = {}
         else:
             response = {'errors': form.errors}

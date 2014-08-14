@@ -114,6 +114,16 @@ def get_receipts_filename(device, date=None):
     return get_valid_filename(s)
 
 
+def create_html_message(subject, template, context,
+                        from_email, recipient_list):
+    html_content = render_to_string(template, context)
+    text_content = strip_tags(html_content)
+    email = EmailMultiAlternatives(
+        subject, text_content, from_email, recipient_list)
+    email.attach_alternative(html_content, 'text/html')
+    return email
+
+
 def send_reconciliation(recipient, device, rec_range):
     """
     Send reconciliation email
@@ -121,21 +131,19 @@ def send_reconciliation(recipient, device, rec_range):
     transactions = device.transaction_set.filter(time__range=rec_range)
     btc_sum = transactions.aggregate(sum=Sum('btc_amount'))['sum']
     fiat_sum = transactions.aggregate(sum=Sum('fiat_amount'))['sum']
-
-    html_content = render_to_string('website/email/reconciliation.html', {
+    context = {
         'device': device,
         'transactions': transactions,
         'btc_amount': 0 if btc_sum is None else btc_sum,
         'fiat_amount': 0 if fiat_sum is None else fiat_sum,
         'rec_datetime': rec_range[1],
-    })
-    text_content = strip_tags(html_content)
-    email = EmailMultiAlternatives(
+    }
+    email = create_html_message(
         'XBTerminal reconciliation report, {0}'.format(rec_range[1].strftime('%d %b %Y')),
-        text_content,
+        'website/email/reconciliation.html',
+        context,
         settings.DEFAULT_FROM_EMAIL,
         [recipient])
-    email.attach_alternative(html_content, 'text/html')
     if transactions:
         csv = get_transaction_csv(transactions, short=True)
         csv.seek(0)
@@ -171,13 +179,14 @@ def send_invoice(order):
         "website/email/order.txt",
         {'order': order})
     message = EmailMessage(
-        "Order",
+        "Your XBTerminal Pre-Order",
         message_text,
         settings.DEFAULT_FROM_EMAIL,
         [order.merchant.contact_email])
-    pdf = generate_pdf("pdf/invoice.html", {
-        'order': order,
-        'terminal_price': config.TERMINAL_PRICE,
-    })
-    message.attach('invoice.pdf', pdf.getvalue(), 'application/pdf')
+    if order.payment_method == 'wire':
+        pdf = generate_pdf("pdf/invoice.html", {
+            'order': order,
+            'terminal_price': config.TERMINAL_PRICE,
+        })
+        message.attach('invoice.pdf', pdf.getvalue(), 'application/pdf')
     message.send(fail_silently=False)

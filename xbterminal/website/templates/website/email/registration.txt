@@ -1,4 +1,7 @@
-Thank you to register on xbterminal.com
+Thank you for registering on xbterminal.io.
 You can logon to the site with your email and password
 Your email: {{ email }}
 Your current password: {{ password }}
+
+Warm regards,
+XBTerminal Team
