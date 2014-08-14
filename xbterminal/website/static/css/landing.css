@@ -12,6 +12,17 @@
     text-align: center;
 }
 
+.section-image-wrapper {
+    float: right;
+    position: relative;
+    right: 50%;
+}
+
+.section-image-wrapper img {
+    position: relative;
+    right: -50%;
+}
+
 /* About */
 
 #about-section {
@@ -24,11 +35,9 @@
     position: relative;
 }
 
-#about-image img {
-    border: none;
-    position: absolute;
-    top: 74px;
-    right: 60px;
+#about-image .section-image-wrapper {
+    margin-top: 74px;
+    margin-right: -25px;
     z-index: 3;
 }
 
@@ -59,13 +68,13 @@
     width: 640px;
 }
 
-.three-ways {
+#three-ways {
     height: 140px;
     margin: 80px 0 -40px;
     overflow: hidden;
 }
 
-.three-ways a {
+#three-ways a {
     background-color: #3D3D3D;
     border-radius: 50%;
     color: white;
@@ -78,8 +87,18 @@
     width: 280px;
 }
 
-.three-ways a:hover {
+#three-ways a:hover {
     background-color: #62B9FF;
+}
+
+@media (max-width: 991px) {
+    #about-image .section-image-wrapper {
+        margin-right: 0;
+    }
+    #about-text,
+    #three-ways {
+        display: none;
+    }
 }
 
 /* Terminal */
@@ -101,12 +120,8 @@
     position: relative;
 }
 
-#terminal-image img {
-    left: 0;
-    margin: 0 auto;
-    position: absolute;
-    right: 0;
-    top: 113px;
+#terminal-image .section-image-wrapper {
+    margin-top: 113px;
 }
 
 #terminal-screen {
@@ -115,10 +130,9 @@
     background-position: center 0px;
     height: 411px;
     margin: 0 auto;
-    left: 0;
     position: absolute;
-    right: 0;
-    top: 159px;
+    right: -50%;
+    top: 46px;
     width: 658px;
     z-index: 3;
 }
@@ -152,7 +166,6 @@
     display: none;
 }
 
-
 /* Mobile */
 
 #mobile-section {
@@ -164,16 +177,28 @@
     position: relative;
 }
 
-#mobile-image img {
-    left: 0;
-    margin: 0 auto;
-    position: absolute;
-    right: 0;
-    top: 81px;
+#mobile-image .section-image-wrapper {
+    margin-top: 81px;
 }
 
 #mobile-downloads {
     margin-top: 40px;
+}
+
+#mobile-app-store {
+    text-align: right;
+}
+
+#mobile-google-play {
+    text-align: left;
+}
+
+@media (max-width: 991px) {
+    #mobile-app-store,
+    #mobile-google-play {
+        text-align: center;
+        margin-bottom: 10px;
+    }
 }
 
 /* Web */
@@ -187,12 +212,8 @@
     position: relative;
 }
 
-#web-image img {
-    left: 0;
-    margin: 0 auto;
-    position: absolute;
-    right: 0;
-    top: 150px;
+#web-image .section-image-wrapper {
+    margin-top: 150px;
 }
 
 #web-set-up {
