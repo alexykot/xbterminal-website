@@ -350,4 +350,8 @@ html, body {
         height: 30px;
         margin: 0 -15px 10px;
     }
+
+    .content h2 {
+        font-size: 4.5em;
+    }
 }

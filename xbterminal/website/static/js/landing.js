@@ -57,11 +57,19 @@ var Landing = (function () {
         });
         sections.scrollSpy();
 
-        skrollr.init({
-            smoothScrolling: false,
-            forceHeight: false,
-            mobileCheck: function () {
-                return false;
+        if ($(window).width() > 767) {
+            skrollr.init({
+                smoothScrolling: false,
+                forceHeight: false,
+                mobileCheck: function () {
+                    return false;
+                }
+            });
+        }
+
+        $(window).on('resize', function () {
+            if ($(window).width() <= 767) {
+                skrollr.init().destroy();
             }
         });
 
