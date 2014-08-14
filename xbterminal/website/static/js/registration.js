@@ -182,7 +182,7 @@ var Registration = (function () {
                 $('#od-vat').html(formatAmounts(subTotal_GBP * 0.2, subTotal_mBTC * 0.2));
                 $('#od-total').html(formatAmounts(subTotal_GBP * 1.2, subTotal_mBTC * 1.2));
                 var paymentMethodBtn = $('[name="payment_method"]:checked');
-                $('#od-payment-method').text(paymentMethodField.parent().text());
+                $('#od-payment-method').text(paymentMethodBtn.parent().text());
                 if (paymentMethodBtn.val() == 'bitcoin') {
                     $('#registration-step-3 [type="submit"]').text('Confirm and pay');
                 } else if (paymentMethodBtn.val() == 'wire') {
