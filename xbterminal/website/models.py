@@ -136,8 +136,8 @@ def gen_device_key():
 class Device(models.Model):
 
     DEVICE_TYPES = [
-        ('mobile', 'Mobile app'),
         ('hardware', 'Terminal'),
+        ('mobile', 'Mobile app'),
         ('web', 'Web app'),
     ]
     DEVICE_STATUSES = [

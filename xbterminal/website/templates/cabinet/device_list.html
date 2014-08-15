@@ -2,7 +2,9 @@
 
 {% block cabinet_content %}
 <div class="create-device-button">
-    <a class="btn btn-default" href="{% url 'website:create_device' %}">Create</a>
+    <a class="btn btn-default" href="{% url 'website:create_device' %}?device_type=hardware">Create terminal</a>
+    <a class="btn btn-default" href="{% url 'website:create_device' %}?device_type=mobile">Create mobile app</a>
+    <a class="btn btn-default" href="{% url 'website:create_device' %}?device_type=web">Create web app</a>
 </div>
 <table class="table table-striped table-bordered table-responsive">
     <tr>

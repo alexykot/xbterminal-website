@@ -268,6 +268,7 @@ class CreateDeviceView(TemplateResponseMixin, CabinetView):
         if form.is_valid():
             device = form.save(commit=False)
             device.merchant = self.request.user.merchant
+            device.payment_processor = 'GoCoin'
             device.save()
             return redirect(reverse('website:devices'))
         else:
