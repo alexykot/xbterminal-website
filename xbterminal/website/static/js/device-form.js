@@ -25,6 +25,12 @@ var Device = (function () {
         });
         paymentProcessing.filter(':checked').trigger('change');
 
+        percent.on('change', function () {
+            if ($(this).val() == '100') {
+                paymentProcessing.filter('[value="full"]').click();
+            }
+        });
+
     };
     return {init: init};
 }());

@@ -1,7 +1,7 @@
 var PercentWidget = (function () {
     'use strict';
     var init = function () {
-        $.fn.percentWidget = function() {
+        $.fn.percentWidget = function () {
             var select = $(this);
             var slider = $('<div id="percent-slider"></div>')
                 .insertAfter(select)
@@ -9,11 +9,11 @@ var PercentWidget = (function () {
                     min: 1,
                     max: 100,
                     value: select.val(),
-                    slide: function(event, ui) {
-                        select.val(ui.value);
+                    slide: function (event, ui) {
+                        select.val(ui.value).trigger('change');
                     }
                 });
-            select.change(function() {
+            select.on('input', function () {
                 slider.slider('value', select.val());
             });
         };
