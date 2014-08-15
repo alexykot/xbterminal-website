@@ -175,6 +175,13 @@ html, body {
     width: 200px;
 }
 
+.user-info {
+    color: #888;
+    text-align: left;
+    white-space: nowrap;
+    width: 200px;
+}
+
 /* STICKY HEADER */
 
 .header-fixed {
@@ -315,7 +322,8 @@ html, body {
     }
     .login-form-title,
     .login-form,
-    .register {
+    .register,
+    .user-info {
         display: none;
     }
     .login,

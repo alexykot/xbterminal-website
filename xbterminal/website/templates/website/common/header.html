@@ -31,7 +31,7 @@
                     {% endif %}
                 </ul>
                 <div class="user-block">
-                    {% if not user.is_authenticated %}
+                    {% if not user.merchant %}
                     <div class="login-form-title">merchant login</div>
                     <form class="login-form" action="{% url 'login' %}" method="POST">
                         {% csrf_token %}
@@ -42,6 +42,13 @@
                     <a class="xbt-btn-secondary login" href="{% url 'login' %}">login</a>
                     <a class="xbt-btn-primary register" href="{% url 'website:registration' %}">register</a>
                     {% else %}
+                    <div class="user-info">
+                        {% with user.merchant.info as info %}
+                        <span>{{ info.name }}</span><br>
+                        <span>POS active/total: {{ info.active }} / {{ info.total }}</span><br>
+                        <span>transactions today: {{ info.tx_count }} / £{{ info.tx_sum|floatformat:2 }}</span>
+                        {% endwith %}
+                    </div>
                     <a class="xbt-btn-secondary logout" href="{% url 'logout' %}">logout</a>
                     {% endif %}
                 </div>

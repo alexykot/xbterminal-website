@@ -127,6 +127,23 @@ class MerchantAccount(models.Model):
         ]
         return [s for s in strings if s]
 
+    @property
+    def info(self):
+        active_dt = timezone.now() - datetime.timedelta(minutes=2)
+        active = self.device_set.filter(last_activity__gte=active_dt).count()
+        total =  self.device_set.count()
+        today = timezone.localtime(timezone.now()).\
+            replace(hour=0, minute=0, second=0, microsecond=0)
+        transactions = Transaction.objects.filter(device__merchant=self,
+                                                  time__gte=today)
+        tx_count = transactions.count()
+        tx_sum = transactions.aggregate(s=models.Sum('fiat_amount'))['s']
+        return {'name': self.trading_name or self.company_name,
+                'active': active,
+                'total': total,
+                'tx_count': tx_count,
+                'tx_sum': 0 if tx_sum is None else tx_sum}
+
 
 def gen_device_key():
     bts = uuid.uuid4().bytes
