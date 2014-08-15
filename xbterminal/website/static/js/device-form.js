@@ -31,6 +31,9 @@ var Device = (function () {
             }
         });
 
+        $('#device-key-select').on('click', function (event) {
+            $('#device-key').select();
+        });
     };
     return {init: init};
 }());

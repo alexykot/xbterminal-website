@@ -98,10 +98,20 @@ label[for="id_county"]:after {
     text-align: center;
 }
 
+/* Device page */
+
+#device-form {
+    margin-bottom: 10px;
+}
+
+#device-key-copy:hover {
+    text-decoration: none;
+}
+
+
 /* Other pages */
 
 #contact-form,
-#device-form,
 #profile-form,
 .create-device-button {
     margin-bottom: 10px;

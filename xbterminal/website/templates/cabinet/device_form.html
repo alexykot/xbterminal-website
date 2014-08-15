@@ -1,5 +1,5 @@
 {% extends "cabinet/base.html" %}
-{% load bootstrap3 %}
+{% load bootstrap3 staticfiles qr_tags %}
 
 {% block js %}
 {{ form.media }}
@@ -12,6 +12,22 @@
         <form id="device-form" action="" method="post">
             {% csrf_token %}
             {% bootstrap_form form %}
+            {% if device and device.device_type == 'mobile' %}
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="form-group">
+                            <label class="control-label" for="device-key">Device key</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="device-key" value="{{ device.key }}" readonly>
+                                <a class="input-group-addon" id="device-key-select">select</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                         {% qr_from_text device.key 's' %}
+                    </div>
+                </div>
+            {% endif %}
             <button type="submit" class="btn btn-default">
                 {% if device %}Update{% else %}Create{% endif %}
             </button>
