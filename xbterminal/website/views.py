@@ -270,7 +270,8 @@ class CreateDeviceView(TemplateResponseMixin, CabinetView):
             device.merchant = self.request.user.merchant
             device.payment_processor = 'GoCoin'
             device.save()
-            return redirect(reverse('website:devices'))
+            return redirect(reverse('website:device',
+                                    kwargs={'device_key': device.key}))
         else:
             context = self.get_context_data(**kwargs)
             context['form'] = form
@@ -309,7 +310,8 @@ class UpdateDeviceView(DeviceMixin, TemplateResponseMixin, CabinetView):
                                 instance=context['device'])
         if form.is_valid():
             device = form.save()
-            return redirect(reverse('website:devices'))
+            return redirect(reverse('website:device',
+                                    kwargs={'device_key': device.key}))
         else:
             context['form'] = form
             return self.render_to_response(context)

@@ -38,7 +38,7 @@ def device(request, key):
         "MERCHANT_DEVICE_NAME": device.name,
         "MERCHANT_INSTANTFIAT_API_KEY": device.api_key,
         "MERCHANT_INSTANTFIAT_EXCHANGE_SERVICE": device.payment_processor,
-        "MERCHANT_INSTANTFIAT_SHARE": float(device.percent / 100) if device.percent else 0,
+        "MERCHANT_INSTANTFIAT_SHARE": float(device.percent / 100),
         "MERCHANT_INSTANTFIAT_TRANSACTION_SPEED": "high",
         "MERCHANT_NAME": device.merchant.company_name,
         "MERCHANT_TRANSACTION_DESCRIPTION": "Payment to %s" % device.merchant.company_name,

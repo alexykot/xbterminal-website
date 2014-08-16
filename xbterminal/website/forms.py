@@ -239,13 +239,10 @@ class DeviceForm(forms.ModelForm):
     def clean_percent(self):
         payment_processing = self.cleaned_data['payment_processing']
         percent = self.cleaned_data['percent']
-
-        if payment_processing == 'partially' and not percent:
-            raise forms.ValidationError('This field is required.')
-
-        if payment_processing == 'full':
+        if payment_processing == 'keep':
+            percent = 0
+        elif payment_processing == 'full':
             percent = 100
-
         return percent
 
     def clean(self):

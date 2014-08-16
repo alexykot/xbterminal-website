@@ -74,7 +74,7 @@ def prepare_payment(device, fiat_amount):
     details['fiat_amount'] = fiat_amount.quantize(FIAT_DEC_PLACES)
     assert details['fiat_amount'] >= FIAT_MIN_OUTPUT
     details['instantfiat_fiat_amount'] = (details['fiat_amount'] *
-                                          Decimal(device.percent / 100 if device.percent else 0)
+                                          Decimal(device.percent / 100)
                                           ).quantize(FIAT_DEC_PLACES)
     if details['instantfiat_fiat_amount'] >= FIAT_MIN_OUTPUT:
         instantfiat_data = instantfiat.create_invoice(

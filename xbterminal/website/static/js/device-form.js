@@ -9,25 +9,38 @@ var Device = (function () {
 
         paymentProcessing.on('change', function () {
             var percentSlider = $('#percent-slider');
-            if ($(this).val() == 'keep') {
-                percent.attr('disabled', true).val('');
-                percentSlider.slider('disable').slider('value', 1);
+            var ppValue = $(this).val();
+            if (ppValue == 'keep') {
+                percent.attr('readonly', true).val('0');
+                percentSlider.slider('value', 0);
                 bitcoinAddress.attr('disabled', false);
-            } else if ($(this).val() == 'partially') {
-                percent.attr('disabled', false);
-                percentSlider.slider('enable');
+            } else if (ppValue == 'partially') {
+                percent.attr('readonly', false);
+                if (percent.val() == '0' || percent.val() == '100') {
+                    percent.val('50');
+                    percentSlider.slider('value', 50);
+                }
                 bitcoinAddress.attr('disabled', false);
-            } else if ($(this).val() == 'full') {
-                percent.attr('disabled', true).val('100');
-                percentSlider.slider('disable').slider('value', 100);
+            } else if (ppValue == 'full') {
+                percent.attr('readonly', true).val('100');
+                percentSlider.slider('value', 100);
                 bitcoinAddress.attr('disabled', true);
             }
         });
         paymentProcessing.filter(':checked').trigger('change');
 
         percent.on('change', function () {
-            if ($(this).val() == '100') {
-                paymentProcessing.filter('[value="full"]').click();
+            var percentValue = $(this).val();
+            var ppValue;
+            if (percentValue == '0') {
+                ppValue = 'keep';
+            } else if (percentValue == '100') {
+                ppValue = 'full';
+            } else {
+                ppValue = 'partially';
+            }
+            if (paymentProcessing.filter(':checked').val() != ppValue) {
+                paymentProcessing.filter('[value="' + ppValue + '"]').click();
             }
         });
 

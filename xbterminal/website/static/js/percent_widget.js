@@ -6,7 +6,7 @@ var PercentWidget = (function () {
             var slider = $('<div id="percent-slider"></div>')
                 .insertAfter(select)
                 .slider({
-                    min: 1,
+                    min: 0,
                     max: 100,
                     value: select.val(),
                     slide: function (event, ui) {
