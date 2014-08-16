@@ -11,18 +11,17 @@ var Device = (function () {
             var percentSlider = $('#percent-slider');
             var ppValue = $(this).val();
             if (ppValue == 'keep') {
-                percent.attr('readonly', true).val('0');
+                percent.val('0');
                 percentSlider.slider('value', 0);
                 bitcoinAddress.attr('disabled', false);
             } else if (ppValue == 'partially') {
-                percent.attr('readonly', false);
                 if (percent.val() == '0' || percent.val() == '100') {
                     percent.val('50');
                     percentSlider.slider('value', 50);
                 }
                 bitcoinAddress.attr('disabled', false);
             } else if (ppValue == 'full') {
-                percent.attr('readonly', true).val('100');
+                percent.val('100');
                 percentSlider.slider('value', 100);
                 bitcoinAddress.attr('disabled', true);
             }
