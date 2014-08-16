@@ -104,6 +104,14 @@ label[for="id_county"]:after {
     margin-bottom: 10px;
 }
 
+#id_payment_processing {
+    width: 100%;
+}
+
+#id_payment_processing > label {
+    width: 33.3%;
+}
+
 #device-key-copy:hover {
     text-decoration: none;
 }
