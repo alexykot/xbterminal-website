@@ -124,3 +124,14 @@ label[for="id_county"]:after {
 .create-device-button {
     margin-bottom: 10px;
 }
+
+/* Team page */
+
+.team-photo-wrapper {
+    float: left;
+    margin: 40px 15px 5px 0;
+}
+
+.team-photo-wrapper img {
+    border-radius: 50%;
+}

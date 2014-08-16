@@ -87,6 +87,16 @@ class TermsConditionsView(TemplateResponseMixin, View):
         return self.render_to_response({})
 
 
+class TeamView(TemplateResponseMixin, View):
+    """
+    Team page
+    """
+    template_name = "website/team.html"
+
+    def get(self, *args, **kwargs):
+        return self.render_to_response({})
+
+
 class RegistrationView(TemplateResponseMixin, View):
     """
     Registration page
