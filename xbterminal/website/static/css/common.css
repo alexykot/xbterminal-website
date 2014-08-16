@@ -175,8 +175,9 @@ html, body {
     width: 200px;
 }
 
-.user-info {
+#merchant-info {
     color: #888;
+    line-height: 34px;
     text-align: left;
     white-space: nowrap;
     width: 200px;
@@ -208,6 +209,11 @@ html, body {
 
 .header-fixed .login {
     display: block;
+}
+
+.header-fixed #merchant-info-devices,
+.header-fixed #merchant-info-tx {
+    display: none;
 }
 
 /* CONTENT */
@@ -323,7 +329,7 @@ html, body {
     .login-form-title,
     .login-form,
     .register,
-    .user-info {
+    #merchant-info {
         display: none;
     }
     .login,
