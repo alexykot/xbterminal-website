@@ -303,9 +303,6 @@ html, body {
         padding-top: 75px;
     }
 
-    .header {
-        position: fixed;
-    }
     .header .navbar-brand {
         line-height: 75px;
     }
