@@ -3,9 +3,9 @@
 
 {% block cabinet_content %}
 <div class="row">
-    <div class="col-md-8 col-md-offset-2">
+    <div class="col-md-6">
         {% if form %}
-        <h3>Contact form:</h3>
+        <h3>By email</h3>
         <form id="contact-form" role="form" action="{% url 'website:contact' %}" method="POST">
             {% csrf_token %}
             {% bootstrap_form form %}
@@ -16,5 +16,13 @@
         <h3>Thanks!</h3><p class="lead">We will contact you as soon as possible</p>
         {% endif %}
     </div>
+    {% if form %}
+    <div class="col-md-6">
+        <h3>By phone</h3>
+        <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit.</p>
+        <h3>In person</h3>
+        <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.</p>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
