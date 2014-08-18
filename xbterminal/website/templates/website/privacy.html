@@ -1,13 +1,13 @@
 {% extends "cabinet/base.html" %}
-{% load staticfiles %}
+{% load staticfiles i18n %}
 
-{% block title %}Privacy policy | {% endblock %}
+{% block title %}{% trans 'Privacy policy' %} | {% endblock %}
 
 {% block cabinet_content %}
 <div class="row">
     <div class="col-md-12">
-        <p><h1>Privacy policy</h1></p>
-
+        <p><h1>{% trans 'Privacy policy' %}</h1></p>
+        {% blocktrans %}
         <p>
             1.	Introduction <br>
             1.1	We are committed to safeguarding the privacy of our website visitors; in this policy we explain
@@ -228,7 +228,7 @@
             14.2 Our data protection registration number is CSN7320488. <br>
         </p>
         <br><br>
-
+        {% endblocktrans %}
     </div>
 </div>
 {% endblock %}

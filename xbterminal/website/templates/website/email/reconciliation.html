@@ -1,17 +1,19 @@
-{% load website_tags %}
+{% load website_tags i18n %}
 <p>
-terminal: {{ device.name|safe }}<br>
-report issue date: {{ rec_datetime|date:"d M Y" }} {{ rec_datetime|time:"g:i A" }}<br>
+{% trans 'terminal' %}: {{ device.name|safe }}<br>
+{% trans 'report issue date' %}: {{ rec_datetime|date:"d M Y" }} {{ rec_datetime|time:"g:i A" }}<br>
 {% if transactions %}
-transactions to date: {{ transactions.count }}<br>
-total m฿: {{ btc_amount|scale|floatformat:5 }}<br>
-total GBP: £{{ fiat_amount|floatformat:2 }}
+{% trans 'transactions to date' %}: {{ transactions.count }}<br>
+{% trans 'total m฿' %}: {{ btc_amount|scale|floatformat:5 }}<br>
+{% trans 'total GBP' %}: £{{ fiat_amount|floatformat:2 }}
 {% else %}
-No transactions to date.
+{% trans 'No transactions to date.' %}
 {% endif %}
 </p>
 <p>
 ---------------------------------<br>
+{% blocktrans %}
 Have problems reading this report or need help with your terminal?<br>
 Contact us at <a href="mailto:support@xbterminal.io">support@xbterminal.io</a>.
+{% endblocktrans %}
 </p>

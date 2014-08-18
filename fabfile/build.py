@@ -51,11 +51,12 @@ def makemessages():
 
 @task
 def compilemessages():
-    with lcd("xbterminal"):
-        local("django-admin.py compilemessages")
+    with env.cd("xbterminal"):
+        env.run("django-admin.py compilemessages")
 
 
 @task(default=True)
 def all():
     dirs()
     venv()
+    compilemessages()

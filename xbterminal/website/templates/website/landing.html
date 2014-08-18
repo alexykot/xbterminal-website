@@ -90,30 +90,30 @@
                                 data-0-bottom-top="display[begin]: none;"
                                 data-76-top-top="display[begin]: block;"
                                 data--124-top-top="display[end]: none;"
-                            >The payment process is simple - Press any key to begin.</span>
+                            >{% trans 'The payment process is simple - Press any key to begin.' %}</span>
                             <span
                                 data-anchor-target="#terminal-section-wrapper"
                                 data-0-bottom-top="display[begin]: none;"
                                 data--124-top-top="display[begin]: block;"
                                 data--924-top-top="display[end]: none;"
-                            >Enter the amount to be paid in local currency, then hit enter.</span>
+                            >{% trans 'Enter the amount to be paid in local currency, then hit enter.' %}</span>
                             <span
                                 data-anchor-target="#terminal-section-wrapper"
                                 data-0-bottom-top="display[begin]: none;"
                                 data--924-top-top="display[begin]: block;"
                                 data--1124-top-top="display[end]: none;"
-                            >Check amount and exchange rate.</span>
+                            >{% trans 'Check amount and exchange rate.' %}</span>
                             <span
                                 data-anchor-target="#terminal-section-wrapper"
                                 data-0-bottom-top="display[begin]: none;"
                                 data--1124-top-top="display[begin]: block;"
                                 data--1324-top-top="display[end]: none;"
-                            >Customer pays by NFC or QR Code.</span>
+                            >{% trans 'Customer pays by NFC or QR Code.' %}</span>
                             <span
                                 data-anchor-target="#terminal-section-wrapper"
                                 data-0-bottom-top="display[begin]: none;"
                                 data--1324-top-top="display[begin]: block;"
-                            >Transaction is cleared and an electronic receipt is downloaded.</span>
+                            >{% trans 'Transaction is cleared and an electronic receipt is downloaded.' %}</span>
                         </div>
                     </div>
                 </div>
@@ -122,26 +122,28 @@
     </div>
     <div class="text-section">
         <div class="container">
-            <h2>XBTerminal</h2>
-            <h3>XBTerminal is the only hardware Bitcoin POS product which can guarantee the local currency return on your sales. </h3>
-            <p>The XBTerminal is our first generation Bitcoin Point of Sale device. It is simple and intuitive to operate
+            <h2>{% trans 'XBTerminal' %}</h2>
+            <h3>{% trans 'XBTerminal is the only hardware Bitcoin POS product which can guarantee the local currency return on your sales.' %}</h3>
+            <p>
+                {% blocktrans %}
+                The XBTerminal is our first generation Bitcoin Point of Sale device. It is simple and intuitive to operate
                 for all your staff. Customers may pay from any mobile Bitcoin wallet by NFC or QR code, payment from offline
                 mobile devices is supported by bluetooth. Transactions are sent directly to our servers for fast verification
                 allowing you to accept Bitcoin without delays at your point of sale. Our payment processor integration means
                 that even though you can accept Bitcoin, you don’t need to worry about exchanging it or selling it for local
                 currency, it can be converted instantly at the point of sale. This solution best suits brick and mortar retail
-                establishments with a fixed point of sale and multiple staff.
-                <br> <small>*Wifi required for operation.</small>
+                establishments with a fixed point of sale and multiple staff.<br>
+                <small>*Wifi required for operation.</small>
+                {% endblocktrans %}
             </p>
-
-            <a id="terminal-pre-order" class="xbt-btn-primary" href="{% url 'website:registration' %}?regtype=terminal">pre order today</a>
+            <a id="terminal-pre-order" class="xbt-btn-primary" href="{% url 'website:registration' %}?regtype=terminal">{% trans 'pre order today' %}</a>
             <form id="terminal-subscribe-form" action="{% url 'website:subscribe' %}" method="POST">
                 {% csrf_token %}
-                <input type="email" name="email" placeholder="your email" required><!--
-                --><button type="submit" class="xbt-btn-secondary">submit</button>
+                <input type="email" name="email" placeholder="{% trans 'your email' %}" required><!--
+                --><button type="submit" class="xbt-btn-secondary">{% trans 'submit' %}</button>
                 <img class="loading-image" src="{% static 'img/loading.gif' %}">
             </form>
-            <h3 id="terminal-subscribe-message">Join the mailing list</h3>
+            <h3 id="terminal-subscribe-message">{% trans 'Join the mailing list' %}</h3>
         </div>
     </div>
     <div
@@ -160,15 +162,18 @@
     </div>
     <div class="text-section">
         <div class="container">
-            <h2>XBT Mobile</h2>
-            <h3>XBT Mobile allows you to Start Accepting Bitcoin now with no upfront costs and the same great features
-                as our dedicated hardware.</h3>
-            <p>Our mobile app is just as easy to operate as our hardware product. Customers may pay from any mobile
+            <h2>{% trans 'XBT Mobile' %}</h2>
+            <h3>{% trans 'XBT Mobile allows you to Start Accepting Bitcoin now with no upfront costs and the same great features as our dedicated hardware.' %}</h3>
+            <p>
+                {% blocktrans %}
+                Our mobile app is just as easy to operate as our hardware product. Customers may pay from any mobile
                 Bitcoin wallet by NFC (Android only) or QR code, payment from offline mobile devices is supported by
                 Bluetooth (Android only). The payment process is fast and secure, replicating the features of our
                 dedicated hardware allowing you to dip your toe into the Bitcoin world without any upfront costs.
                 This solution best suits merchants without a fixed point of sale like pop-up or street traders, it’s
-                also a great starting point before deciding if you want a dedicated device for your business.</p>
+                also a great starting point before deciding if you want a dedicated device for your business.
+                {% endblocktrans %}
+            </p>
             <div class="row" id="mobile-downloads">
                 <div class="col-md-6" id="mobile-app-store">
                     <a><img src="{% static 'img/app_store.png' %}"></a>
@@ -195,15 +200,18 @@
     </div>
     <div class="text-section">
         <div class="container">
-            <h2>XBT Online POS</h2>
-            <h3>XBT Online allows you to Start Accepting Bitcoin Now with no upfront costs and is accessible on
-                any web-connected device.</h3>
-            <p>Our web app is just as easy to operate as our hardware product. Customers may pay from any mobile Bitcoin
+            <h2>{% trans 'XBT Online POS' %}</h2>
+            <h3>{% trans 'XBT Online allows you to Start Accepting Bitcoin Now with no upfront costs and is accessible on any web-connected device.' %}</h3>
+            <p>
+                {% blocktrans %}
+                Our web app is just as easy to operate as our hardware product. Customers may pay from any mobile Bitcoin
                 wallet by QR code.  The payment process is fast and secure, replicating the features of our dedicated
                 hardware allowing you to dip your toe into the Bitcoin world without any upfront costs. This solution best
                 suits merchants who already have a computer or tablet based system who cannot for whatever reason run
-                the mobile application.</p>
-            <a id="web-set-up" class="xbt-btn-primary" href="{% url 'website:registration' %}?regtype=web">set up</a>
+                the mobile application.
+                {% endblocktrans %}
+            </p>
+            <a id="web-set-up" class="xbt-btn-primary" href="{% url 'website:registration' %}?regtype=web">{% trans 'set up' %}</a>
         </div>
     </div>
     <div id="social">

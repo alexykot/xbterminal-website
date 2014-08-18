@@ -17,6 +17,7 @@ from django.views.decorators.http import require_http_methods
 from django.db.models import Count, Sum
 from django.contrib import messages
 from django.utils import timezone
+from django.utils.translation import ugettext as _
 
 from payment.blockchain import construct_bitcoin_uri
 
@@ -57,7 +58,7 @@ class ContactView(TemplateResponseMixin, View):
                 'website/email/contact.txt',
                 form.cleaned_data)
             send_mail(
-                "message from xbterminal.com",
+                _("Message from xbterminal.io"),
                 mail_text,
                 settings.DEFAULT_FROM_EMAIL,
                 settings.CONTACT_EMAIL_RECIPIENTS,
@@ -480,9 +481,11 @@ class SendAllToEmailView(DeviceMixin, CabinetView):
             utils.send_reconciliation(
                 email, context['device'],
                 (rec_range_beg, rec_range_end))
-            messages.success(self.request, 'Email has been sent successfully.')
+            messages.success(self.request,
+                             _('Email has been sent successfully.'))
         else:
-            messages.error(self.request, 'Error: Invalid email. Please, try again.')
+            messages.error(self.request,
+                           _('Error: Invalid email. Please, try again.'))
         return redirect('website:reconciliation', context['device'].key)
 
 
@@ -495,14 +498,14 @@ class SubscribeNewsView(View):
         if form.is_valid():
             subscriber_email = form.cleaned_data['email']
             email1 = utils.create_html_message(
-                "XBTerminal newsletter confirmation",
+                _("XBTerminal newsletter confirmation"),
                 "website/email/subscription.html",
                 {},
                 settings.DEFAULT_FROM_EMAIL,
                 [subscriber_email])
             email1.send(fail_silently=False)
             email2 = utils.create_html_message(
-                "Subscription to newsletters",
+                _("Subscription to newsletters"),
                 "website/email/subscription.html",
                 {'subscriber_email': subscriber_email},
                 settings.DEFAULT_FROM_EMAIL,

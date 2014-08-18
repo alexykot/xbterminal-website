@@ -1,4 +1,4 @@
-from fabric.api import env, local
+from fabric.api import env, local, lcd
 
 import build
 import db
@@ -9,3 +9,4 @@ except ImportError:
 
 env.use_ssh_config = True
 env.run = local
+env.cd = lcd

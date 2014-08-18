@@ -1,34 +1,34 @@
 {% extends "cabinet/base.html" %}
-{% load qr_tags website_tags staticfiles %}
+{% load qr_tags website_tags staticfiles i18n %}
 
 {% block js %}
 <script src="{% static 'js/order.js' %}"></script>
 {% endblock %}
 
 {% block cabinet_content %}
-<h3>Order details</h3>
+<h3>{% trans 'Order details' %}</h3>
 <div class="row">
     <div class="col-md-5" id="payment-bitcoin" data-check-url="{{ check_url }}">
         {% qr_from_text bitcoin_uri 'm' %}
-        <div>to pay &nbsp; ฿{{ order.instantfiat_btc_total_amount|scale|floatformat:5 }} mBTC</div>
+        <div>{% trans 'to pay' %} &nbsp; ฿{{ order.instantfiat_btc_total_amount|scale|floatformat:5 }} mBTC</div>
         <a href="{{ bitcoin_uri }}">{{ order.instantfiat_address }}</a>
     </div>
     <div class="col-md-7">
         <table id="order-details">
             <tr>
-                <td class="od-label">Quantity on order</td>
+                <td class="od-label">{% trans 'Quantity on order' %}</td>
                 <td>{{ order.quantity }}</td>
             </tr>
             <tr>
-                <td class="od-label">Subtotal</td>
+                <td class="od-label">{% trans 'Subtotal' %}</td>
                 <td>£{{ order.fiat_amount|floatformat:2 }} GBP / ฿{{ order.instantfiat_btc_amount|scale|floatformat:5 }} mBTC</td>
             </tr>
             <tr>
-                <td class="od-label">VAT</td>
+                <td class="od-label">{% trans 'VAT' %}</td>
                 <td>£{{ order.fiat_vat_amount|floatformat:2 }} GBP / ฿{{ order.instantfiat_btc_vat_amount|scale|floatformat:5 }} mBTC</td>
             </tr>
             <tr>
-                <td class="od-label">Total</td>
+                <td class="od-label">{% trans 'Total' %}</td>
                 <td>£{{ order.fiat_total_amount|floatformat:2 }} GBP / ฿{{ order.instantfiat_btc_total_amount|scale|floatformat:5 }} mBTC</td>
             </tr>
         </table>

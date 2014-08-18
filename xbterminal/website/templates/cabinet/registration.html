@@ -8,18 +8,20 @@
 {% endblock %}
 
 {% block cabinet_content %}
+{% url 'website:privacy' as privacy_url %}
+{% url 'website:terms' as terms_url %}
 <div class="row">
     <div class="col-md-10 col-md-offset-1">
         <div class="clearfix">
             {% if form.regtype.value == 'default' %}
-                <h3 class="pull-left">Merchant registration</h3>
-                <h3 id="step" class="pull-right">step <span>1</span> of 2</h3>
+                <h3 class="pull-left">{% trans 'Merchant registration' %}</h3>
+                <h3 id="step" class="pull-right">{% trans 'step <span>1</span> of 2' %}</h3>
             {% elif form.regtype.value == 'terminal' %}
-                <h3 class="pull-left">Terminal order</h3>
-                <h3 id="step" class="pull-right">step <span>1</span> of 3</h3>
+                <h3 class="pull-left">{% trans 'Terminal order' %}</h3>
+                <h3 id="step" class="pull-right">{% trans 'step <span>1</span> of 3' %}</h3>
             {% elif form.regtype.value == 'web' %}
-                <h3 class="pull-left">Online POS registration</h3>
-                <h3 id="step" class="pull-right">step <span>1</span> of 2</h3>
+                <h3 class="pull-left">{% trans 'Online POS registration' %}</h3>
+                <h3 id="step" class="pull-right">{% trans 'step <span>1</span> of 2' %}</h3>
             {% endif %}
         </div>
         <form id="merchant-form" role="form" action="{% url 'website:registration' %}" method="POST">
@@ -36,8 +38,8 @@
                         <div class="col-md-6">{% bootstrap_field form.company_name_copy %}</div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6"><a href="#" id="continue-step-2" class="btn btn-default pull-right">Continue</a></div>
-                        <div class="col-md-6"><a href="{% url 'website:landing' %}" class="btn">Cancel</a></div>
+                        <div class="col-md-6"><a href="#" id="continue-step-2" class="btn btn-default pull-right">{% trans 'Continue' %}</a></div>
+                        <div class="col-md-6"><a href="{% url 'website:landing' %}" class="btn">{% trans 'Cancel' %}</a></div>
                     </div>
                 {% elif form.regtype.value == 'terminal' %}
                     <div class="row">
@@ -64,12 +66,16 @@
                     </div>
                     <div class="form-group text-center">
                         <div class="checkbox">
-                            <label for="id_terms"><input id="id_terms" name="terms" type="checkbox">I agree to XBTerminal <a href="{% url 'website:privacy' %}" target="_blank">Privacy Policy</a> and <a href="{% url 'website:terms' %}" target="_blank">Terms & Conditions</a> of use.</label>
+                            <label for="id_terms"><input id="id_terms" name="terms" type="checkbox">
+                                {% blocktrans %}
+                                I agree to XBTerminal <a href="{{ privacy_url }}" target="_blank">Privacy Policy</a> and <a href="{{ terms_url }}" target="_blank">Terms & Conditions</a> of use.
+                                {% endblocktrans %}
+                            </label>
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6"><a href="#" id="continue-step-2" class="btn btn-default pull-right">Continue</a></div>
-                        <div class="col-md-6"><a href="{% url 'website:landing' %}" class="btn">Cancel</a></div>
+                        <div class="col-md-6"><a href="#" id="continue-step-2" class="btn btn-default pull-right">{% trans 'Continue' %}</a></div>
+                        <div class="col-md-6"><a href="{% url 'website:landing' %}" class="btn">{% trans 'Cancel' %}</a></div>
                     </div>
                 {% endif %}
             </div>
@@ -94,13 +100,17 @@
                     </div>
                     <div class="form-group text-center">
                         <div class="checkbox">
-                            <label for="id_terms"><input id="id_terms" name="terms" type="checkbox">I agree to XBTerminal <a href="{% url 'website:privacy' %}" target="_blank">Privacy Policy</a> and <a href="{% url 'website:terms' %}" target="_blank">Terms & Conditions</a> of use.</label>
+                            <label for="id_terms"><input id="id_terms" name="terms" type="checkbox">
+                                {% blocktrans %}
+                                I agree to XBTerminal <a href="{{ privacy_url }}" target="_blank">Privacy Policy</a> and <a href="{{ terms_url }}" target="_blank">Terms & Conditions</a> of use.
+                                {% endblocktrans %}
+                            </label>
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6"><button type="submit" class="btn btn-default pull-right">Create account</button></div>
+                        <div class="col-md-6"><button type="submit" class="btn btn-default pull-right">{% trans 'Create account' %}</button></div>
                         <div class="col-md-6">
-                            <a href="#" id="back-step-1" class="btn">Back</a>
+                            <a href="#" id="back-step-1" class="btn">{% trans 'Back' %}</a>
                             <img id="loading-image" src="{% static 'img/loading.gif' %}">
                         </div>
                     </div>
@@ -115,7 +125,7 @@
                     </div>
                     <div id="calculation" data-price="{{ order_form.terminal_price }}" data-exchange-rate="{{ order_form.exchange_rate }}"></div>
                     {% bootstrap_field order_form.payment_method %}
-                    <label class="control-label">Billing and delivery address</label>
+                    <label class="control-label">{% trans 'Billing and delivery address' %}</label>
                     <div id="delivery-address-preview"></div>
                     {% bootstrap_field order_form.delivery_address_differs %}
                     <div id="delivery-address-group">
@@ -131,8 +141,8 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6"><a href="#" id="continue-step-3" class="btn btn-default pull-right">Continue</a></div>
-                        <div class="col-md-6"><a href="#" id="back-step-1" class="btn">Back</a></div>
+                        <div class="col-md-6"><a href="#" id="continue-step-3" class="btn btn-default pull-right">{% trans 'Continue' %}</a></div>
+                        <div class="col-md-6"><a href="#" id="back-step-1" class="btn">{% trans 'Back' %}</a></div>
                     </div>
                 {% endif %}
             </div>
@@ -140,41 +150,41 @@
             <div id="registration-step-3">
                 <table id="order-details">
                     <tr>
-                        <td class="od-label">Quantity on order</td>
+                        <td class="od-label">{% trans 'Quantity on order' %}</td>
                         <td id="od-quantity"></td>
                         <td colspan="2">&nbsp;</td>
                     </tr>
                     <tr>
-                        <td class="od-label">Billing address</td>
+                        <td class="od-label">{% trans 'Billing address' %}</td>
                         <td id="od-billing-address"></td>
-                        <td class="od-label">Delivery address</td>
+                        <td class="od-label">{% trans 'Delivery address' %}</td>
                         <td id="od-delivery-address"></td>
                     </tr>
                     <tr>
                         <td colspan="2">&nbsp;</td>
-                        <td class="od-label">Subtotal</td>
+                        <td class="od-label">{% trans 'Subtotal' %}</td>
                         <td id="od-subtotal"></td>
                     </tr>
                     <tr>
                         <td colspan="2">&nbsp;</td>
-                        <td class="od-label">VAT</td>
+                        <td class="od-label">{% trans 'VAT' %}</td>
                         <td id="od-vat"></td>
                     </tr>
                     <tr>
                         <td colspan="2">&nbsp;</td>
-                        <td class="od-label">Total</td>
+                        <td class="od-label">{% trans 'Total' %}</td>
                         <td id="od-total"></td>
                     </tr>
                     <tr>
                         <td colspan="2">&nbsp;</td>
-                        <td class="od-label">Payment method</td>
+                        <td class="od-label">{% trans 'Payment method' %}</td>
                         <td id="od-payment-method"></td>
                     </tr>
                 </table>
                 <div class="row">
-                    <div class="col-md-6"><button type="submit" class="btn btn-default pull-right">Confirm</button></div>
+                    <div class="col-md-6"><button type="submit" class="btn btn-default pull-right">{% trans 'Confirm' %}</button></div>
                     <div class="col-md-6">
-                        <a href="#" id="back-step-2" class="btn">Back</a>
+                        <a href="#" id="back-step-2" class="btn">{% trans 'Back' %}</a>
                         <img id="loading-image" src="{% static 'img/loading.gif' %}">
                     </div>
                 </div>
