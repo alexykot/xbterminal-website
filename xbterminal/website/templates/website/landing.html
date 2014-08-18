@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load staticfiles %}
+{% load staticfiles i18n %}
 
 {% block css %}
 <link rel="stylesheet" href="{% static 'css/landing.css' %}">
@@ -27,25 +27,28 @@
                     </div>
                 </div>
                 <div class="col-md-6" id="about-text">
-                    <span id="about-line1">meet the future</span>
-                    <span id="about-line2">of bitcoin point of sale</span>
+                    <span id="about-line1">{% trans 'meet the future' %}</span>
+                    <span id="about-line2">{% trans 'of bitcoin point of sale' %}</span>
                 </div>
             </div>
         </div>
     </div>
     <div class="text-section">
         <div class="container">
-            <h2>Bitcoin payments made easy.</h2>
-            <h3>XBTerminal is the fast, simple and cost effective way for your business to start accepting bitcoin today.</h3>
-            <p>Our unique and innovative solutions allow you accept Bitcoin in a safe and risk free way. You are in control
+            <h2>{% trans 'Bitcoin payments made easy.' %}</h2>
+            <h3>{% trans 'XBTerminal is the fast, simple and cost effective way for your business to start accepting bitcoin today.' %}</h3>
+            <p>
+                {% blocktrans %}
+                Our unique and innovative solutions allow you accept Bitcoin in a safe and risk free way. You are in control
                 of the payment process whether you want to keep the Bitcoins or receive local currency. Through our seamless
                 payment gateway integration we can <b>guarantee</b> a local currency return back to your business bank account.
-                </p>
-            <h3>Three easy ways to accept digital currency.</h3>
+                {% endblocktrans %}
+            </p>
+            <h3>{% trans 'Three easy ways to accept digital currency.' %}</h3>
             <div id="three-ways">
-                <a href="{% url 'website:landing' %}#terminal-section">terminal</a>
-                <a href="{% url 'website:landing' %}#mobile-section">mobile</a>
-                <a href="{% url 'website:landing' %}#web-section">online</a>
+                <a href="{% url 'website:landing' %}#terminal-section">{% trans 'terminal' %}</a>
+                <a href="{% url 'website:landing' %}#mobile-section">{% trans 'mobile' %}</a>
+                <a href="{% url 'website:landing' %}#web-section">{% trans 'online' %}</a>
             </div>
         </div>
     </div>

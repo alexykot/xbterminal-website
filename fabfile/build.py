@@ -43,6 +43,18 @@ def proto():
               "paymentrequest.proto")
 
 
+@task
+def makemessages():
+    with lcd("xbterminal"):
+        local("django-admin.py makemessages -a")
+
+
+@task
+def compilemessages():
+    with lcd("xbterminal"):
+        local("django-admin.py compilemessages")
+
+
 @task(default=True)
 def all():
     dirs()

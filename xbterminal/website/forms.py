@@ -10,6 +10,7 @@ from django.contrib.auth.forms import (
 from django.core.mail import send_mail
 from django.core.validators import RegexValidator
 from django.template.loader import render_to_string
+from django.utils.translation import ugettext_lazy as _
 
 from payment import preorder
 
@@ -70,18 +71,18 @@ class MerchantRegistrationForm(forms.ModelForm):
 
     # Used at registration step 1
     company_name_copy = forms.CharField(
-        label='Company name',
+        label=_('Company name'),
         required=False)
 
     class Meta:
         model = MerchantAccount
         exclude = ['user', 'business_address2', 'language', 'currency']
         labels = {
-            'business_address': 'Trading address',
-            'post_code': 'Post code/Zip code',
-            'contact_first_name': 'First name',
-            'contact_last_name': 'Last name',
-            'contact_email': 'Email',
+            'business_address': _('Trading address'),
+            'post_code': _('Post code/Zip code'),
+            'contact_first_name': _('First name'),
+            'contact_last_name': _('Last name'),
+            'contact_email': _('Email'),
         }
 
     def clean(self):
