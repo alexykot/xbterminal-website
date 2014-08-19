@@ -1,6 +1,8 @@
+import datetime
 from decimal import Decimal
 import rq
 
+from django.utils import timezone
 import django_rq
 from constance import config
 
@@ -43,7 +45,7 @@ def create_invoice(order):
      order.instantfiat_btc_total_amount,
      order.instantfiat_address) = instantfiat_result
     order.save()
-    run_periodic_task(wait_for_payment, [order.pk], 15 * 60)
+    run_periodic_task(wait_for_payment, [order.pk])
 
 
 def wait_for_payment(order_id):
@@ -53,6 +55,9 @@ def wait_for_payment(order_id):
         order_id: Order id
     """
     order = Order.objects.get(pk=order_id)
+    if order.created + datetime.timedelta(minutes=20) < timezone.now():
+        # Cancel job
+        django_rq.get_scheduler().cancel(rq.get_current_job())
     invoice_paid = gocoin.is_invoice_paid(
         order.instantfiat_invoice_id,
         config.GOCOIN_API_KEY)

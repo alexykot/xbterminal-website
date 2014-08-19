@@ -26,14 +26,14 @@ from website.models import PaymentOrder, Transaction
 logger = logging.getLogger(__name__)
 
 
-def run_periodic_task(func, args, duration, interval=2):
+def run_periodic_task(func, args, interval=2):
     scheduler = django_rq.get_scheduler()
     scheduler.schedule(
         scheduled_time=timezone.now(),
         func=func,
         args=args,
         interval=interval,
-        repeat=duration // interval,
+        repeat=None,
         result_ttl=3600)
 
 
@@ -127,8 +127,8 @@ def prepare_payment(device, fiat_amount):
         **details)
     payment_order.save()
     # Schedule tasks
-    run_periodic_task(wait_for_payment, [payment_order.uid], 15 * 60)
-    run_periodic_task(wait_for_validation, [payment_order.uid], 20 * 60)
+    run_periodic_task(wait_for_payment, [payment_order.uid])
+    run_periodic_task(wait_for_validation, [payment_order.uid])
     return payment_order
 
 
@@ -140,6 +140,9 @@ def wait_for_payment(payment_order_uid):
     """
     # Check current balance
     payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
+    if payment_order.created + datetime.timedelta(minutes=15) < timezone.now():
+        # Cancel job
+        django_rq.get_scheduler().cancel(rq.get_current_job())
     if payment_order.incoming_tx_id is not None:
         # Payment already validated, cancel task
         django_rq.get_scheduler().cancel(rq.get_current_job())
@@ -206,6 +209,9 @@ def wait_for_validation(payment_order_uid):
         payment_order_uid: PaymentOrder unique identifier
     """
     payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
+    if payment_order.created + datetime.timedelta(minutes=20) < timezone.now():
+        # Cancel job
+        django_rq.get_scheduler().cancel(rq.get_current_job())
     if payment_order.incoming_tx_id is not None:
         django_rq.get_scheduler().cancel(rq.get_current_job())
         if payment_order.outgoing_tx_id is not None:
@@ -216,7 +222,7 @@ def wait_for_validation(payment_order_uid):
             # Finish payment immediately
             finish_payment(payment_order)
         else:
-            run_periodic_task(wait_for_exchange, [payment_order.uid], 45 * 60)
+            run_periodic_task(wait_for_exchange, [payment_order.uid])
 
 
 def forward_transaction(payment_order):
@@ -253,6 +259,9 @@ def wait_for_exchange(payment_order_uid):
         payment_order_uid: PaymentOrder unique identifier
     """
     payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
+    if payment_order.created + datetime.timedelta(minutes=45) < timezone.now():
+        # Cancel job
+        django_rq.get_scheduler().cancel(rq.get_current_job())
     invoice_paid = instantfiat.is_invoice_paid(
         payment_order.device.payment_processor,
         payment_order.device.api_key,
