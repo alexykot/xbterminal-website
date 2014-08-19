@@ -270,7 +270,7 @@ class CreateDeviceView(TemplateResponseMixin, CabinetView):
         context = self.get_context_data(**kwargs)
         context['form'] = forms.DeviceForm(initial={
             'device_type': device_type,
-            'name': '{0} #{1}'.format(device_types[device_type], count + 1),
+            'name': u'{0} #{1}'.format(device_types[device_type], count + 1),
         })
         return self.render_to_response(context)
 
