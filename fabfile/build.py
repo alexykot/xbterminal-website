@@ -47,6 +47,7 @@ def proto():
 def makemessages():
     with lcd("xbterminal"):
         local("django-admin.py makemessages -a")
+        local("django-admin.py makemessages -d djangojs -a")
 
 
 @task

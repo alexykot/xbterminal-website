@@ -28,7 +28,7 @@ var paymentInit = function (form) {
     var amountField = form.find('[name="amount"]');
     var amount = parseFloat(amountField.val());
     if (isNaN(amount) || amount < 0.01) {
-        showErrorMessage('invalid amount');
+        showErrorMessage(gettext('invalid amount'));
         return false;
     }
     hideErrorMessage();
@@ -50,10 +50,10 @@ var paymentInit = function (form) {
         $('.payment-request').
             attr('alt', data.payment_uri).
             attr('src', data.qr_code_src);
-        $('.payment-reset').text('Cancel');
+        $('.payment-reset').text(gettext('Cancel'));
         paymentCheck(data.check_url);
     }).fail(function () {
-        showErrorMessage('server error');
+        showErrorMessage(gettext('server error'));
     });
 };
 

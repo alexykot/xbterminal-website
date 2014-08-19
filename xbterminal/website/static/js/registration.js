@@ -112,15 +112,15 @@ var Registration = (function () {
                 async: false
             });
             return isValid;
-        }, 'Merchant account with this contact email already exists. Please <a href="/login">login</a> or <a>reset your password</a>.');
+        }, gettext('Merchant account with this contact email already exists. Please <a href="/login">login</a> or <a>reset your password</a>.'));
 
         $.validator.addMethod('phone', function (value, element) {
             return this.optional(element) || /^[0-9\s-+().]{5,20}$/.test(value);
-        }, 'Please enter a valid phone number.');
+        }, gettext('Please enter a valid phone number.'));
 
         $.validator.addMethod('postCode', function (value, element) {
             return this.optional(element) || /^[a-zA-Z0-9\s-+]{2,10}$/.test(value);
-        }, 'Please enter a valid post code.');
+        }, gettext('Please enter a valid post code.'));
 
         validator = $('#merchant-form').validate({
             showErrors: function (errorMap, errorList) {
@@ -143,7 +143,7 @@ var Registration = (function () {
                 terms: 'required'
             },
             messages: {
-                terms: 'Please accept terms & conditions.'
+                terms: gettext('Please accept terms & conditions.')
             },
             onsubmit: false,
             onfocusout: false,
@@ -184,9 +184,9 @@ var Registration = (function () {
                 var paymentMethodBtn = $('[name="payment_method"]:checked');
                 $('#od-payment-method').text(paymentMethodBtn.parent().text());
                 if (paymentMethodBtn.val() == 'bitcoin') {
-                    $('#registration-step-3 [type="submit"]').text('Confirm and pay');
+                    $('#registration-step-3 [type="submit"]').text(gettext('Confirm and pay'));
                 } else if (paymentMethodBtn.val() == 'wire') {
-                    $('#registration-step-3 [type="submit"]').text('Confirm Order');
+                    $('#registration-step-3 [type="submit"]').text(gettext('Confirm Order'));
                 }
             }
         });
@@ -258,7 +258,7 @@ var Registration = (function () {
                     showErrors(data.errors);
                 }
             }).fail(function () {
-                alert('Server error!');
+                alert(gettext('Server error!'));
             }).always(function () {
                 $('#loading-image').hide();
             });

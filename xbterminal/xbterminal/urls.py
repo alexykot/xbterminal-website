@@ -16,4 +16,5 @@ urlpatterns = patterns('',
     url(r'', include('website.urls', namespace='website')),
     url(r'^api/', include('api.urls', namespace='api')),
     url(r'^django-rq/', include('django_rq.urls')),
+    url(r'^jsi18n/$', 'django.views.i18n.javascript_catalog', {'packages': ('xbterminal',)}),
 )

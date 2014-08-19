@@ -28,7 +28,7 @@ var Landing = (function () {
                     formMessage.text('Error!');
                 } else {
                     form.css('visibility', 'hidden');
-                    formMessage.text('Thank you for joining our mailing list!');
+                    formMessage.text(gettext('Thank you for joining our mailing list!'));
                 }
             }).always(function () {
                 form.find('.loading-image').hide();
@@ -75,7 +75,7 @@ var Landing = (function () {
 
         $('#mobile-downloads a').on('click', function (event) {
             event.preventDefault();
-            alert('Application is under appstore review, please check back soon.');
+            alert(gettext('Application is under appstore review, please check back soon.'));
         });
     };
     return {init: init};
