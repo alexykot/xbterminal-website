@@ -46,14 +46,16 @@ def proto():
 @task
 def makemessages():
     with lcd("xbterminal"):
-        local("django-admin.py makemessages -a")
-        local("django-admin.py makemessages -d djangojs -a")
+        with prefix(". ../venv/bin/activate"):
+            local("django-admin.py makemessages -a")
+            local("django-admin.py makemessages -d djangojs -a")
 
 
 @task
 def compilemessages():
     with env.cd("xbterminal"):
-        env.run("django-admin.py compilemessages")
+        with prefix(". ../venv/bin/activate"):
+            env.run("django-admin.py compilemessages")
 
 
 @task(default=True)
