@@ -85,7 +85,9 @@ def prepare_payment(device, fiat_amount):
             details['fiat_currency'],
             description="Payment to {0}".format(device.merchant.company_name))
         details.update(instantfiat_data)
-        assert details['instantfiat_btc_amount'] >= BTC_MIN_OUTPUT
+        assert details['instantfiat_btc_amount'] > 0
+        if details['instantfiat_btc_amount'] < BTC_MIN_OUTPUT:
+            details['instantfiat_btc_amount'] = BTC_MIN_OUTPUT
         exchange_rate = details['instantfiat_fiat_amount'] / details['instantfiat_btc_amount']
     else:
         details['instantfiat_fiat_amount'] = FIAT_DEC_PLACES
@@ -108,7 +110,7 @@ def prepare_payment(device, fiat_amount):
     details['merchant_btc_amount'] = ((details['fiat_amount'] - details['instantfiat_fiat_amount']) /
                                       exchange_rate).quantize(BTC_DEC_PLACES)
     assert details['merchant_btc_amount'] >= 0
-    if details['merchant_btc_amount'] < BTC_MIN_OUTPUT:
+    if 0 < details['merchant_btc_amount'] < BTC_MIN_OUTPUT:
         details['merchant_btc_amount'] = BTC_MIN_OUTPUT
     # Total
     details['btc_amount'] = (details['merchant_btc_amount'] +
@@ -213,7 +215,7 @@ def wait_for_validation(payment_order_uid):
             # Finish payment immediately
             finish_payment(payment_order)
         else:
-            run_periodic_task(wait_for_exchange, [payment_order.uid], 20 * 60)
+            run_periodic_task(wait_for_exchange, [payment_order.uid], 45 * 60)
 
 
 def forward_transaction(payment_order):
