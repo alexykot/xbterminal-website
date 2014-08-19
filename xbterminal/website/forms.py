@@ -299,7 +299,7 @@ class SendDailyReconciliationForm(forms.ModelForm):
 class EnterAmountForm(forms.Form):
 
     device_key = forms.CharField(
-        validators=[RegexValidator('^[0-9a-fA-F]{32}$')])
+        validators=[RegexValidator('^[0-9a-zA-Z]{8,32}$')])
     amount = forms.DecimalField(
         max_digits=9,
         decimal_places=2,
