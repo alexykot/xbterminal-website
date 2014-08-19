@@ -3,21 +3,24 @@
     "model": "website.language",
     "pk": 1,
     "fields": {
-      "name": "English"
+      "name": "English",
+      "code": "en"
     }
   },
   {
     "model": "website.language",
     "pk": 2,
     "fields": {
-      "name": "Deutsch"
+      "name": "Deutsch",
+      "code": "de"
     }
   },
   {
     "model": "website.language",
     "pk": 3,
     "fields": {
-      "name": "Français"
+      "name": "Français",
+      "code": "fr"
     }
   },
   {

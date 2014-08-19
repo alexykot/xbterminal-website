@@ -75,6 +75,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class Language(models.Model):
     name = models.CharField(max_length=50)
+    code = models.CharField(max_length=2)
     fractional_split = models.CharField(max_length=1, default=".")
     thousands_split = models.CharField(max_length=1, default=",")
 
