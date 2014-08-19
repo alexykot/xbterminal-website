@@ -7,6 +7,20 @@
     }
   },
   {
+    "model": "website.language",
+    "pk": 2,
+    "fields": {
+      "name": "Deutsch"
+    }
+  },
+  {
+    "model": "website.language",
+    "pk": 3,
+    "fields": {
+      "name": "Français"
+    }
+  },
+  {
     "model": "website.currency",
     "pk": 1,
     "fields": {
