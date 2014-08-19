@@ -66,6 +66,7 @@ def prepare_payment(device, fiat_amount):
     try:
         details['local_address'] = str(bc.get_new_address())
     except Exception:
+        logger.error('no response from bitcoind')
         raise blockchain.NetworkError
     details['merchant_address'] = device.bitcoin_address
     details['fee_address'] = device.our_fee_address
@@ -192,6 +193,7 @@ def validate_payment(payment_order, transactions, broadcast=False):
             logger.exception(error)
     payment_order.incoming_tx_id = blockchain.get_txid(incoming_tx)
     payment_order.save()
+    logger.info('payment recieved ({0})'.format(payment_order.uid))
 
 
 def wait_for_validation(payment_order_uid):
@@ -283,3 +285,4 @@ def finish_payment(payment_order):
     transaction.save()
     payment_order.transaction = transaction
     payment_order.save()
+    logger.info('payment finished ({0})'.format(payment_order.uid))

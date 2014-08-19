@@ -345,6 +345,9 @@ class PaymentOrder(models.Model):
     outgoing_tx_id = models.CharField(max_length=64, validators=[validate_transaction], null=True)
     transaction = models.OneToOneField(Transaction, null=True)
 
+    def __unicode__(self):
+        return "Payment order {0}".format(self.uid)
+
 
 def gen_payment_reference():
     bts = uuid.uuid4().bytes
