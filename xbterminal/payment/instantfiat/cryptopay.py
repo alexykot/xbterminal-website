@@ -46,7 +46,7 @@ def is_invoice_paid(invoice_id, api_key):
         data = response.json()
     except (requests.exceptions.RequestException, ValueError):
         raise
-    if data['status'] == 'paid':
+    if data['status'] in ['paid', 'confirmed']:
         return True
     else:
         return False
