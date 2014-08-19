@@ -125,6 +125,7 @@ def prepare_payment(device, fiat_amount):
         created=now,
         expires=now + datetime.timedelta(minutes=10),
         **details)
+    payment_order.save()
     # Schedule tasks
     run_periodic_task(wait_for_payment, [payment_order.uid], 15 * 60)
     run_periodic_task(wait_for_validation, [payment_order.uid], 20 * 60)
