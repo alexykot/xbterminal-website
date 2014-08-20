@@ -116,13 +116,21 @@ label[for="id_county"]:after {
     text-decoration: none;
 }
 
-
 /* Other pages */
 
-#contact-form,
 #profile-form,
 .create-device-button {
     margin-bottom: 10px;
+}
+
+/* Contact page */
+
+#contact-form {
+    margin-bottom: 10px;
+}
+
+#contact-info p {
+    margin-top: 0;
 }
 
 /* Team page */
