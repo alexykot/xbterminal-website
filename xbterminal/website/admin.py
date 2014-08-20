@@ -43,8 +43,19 @@ class UserAdmin(UserAdmin):
     ordering = ('email',)
 
 
+class MerchantAccountAdmin(admin.ModelAdmin):
+
+    readonly_fields = ['date_joined', 'last_login']
+
+    def date_joined(self, merchant):
+        return merchant.user.date_joined.strftime('%d %b %Y %l:%M %p')
+
+    def last_login(self, merchant):
+        return merchant.user.last_login.strftime('%d %b %Y %l:%M %p')
+
+
 admin.site.register(models.User, UserAdmin)
-admin.site.register(models.MerchantAccount)
+admin.site.register(models.MerchantAccount, MerchantAccountAdmin)
 admin.site.register(models.Device, DeviceAdmin)
 admin.site.register(models.Language)
 admin.site.register(models.Currency)
