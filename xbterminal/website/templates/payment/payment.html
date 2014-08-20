@@ -8,7 +8,7 @@
     <form class="enter-amount" action="{% url 'api:payment_init' %}" method="POST" data-device-key="{{ device.key }}">
         <label class="amount-label">{% trans 'amount' %}</label>
         <div class="amount-wrapper">
-            <div class="gbp-symbol">£</div>
+            <div class="fiat-symbol">{{ device.merchant.currency.prefix }}</div>
             <input type="text" name="amount" value="0.00">
         </div>
         <div class="error-message"></div>
@@ -16,7 +16,7 @@
     </form>
     <div class="payment-init">
         <div class="payment-message-1">
-            <div class="fiat-amount-wrapper">£ <span class="fiat-amount"></span></div>
+            <div class="fiat-amount-wrapper">{{ device.merchant.currency.prefix }} <span class="fiat-amount"></span></div>
             <div class="mbtc-amount-wrapper">m฿ <span class="mbtc-amount"></span></div>
         </div>
         <div class="payment-message-2">{% trans 'exchange rate' %}: <span class="exchange-rate"></span></div>

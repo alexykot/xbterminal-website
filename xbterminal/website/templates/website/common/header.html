@@ -46,7 +46,7 @@
                         {% with user.merchant.info as info %}
                         <div id="merchant-info-name">{{ info.name }}</div>
                         <div id="merchant-info-devices">{% trans 'POS active/total:' %} {{ info.active }} / {{ info.total }}</div>
-                        <div id="merchant-info-tx">{% trans 'transactions today:' %} {{ info.tx_count }} / £{{ info.tx_sum|floatformat:2 }}</div>
+                        <div id="merchant-info-tx">{% trans 'transactions today:' %} {{ info.tx_count }} / {{ user.merchant.currency.prefix }}{{ info.tx_sum|floatformat:2 }}</div>
                         {% endwith %}
                     </div>
                     <a class="xbt-btn-secondary logout" href="{% url 'logout' %}">{% trans 'logout' %}</a>
