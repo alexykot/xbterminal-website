@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-08-19 14:41+0400\n"
+"POT-Creation-Date: 2014-08-20 12:02+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: website/forms.py:74 website/models.py:99
+#: website/forms.py:74 website/models.py:100
 msgid "Company name"
 msgstr ""
 
@@ -58,15 +58,15 @@ msgstr ""
 msgid "Terminals on order"
 msgstr ""
 
-#: website/forms.py:149 website/models.py:104
+#: website/forms.py:149 website/models.py:105
 msgid "Town"
 msgstr ""
 
-#: website/forms.py:151 website/models.py:105
+#: website/forms.py:151 website/models.py:106
 msgid "State / County"
 msgstr ""
 
-#: website/forms.py:152 website/models.py:107
+#: website/forms.py:152 website/models.py:108
 msgid "Country"
 msgstr ""
 
@@ -78,115 +78,115 @@ msgstr ""
 msgid "Phone"
 msgstr ""
 
-#: website/models.py:100
+#: website/models.py:101
 msgid "Trading name"
 msgstr ""
 
-#: website/models.py:101
+#: website/models.py:102
 msgid "Business address"
 msgstr ""
 
-#: website/models.py:106
+#: website/models.py:107
 msgid "Post code"
 msgstr ""
 
-#: website/models.py:108
+#: website/models.py:109
 msgid "Contact first name"
 msgstr ""
 
-#: website/models.py:109
+#: website/models.py:110
 msgid "Contact last name"
 msgstr ""
 
-#: website/models.py:110
+#: website/models.py:111
 msgid "Contact phone"
 msgstr ""
 
-#: website/models.py:111
+#: website/models.py:112
 msgid "Contact email"
 msgstr ""
 
-#: website/models.py:157
+#: website/models.py:158
 msgid "Terminal"
 msgstr ""
 
-#: website/models.py:158
+#: website/models.py:159
 msgid "Mobile app"
 msgstr ""
 
-#: website/models.py:159
+#: website/models.py:160
 msgid "Web app"
 msgstr ""
 
-#: website/models.py:162
+#: website/models.py:163
 msgid "Preordered"
 msgstr ""
 
-#: website/models.py:163
+#: website/models.py:164
 msgid "Dispatched"
 msgstr ""
 
-#: website/models.py:164
+#: website/models.py:165
 msgid "Delivered"
 msgstr ""
 
-#: website/models.py:165
+#: website/models.py:166
 msgid "Online"
 msgstr ""
 
-#: website/models.py:166
+#: website/models.py:167
 msgid "Suspended"
 msgstr ""
 
-#: website/models.py:167
+#: website/models.py:168
 msgid "Disposed"
 msgstr ""
 
-#: website/models.py:170
+#: website/models.py:171
 msgid "keep bitcoins"
 msgstr ""
 
-#: website/models.py:171
+#: website/models.py:172
 msgid "convert partially"
 msgstr ""
 
-#: website/models.py:172
+#: website/models.py:173
 msgid "convert full amount"
 msgstr ""
 
-#: website/models.py:187
+#: website/models.py:188
 msgid "Your reference"
 msgstr ""
 
-#: website/models.py:189
+#: website/models.py:190
 msgid "Payment processing"
 msgstr ""
 
-#: website/models.py:190 website/templates/cabinet/device_list.html:14
+#: website/models.py:191 website/templates/cabinet/device_list.html:14
 msgid "Payment processor"
 msgstr ""
 
-#: website/models.py:191
+#: website/models.py:192
 msgid "API key"
 msgstr ""
 
-#: website/models.py:193
+#: website/models.py:194
 msgid "Percent to convert"
 msgstr ""
 
-#: website/models.py:197
+#: website/models.py:198
 msgid "Bitcoin address to send to"
 msgstr ""
 
-#: website/models.py:199 website/templates/cabinet/device_form.html:19
+#: website/models.py:200 website/templates/cabinet/device_form.html:19
 msgid "Device key"
 msgstr ""
 
-#: website/models.py:358
+#: website/models.py:362
 msgid "Bitcoin"
 msgstr ""
 
-#: website/models.py:359
+#: website/models.py:363
 msgid "Bank wire transfer"
 msgstr ""
 
@@ -473,6 +473,56 @@ msgstr ""
 
 #: website/templates/payment/payment.html:30
 msgid "Reset"
+msgstr ""
+
+#: website/templates/pdf/receipt.html:74
+msgid "Customer Receipt"
+msgstr ""
+
+#: website/templates/pdf/receipt.html:77
+msgid "Amount"
+msgstr ""
+
+#: website/templates/pdf/receipt.html:81
+msgid "Bitcoin amount paid"
+msgstr ""
+
+#: website/templates/pdf/receipt.html:85
+msgid "Effective exchange rate"
+msgstr ""
+
+#: website/templates/pdf/receipt.html:90
+msgid "Destination address"
+msgstr ""
+
+#: website/templates/pdf/receipt.html:94
+msgid "Bitcoin transaction ID"
+msgstr ""
+
+#: website/templates/pdf/receipt.html:99
+msgid "Merchant name"
+msgstr ""
+
+#: website/templates/pdf/receipt.html:103
+msgid "Merchant address"
+msgstr ""
+
+#: website/templates/pdf/receipt.html:107
+msgid "Merchant invoice number"
+msgstr ""
+
+#: website/templates/pdf/receipt.html:111
+msgid "Transaction time"
+msgstr ""
+
+#: website/templates/pdf/receipt.html:117
+msgid ""
+"View this receipt online by visiting the link above, or by scanning the QR "
+"code adjacent."
+msgstr ""
+
+#: website/templates/pdf/receipt.html:122
+msgid "payment processed by"
 msgstr ""
 
 #: website/templates/website/landing.html:30

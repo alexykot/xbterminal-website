@@ -49,15 +49,10 @@ def device(request, key):
 def transaction_pdf(request, key):
     transaction = get_object_or_404(Transaction, receipt_key=key)
 
-    response = render_to_pdf(
-        'api/transaction.html', {
-            'transaction': transaction,
-            'STATIC_ROOT': settings.STATIC_ROOT
-        }
-    )
-
-    disposition = 'inline; filename="receipt %s %s.pdf"' %\
-        (transaction.id, transaction.device.merchant.company_name)
+    response = render_to_pdf('pdf/receipt.html',
+                             {'transaction': transaction})
+    disposition = 'inline; filename="receipt %s %s.pdf"'.format(
+        transaction.id, transaction.device.merchant.company_name)
     response['Content-Disposition'] = disposition
     return response
 
