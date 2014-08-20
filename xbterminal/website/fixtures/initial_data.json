@@ -32,6 +32,22 @@
     }
   },
   {
+    "model": "website.currency",
+    "pk": 2,
+    "fields": {
+      "name": "USD",
+      "prefix": "$"
+    }
+  },
+  {
+    "model": "website.currency",
+    "pk": 3,
+    "fields": {
+      "name": "EUR",
+      "prefix": "€"
+    }
+  },
+  {
     "model": "sites.Site",
     "pk": 1,
     "fields": {
