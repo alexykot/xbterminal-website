@@ -106,7 +106,7 @@ class RegistrationView(TemplateResponseMixin, View):
 
     def get(self, *args, **kwargs):
         regtype = self.request.GET.get('regtype', 'default')
-        if self.request.user.is_authenticated():
+        if hasattr(self.request.user, 'merchant'):
             return redirect(reverse('website:devices'))
         context = {
             'form': forms.MerchantRegistrationForm(initial={'regtype': regtype}),
@@ -135,6 +135,7 @@ class RegistrationView(TemplateResponseMixin, View):
                                     content_type='application/json')
         merchant = form.save()
         if regtype == 'default':
+            utils.send_registration_info(merchant)
             response = {
                 'result': 'ok',
                 'next': reverse('website:devices'),
@@ -149,6 +150,7 @@ class RegistrationView(TemplateResponseMixin, View):
                     name='Terminal #{0}'.format(idx + 1),
                     merchant=merchant)
                 device.save()
+            utils.send_registration_info(merchant, order)
             response = {
                 'result': 'ok',
                 'next': reverse('website:order', kwargs={'pk': order.pk}),
@@ -160,6 +162,7 @@ class RegistrationView(TemplateResponseMixin, View):
                 name='Web POS #1',
                 merchant=merchant)
             device.save()
+            utils.send_registration_info(merchant)
             response = {
                 'result': 'ok',
                 'next': reverse('website:devices'),
