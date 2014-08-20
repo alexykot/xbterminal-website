@@ -73,7 +73,7 @@ var Landing = (function () {
             }
         });
 
-        $('#mobile-downloads a').on('click', function (event) {
+        $('#mobile-app-store').on('click', function (event) {
             event.preventDefault();
             alert(gettext('Application is under appstore review, please check back soon.'));
         });
