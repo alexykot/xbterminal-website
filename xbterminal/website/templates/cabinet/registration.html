@@ -1,5 +1,5 @@
 {% extends "cabinet/base.html" %}
-{% load bootstrap3 staticfiles i18n %}
+{% load bootstrap3 staticfiles i18n l10n %}
 
 {% block js %}
 <script src="{% static 'lib/jquery.validate.min.js' %}"></script>
@@ -122,7 +122,7 @@
                             <a id="quantity-minus" class="xbt-btn-secondary">-</a>
                         </div>
                     </div>
-                    <div id="calculation" data-price="{{ order_form.terminal_price }}" data-exchange-rate="{{ order_form.exchange_rate }}"></div>
+                    <div id="calculation" data-price="{{ order_form.terminal_price|unlocalize }}" data-exchange-rate="{{ order_form.exchange_rate|unlocalize }}"></div>
                     {% bootstrap_field order_form.payment_method %}
                     <label class="control-label">{% trans 'Billing and delivery address' %}</label>
                     <div id="delivery-address-preview"></div>
