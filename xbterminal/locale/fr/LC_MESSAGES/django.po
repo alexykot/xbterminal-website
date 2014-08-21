@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-08-20 12:02+0400\n"
+"POT-Creation-Date: 2014-08-22 01:33+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -174,19 +174,19 @@ msgstr ""
 msgid "Percent to convert"
 msgstr ""
 
-#: website/models.py:198
+#: website/models.py:199
 msgid "Bitcoin address to send to"
 msgstr ""
 
-#: website/models.py:200 website/templates/cabinet/device_form.html:19
+#: website/models.py:201 website/templates/cabinet/device_form.html:19
 msgid "Device key"
 msgstr ""
 
-#: website/models.py:362
+#: website/models.py:363
 msgid "Bitcoin"
 msgstr ""
 
-#: website/models.py:363
+#: website/models.py:364
 msgid "Bank wire transfer"
 msgstr ""
 
@@ -194,19 +194,19 @@ msgstr ""
 msgid "Message from xbterminal.io"
 msgstr ""
 
-#: website/views.py:485
+#: website/views.py:488
 msgid "Email has been sent successfully."
 msgstr ""
 
-#: website/views.py:488
+#: website/views.py:491
 msgid "Error: Invalid email. Please, try again."
 msgstr ""
 
-#: website/views.py:501
+#: website/views.py:504
 msgid "XBTerminal newsletter confirmation"
 msgstr ""
 
-#: website/views.py:508
+#: website/views.py:511
 msgid "Subscription to newsletters"
 msgstr ""
 
@@ -226,8 +226,8 @@ msgid "select"
 msgstr ""
 
 #: website/templates/cabinet/device_form.html:34
-#: website/templates/cabinet/registration.html:42
-#: website/templates/cabinet/registration.html:78
+#: website/templates/cabinet/registration.html:41
+#: website/templates/cabinet/registration.html:77
 msgid "Cancel"
 msgstr ""
 
@@ -280,22 +280,24 @@ msgid "to pay"
 msgstr ""
 
 #: website/templates/cabinet/order.html:19
-#: website/templates/cabinet/registration.html:153
+#: website/templates/cabinet/registration.html:152
 msgid "Quantity on order"
 msgstr ""
 
 #: website/templates/cabinet/order.html:23
-#: website/templates/cabinet/registration.html:165
+#: website/templates/cabinet/registration.html:164
 msgid "Subtotal"
 msgstr ""
 
 #: website/templates/cabinet/order.html:27
-#: website/templates/cabinet/registration.html:170
+#: website/templates/cabinet/registration.html:169
+#: website/templates/pdf/invoice.html:107
 msgid "VAT"
 msgstr ""
 
 #: website/templates/cabinet/order.html:31
-#: website/templates/cabinet/registration.html:175
+#: website/templates/cabinet/registration.html:174
+#: website/templates/pdf/invoice.html:129
 msgid "Total"
 msgstr ""
 
@@ -376,38 +378,39 @@ msgid "Close"
 msgstr ""
 
 #: website/templates/cabinet/reconciliation.html:90
+#: website/templates/website/contact.html:12
 msgid "Send"
 msgstr ""
 
-#: website/templates/cabinet/registration.html:17
+#: website/templates/cabinet/registration.html:16
 msgid "Merchant registration"
 msgstr ""
 
-#: website/templates/cabinet/registration.html:18
-#: website/templates/cabinet/registration.html:24
+#: website/templates/cabinet/registration.html:17
+#: website/templates/cabinet/registration.html:23
 msgid "step <span>1</span> of 2"
 msgstr ""
 
-#: website/templates/cabinet/registration.html:20
+#: website/templates/cabinet/registration.html:19
 msgid "Terminal order"
 msgstr ""
 
-#: website/templates/cabinet/registration.html:21
+#: website/templates/cabinet/registration.html:20
 msgid "step <span>1</span> of 3"
 msgstr ""
 
-#: website/templates/cabinet/registration.html:23
+#: website/templates/cabinet/registration.html:22
 msgid "Online POS registration"
 msgstr ""
 
-#: website/templates/cabinet/registration.html:41
-#: website/templates/cabinet/registration.html:77
-#: website/templates/cabinet/registration.html:144
+#: website/templates/cabinet/registration.html:40
+#: website/templates/cabinet/registration.html:76
+#: website/templates/cabinet/registration.html:143
 msgid "Continue"
 msgstr ""
 
-#: website/templates/cabinet/registration.html:70
-#: website/templates/cabinet/registration.html:104
+#: website/templates/cabinet/registration.html:69
+#: website/templates/cabinet/registration.html:103
 #, python-format
 msgid ""
 "\n"
@@ -417,33 +420,33 @@ msgid ""
 "                                "
 msgstr ""
 
-#: website/templates/cabinet/registration.html:111
+#: website/templates/cabinet/registration.html:110
 msgid "Create account"
 msgstr ""
 
-#: website/templates/cabinet/registration.html:113
-#: website/templates/cabinet/registration.html:145
-#: website/templates/cabinet/registration.html:187
+#: website/templates/cabinet/registration.html:112
+#: website/templates/cabinet/registration.html:144
+#: website/templates/cabinet/registration.html:186
 msgid "Back"
 msgstr ""
 
-#: website/templates/cabinet/registration.html:128
+#: website/templates/cabinet/registration.html:127
 msgid "Billing and delivery address"
 msgstr ""
 
-#: website/templates/cabinet/registration.html:158
+#: website/templates/cabinet/registration.html:157
 msgid "Billing address"
 msgstr ""
 
-#: website/templates/cabinet/registration.html:160
+#: website/templates/cabinet/registration.html:159
 msgid "Delivery address"
 msgstr ""
 
-#: website/templates/cabinet/registration.html:180
+#: website/templates/cabinet/registration.html:179
 msgid "Payment method"
 msgstr ""
 
-#: website/templates/cabinet/registration.html:185
+#: website/templates/cabinet/registration.html:184
 msgid "Confirm"
 msgstr ""
 
@@ -475,12 +478,85 @@ msgstr ""
 msgid "Reset"
 msgstr ""
 
-#: website/templates/pdf/receipt.html:74
-msgid "Customer Receipt"
+#: website/templates/pdf/invoice.html:49
+msgid "Invoice"
 msgstr ""
 
+#: website/templates/pdf/invoice.html:59
+msgid "Date"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:60
+msgid "Invoice No."
+msgstr ""
+
+#: website/templates/pdf/invoice.html:67
+msgid "Terms"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:68
+msgid "Due Date"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:71
+msgid "Due on receipt"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:85
+msgid "Invoice To"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:87
+msgid "Amount Due"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:104
+msgid "Activity"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:105
+msgid "Quantity"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:106
+msgid "Rate"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:108
 #: website/templates/pdf/receipt.html:77
 msgid "Amount"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:119
+msgid "SubTotal"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:124
+msgid "VAT Total"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:136
+msgid "VAT Registration No"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:142
+msgid "Payment details"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:148
+msgid "Account name"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:149
+msgid "Account registered address"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:150
+msgid "Payment reference"
+msgstr ""
+
+#: website/templates/pdf/receipt.html:74
+msgid "Customer Receipt"
 msgstr ""
 
 #: website/templates/pdf/receipt.html:81
@@ -523,6 +599,39 @@ msgstr ""
 
 #: website/templates/pdf/receipt.html:122
 msgid "payment processed by"
+msgstr ""
+
+#: website/templates/website/contact.html:8
+msgid "By email"
+msgstr ""
+
+#: website/templates/website/contact.html:16
+msgid ""
+"<h3>Thanks!</h3><p class=\"lead\">We will contact you as soon as possible</p>"
+msgstr ""
+
+#: website/templates/website/contact.html:21
+msgid "By phone"
+msgstr ""
+
+#: website/templates/website/contact.html:24
+msgid "during business hours London time"
+msgstr ""
+
+#: website/templates/website/contact.html:26
+msgid "By post"
+msgstr ""
+
+#: website/templates/website/contact.html:28
+msgid "Our registered address is"
+msgstr ""
+
+#: website/templates/website/contact.html:34
+msgid "By foot"
+msgstr ""
+
+#: website/templates/website/contact.html:36
+msgid "We're often can be found at"
 msgstr ""
 
 #: website/templates/website/landing.html:30

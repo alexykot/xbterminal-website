@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-08-20 12:02+0400\n"
+"POT-Creation-Date: 2014-08-22 01:33+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,10 +20,6 @@ msgstr ""
 
 #: website/static/js/landing.js:31
 msgid "Thank you for joining our mailing list!"
-msgstr ""
-
-#: website/static/js/landing.js:78
-msgid "Application is under appstore review, please check back soon."
 msgstr ""
 
 #: website/static/js/registration.js:115
