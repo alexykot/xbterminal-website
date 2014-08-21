@@ -1,5 +1,5 @@
 {% extends "cabinet/base.html" %}
-{% load bootstrap3 staticfiles qr_tags %}
+{% load bootstrap3 staticfiles qr_tags i18n %}
 
 {% block js %}
 {{ form.media }}
@@ -8,7 +8,7 @@
 {% block cabinet_content %}
 <div class="row">
     <div class="col-md-8 col-md-offset-2">
-        <h3>{% if device %}Update{% else %}Create{% endif %} {{ form.device_type_verbose|lower }}:</h3>
+        <h3>{% if device %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %} {{ form.device_type_verbose|lower }}:</h3>
         <form id="device-form" action="" method="post">
             {% csrf_token %}
             {% bootstrap_form form %}
@@ -16,10 +16,10 @@
                 <div class="row">
                     <div class="col-md-8">
                         <div class="form-group">
-                            <label class="control-label" for="device-key">Device key</label>
+                            <label class="control-label" for="device-key">{% trans 'Device key' %}</label>
                             <div class="input-group">
                                 <input type="text" class="form-control" id="device-key" value="{{ device.key }}" readonly>
-                                <a class="input-group-addon" id="device-key-select">select</a>
+                                <a class="input-group-addon" id="device-key-select">{% trans 'select' %}</a>
                             </div>
                         </div>
                     </div>
@@ -29,9 +29,9 @@
                 </div>
             {% endif %}
             <button type="submit" class="btn btn-default">
-                {% if device %}Update{% else %}Create{% endif %}
+                {% if device %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %}
             </button>
-            <a href="{% url 'website:devices' %}" class="btn btn-default">Cancel</a>
+            <a href="{% url 'website:devices' %}" class="btn btn-default">{% trans 'Cancel' %}</a>
         </form>
     </div>
 </div>

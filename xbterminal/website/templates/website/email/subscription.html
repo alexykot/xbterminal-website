@@ -1,5 +1,9 @@
 {% if subscriber_email %}
+{% blocktrans %}
 New subscription from {{ subscriber_email }}
+{% endblocktrans %}
 {% else %}
+{% blocktrans %}
 Thank you for subscribing to XBTerminal newsletter. Also you can follow us on <a href="https://twitter.com/xbterminal">twitter</a>. Stay tuned, we will send updates once we have them.
+{% endblocktrans %}
 {% endif %}

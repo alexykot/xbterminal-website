@@ -13,3 +13,4 @@ config/supervisor.ini
 firmware
 logs
 /reports
+*.mo

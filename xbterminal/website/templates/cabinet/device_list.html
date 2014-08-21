@@ -1,17 +1,18 @@
 {% extends "cabinet/base.html" %}
+{% load i18n %}
 
 {% block cabinet_content %}
-<div class="create-device-button">
-    <a class="btn btn-default" href="{% url 'website:create_device' %}?device_type=hardware">Create terminal</a>
-    <a class="btn btn-default" href="{% url 'website:create_device' %}?device_type=mobile">Create mobile app</a>
-    <a class="btn btn-default" href="{% url 'website:create_device' %}?device_type=web">Create web app</a>
+<div>
+    <a class="btn btn-default" href="{% url 'website:create_device' %}?device_type=hardware">{% trans 'Create terminal' %}</a>
+    <a class="btn btn-default" href="{% url 'website:create_device' %}?device_type=mobile">{% trans 'Create mobile app' %}</a>
+    <a class="btn btn-default" href="{% url 'website:create_device' %}?device_type=web">{% trans 'Create web app' %}</a>
 </div>
-<table class="table table-striped table-bordered table-responsive">
+<table id="devices" class="table table-striped table-bordered table-responsive">
     <tr>
-        <th>Name</th>
-        <th>Receiving address</th>
-        <th>Payment processor</th>
-        <th>Actions</th>
+        <th>{% trans 'Name' %}</th>
+        <th>{% trans 'Receiving address' %}</th>
+        <th>{% trans 'Payment processor' %}</th>
+        <th>{% trans 'Actions' %}</th>
     </tr>
     {% for device in devices %}
     <tr>
@@ -28,8 +29,8 @@
         </td>
         <td>{{ device.payment_processor_info|default:"--" }}</td>
         <td>
-            <div><a href="{% url 'website:reconciliation' device.key %}">reconciliation</a></div>
-            <div><a href="{% url 'website:payment' device.key %}" target="_blank">online POS</a></div>
+            <div><a href="{% url 'website:reconciliation' device.key %}">{% trans 'reconciliation' %}</a></div>
+            <div><a href="{% url 'website:payment' device.key %}" target="_blank">{% trans 'online POS' %}</a></div>
         </td>
     </tr>
     {% endfor %}

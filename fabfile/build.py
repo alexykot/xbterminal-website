@@ -43,7 +43,23 @@ def proto():
               "paymentrequest.proto")
 
 
+@task
+def makemessages():
+    with lcd("xbterminal"):
+        with prefix(". ../venv/bin/activate"):
+            local("django-admin.py makemessages -a")
+            local("django-admin.py makemessages -d djangojs -a")
+
+
+@task
+def compilemessages():
+    with env.cd("xbterminal"):
+        with prefix(". ../venv/bin/activate"):
+            env.run("django-admin.py compilemessages")
+
+
 @task(default=True)
 def all():
     dirs()
     venv()
+    compilemessages()

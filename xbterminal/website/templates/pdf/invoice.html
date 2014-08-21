@@ -1,3 +1,4 @@
+{% load i18n %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -45,7 +46,7 @@
     <table cellpadding="0" border="0">
         <tr>
             <td colspan="4" class="h1">XBTerminal Ltd</td>
-            <td colspan="4" class="h1 right">Invoice</td>
+            <td colspan="4" class="h1 right">{% trans 'Invoice' %}</td>
         </tr>
         <tr>
             <td colspan="6" rowspan="4" valign="top">
@@ -55,19 +56,19 @@
                 EC1V 2NX<br>
                 United Kingdom
             </td>
-            <td class="h3 border center">Date</td>
-            <td class="h3 border center">Invoice No.</td>
+            <td class="h3 border center">{% trans 'Date' %}</td>
+            <td class="h3 border center">{% trans 'Invoice No.' %}</td>
         </tr>
         <tr>
             <td class="center">{{ order.created|date:'d/m/Y' }}</td>
             <td class="center">{{ order.id }}</td>
         </tr>
         <tr>
-            <td class="h3 border center">Terms</td>
-            <td class="h3 border center">Due Date</td>
+            <td class="h3 border center">{% trans 'Terms' %}</td>
+            <td class="h3 border center">{% trans 'Due Date' %}</td>
         </tr>
         <tr>
-            <td class="center">Due on receipt</td>
+            <td class="center">{% trans 'Due on receipt' %}</td>
             <td class="center">{{ order.invoice_due_date|date:'d/m/Y' }}</td>
         </tr>
         <tr>
@@ -81,9 +82,9 @@
             <td colspan="8"><br></td>
         </tr>
         <tr>
-            <td colspan="3" class="h3 border">Invoice To</td>
+            <td colspan="3" class="h3 border">{% trans 'Invoice To' %}</td>
             <td colspan="4">&nbsp;</td>
-            <td class="h3 border center">Amount Due</td>
+            <td class="h3 border center">{% trans 'Amount Due' %}</td>
         </tr>
         <tr>
             <td colspan="3" rowspan="2">
@@ -100,11 +101,11 @@
             <td colspan="8"><br></td>
         </tr>
         <tr>
-            <td colspan="4" class="h3 border">Activity</td>
-            <td class="h3 border center">Quantity</td>
-            <td class="h3 border center">Rate</td>
-            <td width="20%" class="h3 border center">VAT</td>
-            <td width="20%" class="h3 border right">Amount (GBP)</td>
+            <td colspan="4" class="h3 border">{% trans 'Activity' %}</td>
+            <td class="h3 border center">{% trans 'Quantity' %}</td>
+            <td class="h3 border center">{% trans 'Rate' %}</td>
+            <td width="20%" class="h3 border center">{% trans 'VAT' %}</td>
+            <td width="20%" class="h3 border right">{% trans 'Amount' %} (GBP)</td>
         </tr>
         <tr>
             <td colspan="4" class="border top">XBTerminal Bitcoin POS Terminal<br><br><br><br></td>
@@ -115,38 +116,38 @@
         </tr>
         <tr>
             <td colspan="5">&nbsp;</td>
-            <td colspan="2" class="h3 border right">SubTotal</td>
+            <td colspan="2" class="h3 border right">{% trans 'SubTotal' %}</td>
             <td class="border right">£{{ order.fiat_amount|floatformat:2 }}</td>
         </tr>
         <tr>
             <td colspan="5">&nbsp;</td>
-            <td colspan="2" class="h3 border right">VAT Total</td>
+            <td colspan="2" class="h3 border right">{% trans 'VAT Total' %}</td>
             <td class="border right">£{{ order.fiat_vat_amount|floatformat:2 }}</td>
         </tr>
         <tr>
             <td colspan="5">&nbsp;</td>
-            <td colspan="2" class="h3 border right">Total</td>
+            <td colspan="2" class="h3 border right">{% trans 'Total' %}</td>
             <td class="border right">£{{ order.fiat_total_amount|floatformat:2 }}</td>
         </tr>
         <tr>
             <td colspan="8"><br></td>
         </tr>
         <tr>
-            <td colspan="8" class="h2">VAT Registration No:</td>
+            <td colspan="8" class="h2">{% trans 'VAT Registration No' %}:</td>
         </tr>
         <tr>
             <td colspan="8"><br></td>
         </tr>
         <tr>
-            <td colspan="8" class="h2">Payment details:</td>
+            <td colspan="8" class="h2">{% trans 'Payment details' %}:</td>
         </tr>
         <tr>
             <td colspan="8">
                 IBAN: PL27 1090 2851 0000 0001 2372 0021<br>
                 SWIFT: WBKPPLPPXXX<br>
-                Account name: XBTerminal Ltd<br>
-                Account registered address: ul. Solec 81B, Lok A-51, 00-382, Warsaw, Poland<br>
-                Payment reference: {{ order.payment_reference }}
+                {% trans 'Account name' %}: XBTerminal Ltd<br>
+                {% trans 'Account registered address' %}: ul. Solec 81B, Lok A-51, 00-382, Warsaw, Poland<br>
+                {% trans 'Payment reference' %}: {{ order.payment_reference }}
             </td>
         </tr>
     </table>

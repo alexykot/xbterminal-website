@@ -10,6 +10,7 @@ from django.contrib.auth.forms import (
 from django.core.mail import send_mail
 from django.core.validators import RegexValidator
 from django.template.loader import render_to_string
+from django.utils.translation import ugettext_lazy as _
 
 from payment import preorder
 
@@ -70,18 +71,18 @@ class MerchantRegistrationForm(forms.ModelForm):
 
     # Used at registration step 1
     company_name_copy = forms.CharField(
-        label='Company name',
+        label=_('Company name'),
         required=False)
 
     class Meta:
         model = MerchantAccount
         exclude = ['user', 'business_address2', 'language', 'currency']
         labels = {
-            'business_address': 'Trading address',
-            'post_code': 'Post code/Zip code',
-            'contact_first_name': 'First name',
-            'contact_last_name': 'Last name',
-            'contact_email': 'Email',
+            'business_address': _('Trading address'),
+            'post_code': _('Post code/Zip code'),
+            'contact_first_name': _('First name'),
+            'contact_last_name': _('Last name'),
+            'contact_email': _('Email'),
         }
 
     def clean(self):
@@ -94,13 +95,14 @@ class MerchantRegistrationForm(forms.ModelForm):
         })
         if not self._errors:
             try:
-                send_mail("Registration for XBTerminal.io",
+                send_mail(
+                        _("Registration for XBTerminal.io"),
                         mail_text,
                         settings.DEFAULT_FROM_EMAIL,
                         [cleaned_data['contact_email']],
                         fail_silently=False)
             except smtplib.SMTPRecipientsRefused as error:
-                self._errors['contact_email'] = self.error_class(['Invalid email.'])
+                self._errors['contact_email'] = self.error_class([_('Invalid email.')])
                 del cleaned_data['contact_email']
         return cleaned_data
 
@@ -125,7 +127,7 @@ class TerminalOrderForm(forms.ModelForm):
     Terminal order form
     """
     delivery_address_differs = forms.BooleanField(
-        label="Deliver to a different address",
+        label=_("Deliver to a different address"),
         required=False)
 
     class Meta:
@@ -143,11 +145,11 @@ class TerminalOrderForm(forms.ModelForm):
             'payment_status',
         ]
         labels = {
-            'quantity': 'Terminals on order',
-            'delivery_town': 'Town',
-            'delivery_post_code': 'Post code/Zip code',
-            'delivery_county': 'State / County',
-            'delivery_country': 'Country',
+            'quantity': _('Terminals on order'),
+            'delivery_town': _('Town'),
+            'delivery_post_code': _('Post code/Zip code'),
+            'delivery_county': _('State / County'),
+            'delivery_country': _('Country'),
         }
         widgets = {
             'quantity': forms.TextInput,
@@ -174,7 +176,7 @@ class TerminalOrderForm(forms.ModelForm):
             for field_name in required_fields:
                 if not cleaned_data.get(field_name):
                     self._errors[field_name] = self.error_class(
-                        ["This field is required."])
+                        [_("This field is required.")])
                     del cleaned_data[field_name]
         return cleaned_data
 
@@ -204,11 +206,11 @@ class ProfileForm(forms.ModelForm):
         model = MerchantAccount
         exclude = ['user', 'business_address2', 'language', 'currency']
         labels = {
-            'business_address': 'Trading address',
-            'contact_first_name': 'First name',
-            'contact_last_name': 'Last name',
-            'contact_email': 'Email',
-            'contact_phone': 'Phone',
+            'business_address': _('Trading address'),
+            'contact_first_name': _('First name'),
+            'contact_last_name': _('Last name'),
+            'contact_email': _('Email'),
+            'contact_phone': _('Phone'),
         }
 
 class DeviceForm(forms.ModelForm):

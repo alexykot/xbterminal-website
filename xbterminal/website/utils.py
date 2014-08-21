@@ -86,7 +86,7 @@ def get_transaction_pdf_archive(transactions, to_file=None):
 
     for transaction in transactions:
         result = generate_pdf(
-            'api/transaction.html',
+            'pdf/receipt.html',
             {'transaction': transaction})
         archive.writestr('receipt #%s.pdf' % transaction.id, result.getvalue())
         result.close()
@@ -190,3 +190,20 @@ def send_invoice(order):
         })
         message.attach('invoice.pdf', pdf.getvalue(), 'application/pdf')
     message.send(fail_silently=False)
+
+
+def send_registration_info(merchant, order=None):
+    """
+    Send merchant registration info
+    """
+    context = {
+        'merchant': merchant,
+        'order': order,
+    }
+    email = create_html_message(
+        'XBTerminal registration info',
+        'website/email/registration_info.html',
+        context,
+        settings.DEFAULT_FROM_EMAIL,
+        settings.CONTACT_EMAIL_RECIPIENTS)
+    email.send(fail_silently=False)

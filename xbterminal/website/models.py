@@ -11,6 +11,7 @@ from django_countries.fields import CountryField
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.contrib.sites.models import Site
 from django.utils import timezone
+from django.utils.translation import ugettext_lazy as _
 
 from constance import config
 
@@ -74,6 +75,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class Language(models.Model):
     name = models.CharField(max_length=50)
+    code = models.CharField(max_length=2)
     fractional_split = models.CharField(max_length=1, default=".")
     thousands_split = models.CharField(max_length=1, default=",")
 
@@ -95,19 +97,19 @@ class Currency(models.Model):
 
 class MerchantAccount(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name="merchant", null=True)
-    company_name = models.CharField(max_length=255)
-    trading_name = models.CharField(max_length=255, blank=True)
-    business_address = models.CharField(max_length=255)
+    company_name = models.CharField(_('Company name'), max_length=255)
+    trading_name = models.CharField(_('Trading name'), max_length=255, blank=True)
+    business_address = models.CharField(_('Business address'), max_length=255)
     business_address1 = models.CharField('', max_length=255, blank=True, default='')
     business_address2 = models.CharField('', max_length=255, blank=True, default='')
-    town = models.CharField(max_length=64)
-    county = models.CharField("State / County", max_length=128, blank=True)
-    post_code = models.CharField(max_length=32, validators=[validate_post_code])
-    country = CountryField(default='GB')
-    contact_first_name = models.CharField(max_length=255)
-    contact_last_name = models.CharField(max_length=255)
-    contact_phone = models.CharField(max_length=32, validators=[validate_phone])
-    contact_email = models.EmailField(max_length=254, unique=True)
+    town = models.CharField(_('Town'), max_length=64)
+    county = models.CharField(_('State / County'), max_length=128, blank=True)
+    post_code = models.CharField(_('Post code'), max_length=32, validators=[validate_post_code])
+    country = CountryField(_('Country'), default='GB')
+    contact_first_name = models.CharField(_('Contact first name'), max_length=255)
+    contact_last_name = models.CharField(_('Contact last name'), max_length=255)
+    contact_phone = models.CharField(_('Contact phone'), max_length=32, validators=[validate_phone])
+    contact_email = models.EmailField(_('Contact email'), max_length=254, unique=True)
 
     language = models.ForeignKey(Language, default=1)  # by default, English, see fixtures
     currency = models.ForeignKey(Currency, default=1)  # by default, GBP, see fixtures
@@ -153,22 +155,22 @@ def gen_device_key():
 class Device(models.Model):
 
     DEVICE_TYPES = [
-        ('hardware', 'Terminal'),
-        ('mobile', 'Mobile app'),
-        ('web', 'Web app'),
+        ('hardware', _('Terminal')),
+        ('mobile', _('Mobile app')),
+        ('web', _('Web app')),
     ]
     DEVICE_STATUSES = [
-        ('preordered', 'Preordered'),
-        ('dispatched', 'Dispatched'),
-        ('delivered', 'Delivered'),
-        ('active', 'Online'),
-        ('suspended', 'Suspended'),
-        ('disposed', 'Disposed'),
+        ('preordered', _('Preordered')),
+        ('dispatched', _('Dispatched')),
+        ('delivered', _('Delivered')),
+        ('active', _('Online')),
+        ('suspended', _('Suspended')),
+        ('disposed', _('Disposed')),
     ]
     PAYMENT_PROCESSING_CHOICES = [
-        ('keep', 'keep bitcoins'),
-        ('partially', 'convert partially'),
-        ('full', 'convert full amount'),
+        ('keep', _('keep bitcoins')),
+        ('partially', _('convert partially')),
+        ('full', _('convert full amount')),
     ]
     PAYMENT_PROCESSOR_CHOICES = [
         ('BitPay', 'BitPay'),
@@ -183,20 +185,20 @@ class Device(models.Model):
     merchant = models.ForeignKey(MerchantAccount)
     device_type = models.CharField(max_length=50, choices=DEVICE_TYPES)
     status = models.CharField(max_length=50, choices=DEVICE_STATUSES, default='active')
-    name = models.CharField('Your reference', max_length=100)
+    name = models.CharField(_('Your reference'), max_length=100)
 
-    payment_processing = models.CharField(max_length=50, choices=PAYMENT_PROCESSING_CHOICES, default='keep')
-    payment_processor = models.CharField(max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, blank=True, null=True)
-    api_key = models.CharField(max_length=255, blank=True)
+    payment_processing = models.CharField(_('Payment processing'), max_length=50, choices=PAYMENT_PROCESSING_CHOICES, default='keep')
+    payment_processor = models.CharField(_('Payment processor'), max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, blank=True, null=True)
+    api_key = models.CharField(_('API key'), max_length=255, blank=True)
     percent = models.DecimalField(
-        'percent to convert',
+        _('Percent to convert'),
         max_digits=4,
         decimal_places=1,
         validators=[validate_percent],
         default=0)
-    bitcoin_address = models.CharField('bitcoin address to send to', max_length=100, blank=True)
+    bitcoin_address = models.CharField(_('Bitcoin address to send to'), max_length=100, blank=True)
 
-    key = models.CharField(max_length=32, editable=False, unique=True, default=gen_device_key)
+    key = models.CharField(_('Device key'), max_length=32, editable=False, unique=True, default=gen_device_key)
 
     serial_number = models.CharField(max_length=50, blank=True, null=True)
     bitcoin_network = models.CharField(max_length=50, choices=BITCOIN_NETWORKS, default='mainnet')
@@ -358,8 +360,8 @@ def gen_payment_reference():
 class Order(models.Model):
 
     PAYMENT_METHODS = [
-        ('bitcoin', 'Bitcoin'),
-        ('wire', 'Bank wire transfer'),
+        ('bitcoin', _('Bitcoin')),
+        ('wire', _('Bank wire transfer')),
     ]
     PAYMENT_STATUSES = [
         ('unpaid', 'unpaid'),

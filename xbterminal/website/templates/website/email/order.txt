@@ -1,8 +1,14 @@
+{% load i18n %}
 {% if order.payment_method == 'bitcoin' %}
-Thank you for your order, we appreciate your business. Your order id is #{{ order.id|stringformat:"03d" }}, we will notify you as long as your order will be ready for shipping.
+    {% blocktrans %}
+    Thank you for your order, we appreciate your business. Your order id is #{{ order.id|stringformat:"03d" }}, we will notify you as long as your order will be ready for shipping.
+    {% endblocktrans %}
 {% elif order.payment_method == 'wire' %}
-Thank you for your order, we appreciate your business. Your preorder invoice is attached along with payment details if you have not already done so.
+    {% blocktrans %}
+    Thank you for your order, we appreciate your business. Your preorder invoice is attached along with payment details if you have not already done so.
+    {% endblocktrans %}
 {% endif %}
-
+{% blocktrans %}
 Warm regards,
 XBTerminal Team
+{% endblocktrans %}

@@ -17,6 +17,7 @@ from django.views.decorators.http import require_http_methods
 from django.db.models import Count, Sum
 from django.contrib import messages
 from django.utils import timezone
+from django.utils.translation import ugettext as _
 
 from payment.blockchain import construct_bitcoin_uri
 
@@ -57,7 +58,7 @@ class ContactView(TemplateResponseMixin, View):
                 'website/email/contact.txt',
                 form.cleaned_data)
             send_mail(
-                "message from xbterminal.com",
+                _("Message from xbterminal.io"),
                 mail_text,
                 settings.DEFAULT_FROM_EMAIL,
                 settings.CONTACT_EMAIL_RECIPIENTS,
@@ -105,7 +106,7 @@ class RegistrationView(TemplateResponseMixin, View):
 
     def get(self, *args, **kwargs):
         regtype = self.request.GET.get('regtype', 'default')
-        if self.request.user.is_authenticated():
+        if hasattr(self.request.user, 'merchant'):
             return redirect(reverse('website:devices'))
         context = {
             'form': forms.MerchantRegistrationForm(initial={'regtype': regtype}),
@@ -134,6 +135,7 @@ class RegistrationView(TemplateResponseMixin, View):
                                     content_type='application/json')
         merchant = form.save()
         if regtype == 'default':
+            utils.send_registration_info(merchant)
             response = {
                 'result': 'ok',
                 'next': reverse('website:devices'),
@@ -148,6 +150,7 @@ class RegistrationView(TemplateResponseMixin, View):
                     name='Terminal #{0}'.format(idx + 1),
                     merchant=merchant)
                 device.save()
+            utils.send_registration_info(merchant, order)
             response = {
                 'result': 'ok',
                 'next': reverse('website:order', kwargs={'pk': order.pk}),
@@ -159,6 +162,7 @@ class RegistrationView(TemplateResponseMixin, View):
                 name='Web POS #1',
                 merchant=merchant)
             device.save()
+            utils.send_registration_info(merchant)
             response = {
                 'result': 'ok',
                 'next': reverse('website:devices'),
@@ -269,7 +273,7 @@ class CreateDeviceView(TemplateResponseMixin, CabinetView):
         context = self.get_context_data(**kwargs)
         context['form'] = forms.DeviceForm(initial={
             'device_type': device_type,
-            'name': '{0} #{1}'.format(device_types[device_type], count + 1),
+            'name': u'{0} #{1}'.format(device_types[device_type], count + 1),
         })
         return self.render_to_response(context)
 
@@ -480,9 +484,11 @@ class SendAllToEmailView(DeviceMixin, CabinetView):
             utils.send_reconciliation(
                 email, context['device'],
                 (rec_range_beg, rec_range_end))
-            messages.success(self.request, 'Email has been sent successfully.')
+            messages.success(self.request,
+                             _('Email has been sent successfully.'))
         else:
-            messages.error(self.request, 'Error: Invalid email. Please, try again.')
+            messages.error(self.request,
+                           _('Error: Invalid email. Please, try again.'))
         return redirect('website:reconciliation', context['device'].key)
 
 
@@ -495,14 +501,14 @@ class SubscribeNewsView(View):
         if form.is_valid():
             subscriber_email = form.cleaned_data['email']
             email1 = utils.create_html_message(
-                "XBTerminal newsletter confirmation",
+                _("XBTerminal newsletter confirmation"),
                 "website/email/subscription.html",
                 {},
                 settings.DEFAULT_FROM_EMAIL,
                 [subscriber_email])
             email1.send(fail_silently=False)
             email2 = utils.create_html_message(
-                "Subscription to newsletters",
+                _("Subscription to newsletters"),
                 "website/email/subscription.html",
                 {'subscriber_email': subscriber_email},
                 settings.DEFAULT_FROM_EMAIL,

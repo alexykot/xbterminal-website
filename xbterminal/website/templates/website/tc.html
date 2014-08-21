@@ -1,13 +1,13 @@
 {% extends "cabinet/base.html" %}
-{% load staticfiles %}
+{% load staticfiles i18n %}
 
-{% block title %}Terms and conditions | {% endblock %}
+{% block title %}{% trans 'Terms and conditions' %} | {% endblock %}
 
 {% block cabinet_content %}
 <div class="row">
     <div class="col-md-12">
-        <p><h1>Terms and conditions of use</h1></p>
-
+        <p><h1>{% trans 'Terms and conditions of use' %}</h1></p>
+        {% blocktrans %}
         <p>
         1. Introduction <br>
         1.1	These terms and conditions govern your use of our website. <br>
@@ -278,6 +278,7 @@
         20.4 You can contact us by writing to the business address given above, by using our website contact
             form, by email to info@xbterminal.io or by telephone on +44 (0) 20 8123 8185. <br>
         </p>
+        {% endblocktrans %}
     </div>
 </div>
 {% endblock %}

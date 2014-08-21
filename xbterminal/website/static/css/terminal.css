@@ -51,7 +51,7 @@ body {
     width: 300px;
 }
 
-.enter-amount .gbp-symbol {
+.enter-amount .fiat-symbol {
     font-size: 3em;
     left: -40px;
     position: absolute;

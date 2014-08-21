@@ -3,7 +3,24 @@
     "model": "website.language",
     "pk": 1,
     "fields": {
-      "name": "English"
+      "name": "English",
+      "code": "en"
+    }
+  },
+  {
+    "model": "website.language",
+    "pk": 2,
+    "fields": {
+      "name": "Deutsch",
+      "code": "de"
+    }
+  },
+  {
+    "model": "website.language",
+    "pk": 3,
+    "fields": {
+      "name": "Français",
+      "code": "fr"
     }
   },
   {
@@ -12,6 +29,22 @@
     "fields": {
       "name": "GBP",
       "prefix": "£"
+    }
+  },
+  {
+    "model": "website.currency",
+    "pk": 2,
+    "fields": {
+      "name": "USD",
+      "prefix": "$"
+    }
+  },
+  {
+    "model": "website.currency",
+    "pk": 3,
+    "fields": {
+      "name": "EUR",
+      "prefix": "€"
     }
   },
   {

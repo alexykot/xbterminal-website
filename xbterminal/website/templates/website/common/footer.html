@@ -1,15 +1,15 @@
-{% load staticfiles %}
+{% load staticfiles i18n %}
 
 <div class="footer-1 row">
     <div class="container">
         <ul class="footer-menu">
-            <li><a href="{% url 'website:landing' %}#about-section">about</a></li>
-            <li><a href="{% url 'website:landing' %}#terminal-section">terminal</a></li>
-            <li><a href="{% url 'website:landing' %}#mobile-section">mobile</a></li>
-            <li><a href="{% url 'website:landing' %}#web-section">web</a></li>
-            <li><a href="{% url 'website:terms' %}">terms & conditions</a></li>
-            <li><a href="{% url 'website:privacy' %}">privacy policy</a></li>
-            <li><a href="{% url 'website:contact' %}">contact us</a></li>
+            <li><a href="{% url 'website:landing' %}#about-section">{% trans 'about' %}</a></li>
+            <li><a href="{% url 'website:landing' %}#terminal-section">{% trans 'terminal' %}</a></li>
+            <li><a href="{% url 'website:landing' %}#mobile-section">{% trans 'mobile' %}</a></li>
+            <li><a href="{% url 'website:landing' %}#web-section">{% trans 'web' %}</a></li>
+            <li><a href="{% url 'website:terms' %}">{% trans 'terms & conditions' %}</a></li>
+            <li><a href="{% url 'website:privacy' %}">{% trans 'privacy policy' %}</a></li>
+            <li><a href="{% url 'website:contact' %}">{% trans 'contact us' %}</a></li>
         </ul>
         <div class="copyright">Copyright XBTerminal 2014</div>
     </div>

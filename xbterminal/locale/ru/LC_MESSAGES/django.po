@@ -1,0 +1,1758 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-08-22 01:33+0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: website/forms.py:74 website/models.py:100
+msgid "Company name"
+msgstr ""
+
+#: website/forms.py:81 website/forms.py:209
+msgid "Trading address"
+msgstr ""
+
+#: website/forms.py:82 website/forms.py:150
+msgid "Post code/Zip code"
+msgstr ""
+
+#: website/forms.py:83 website/forms.py:210
+msgid "First name"
+msgstr ""
+
+#: website/forms.py:84 website/forms.py:211
+msgid "Last name"
+msgstr ""
+
+#: website/forms.py:85 website/forms.py:212
+msgid "Email"
+msgstr ""
+
+#: website/forms.py:99
+msgid "Registration for XBTerminal.io"
+msgstr ""
+
+#: website/forms.py:105
+msgid "Invalid email."
+msgstr ""
+
+#: website/forms.py:130
+msgid "Deliver to a different address"
+msgstr ""
+
+#: website/forms.py:148
+msgid "Terminals on order"
+msgstr ""
+
+#: website/forms.py:149 website/models.py:105
+msgid "Town"
+msgstr ""
+
+#: website/forms.py:151 website/models.py:106
+msgid "State / County"
+msgstr ""
+
+#: website/forms.py:152 website/models.py:108
+msgid "Country"
+msgstr ""
+
+#: website/forms.py:179
+msgid "This field is required."
+msgstr ""
+
+#: website/forms.py:213
+msgid "Phone"
+msgstr ""
+
+#: website/models.py:101
+msgid "Trading name"
+msgstr ""
+
+#: website/models.py:102
+msgid "Business address"
+msgstr ""
+
+#: website/models.py:107
+msgid "Post code"
+msgstr ""
+
+#: website/models.py:109
+msgid "Contact first name"
+msgstr ""
+
+#: website/models.py:110
+msgid "Contact last name"
+msgstr ""
+
+#: website/models.py:111
+msgid "Contact phone"
+msgstr ""
+
+#: website/models.py:112
+msgid "Contact email"
+msgstr ""
+
+#: website/models.py:158
+msgid "Terminal"
+msgstr ""
+
+#: website/models.py:159
+msgid "Mobile app"
+msgstr ""
+
+#: website/models.py:160
+msgid "Web app"
+msgstr ""
+
+#: website/models.py:163
+msgid "Preordered"
+msgstr ""
+
+#: website/models.py:164
+msgid "Dispatched"
+msgstr ""
+
+#: website/models.py:165
+msgid "Delivered"
+msgstr ""
+
+#: website/models.py:166
+msgid "Online"
+msgstr ""
+
+#: website/models.py:167
+msgid "Suspended"
+msgstr ""
+
+#: website/models.py:168
+msgid "Disposed"
+msgstr ""
+
+#: website/models.py:171
+msgid "keep bitcoins"
+msgstr ""
+
+#: website/models.py:172
+msgid "convert partially"
+msgstr ""
+
+#: website/models.py:173
+msgid "convert full amount"
+msgstr ""
+
+#: website/models.py:188
+msgid "Your reference"
+msgstr ""
+
+#: website/models.py:190
+msgid "Payment processing"
+msgstr ""
+
+#: website/models.py:191 website/templates/cabinet/device_list.html:14
+msgid "Payment processor"
+msgstr ""
+
+#: website/models.py:192
+msgid "API key"
+msgstr ""
+
+#: website/models.py:194
+msgid "Percent to convert"
+msgstr ""
+
+#: website/models.py:199
+msgid "Bitcoin address to send to"
+msgstr ""
+
+#: website/models.py:201 website/templates/cabinet/device_form.html:19
+msgid "Device key"
+msgstr ""
+
+#: website/models.py:363
+msgid "Bitcoin"
+msgstr ""
+
+#: website/models.py:364
+msgid "Bank wire transfer"
+msgstr ""
+
+#: website/views.py:61
+msgid "Message from xbterminal.io"
+msgstr ""
+
+#: website/views.py:488
+msgid "Email has been sent successfully."
+msgstr ""
+
+#: website/views.py:491
+msgid "Error: Invalid email. Please, try again."
+msgstr ""
+
+#: website/views.py:504
+msgid "XBTerminal newsletter confirmation"
+msgstr ""
+
+#: website/views.py:511
+msgid "Subscription to newsletters"
+msgstr ""
+
+#: website/templates/cabinet/device_form.html:11
+#: website/templates/cabinet/device_form.html:32
+#: website/templates/cabinet/profile_form.html:33
+msgid "Update"
+msgstr ""
+
+#: website/templates/cabinet/device_form.html:11
+#: website/templates/cabinet/device_form.html:32
+msgid "Create"
+msgstr ""
+
+#: website/templates/cabinet/device_form.html:22
+msgid "select"
+msgstr ""
+
+#: website/templates/cabinet/device_form.html:34
+#: website/templates/cabinet/registration.html:41
+#: website/templates/cabinet/registration.html:77
+msgid "Cancel"
+msgstr ""
+
+#: website/templates/cabinet/device_list.html:6
+msgid "Create terminal"
+msgstr ""
+
+#: website/templates/cabinet/device_list.html:7
+msgid "Create mobile app"
+msgstr ""
+
+#: website/templates/cabinet/device_list.html:8
+msgid "Create web app"
+msgstr ""
+
+#: website/templates/cabinet/device_list.html:12
+msgid "Name"
+msgstr ""
+
+#: website/templates/cabinet/device_list.html:13
+msgid "Receiving address"
+msgstr ""
+
+#: website/templates/cabinet/device_list.html:15
+msgid "Actions"
+msgstr ""
+
+#: website/templates/cabinet/device_list.html:32
+msgid "reconciliation"
+msgstr ""
+
+#: website/templates/cabinet/device_list.html:33
+msgid "online POS"
+msgstr ""
+
+#: website/templates/cabinet/login.html:8
+msgid "Merchant login"
+msgstr ""
+
+#: website/templates/cabinet/login.html:12
+msgid "Login"
+msgstr ""
+
+#: website/templates/cabinet/order.html:9
+msgid "Order details"
+msgstr ""
+
+#: website/templates/cabinet/order.html:13
+msgid "to pay"
+msgstr ""
+
+#: website/templates/cabinet/order.html:19
+#: website/templates/cabinet/registration.html:152
+msgid "Quantity on order"
+msgstr ""
+
+#: website/templates/cabinet/order.html:23
+#: website/templates/cabinet/registration.html:164
+msgid "Subtotal"
+msgstr ""
+
+#: website/templates/cabinet/order.html:27
+#: website/templates/cabinet/registration.html:169
+#: website/templates/pdf/invoice.html:107
+msgid "VAT"
+msgstr ""
+
+#: website/templates/cabinet/order.html:31
+#: website/templates/cabinet/registration.html:174
+#: website/templates/pdf/invoice.html:129
+msgid "Total"
+msgstr ""
+
+#: website/templates/cabinet/profile_form.html:7
+msgid "Merchant profile"
+msgstr ""
+
+#: website/templates/cabinet/reconciliation.html:11
+msgid "send daily reconciliation to email every day at"
+msgstr ""
+
+#: website/templates/cabinet/reconciliation.html:22
+msgid "Add"
+msgstr ""
+
+#: website/templates/cabinet/reconciliation.html:29
+msgid "email"
+msgstr ""
+
+#: website/templates/cabinet/reconciliation.html:30
+msgid "time"
+msgstr ""
+
+#: website/templates/cabinet/reconciliation.html:36
+msgid "remove"
+msgstr ""
+
+#: website/templates/cabinet/reconciliation.html:42
+msgid "daily reconciliation history"
+msgstr ""
+
+#: website/templates/cabinet/reconciliation.html:43
+msgid "download all transactions"
+msgstr ""
+
+#: website/templates/cabinet/reconciliation.html:44
+msgid "download all receipts"
+msgstr ""
+
+#: website/templates/cabinet/reconciliation.html:49
+msgid "date"
+msgstr ""
+
+#: website/templates/cabinet/reconciliation.html:50
+msgid "total transactions"
+msgstr ""
+
+#: website/templates/cabinet/reconciliation.html:51
+msgid "total amount"
+msgstr ""
+
+#: website/templates/cabinet/reconciliation.html:52
+msgid "total converted"
+msgstr ""
+
+#: website/templates/cabinet/reconciliation.html:63
+msgid "download transactions"
+msgstr ""
+
+#: website/templates/cabinet/reconciliation.html:65
+msgid "download receipts"
+msgstr ""
+
+#: website/templates/cabinet/reconciliation.html:67
+msgid "send all to email"
+msgstr ""
+
+#: website/templates/cabinet/reconciliation.html:72
+msgid "empty"
+msgstr ""
+
+#: website/templates/cabinet/reconciliation.html:81
+msgid "Send all to email"
+msgstr ""
+
+#: website/templates/cabinet/reconciliation.html:89
+msgid "Close"
+msgstr ""
+
+#: website/templates/cabinet/reconciliation.html:90
+#: website/templates/website/contact.html:12
+msgid "Send"
+msgstr ""
+
+#: website/templates/cabinet/registration.html:16
+msgid "Merchant registration"
+msgstr ""
+
+#: website/templates/cabinet/registration.html:17
+#: website/templates/cabinet/registration.html:23
+msgid "step <span>1</span> of 2"
+msgstr ""
+
+#: website/templates/cabinet/registration.html:19
+msgid "Terminal order"
+msgstr ""
+
+#: website/templates/cabinet/registration.html:20
+msgid "step <span>1</span> of 3"
+msgstr ""
+
+#: website/templates/cabinet/registration.html:22
+msgid "Online POS registration"
+msgstr ""
+
+#: website/templates/cabinet/registration.html:40
+#: website/templates/cabinet/registration.html:76
+#: website/templates/cabinet/registration.html:143
+msgid "Continue"
+msgstr ""
+
+#: website/templates/cabinet/registration.html:69
+#: website/templates/cabinet/registration.html:103
+#, python-format
+msgid ""
+"\n"
+"                                I agree to XBTerminal <a href="
+"\"%(privacy_url)s\" target=\"_blank\">Privacy Policy</a> and <a href="
+"\"%(terms_url)s\" target=\"_blank\">Terms & Conditions</a> of use.\n"
+"                                "
+msgstr ""
+
+#: website/templates/cabinet/registration.html:110
+msgid "Create account"
+msgstr ""
+
+#: website/templates/cabinet/registration.html:112
+#: website/templates/cabinet/registration.html:144
+#: website/templates/cabinet/registration.html:186
+msgid "Back"
+msgstr ""
+
+#: website/templates/cabinet/registration.html:127
+msgid "Billing and delivery address"
+msgstr ""
+
+#: website/templates/cabinet/registration.html:157
+msgid "Billing address"
+msgstr ""
+
+#: website/templates/cabinet/registration.html:159
+msgid "Delivery address"
+msgstr ""
+
+#: website/templates/cabinet/registration.html:179
+msgid "Payment method"
+msgstr ""
+
+#: website/templates/cabinet/registration.html:184
+msgid "Confirm"
+msgstr ""
+
+#: website/templates/payment/base.html:18
+msgid "testnet active"
+msgstr ""
+
+#: website/templates/payment/payment.html:9
+msgid "amount"
+msgstr ""
+
+#: website/templates/payment/payment.html:15
+msgid "Pay now"
+msgstr ""
+
+#: website/templates/payment/payment.html:22
+msgid "exchange rate"
+msgstr ""
+
+#: website/templates/payment/payment.html:26
+msgid "payment successful"
+msgstr ""
+
+#: website/templates/payment/payment.html:27
+msgid "SCAN QR CODE FOR RECEIPT"
+msgstr ""
+
+#: website/templates/payment/payment.html:30
+msgid "Reset"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:49
+msgid "Invoice"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:59
+msgid "Date"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:60
+msgid "Invoice No."
+msgstr ""
+
+#: website/templates/pdf/invoice.html:67
+msgid "Terms"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:68
+msgid "Due Date"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:71
+msgid "Due on receipt"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:85
+msgid "Invoice To"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:87
+msgid "Amount Due"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:104
+msgid "Activity"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:105
+msgid "Quantity"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:106
+msgid "Rate"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:108
+#: website/templates/pdf/receipt.html:77
+msgid "Amount"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:119
+msgid "SubTotal"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:124
+msgid "VAT Total"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:136
+msgid "VAT Registration No"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:142
+msgid "Payment details"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:148
+msgid "Account name"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:149
+msgid "Account registered address"
+msgstr ""
+
+#: website/templates/pdf/invoice.html:150
+msgid "Payment reference"
+msgstr ""
+
+#: website/templates/pdf/receipt.html:74
+msgid "Customer Receipt"
+msgstr ""
+
+#: website/templates/pdf/receipt.html:81
+msgid "Bitcoin amount paid"
+msgstr ""
+
+#: website/templates/pdf/receipt.html:85
+msgid "Effective exchange rate"
+msgstr ""
+
+#: website/templates/pdf/receipt.html:90
+msgid "Destination address"
+msgstr ""
+
+#: website/templates/pdf/receipt.html:94
+msgid "Bitcoin transaction ID"
+msgstr ""
+
+#: website/templates/pdf/receipt.html:99
+msgid "Merchant name"
+msgstr ""
+
+#: website/templates/pdf/receipt.html:103
+msgid "Merchant address"
+msgstr ""
+
+#: website/templates/pdf/receipt.html:107
+msgid "Merchant invoice number"
+msgstr ""
+
+#: website/templates/pdf/receipt.html:111
+msgid "Transaction time"
+msgstr ""
+
+#: website/templates/pdf/receipt.html:117
+msgid ""
+"View this receipt online by visiting the link above, or by scanning the QR "
+"code adjacent."
+msgstr ""
+
+#: website/templates/pdf/receipt.html:122
+msgid "payment processed by"
+msgstr ""
+
+#: website/templates/website/contact.html:8
+msgid "By email"
+msgstr ""
+
+#: website/templates/website/contact.html:16
+msgid ""
+"<h3>Thanks!</h3><p class=\"lead\">We will contact you as soon as possible</p>"
+msgstr ""
+
+#: website/templates/website/contact.html:21
+msgid "By phone"
+msgstr ""
+
+#: website/templates/website/contact.html:24
+msgid "during business hours London time"
+msgstr ""
+
+#: website/templates/website/contact.html:26
+msgid "By post"
+msgstr ""
+
+#: website/templates/website/contact.html:28
+msgid "Our registered address is"
+msgstr ""
+
+#: website/templates/website/contact.html:34
+msgid "By foot"
+msgstr ""
+
+#: website/templates/website/contact.html:36
+msgid "We're often can be found at"
+msgstr ""
+
+#: website/templates/website/landing.html:30
+msgid "meet the future"
+msgstr ""
+
+#: website/templates/website/landing.html:31
+msgid "of bitcoin point of sale"
+msgstr ""
+
+#: website/templates/website/landing.html:38
+msgid "Bitcoin payments made easy."
+msgstr ""
+
+#: website/templates/website/landing.html:39
+msgid ""
+"XBTerminal is the fast, simple and cost effective way for your business to "
+"start accepting bitcoin today."
+msgstr ""
+
+#: website/templates/website/landing.html:41
+msgid ""
+"\n"
+"                Our unique and innovative solutions allow you accept Bitcoin "
+"in a safe and risk free way. You are in control\n"
+"                of the payment process whether you want to keep the Bitcoins "
+"or receive local currency. Through our seamless\n"
+"                payment gateway integration we can <b>guarantee</b> a local "
+"currency return back to your business bank account.\n"
+"                "
+msgstr ""
+
+#: website/templates/website/landing.html:47
+msgid "Three easy ways to accept digital currency."
+msgstr ""
+
+#: website/templates/website/landing.html:49
+#: website/templates/website/common/footer.html:7
+#: website/templates/website/common/header.html:28
+#: website/templates/website/email/reconciliation.html:3
+msgid "terminal"
+msgstr ""
+
+#: website/templates/website/landing.html:50
+#: website/templates/website/common/footer.html:8
+#: website/templates/website/common/header.html:29
+msgid "mobile"
+msgstr ""
+
+#: website/templates/website/landing.html:51
+msgid "online"
+msgstr ""
+
+#: website/templates/website/landing.html:93
+msgid "The payment process is simple - Press any key to begin."
+msgstr ""
+
+#: website/templates/website/landing.html:99
+msgid "Enter the amount to be paid in local currency, then hit enter."
+msgstr ""
+
+#: website/templates/website/landing.html:105
+msgid "Check amount and exchange rate."
+msgstr ""
+
+#: website/templates/website/landing.html:111
+msgid "Customer pays by NFC or QR Code."
+msgstr ""
+
+#: website/templates/website/landing.html:116
+msgid "Transaction is cleared and an electronic receipt is downloaded."
+msgstr ""
+
+#: website/templates/website/landing.html:125
+msgid "XBTerminal"
+msgstr ""
+
+#: website/templates/website/landing.html:126
+msgid ""
+"XBTerminal is the only hardware Bitcoin POS product which can guarantee the "
+"local currency return on your sales."
+msgstr ""
+
+#: website/templates/website/landing.html:128
+msgid ""
+"\n"
+"                The XBTerminal is our first generation Bitcoin Point of Sale "
+"device. It is simple and intuitive to operate\n"
+"                for all your staff. Customers may pay from any mobile "
+"Bitcoin wallet by NFC or QR code, payment from offline\n"
+"                mobile devices is supported by bluetooth. Transactions are "
+"sent directly to our servers for fast verification\n"
+"                allowing you to accept Bitcoin without delays at your point "
+"of sale. Our payment processor integration means\n"
+"                that even though you can accept Bitcoin, you don’t need to "
+"worry about exchanging it or selling it for local\n"
+"                currency, it can be converted instantly at the point of "
+"sale. This solution best suits brick and mortar retail\n"
+"                establishments with a fixed point of sale and multiple staff."
+"<br>\n"
+"                <small>*Wifi required for operation.</small>\n"
+"                "
+msgstr ""
+
+#: website/templates/website/landing.html:139
+msgid "pre order today"
+msgstr ""
+
+#: website/templates/website/landing.html:142
+msgid "your email"
+msgstr ""
+
+#: website/templates/website/landing.html:143
+msgid "submit"
+msgstr ""
+
+#: website/templates/website/landing.html:146
+msgid "Join the mailing list"
+msgstr ""
+
+#: website/templates/website/landing.html:165
+msgid "XBT Mobile"
+msgstr ""
+
+#: website/templates/website/landing.html:166
+msgid ""
+"XBT Mobile allows you to Start Accepting Bitcoin now with no upfront costs "
+"and the same great features as our dedicated hardware."
+msgstr ""
+
+#: website/templates/website/landing.html:168
+msgid ""
+"\n"
+"                Our mobile app is just as easy to operate as our hardware "
+"product. Customers may pay from any mobile\n"
+"                Bitcoin wallet by NFC (Android only) or QR code, payment "
+"from offline mobile devices is supported by\n"
+"                Bluetooth (Android only). The payment process is fast and "
+"secure, replicating the features of our\n"
+"                dedicated hardware allowing you to dip your toe into the "
+"Bitcoin world without any upfront costs.\n"
+"                This solution best suits merchants without a fixed point of "
+"sale like pop-up or street traders, it’s\n"
+"                also a great starting point before deciding if you want a "
+"dedicated device for your business.\n"
+"                "
+msgstr ""
+
+#: website/templates/website/landing.html:203
+msgid "XBT Online POS"
+msgstr ""
+
+#: website/templates/website/landing.html:204
+msgid ""
+"XBT Online allows you to Start Accepting Bitcoin Now with no upfront costs "
+"and is accessible on any web-connected device."
+msgstr ""
+
+#: website/templates/website/landing.html:206
+msgid ""
+"\n"
+"                Our web app is just as easy to operate as our hardware "
+"product. Customers may pay from any mobile Bitcoin\n"
+"                wallet by QR code.  The payment process is fast and secure, "
+"replicating the features of our dedicated\n"
+"                hardware allowing you to dip your toe into the Bitcoin world "
+"without any upfront costs. This solution best\n"
+"                suits merchants who already have a computer or tablet based "
+"system who cannot for whatever reason run\n"
+"                the mobile application.\n"
+"                "
+msgstr ""
+
+#: website/templates/website/landing.html:214
+msgid "set up"
+msgstr ""
+
+#: website/templates/website/privacy.html:4
+#: website/templates/website/privacy.html:9
+msgid "Privacy policy"
+msgstr ""
+
+#: website/templates/website/privacy.html:10
+msgid ""
+"\n"
+"        <p>\n"
+"            1.\tIntroduction <br>\n"
+"            1.1\tWe are committed to safeguarding the privacy of our website "
+"visitors; in this policy we explain\n"
+"            how we will treat your personal information. <br>\n"
+"            1.2\tWe will ask you to consent to our use of cookies in "
+"accordance with the terms of this policy\n"
+"            when you first visit our website.</p>\n"
+"        <p>2.\tOur details <br>\n"
+"            2.1\tThis website is owned and operated by XBTerminal Ltd. <br>\n"
+"            2.2\tWe are registered in England and Wales under registration "
+"number 09060982, and our registered\n"
+"            office is at Kemp House 152 City Road, London, EC1V 2NX, United "
+"Kingdom. <br>\n"
+"            2.3\tOur principal place of business is at Kemp House 152 City "
+"Road, London, EC1V 2NX, United Kingdom. <br>\n"
+"            2.4\tYou can contact us by writing to the business address given "
+"above, by using our\n"
+"            website contact form, by email to info@xbterminal.io or by "
+"telephone on +44 (0) 20 8123 8185.\n"
+"        </p>\n"
+"        <p>\n"
+"            3. Collecting personal information <br>\n"
+"            3.1\tWe may collect, store and use the following kinds of "
+"personal information: <br>\n"
+"            (a)\tinformation about your computer and about your visits to "
+"and use of this website\n"
+"            (including your IP address, geographical location, browser type "
+"and version, operating system,\n"
+"            referral source, length of visit, page views and website "
+"navigation paths); <br>\n"
+"            (b)\tinformation that you provide to us when registering with "
+"our website (including your email address); <br>\n"
+"            (c)\tinformation that you provide when completing your profile "
+"on our website (including your name,\n"
+"            profile pictures, gender, date of birth, relationship status, "
+"interests and hobbies, educational\n"
+"            details and employment details); <br>\n"
+"            (d)\tinformation that you provide to us for the purpose of "
+"subscribing to our email notifications\n"
+"            and/or newsletters (including your name and email address); "
+"<br>\n"
+"            (e)\tinformation that you provide to us when using the services "
+"on our website, or that is generated\n"
+"            in the course of the use of those services (including the "
+"timing, frequency and pattern of service use); <br>\n"
+"            (f)\tinformation relating to any purchases you make of our "
+"goods / services / goods and/or services\n"
+"            or any other transactions that you enter into through our "
+"website (including your name, address,\n"
+"            telephone number, email address and card details; <br>\n"
+"            (g)\tinformation that you post to our website for publication on "
+"the internet (including your user name,\n"
+"            your profile pictures and the content of your posts); <br>\n"
+"            (h)\tinformation contained in or relating to any communications "
+"that you send to us or send\n"
+"            through our website (including the communication content and "
+"meta data associated with the communication); <br>\n"
+"            (i)\tany other personal information that you choose to send to "
+"us; and <br>\n"
+"            (j)\tprovide details of other personal information collected.\n"
+"            3.2\tBefore you disclose to us the personal information of "
+"another person, you must obtain\n"
+"            that person's consent to both the disclosure and the processing "
+"of that personal information in\n"
+"            accordance with this policy.\n"
+"        </p>\n"
+"        <p>\n"
+"            4.\tUsing your personal information <br>\n"
+"            4.1\tPersonal information submitted to us through our website "
+"will be used for the purposes specified\n"
+"            in this policy or on the relevant pages of the website. <br>\n"
+"            4.2\tWe may use your personal information to: <br>\n"
+"            (a)\tadminister our website and business; <br>\n"
+"            (b)\tpersonalise our website for you; <br>\n"
+"            (c)\tenable your use of the services available on our website; "
+"<br>\n"
+"            (d)\tsend you goods purchased through our website; <br>\n"
+"            (e)\tsupply to you services purchased through our website; <br>\n"
+"            (f)\tsend statements, invoices and payment reminders to you, and "
+"collect payments from you; <br>\n"
+"            (g)\tsend you non-marketing commercial communications; <br>\n"
+"            (h)\tsend you email notifications that you have specifically "
+"requested; <br>\n"
+"            (i)\tsend you our email newsletter, if you have requested it "
+"(you can inform us at any time if you no\n"
+"            longer require the newsletter); <br>\n"
+"            (j)\tsend you marketing communications relating to our business "
+"or the businesses of carefully-selected\n"
+"            third parties which we think may be of interest to you, by post "
+"or, where you have specifically agreed\n"
+"            to this, by email or similar technology (you can inform us at "
+"any time if you no longer require\n"
+"            marketing communications); <br>\n"
+"            (k)\tprovide third parties with statistical information about "
+"our users (but those third parties will\n"
+"            not be able to identify any individual user from that "
+"information); <br>\n"
+"            (l)\tdeal with enquiries and complaints made by or about you "
+"relating to our website; <br>\n"
+"            (m)\tkeep our website secure and prevent fraud; <br>\n"
+"            (n)\tverify compliance with the terms and conditions governing "
+"the use of our website (including\n"
+"            monitoring private messages sent through our website private "
+"messaging service); and <br>\n"
+"            (o)\tother uses. <br>\n"
+"            4.3\tIf you submit personal information for publication on our "
+"website, we will publish and otherwise\n"
+"            use that information in accordance with the licence you grant to "
+"us. <br>\n"
+"            4.4\tYour privacy settings can be used to limit the publication "
+"of your information on our website,\n"
+"            and can be adjusted using privacy controls on the website. <br>\n"
+"            4.5\tWe will not, without your express consent, supply your "
+"personal information to any third party\n"
+"            for the purpose of their or any other third party's direct "
+"marketing. <br>\n"
+"            4.6\tSome of our website financial transactions may from time to "
+"time be handled through a payment\n"
+"            services provider. You can review the provider's privacy policy "
+"at the payment screens where\n"
+"            appropriate. We will share information with our payment services "
+"provider only to the extent\n"
+"            necessary for the purposes of processing payments you make via "
+"our website, refunding such\n"
+"            payments and dealing with complaints and queries relating to "
+"such payments and refunds.\n"
+"        </p>\n"
+"        <p>\n"
+"            5.\tDisclosing personal information <br>\n"
+"            5.1\tWe may disclose your personal information to any of our "
+"employees, officers, insurers, professional\n"
+"            advisers, agents, suppliers or subcontractors insofar as "
+"reasonably necessary for the purposes\n"
+"            set out in this policy. <br>\n"
+"            5.2\tWe may disclose your personal information to any member of "
+"our group of companies\n"
+"            (this means our subsidiaries, our ultimate holding company and "
+"all its subsidiaries) insofar as\n"
+"            reasonably necessary for the purposes set out in this policy. "
+"<br>\n"
+"            5.3\tWe may disclose your personal information: <br>\n"
+"            (a)\tto the extent that we are required to do so by law; <br>\n"
+"            (b)\tin connection with any ongoing or prospective legal "
+"proceedings; <br>\n"
+"            (c)\tin order to establish, exercise or defend our legal rights "
+"(including providing information to\n"
+"            others for the purposes of fraud prevention and reducing credit "
+"risk); <br>\n"
+"            (d)\tto the purchaser (or prospective purchaser) of any business "
+"or asset that we are (or are contemplating)\n"
+"            selling; and <br>\n"
+"            (e)\tto any person who we reasonably believe may apply to a "
+"court or other competent authority for\n"
+"            disclosure of that personal information where, in our reasonable "
+"opinion, such\n"
+"            court or authority would be reasonably likely to order "
+"disclosure of that personal information. <br>\n"
+"            5.4\tExcept as provided in this policy, we will not provide your "
+"personal information to third parties.\n"
+"        </p>\n"
+"        <p>\n"
+"            6.\tInternational data transfers\n"
+"            6.1\tInformation that we collect may be stored and processed in "
+"and transferred between any of the\n"
+"            countries in which we operate in order to enable us to use the "
+"information in accordance with this policy. <br>\n"
+"            6.2\tInformation that we collect may be transferred to the "
+"following countries which do not have data\n"
+"            protection laws equivalent to those in force in the European "
+"Economic Area: the United States of America,\n"
+"            Russia, Japan, China and India. <br>\n"
+"            6.3\tPersonal information that you publish on our website or "
+"submit for publication on our website\n"
+"            may be available, via the internet, around the world. We cannot "
+"prevent the use or misuse of such\n"
+"            information by others. <br>\n"
+"            6.4\tYou expressly agree to the transfers of personal "
+"information described in this Section 6. <br>\n"
+"        </p>\n"
+"        <p>\n"
+"            7.\tRetaining personal information\n"
+"            7.1\tThis Section 7 sets out our data retention policies and "
+"procedure, which are designed to help\n"
+"            ensure that we comply with our legal obligations in relation to "
+"the retention and deletion\n"
+"            of personal information. <br>\n"
+"            7.2\tPersonal information that we process for any purpose or "
+"purposes shall not be kept for longer than\n"
+"            is necessary for that purpose or those purposes. <br>\n"
+"            7.3\tNotwithstanding the other provisions of this Section 7, we "
+"will retain documents\n"
+"            (including electronic documents) containing personal data: <br>\n"
+"            (a)\tto the extent that we are required to do so by law; <br>\n"
+"            (b)\tif we believe that the documents may be relevant to any "
+"ongoing or prospective legal proceedings; and <br>\n"
+"            (c)\tin order to establish, exercise or defend our legal rights "
+"(including providing information to\n"
+"            others for the purposes of fraud prevention and reducing credit "
+"risk). <br>\n"
+"        </p>\n"
+"        <p>\n"
+"            8.\tSecurity of your personal information <br>\n"
+"            8.1\tWe will take reasonable technical and organisational "
+"precautions to prevent the loss, misuse or\n"
+"            alteration of your personal information. <br>\n"
+"            8.2\tWe will store all the personal information you provide on "
+"our secure\n"
+"            (password- and firewall-protected) servers. <br>\n"
+"            8.3\tAll electronic financial transactions entered into through "
+"our website will be protected by\n"
+"            encryption technology. <br>\n"
+"            8.4\tYou acknowledge that the transmission of information over "
+"the internet is inherently insecure,\n"
+"            and we cannot guarantee the security of data sent over the "
+"internet. <br>\n"
+"            8.5\tYou are responsible for keeping the password you use for "
+"accessing our website confidential;\n"
+"            we will not ask you for your password (except when you log in to "
+"our website). <br>\n"
+"        </p>\n"
+"        <p>\n"
+"            9.\tAmendments <br>\n"
+"            9.1\tWe may update this policy from time to time by publishing a "
+"new version on our website. <br>\n"
+"            9.2\tYou should check this page occasionally to ensure you are "
+"happy with any changes to this policy. <br>\n"
+"            9.3\tWe may notify you of changes to this policy by email or "
+"through the private messaging system\n"
+"            on our website. <br>\n"
+"        </p>\n"
+"        <p>\n"
+"            10.\tYour rights\n"
+"            10.1\tYou may instruct us to provide you with any personal "
+"information we hold about you;\n"
+"            provision of such information will be subject to: <br>\n"
+"            (a)\tthe payment of a fee (currently fixed at GBP 10); and <br>\n"
+"            (b)\tthe supply of appropriate evidence of your identity (for "
+"this purpose, we will usually\n"
+"            accept a photocopy of your passport certified by a solicitor or "
+"bank plus an original copy of\n"
+"            a utility bill showing your current address). <br>\n"
+"            10.2\tWe may withhold personal information that you request to "
+"the extent permitted by law. <br>\n"
+"            10.3\tYou may instruct us at any time not to process your "
+"personal information for marketing purposes. <br>\n"
+"            10.4\tIn practice, you will usually either expressly agree in "
+"advance to our use of your personal\n"
+"            information for marketing purposes, or we will provide you with "
+"an opportunity to opt out of\n"
+"            the use of your personal information for marketing purposes. "
+"<br>\n"
+"        </p>\n"
+"        <p>\n"
+"            11.\tThird party websites <br>\n"
+"            11.1\tOur website includes hyperlinks to, and details of, third "
+"party websites. <br>\n"
+"            11.2\tWe have no control over, and are not responsible for, the "
+"privacy policies and\n"
+"            practices of third parties. <br>\n"
+"        </p>\n"
+"        <p>\n"
+"            12.\tUpdating information <br>\n"
+"            12.1 Please let us know if the personal information that we hold "
+"about you needs to\n"
+"            be corrected or updated. <br>\n"
+"        </p>\n"
+"        <p>\n"
+"            13.\tCookies <br>\n"
+"            13.1 Our website uses cookies. <br>\n"
+"            13.2 A cookie is a file containing an identifier (a string of "
+"letters and numbers) that is sent by\n"
+"            a web server to a web browser and is stored by the browser. The "
+"identifier is then sent back to\n"
+"            the server each time the browser requests a page from the "
+"server. <br>\n"
+"            13.3 Cookies may be either \"persistent\" cookies or \"session\" "
+"cookies: a persistent cookie will be\n"
+"            stored by a web browser and will remain valid until its set "
+"expiry date, unless deleted by the\n"
+"            user before the expiry date; a session cookie, on the other "
+"hand, will expire at the end of the\n"
+"            user session, when the web browser is closed. <br>\n"
+"            13.4 Cookies do not typically contain any information that "
+"personally identifies a user, but personal\n"
+"            information that we store about you may be linked to the "
+"information stored in and obtained from cookies. <br>\n"
+"            13.5 We use only session cookies / only persistent cookies / "
+"both session and persistent cookies on\n"
+"            our website. <br>\n"
+"            13.6 The names of the cookies that we use on our website, and "
+"the purposes for which they are used,\n"
+"            are set out below: <br>\n"
+"            (a)\twe use _unam on our website to enable the sharethis "
+"facility; <br>\n"
+"            (b)\twe use csrftoken on our website to prevent fraud and "
+"improve the security of the website; <br>\n"
+"            (c)\twe use sessionid on our website to recognise a computer "
+"when a user visits the website, track users\n"
+"            as they navigate the website, enable the use of a shopping cart "
+"on the website, improve the\n"
+"            website's usability, analyse the use of the website, administer "
+"the website, prevent fraud and\n"
+"            improve the security of the website, personalise the website for "
+"each user. <br>\n"
+"            13.7 Most browsers allow you to refuse to accept cookies; for "
+"example: <br>\n"
+"            (a)\tin Internet Explorer (version 10) you can block cookies "
+"using the cookie handling override settings\n"
+"            available by clicking \"Tools\", \"Internet Options\", \"Privacy"
+"\" and then \"Advanced\"; <br>\n"
+"            (b)\tin Firefox (version 24) you can block all cookies by "
+"clicking \"Tools\", \"Options\", \"Privacy\",\n"
+"            selecting \"Use custom settings for history\" from the drop-down "
+"menu, and unticking \"Accept cookies\n"
+"            from sites\"; and <br>\n"
+"            (c)\tin Chrome (version 29), you can block all cookies by "
+"accessing the \"Customise and control\" menu,\n"
+"            and clicking \"Settings\", \"Show advanced settings\" and "
+"\"Content settings\", and then selecting\n"
+"            \"Block sites from setting any data\" under the \"Cookies\" "
+"heading. <br>\n"
+"            13.8 Blocking all cookies will have a negative impact upon the "
+"usability of many websites. <br>\n"
+"            13.9 If you block cookies, you will not be able to use all the "
+"features on our website. <br>\n"
+"            13.10 You can delete cookies already stored on your computer; "
+"for example: <br>\n"
+"            (a)\tin Internet Explorer (version 10), you must manually delete "
+"cookie files (you can find instructions\n"
+"            for doing so at http://support.microsoft.com/kb/278835); <br>\n"
+"            (b)\tin Firefox (version 24), you can delete cookies by clicking "
+"\"Tools\", \"Options\" and \"Privacy\",\n"
+"            then selecting \"Use custom settings for history\", clicking "
+"\"Show Cookies\", and then clicking\n"
+"            \"Remove All Cookies\"; and <br>\n"
+"            (c)\tin Chrome (version 29), you can delete all cookies by "
+"accessing the \"Customise and control\" menu,\n"
+"            and clicking \"Settings\", \"Show advanced settings\" and "
+"\"Clear browsing data\", and then selecting\n"
+"            \"Delete cookies and other site and plug-in data\" before "
+"clicking \"Clear browsing data\". <br>\n"
+"            13.11 Deleting cookies will have a negative impact on the "
+"usability of many websites. <br>\n"
+"        </p>\n"
+"        <p>\n"
+"            14.\tData protection registration <br>\n"
+"            14.1 We are registered as a data controller with the UK "
+"Information Commissioner's Office. <br>\n"
+"            14.2 Our data protection registration number is CSN7320488. "
+"<br>\n"
+"        </p>\n"
+"        <br><br>\n"
+"        "
+msgstr ""
+
+#: website/templates/website/tc.html:4
+msgid "Terms and conditions"
+msgstr ""
+
+#: website/templates/website/tc.html:9
+msgid "Terms and conditions of use"
+msgstr ""
+
+#: website/templates/website/tc.html:10
+msgid ""
+"\n"
+"        <p>\n"
+"        1. Introduction <br>\n"
+"        1.1\tThese terms and conditions govern your use of our website. "
+"<br>\n"
+"        1.2\tBy using our website, you accept these terms and conditions in "
+"full; accordingly, if you disagree with\n"
+"            these terms and conditions or any part of these terms and "
+"conditions, you must not use our website. <br>\n"
+"        1.3\tIf you register with our website, submit any material to our "
+"website or use any of our website services,\n"
+"            we will ask you to expressly agree to these terms and "
+"conditions. <br>\n"
+"        1.4\tThere is no age restriction on using our website however you "
+"may need to must be at least 18 years of age\n"
+"            to use our website; and by using our website or agreeing to "
+"these terms and conditions, you warrant and\n"
+"            represent to us that you are at least 18 years of age. <br>\n"
+"        1.5\tOur website uses cookies; by using our website or agreeing to "
+"these terms and conditions, you consent\n"
+"            to our use of cookies in accordance with the terms of our "
+"privacy and cookies policy. <br>\n"
+"        </p>\n"
+"        <p>\n"
+"        2. Copyright notice <br>\n"
+"        2.1\tCopyright (c) 2014 XBTerminal Ltd. <br>\n"
+"        2.2\tSubject to the express provisions of these terms and "
+"conditions: <br>\n"
+"        (a)\twe, together with our licensors, own and control all the "
+"copyright and other intellectual property rights\n"
+"            in our website and the material on our website; and <br>\n"
+"        (b)\tall the copyright and other intellectual property rights in our "
+"website and the material on our website\n"
+"            are reserved. <br>\n"
+"        </p>\n"
+"        <p>\n"
+"        3. Licence to use website <br>\n"
+"        3.1\tYou may: <br>\n"
+"        (a)\tview pages from our website in a web browser; <br>\n"
+"        (b)\tdownload pages from our website for caching in a web browser; "
+"<br>\n"
+"        (c)\tprint pages from our website; <br>\n"
+"        (d)\tstream audio and video files from our website; and <br>\n"
+"        (e)\tuse our website services by means of a web browser, <br>\n"
+"        (f)\tuse our website services by means of a mobile application, "
+"<br>\n"
+"            subject to the other provisions of these terms and conditions. "
+"<br>\n"
+"        3.2\tExcept as expressly permitted by Section 3.1 or the other "
+"provisions of these terms and conditions,\n"
+"            you must not download any material from our website or save any "
+"such material to your computer. <br>\n"
+"        3.3\tYou may only use our website for your own personal and business "
+"purposes, and you must not use our\n"
+"            website for any other purposes. <br>\n"
+"        3.4\tExcept as expressly permitted by these terms and conditions, "
+"you must not edit or otherwise modify any\n"
+"            material on our website. <br>\n"
+"        3.5\tUnless you own or control the relevant rights in the material, "
+"you must not: <br>\n"
+"        (a)\trepublish material from our website (including republication on "
+"another website); <br>\n"
+"        (b)\tsell, rent or sub-license material from our website; <br>\n"
+"        (c)\tshow any material from our website in public; <br>\n"
+"        (d)\treproduce, duplicate, copy or otherwise exploit material from "
+"our website for a commercial purpose; or <br>\n"
+"        (e)\tredistribute material from our website. <br>\n"
+"        3.6\tNotwithstanding Section 3.5, you may redistribute our "
+"newsletter and press packs in print and electronic\n"
+"            form to any person. <br>\n"
+"        3.7\tWe reserve the right to restrict access to areas of our "
+"website, or indeed our whole website,\n"
+"            at our discretion; you must not circumvent or bypass, or attempt "
+"to circumvent or bypass, any access\n"
+"            restriction measures on our website. <br>\n"
+"        </p>\n"
+"        <p>\n"
+"        4. Acceptable use <br>\n"
+"        4.1\tYou must not: <br>\n"
+"        (a)\tuse our website in any way or take any action that causes, or "
+"may cause, damage to the website or\n"
+"            impairment of the performance, availability or accessibility of "
+"the website; <br>\n"
+"        (b)\tuse our website in any way that is unlawful, illegal, "
+"fraudulent or harmful, or in connection with\n"
+"            any unlawful, illegal, fraudulent or harmful purpose or "
+"activity; <br>\n"
+"        (c)\tuse our website to copy, store, host, transmit, send, use, "
+"publish or distribute any material which\n"
+"            consists of (or is linked to) any spyware, computer virus, "
+"Trojan horse, worm, keystroke logger,\n"
+"            rootkit or other malicious computer software; <br>\n"
+"        (d)\tconduct any systematic or automated data collection activities "
+"(including without limitation scraping,\n"
+"            data mining, data extraction and data harvesting) on or in "
+"relation to our website without our\n"
+"            express written consent; <br>\n"
+"        (e)\taccess or otherwise interact with our website using any robot, "
+"spider or other automated means; <br>\n"
+"        (f)\tviolate the directives set out in the robots.txt file for our "
+"website; or <br>\n"
+"        (g)\tuse data collected from our website for any direct marketing "
+"activity (including without limitation\n"
+"            email marketing, SMS marketing, telemarketing and direct "
+"mailing). <br>\n"
+"        4.2\tYou must not use data collected from our website to contact "
+"individuals, companies or other persons\n"
+"            or entities, unless specifically listed in the merchant "
+"directory. <br>\n"
+"        4.3\tYou must ensure that all the information you supply to us "
+"through our website, or in relation to\n"
+"            our website, is true, accurate, current, complete and non-"
+"misleading. <br>\n"
+"        </p>\n"
+"        <p>\n"
+"        5. Registration and accounts <br>\n"
+"        5.1\tTo be eligible for an account on our website under this Section "
+"5, you must be at least 18 years of age. <br>\n"
+"        5.2\tYou may register for an account with our website by completing "
+"and submitting the account registration\n"
+"            form on our website, and clicking on the verification link in "
+"the email that the website will send to you. <br>\n"
+"        5.3\tYou must notify us in writing immediately if you become aware "
+"of any unauthorised use of your account. <br>\n"
+"        5.4\tYou must not use any other person's account to access the "
+"website, unless you have that person's express\n"
+"            permission to do so. <br>\n"
+"        </p>\n"
+"        <p>\n"
+"        6. User IDs and passwords <br>\n"
+"        6.1\tIf you register for an account with our website, you will be "
+"asked to choose a user ID and password. <br>\n"
+"        6.2\tYour user ID must not be liable to mislead and must comply with "
+"the content rules set out in Section 9;\n"
+"            you must not use your account or user ID for or in connection "
+"with the impersonation of any person. <br>\n"
+"        6.3\tYou must keep your password confidential. <br>\n"
+"        6.4\tYou must notify us in writing immediately if you become aware "
+"of any disclosure of your password. <br>\n"
+"        6.5\tYou are responsible for any activity on our website arising out "
+"of any failure to keep your password\n"
+"            confidential, and may be held liable for any losses arising out "
+"of such a failure. <br>\n"
+"        </p>\n"
+"        <p>\n"
+"        7. Cancellation and suspension of account <br>\n"
+"        7.1\tWe may: <br>\n"
+"        (a)\tsuspend your account; <br>\n"
+"        (b)\tcancel your account; and/or <br>\n"
+"        (c)\tedit your account details, <br>\n"
+"            at any time in our sole discretion without notice or "
+"explanation. <br>\n"
+"        7.2\tYou may cancel your account on our website using your account "
+"control panel on the website. <br>\n"
+"        </p>\n"
+"        <p>\n"
+"        8. Your content: licence <br>\n"
+"        8.1\tIn these terms and conditions, \"your content\" means all works "
+"and materials (including without\n"
+"            limitation text, graphics, images, audio material, video "
+"material, audio-visual material, scripts,\n"
+"            software and files) that you submit to us or our website for "
+"storage or publication on, processing by,\n"
+"            or transmission via, our website. <br>\n"
+"        8.2\tYou grant to us a worldwide, irrevocable, non-exclusive, "
+"royalty-free licence to use, reproduce,\n"
+"            store, adapt, publish, translate and distribute your content in "
+"any existing or future media. <br>\n"
+"        8.3\tYou grant to us the right to sub-license the rights licensed "
+"under Section 8.2. <br>\n"
+"        8.4\tYou grant to us the right to bring an action for infringement "
+"of the rights licensed under Section 8.2. <br>\n"
+"        8.5\tYou hereby waive all your moral rights in your content to the "
+"maximum extent permitted by applicable law;\n"
+"            and you warrant and represent that all other moral rights in "
+"your content have been waived to the\n"
+"            maximum extent permitted by applicable law. <br>\n"
+"        8.6\tYou may edit your content to the extent permitted using the "
+"editing functionality made available on\n"
+"            our website. <br>\n"
+"        8.7\tWithout prejudice to our other rights under these terms and "
+"conditions, if you breach any\n"
+"            provision of these terms and conditions in any way, or if we "
+"reasonably suspect that you have breached\n"
+"            these terms and conditions in any way, we may delete, unpublish "
+"or edit any or all of your content. <br>\n"
+"        </p>\n"
+"        <p>\n"
+"        9. Your content: rules <br>\n"
+"        9.1\tYou warrant and represent that your content will comply with "
+"these terms and conditions. <br>\n"
+"        9.2\tYour content must not be illegal or unlawful, must not infringe "
+"any person's legal rights, and must\n"
+"            not be capable of giving rise to legal action against any person "
+"(in each case in any jurisdiction\n"
+"            and under any applicable law). <br>\n"
+"        9.3\tYour content, and the use of your content by us in accordance "
+"with these terms and conditions, must not: <br>\n"
+"        (a)\tbe libellous or maliciously false; <br>\n"
+"        (b)\tbe obscene or indecent; <br>\n"
+"        (c)\tinfringe any copyright, moral right, database right, trade mark "
+"right, design right, right in\n"
+"            passing off, or other intellectual property right; <br>\n"
+"        (d)\tinfringe any right of confidence, right of privacy or right "
+"under data protection legislation; <br>\n"
+"        (e)\tconstitute negligent advice or contain any negligent statement; "
+"<br>\n"
+"        (f)\tconstitute an incitement to commit a crime[, instructions for "
+"the commission of a crime or the\n"
+"            promotion of criminal activity]; <br>\n"
+"        (g)\tbe in contempt of any court, or in breach of any court order; "
+"<br>\n"
+"        (h)\tbe in breach of racial or religious hatred or discrimination "
+"legislation; <br>\n"
+"        (i)\tbe blasphemous; <br>\n"
+"        (j)\tbe in breach of official secrets legislation; <br>\n"
+"        (k)\tbe in breach of any contractual obligation owed to any person; "
+"<br>\n"
+"        (l)\tdepict violence, in an explicit, graphic or gratuitous manner; "
+"<br>\n"
+"        (m)\tbe pornographic, lewd, suggestive or sexually explicit; <br>\n"
+"        (n)\tbe untrue, false, inaccurate or misleading; <br>\n"
+"        (o)\tconsist of or contain any instructions, advice or other "
+"information which may be acted upon and\n"
+"            could, if acted upon, cause illness, injury or death, or any "
+"other loss or damage; <br>\n"
+"        (p)\tconstitute spam; <br>\n"
+"        (q)\tbe offensive, deceptive, fraudulent, threatening, abusive, "
+"harassing, anti-social, menacing,\n"
+"            hateful, discriminatory or inflammatory; or <br>\n"
+"        (r)\tcause annoyance, inconvenience or needless anxiety to any "
+"person. <br>\n"
+"        </p>\n"
+"        <p>\n"
+"        10.\tLimited warranties <br>\n"
+"        10.1 We do not warrant or represent: <br>\n"
+"        (a)\tthe completeness or accuracy of the information published on "
+"our website; <br>\n"
+"        (b)\tthat the material on the website is up to date; or <br>\n"
+"        (c)\tthat the website or any service on the website will remain "
+"available. <br>\n"
+"        10.2 We reserve the right to discontinue or alter any or all of our "
+"website services, and to stop\n"
+"            publishing our website, at any time in our sole discretion "
+"without notice or explanation;\n"
+"            and save to the extent that these terms and conditions expressly "
+"provide otherwise,\n"
+"            you will not be entitled to any compensation or other payment "
+"upon the discontinuance or\n"
+"            alteration of any website services, or if we stop publishing the "
+"website. <br>\n"
+"        10.3 To the maximum extent permitted by applicable law and subject "
+"to Section 11.1, we exclude all\n"
+"            representations and warranties relating to the subject matter of "
+"these terms and conditions,\n"
+"            our website and the use of our website. <br>\n"
+"        </p>\n"
+"        <p>\n"
+"        11.\tLimitations and exclusions of liability <br>\n"
+"        11.1 Nothing in these terms and conditions will: <br>\n"
+"        (a)\tlimit or exclude any liability for death or personal injury "
+"resulting from negligence; <br>\n"
+"        (b)\tlimit or exclude any liability for fraud or fraudulent "
+"misrepresentation; <br>\n"
+"        (c)\tlimit any liabilities in any way that is not permitted under "
+"applicable law; or <br>\n"
+"        (d)\texclude any liabilities that may not be excluded under "
+"applicable law. <br>\n"
+"        11.2 The limitations and exclusions of liability set out in this "
+"Section 11 and elsewhere in these\n"
+"            terms and conditions: <br>\n"
+"        (a)\tare subject to Section 11.1; and <br>\n"
+"        (b)\tgovern all liabilities arising under these terms and conditions "
+"or relating to the subject matter\n"
+"            of these terms and conditions, including liabilities arising in "
+"contract, in tort (including negligence)\n"
+"            and for breach of statutory duty. <br>\n"
+"        11.3 To the extent that our website and the information and services "
+"on our website are provided\n"
+"            free of charge, we will not be liable for any loss or damage of "
+"any nature. <br>\n"
+"        11.4 We will not be liable to you in respect of any losses arising "
+"out of any event or events beyond\n"
+"            our reasonable control. <br>\n"
+"        11.5 We will not be liable to you in respect of any business losses, "
+"including (without limitation)\n"
+"            loss of or damage to profits, income, revenue, use, production, "
+"anticipated savings, business,\n"
+"            contracts, commercial opportunities or goodwill. <br>\n"
+"        11.6 We will not be liable to you in respect of any loss or "
+"corruption of any data,\n"
+"            database or software. <br>\n"
+"        11.7 We will not be liable to you in respect of any special, "
+"indirect or consequential loss or damage. <br>\n"
+"        11.8 You accept that we have an interest in limiting the personal "
+"liability of our officers and employees\n"
+"            and, having regard to that interest, you acknowledge that we are "
+"a limited liability entity;\n"
+"            you agree that you will not bring any claim personally against "
+"our officers or employees in respect of\n"
+"            any losses you suffer in connection with the website or these "
+"terms and conditions (this will not,\n"
+"            of course, limit or exclude the liability of the limited "
+"liability entity itself for the acts and\n"
+"            omissions of our officers and employees). <br>\n"
+"        </p>\n"
+"        <p>\n"
+"        12.\tBreaches of these terms and conditions <br>\n"
+"        12.1 Without prejudice to our other rights under these terms and "
+"conditions, if you breach these terms\n"
+"            and conditions in any way, or if we reasonably suspect that you "
+"have breached these terms and\n"
+"            conditions in any way, we may: <br>\n"
+"        (a)\tsend you one or more formal warnings; <br>\n"
+"        (b)\ttemporarily suspend your access to our website; <br>\n"
+"        (c)\tpermanently prohibit you from accessing our website; <br>\n"
+"        (d)\tblock computers using your IP address from accessing our "
+"website; <br>\n"
+"        (e)\tcontact any or all your internet service providers and request "
+"that they block your\n"
+"            access to our website; <br>\n"
+"        (f)\tcommence legal action against you, whether for breach of "
+"contract or otherwise; and/or <br>\n"
+"        (g)\tsuspend or delete your account on our website. <br>\n"
+"        12.2 Where we suspend or prohibit or block your access to our "
+"website or a part of our website,\n"
+"            you must not take any action to circumvent such suspension or "
+"prohibition or blocking\n"
+"            (including without limitation creating and/or using a different "
+"account). <br>\n"
+"        </p>\n"
+"        <p>\n"
+"        13.\tVariation <br>\n"
+"        13.1 We may revise these terms and conditions from time to time. "
+"<br>\n"
+"        13.2 The revised terms and conditions will apply to the use of our "
+"website from the date of their\n"
+"            publication on the website, and you hereby waive any right you "
+"may otherwise have to be notified of,\n"
+"            or to consent to, revisions of the terms and conditions. <br>\n"
+"        13.3 If you have given your express agreement to these terms and "
+"conditions, we will ask for your\n"
+"            express agreement to any revision of these terms and conditions; "
+"and if you do not give your\n"
+"            express agreement to the revised terms and conditions within "
+"such period as we may specify, we\n"
+"            will disable or delete your account on the website, and you must "
+"stop using the website. <br>\n"
+"        </p>\n"
+"        <p>\n"
+"        14.\tAssignment <br>\n"
+"        14.1 You hereby agree that we may assign, transfer, sub-contract or "
+"otherwise deal with our rights\n"
+"            and/or obligations under these terms and conditions. <br>\n"
+"        14.2 You may not without our prior written consent assign, transfer, "
+"sub-contract or otherwise deal\n"
+"            with any of your rights and/or obligations under these terms and "
+"conditions. <br>\n"
+"        </p>\n"
+"        <p>\n"
+"        15.\tSeverability <br>\n"
+"        15.1\tIf a provision of these terms and conditions is determined by "
+"any court or other competent\n"
+"            authority to be unlawful and/or unenforceable, the other "
+"provisions will continue in effect. <br>\n"
+"        15.2 If any unlawful and/or unenforceable provision of these terms "
+"and conditions would be lawful\n"
+"            or enforceable if part of it were deleted, that part will be "
+"deemed to be deleted, and the rest\n"
+"            of the provision will continue in effect. <br>\n"
+"        </p>\n"
+"        <p>\n"
+"        16.\tThird party rights <br>\n"
+"        16.1 These terms and conditions are for our benefit and your "
+"benefit, and are not intended to benefit\n"
+"            or be enforceable by any third party. <br>\n"
+"        16.2 The exercise of the parties' rights under these terms and "
+"conditions is not subject to the consent\n"
+"            of any third party. <br>\n"
+"        </p>\n"
+"        <p>\n"
+"        17.\tEntire agreement <br>\n"
+"        17.1 Subject to Section 11.1, these terms and conditions, together "
+"with our privacy and cookies\n"
+"            policy, constitute the entire agreement between you and us in "
+"relation to your use of our\n"
+"            website and supersede all previous agreements between you and us "
+"in relation to your use of our website. <br>\n"
+"        </p>\n"
+"        <p>\n"
+"        18.\tLaw and jurisdiction <br>\n"
+"        18.1 These terms and conditions shall be governed by and construed "
+"in accordance with English law. <br>\n"
+"        18.2 Any disputes relating to these terms and conditions shall be "
+"subject to the exclusive jurisdiction\n"
+"            of the courts of England. <br>\n"
+"        </p>\n"
+"        <p>\n"
+"        19.\tStatutory and regulatory disclosures <br>\n"
+"        19.1 We are subject to The Data Protection Act 1998, which is "
+"supervised by Information\n"
+"            Comissioner’s Office. <br>\n"
+"        </p>\n"
+"        <p>\n"
+"        20.\tOur details <br>\n"
+"        20.1 This website is owned and operated by XBTerminal Ltd. <br>\n"
+"        20.2 We are registered in England and Wales under registration "
+"number 09060982, and our registered\n"
+"            office is at Kemp House, 152-160 City Road, London, EX1V 2NX. "
+"<br>\n"
+"        20.3 Our principal place of business is at Kemp House, 152-160 City "
+"Road, London, EX1V 2NX. <br>\n"
+"        20.4 You can contact us by writing to the business address given "
+"above, by using our website contact\n"
+"            form, by email to info@xbterminal.io or by telephone on +44 (0) "
+"20 8123 8185. <br>\n"
+"        </p>\n"
+"        "
+msgstr ""
+
+#: website/templates/website/common/footer.html:6
+#: website/templates/website/common/header.html:27
+msgid "about"
+msgstr ""
+
+#: website/templates/website/common/footer.html:9
+#: website/templates/website/common/header.html:30
+msgid "web"
+msgstr ""
+
+#: website/templates/website/common/footer.html:10
+msgid "terms & conditions"
+msgstr ""
+
+#: website/templates/website/common/footer.html:11
+msgid "privacy policy"
+msgstr ""
+
+#: website/templates/website/common/footer.html:12
+msgid "contact us"
+msgstr ""
+
+#: website/templates/website/common/header.html:5
+msgid ""
+"Cookies help us to deliver our services. By using our services, you agree to "
+"our use of cookies."
+msgstr ""
+
+#: website/templates/website/common/header.html:6
+msgid "Got it"
+msgstr ""
+
+#: website/templates/website/common/header.html:24
+msgid "terminals"
+msgstr ""
+
+#: website/templates/website/common/header.html:25
+msgid "profile"
+msgstr ""
+
+#: website/templates/website/common/header.html:35
+msgid "merchant login"
+msgstr ""
+
+#: website/templates/website/common/header.html:38
+msgid "username"
+msgstr ""
+
+#: website/templates/website/common/header.html:39
+msgid "password"
+msgstr ""
+
+#: website/templates/website/common/header.html:40
+#: website/templates/website/common/header.html:42
+msgid "login"
+msgstr ""
+
+#: website/templates/website/common/header.html:43
+msgid "register"
+msgstr ""
+
+#: website/templates/website/common/header.html:48
+msgid "POS active/total:"
+msgstr ""
+
+#: website/templates/website/common/header.html:49
+msgid "transactions today:"
+msgstr ""
+
+#: website/templates/website/common/header.html:52
+msgid "logout"
+msgstr ""
+
+#: website/templates/website/email/order.txt:3
+#, python-format
+msgid ""
+"\n"
+"    Thank you for your order, we appreciate your business. Your order id is #"
+"%(order.id|stringformat:\"03d\")s, we will notify you as long as your order "
+"will be ready for shipping.\n"
+"    "
+msgstr ""
+
+#: website/templates/website/email/order.txt:7
+msgid ""
+"\n"
+"    Thank you for your order, we appreciate your business. Your preorder "
+"invoice is attached along with payment details if you have not already done "
+"so.\n"
+"    "
+msgstr ""
+
+#: website/templates/website/email/order.txt:11
+#: website/templates/website/email/registration.txt:8
+msgid ""
+"\n"
+"Warm regards,\n"
+"XBTerminal Team\n"
+msgstr ""
+
+#: website/templates/website/email/reconciliation.html:4
+msgid "report issue date"
+msgstr ""
+
+#: website/templates/website/email/reconciliation.html:6
+msgid "transactions to date"
+msgstr ""
+
+#: website/templates/website/email/reconciliation.html:7
+msgid "total m฿"
+msgstr ""
+
+#: website/templates/website/email/reconciliation.html:8
+msgid "total GBP"
+msgstr ""
+
+#: website/templates/website/email/reconciliation.html:10
+msgid "No transactions to date."
+msgstr ""
+
+#: website/templates/website/email/reconciliation.html:15
+msgid ""
+"\n"
+"Have problems reading this report or need help with your terminal?<br>\n"
+"Contact us at <a href=\"mailto:support@xbterminal.io\">support@xbterminal."
+"io</a>.\n"
+msgstr ""
+
+#: website/templates/website/email/registration.txt:2
+#, python-format
+msgid ""
+"\n"
+"Thank you for registering on xbterminal.io.\n"
+"You can logon to the site with your email and password\n"
+"Your email: %(email)s\n"
+"Your current password: %(password)s\n"
+msgstr ""
+
+#: website/templates/website/email/subscription.html:2
+#, python-format
+msgid ""
+"\n"
+"New subscription from %(subscriber_email)s\n"
+msgstr ""
+
+#: website/templates/website/email/subscription.html:6
+msgid ""
+"\n"
+"Thank you for subscribing to XBTerminal newsletter. Also you can follow us "
+"on <a href=\"https://twitter.com/xbterminal\">twitter</a>. Stay tuned, we "
+"will send updates once we have them.\n"
+msgstr ""

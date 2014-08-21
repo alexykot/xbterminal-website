@@ -1,9 +1,9 @@
-{% load staticfiles %}
+{% load staticfiles i18n %}
 
 <div class="header row">
     <div id="cookie-notice">
-        Cookies help us to deliver our services. By using our services, you agree to our use of cookies.
-        <button type="button">Got it</button>
+        {% trans 'Cookies help us to deliver our services. By using our services, you agree to our use of cookies.' %}
+        <button type="button">{% trans 'Got it' %}</button>
     </div>
     <div class="container">
         <nav class="navbar navbar-default" role="navigation">
@@ -21,35 +21,35 @@
             <div class="collapse navbar-collapse">
                 <ul class="nav navbar-nav">
                     {% if cabinet_page %}
-                    <li><a href="{% url 'website:devices' %}" {% if cabinet_page == 'devices' %}class="active"{% endif %}>terminals</a></li><!--
-                    --><li><a href="{% url 'website:profile' %}" {% if cabinet_page == 'profile' %}class="active"{% endif %}>profile</a></li>
+                    <li><a href="{% url 'website:devices' %}" {% if cabinet_page == 'devices' %}class="active"{% endif %}>{% trans 'terminals' %}</a></li><!--
+                    --><li><a href="{% url 'website:profile' %}" {% if cabinet_page == 'profile' %}class="active"{% endif %}>{% trans 'profile' %}</a></li>
                     {% else %}
-                    <li><a href="{% url 'website:landing' %}#about-section">about</a></li><!--
-                    --><li><a href="{% url 'website:landing' %}#terminal-section">terminal</a></li><!--
-                    --><li><a href="{% url 'website:landing' %}#mobile-section">mobile</a></li><!--
-                    --><li><a href="{% url 'website:landing' %}#web-section">web</a></li>
+                    <li><a href="{% url 'website:landing' %}#about-section">{% trans 'about' %}</a></li><!--
+                    --><li><a href="{% url 'website:landing' %}#terminal-section">{% trans 'terminal' %}</a></li><!--
+                    --><li><a href="{% url 'website:landing' %}#mobile-section">{% trans 'mobile' %}</a></li><!--
+                    --><li><a href="{% url 'website:landing' %}#web-section">{% trans 'web' %}</a></li>
                     {% endif %}
                 </ul>
                 <div class="user-block">
                     {% if not user.merchant %}
-                    <div class="login-form-title">merchant login</div>
+                    <div class="login-form-title">{% trans 'merchant login' %}</div>
                     <form class="login-form" action="{% url 'login' %}" method="POST">
                         {% csrf_token %}
-                        <input type="text" name="username" placeholder="username"><br>
-                        <input type="password" name="password" placeholder="password"><br>
-                        <button type="submit" class="xbt-btn-secondary">login</button>
+                        <input type="text" name="username" placeholder="{% trans 'username' %}"><br>
+                        <input type="password" name="password" placeholder="{% trans 'password' %}"><br>
+                        <button type="submit" class="xbt-btn-secondary">{% trans 'login' %}</button>
                     </form>
-                    <a class="xbt-btn-secondary login" href="{% url 'login' %}">login</a>
-                    <a class="xbt-btn-primary register" href="{% url 'website:registration' %}">register</a>
+                    <a class="xbt-btn-secondary login" href="{% url 'login' %}">{% trans 'login' %}</a>
+                    <a class="xbt-btn-primary register" href="{% url 'website:registration' %}">{% trans 'register' %}</a>
                     {% else %}
                     <div id="merchant-info">
                         {% with user.merchant.info as info %}
                         <div id="merchant-info-name">{{ info.name }}</div>
-                        <div id="merchant-info-devices">POS active/total: {{ info.active }} / {{ info.total }}</div>
-                        <div id="merchant-info-tx">transactions today: {{ info.tx_count }} / £{{ info.tx_sum|floatformat:2 }}</div>
+                        <div id="merchant-info-devices">{% trans 'POS active/total:' %} {{ info.active }} / {{ info.total }}</div>
+                        <div id="merchant-info-tx">{% trans 'transactions today:' %} {{ info.tx_count }} / {{ user.merchant.currency.prefix }}{{ info.tx_sum|floatformat:2 }}</div>
                         {% endwith %}
                     </div>
-                    <a class="xbt-btn-secondary logout" href="{% url 'logout' %}">logout</a>
+                    <a class="xbt-btn-secondary logout" href="{% url 'logout' %}">{% trans 'logout' %}</a>
                     {% endif %}
                 </div>
             </div>

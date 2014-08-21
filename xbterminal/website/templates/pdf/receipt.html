@@ -1,0 +1,125 @@
+{% load i18n qr_tags website_tags %}
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta http-equiv="content-type" content="text/html; charset=utf-8"> 
+<style type="text/css">
+    @font-face {
+        font-family: FontAwesome;
+        src: url('xbterminal/website/static/fonts/fontawesome-webfont.ttf');
+    }
+    body {
+        font-size: 16px;
+    }
+    @page {
+        margin: 1cm;
+        margin-top: 3cm;
+        @frame qrcode-text {
+            -pdf-frame-content: qrcode-text;
+            width: 12cm;
+            bottom: 5cm;
+            height: 2.5cm;
+            right: 6cm;
+        }
+        @frame qrcode {
+            -pdf-frame-content: qrcode;
+            width: 5cm;
+            bottom: 5cm;
+            height: 5cm;
+            right: 0cm;
+        }
+        @frame footer {
+            -pdf-frame-content: footer;
+            bottom: 0.25cm;
+            text-align: center;
+            height: 2cm;
+            left: 5cm;
+            vertical-align: middle;
+        }
+        @frame footer-image {
+            -pdf-frame-content: footer-image;
+            bottom: 0cm;
+            height: 2.5cm;
+            left: 9.5cm;
+        }
+    }
+    #qrcode-text {
+        font-size: 14px;
+        color: #555;
+    }
+    #footer {
+        color: #777;
+    }
+    .title {
+        text-align: center;
+        font-weight: bold;
+        font-size: 20px;
+    }
+    .btc-symbol {
+        font-family: FontAwesome;
+    }
+    table {
+        margin-top: 30px;
+        color: #555;
+        border: 1px;
+    }
+    td, th { padding: 5px; padding-bottom: 0px; }
+    .col1 {
+        text-align: right;
+    }
+</style>
+</head>
+<body>
+<div class="title">{% trans 'Customer Receipt' %} - #{{ transaction.id }}</div>
+<table>
+    <tr>
+        <td style="width: 400px;" class="col1">{% trans 'Amount' %}</td>
+        <td class="col2">{{ transaction.device.merchant.currency.prefix }}{{ transaction.fiat_amount|amount }}{{ transaction.merchant.device.currency.postfix }}</td>
+    </tr>
+    <tr>
+        <td class="col1">{% trans 'Bitcoin amount paid' %}</td>
+        <td class="col2 btc-amount">m<span class="btc-symbol">&#xf15a;</span> {{ transaction.scaled_btc_amount|amount }}</td>
+    </tr>
+    <tr>
+        <td class="col1">{% trans 'Effective exchange rate' %}</td>
+        <td class="col2">{{ transaction.device.merchant.currency.prefix }}{{ transaction.scaled_effective_exchange_rate|amount }}{{ transaction.device.merchant.currency.postfix }}</td>
+    </tr>
+    <tr></tr>
+    <tr>
+        <td class="col1">{% trans 'Destination address' %}</td>
+        <td class="col2"><a href="{{ transaction.get_dest_address_url }}">{{ transaction.dest_address }}</a></td>
+    </tr>
+    <tr>
+        <td class="col1">{% trans 'Bitcoin transaction ID' %}</td>
+        <td class="col2"><a href="{{ transaction.get_blockchain_transaction_url }}">{{ transaction.bitcoin_transaction_id_1 }}</a></td>
+    </tr>
+    <tr></tr>
+    <tr>
+        <td class="col1">{% trans 'Merchant name' %}</td>
+        <td class="col2">{{ transaction.device.merchant.company_name }}</td>
+    </tr>
+    <tr>
+        <td class="col1">{% trans 'Merchant address' %}</td>
+        <td class="col2">{{ transaction.device.merchant.billing_address|join:', ' }}</td>
+    </tr>
+    <tr>
+        <td class="col1">{% trans 'Merchant invoice number' %}</td>
+        <td class="col2">{{ transaction.id }}</td>
+    </tr>
+    <tr>
+        <td class="col1">{% trans 'Transaction time' %}</td>
+        <td class="col2">{{ transaction.time|date:'Y-m-d H:i' }}</td>
+    </tr>
+</table>
+<div id="qrcode-text">
+    <div><a href="{{ transaction.get_api_url }}">{{ transaction.get_api_url }}</a></div>
+    <div>{% trans 'View this receipt online by visiting the link above, or by scanning the QR code adjacent.' %}</div>
+</div>
+<div id="qrcode">
+    {% qr_from_text transaction.get_api_url %}
+</div>
+<div id="footer">{% trans 'payment processed by' %}</div>
+<div id="footer-image"><img src="xbterminal/website/static/img/xbt_logo_small.png"></div>
+</body>
+</html>
