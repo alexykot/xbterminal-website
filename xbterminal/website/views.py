@@ -3,7 +3,7 @@ import datetime
 
 from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.mail import send_mail
@@ -21,13 +21,6 @@ from django.utils import timezone
 from django.utils.translation import ugettext as _
 
 from payment.blockchain import construct_bitcoin_uri
-
-from website.models import Device, ReconciliationTime
-from website.forms import (
-    ProfileForm,
-    DeviceForm,
-    SendDailyReconciliationForm,
-    SendReconciliationForm)
 
 from website import forms, models, utils
 
@@ -331,7 +324,7 @@ class DeviceMixin(ContextMixin):
         try:
             context['device'] = self.request.user.merchant.device_set.get(
                 key=self.kwargs.get('device_key'))
-        except Device.DoesNotExist:
+        except models.Device.DoesNotExist:
             raise Http404
         return context
 
@@ -495,7 +488,7 @@ class SendAllToEmailView(DeviceMixin, CabinetView):
     """
     def post(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        form = SendReconciliationForm(self.request.POST)
+        form = forms.SendReconciliationForm(self.request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
             date = form.cleaned_data['date']

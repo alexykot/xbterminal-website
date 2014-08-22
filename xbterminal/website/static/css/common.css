@@ -32,6 +32,12 @@ html, body {
     background-color: #3D3D3D;
 }
 
+.xbt-btn-primary:hover,
+.xbt-btn-secondary:hover {
+    color: #eee;
+    text-decoration: none;
+}
+
 [data-toggle="buttons"] > .btn > input[type="radio"] {
     top: 0;
     right: 0;
