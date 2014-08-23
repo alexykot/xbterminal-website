@@ -140,12 +140,12 @@
     background-image: url(../img/l_terminal_screens.png);
     background-repeat: no-repeat;
     background-position: center 0px;
-    height: 411px;
+    height: 355px;
     margin: 0 auto;
     position: absolute;
     right: -50%;
-    top: 46px;
-    width: 658px;
+    top: 61px;
+    width: 800px;
     z-index: 3;
 }
 
