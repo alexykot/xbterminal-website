@@ -188,7 +188,7 @@ class Device(models.Model):
     name = models.CharField(_('Your reference'), max_length=100)
 
     payment_processing = models.CharField(_('Payment processing'), max_length=50, choices=PAYMENT_PROCESSING_CHOICES, default='keep')
-    payment_processor = models.CharField(_('Payment processor'), max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, blank=True, null=True)
+    payment_processor = models.CharField(_('Payment processor'), max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, default='GoCoin')
     api_key = models.CharField(_('API key'), max_length=255, blank=True)
     percent = models.DecimalField(
         _('Percent to convert'),
