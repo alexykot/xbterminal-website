@@ -27,6 +27,29 @@ import payment.protocol
 logger = logging.getLogger(__name__)
 
 
+class DeviceListView(View):
+    """
+    Device list
+    """
+    def get(self, *args, **kwargs):
+        try:
+            devices = Device.objects.filter(merchant__pk=self.kwargs.get('pk'))
+        except Device.DoesNotExist:
+            raise Http404
+        data = []
+        for device in devices:
+            data.append({
+                'name': device.name,
+                'key': device.key,
+                'percent': float(device.percent),
+                'type': device.device_type,
+                'is_active': (device.status == 'active'),
+            })
+        response = HttpResponse(json.dumps(data),
+                                content_type='application/json')
+        return response
+
+
 @api_view(['GET'])
 def device(request, key):
     device = get_object_or_404(Device, key=key)
