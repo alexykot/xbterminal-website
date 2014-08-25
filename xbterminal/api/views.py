@@ -28,11 +28,16 @@ import payment.protocol
 logger = logging.getLogger(__name__)
 
 
-class DeviceListView(ProtectedResourceView):
-    """
-    Device list
-    """
+class DevicesView(ProtectedResourceView):
+
+    @csrf_exempt
+    def dispatch(self, *args, **kwargs):
+        return super(DevicesView, self).dispatch(*args, **kwargs)
+
     def get(self, *args, **kwargs):
+        """
+        Device list
+        """
         merchant = self.request.resource_owner.merchant
         data = []
         for device in merchant.device_set.all():
@@ -47,16 +52,10 @@ class DeviceListView(ProtectedResourceView):
                                 content_type='application/json')
         return response
 
-
-class CreateDeviceView(ProtectedResourceView):
-    """
-    Create device
-    """
-    @csrf_exempt
-    def dispatch(self, *args, **kwargs):
-        return super(CreateDeviceView, self).dispatch(*args, **kwargs)
-
     def post(self, *args, **kwargs):
+        """
+        Create new device
+        """
         merchant = self.request.resource_owner.merchant
         name = self.request.POST.get('name')
         if not name:
