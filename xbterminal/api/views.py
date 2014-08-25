@@ -41,7 +41,7 @@ class DeviceListView(ProtectedResourceView):
                 'key': device.key,
                 'percent': float(device.percent),
                 'type': device.device_type,
-                'is_active': (device.status == 'active'),
+                'online': device.is_online(),
             })
         response = HttpResponse(json.dumps(data),
                                 content_type='application/json')
@@ -67,7 +67,14 @@ class CreateDeviceView(ProtectedResourceView):
             name=name,
             merchant=merchant)
         device.save()
-        response = HttpResponse(json.dumps({'key': device.key}),
+        data = {
+            'name': device.name,
+            'key': device.key,
+            'percent': float(device.percent),
+            'type': device.device_type,
+            'online': device.is_online(),
+        }
+        response = HttpResponse(json.dumps(data),
                                 content_type='application/json')
         return response
 
