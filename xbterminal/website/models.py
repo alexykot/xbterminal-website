@@ -278,7 +278,7 @@ class Device(models.Model):
         max_digits=4,
         decimal_places=1,
         validators=[validate_percent],
-        default=0)
+        default=100)
     bitcoin_address = models.CharField(_('Bitcoin address to send to'), max_length=100, blank=True)
 
     key = models.CharField(_('Device key'), max_length=32, editable=False, unique=True, default=gen_device_key)
