@@ -15,7 +15,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from constance import config
 
-from website.models import Device, Transaction, Firmware, PaymentOrder
+from website.models import Device, Transaction, Firmware, PaymentOrder, MerchantAccount
 from website.forms import EnterAmountForm
 from website.utils import generate_qr_code
 from api.shortcuts import render_to_pdf
@@ -32,12 +32,10 @@ class DeviceListView(View):
     Device list
     """
     def get(self, *args, **kwargs):
-        try:
-            devices = Device.objects.filter(merchant__pk=self.kwargs.get('pk'))
-        except Device.DoesNotExist:
-            raise Http404
+        merchant = get_object_or_404(MerchantAccount,
+                                     pk=self.kwargs.get('pk'))
         data = []
-        for device in devices:
+        for device in merchant.device_set.all():
             data.append({
                 'name': device.name,
                 'key': device.key,
@@ -46,6 +44,31 @@ class DeviceListView(View):
                 'is_active': (device.status == 'active'),
             })
         response = HttpResponse(json.dumps(data),
+                                content_type='application/json')
+        return response
+
+
+class CreateDeviceView(View):
+    """
+    Create device
+    """
+    @csrf_exempt
+    def dispatch(self, *args, **kwargs):
+        return super(CreateDeviceView, self).dispatch(*args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        merchant = get_object_or_404(MerchantAccount,
+                                     pk=self.kwargs.get('pk'))
+        name = self.request.POST.get('name')
+        if not name:
+            return HttpResponseBadRequest()
+        device = Device(
+            device_type='mobile',
+            status='active',
+            name=name,
+            merchant=merchant)
+        device.save()
+        response = HttpResponse(json.dumps({'key': device.key}),
                                 content_type='application/json')
         return response
 
