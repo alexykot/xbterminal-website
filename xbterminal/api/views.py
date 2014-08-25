@@ -14,6 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from constance import config
+from oauth2_provider.views.generic import ProtectedResourceView
 
 from website.models import Device, Transaction, Firmware, PaymentOrder, MerchantAccount
 from website.forms import EnterAmountForm
@@ -27,13 +28,12 @@ import payment.protocol
 logger = logging.getLogger(__name__)
 
 
-class DeviceListView(View):
+class DeviceListView(ProtectedResourceView):
     """
     Device list
     """
     def get(self, *args, **kwargs):
-        merchant = get_object_or_404(MerchantAccount,
-                                     pk=self.kwargs.get('pk'))
+        merchant = self.request.resource_owner.merchant
         data = []
         for device in merchant.device_set.all():
             data.append({
@@ -48,7 +48,7 @@ class DeviceListView(View):
         return response
 
 
-class CreateDeviceView(View):
+class CreateDeviceView(ProtectedResourceView):
     """
     Create device
     """
@@ -57,8 +57,7 @@ class CreateDeviceView(View):
         return super(CreateDeviceView, self).dispatch(*args, **kwargs)
 
     def post(self, *args, **kwargs):
-        merchant = get_object_or_404(MerchantAccount,
-                                     pk=self.kwargs.get('pk'))
+        merchant = self.request.resource_owner.merchant
         name = self.request.POST.get('name')
         if not name:
             return HttpResponseBadRequest()

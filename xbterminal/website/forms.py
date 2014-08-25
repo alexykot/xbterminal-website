@@ -154,6 +154,13 @@ class MerchantRegistrationForm(forms.ModelForm):
         instance.language = get_language(instance.country.code)
         instance.currency = get_currency(instance.country.code)
         instance.save()
+        # Create oauth client
+        user.application_set.create(
+            name='XBTerminal app',
+            client_id=user.email,
+            client_type='confidential',
+            authorization_grant_type='password',
+            client_secret='#')
         return instance
 
 

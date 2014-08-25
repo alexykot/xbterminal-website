@@ -4,10 +4,10 @@ from api import views
 
 
 urlpatterns = patterns('api.views',
-    url(r'^merchant/(?P<pk>\d+)/devices/$',
+    url(r'^devices/$',
         views.DeviceListView.as_view(),
         name='devices'),
-    url(r'^merchant/(?P<pk>\d+)/create_device/$',
+    url(r'^create_device/$',
         views.CreateDeviceView.as_view(),
         name='create_device'),
     url(r'^devices/(?P<key>[0-9a-zA-Z]{8,32})/$', 'device', name='device'),
