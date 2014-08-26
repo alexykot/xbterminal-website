@@ -199,6 +199,11 @@ BITCOIND_AUTH = {
     "testnet": ("root", "password"),
 }
 
+# OAuth
+OAUTH2_PROVIDER = {
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 100000000,
+}
+
 # Override default settings
 try:
     from local_settings import *
