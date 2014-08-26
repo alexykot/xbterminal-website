@@ -331,12 +331,12 @@ html, body {
     }
     .login-form-title,
     .login-form,
-    .register,
     #merchant-info {
         display: none;
     }
     .login,
-    .logout {
+    .logout,
+    .register {
         display: block;
         line-height: 75px;
         margin: 0 auto;
@@ -363,14 +363,15 @@ html, body {
     }
     .header .navbar-nav > li > a,
     .login,
-    .logout {
+    .logout,
+    .register {
         line-height: 30px;
         width: 100%;
     }
 
     .header .user-block {
         float: none;
-        height: 30px;
+        height: 60px;
         margin: 0 -15px 10px;
     }
 
