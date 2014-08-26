@@ -5,6 +5,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import (
+    AuthenticationForm as DjangoAuthenticationForm,
     UserCreationForm as DjangoUserCreationForm,
     UserChangeForm as DjangoUserChangeForm)
 from django.core.mail import send_mail
@@ -38,6 +39,13 @@ class UserChangeForm(DjangoUserChangeForm):
 
     class Meta:
         model = User
+
+
+class AuthenticationForm(DjangoAuthenticationForm):
+
+    def clean_username(self):
+        email = self.cleaned_data['username']
+        return email.lower()
 
 
 class ContactForm(forms.Form):
