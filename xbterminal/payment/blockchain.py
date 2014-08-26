@@ -11,14 +11,7 @@ from bitcoin.wallet import CBitcoinAddress
 from django.conf import settings
 
 import payment
-
-
-class NetworkError(Exception):
-    pass
-
-
-class InvalidTransaction(Exception):
-    pass
+from payment.exceptions import NetworkError, InvalidTransaction
 
 
 class BlockChain(object):

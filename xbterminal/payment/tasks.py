@@ -19,7 +19,7 @@ from payment import (
     BTC_DEC_PLACES,
     BTC_DEFAULT_FEE,
     BTC_MIN_OUTPUT)
-from payment import average, blockchain, instantfiat
+from payment import average, blockchain, instantfiat, exceptions
 
 from website.models import PaymentOrder, Transaction
 
@@ -67,7 +67,7 @@ def prepare_payment(device, fiat_amount):
         details['local_address'] = str(bc.get_new_address())
     except Exception:
         logger.error('no response from bitcoind')
-        raise blockchain.NetworkError
+        raise exceptions.NetworkError
     details['merchant_address'] = device.bitcoin_address
     details['fee_address'] = device.our_fee_address
     # Exchange service
@@ -156,16 +156,6 @@ def wait_for_payment(payment_order_uid):
         django_rq.get_scheduler().cancel(rq.get_current_job())
 
 
-class InvalidPayment(Exception):
-
-    def __init__(self, error_message):
-        super(InvalidPayment, self).__init__()
-        self.error_message = error_message
-
-    def __str__(self):
-        return "Invalid payment: {0}".format(self.error_message)
-
-
 def validate_payment(payment_order, transactions, broadcast=False):
     """
     Validates payment and stores incoming transaction id
@@ -177,7 +167,7 @@ def validate_payment(payment_order, transactions, broadcast=False):
     """
     bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
     if len(transactions) != 1:
-        raise InvalidPayment('expecting single transaction')
+        raise exceptions.InvalidPayment('expecting single transaction')
     incoming_tx = transactions[0]
     # Check amount
     btc_amount = BTC_DEC_PLACES
@@ -185,12 +175,12 @@ def validate_payment(payment_order, transactions, broadcast=False):
         if str(output['address']) == payment_order.local_address:
             btc_amount += output['amount']
     if btc_amount < payment_order.btc_amount:
-        raise InvalidPayment('insufficient funds')
+        raise exceptions.InvalidPayment('insufficient funds')
     # Validate transaction
     try:
         incoming_tx_signed = bc.sign_raw_transaction(incoming_tx)
-    except blockchain.InvalidTransaction:
-        raise InvalidPayment('invalid transaction')
+    except exceptions.InvalidTransaction:
+        raise exceptions.InvalidPayment('invalid transaction')
     # Save incoming transaction id
     if broadcast:
         try:
