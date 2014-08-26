@@ -91,7 +91,13 @@ class MerchantRegistrationForm(forms.ModelForm):
 
     class Meta:
         model = MerchantAccount
-        exclude = ['user', 'business_address2', 'language', 'currency']
+        exclude = [
+            'user',
+            'business_address2',
+            'language',
+            'currency',
+            'comments',
+        ]
         labels = {
             'business_address': _('Trading address'),
             'post_code': _('Post code/Zip code'),
@@ -221,7 +227,13 @@ class ProfileForm(forms.ModelForm):
 
     class Meta:
         model = MerchantAccount
-        exclude = ['user', 'business_address2', 'language', 'currency']
+        exclude = [
+            'user',
+            'business_address2',
+            'language',
+            'currency',
+            'comments',
+        ]
         labels = {
             'business_address': _('Trading address'),
             'contact_first_name': _('First name'),

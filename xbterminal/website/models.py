@@ -124,6 +124,7 @@ class MerchantAccount(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name="merchant", null=True)
     company_name = models.CharField(_('Company name'), max_length=255)
     trading_name = models.CharField(_('Trading name'), max_length=255, blank=True)
+
     business_address = models.CharField(_('Business address'), max_length=255)
     business_address1 = models.CharField('', max_length=255, blank=True, default='')
     business_address2 = models.CharField('', max_length=255, blank=True, default='')
@@ -131,6 +132,7 @@ class MerchantAccount(models.Model):
     county = models.CharField(_('State / County'), max_length=128, blank=True)
     post_code = models.CharField(_('Post code'), max_length=32, validators=[validate_post_code])
     country = CountryField(_('Country'), default='GB')
+
     contact_first_name = models.CharField(_('Contact first name'), max_length=255)
     contact_last_name = models.CharField(_('Contact last name'), max_length=255)
     contact_phone = models.CharField(_('Contact phone'), max_length=32, validators=[validate_phone])
@@ -138,6 +140,8 @@ class MerchantAccount(models.Model):
 
     language = models.ForeignKey(Language, default=1)  # by default, English, see fixtures
     currency = models.ForeignKey(Currency, default=1)  # by default, GBP, see fixtures
+
+    comments = models.TextField(blank=True)
 
     def __unicode__(self):
         return self.company_name
