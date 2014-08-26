@@ -15,7 +15,14 @@ from django.utils.translation import ugettext_lazy as _
 
 from payment import preorder
 
-from website.models import User, MerchantAccount, Device, ReconciliationTime, Order
+from website.models import (
+    User,
+    MerchantAccount,
+    Device,
+    ReconciliationTime,
+    Order,
+    get_language,
+    get_currency)
 from website.fields import BCAddressField
 from website.widgets import ButtonGroupRadioSelect, PercentWidget, TimeWidget
 from website.validators import validate_bitcoin_address
@@ -126,6 +133,8 @@ class MerchantRegistrationForm(forms.ModelForm):
             self._password)
         user.backend = 'django.contrib.auth.backends.ModelBackend'
         instance.user = user
+        instance.language = get_language(instance.country.code)
+        instance.currency = get_currency(instance.country.code)
         instance.save()
         return instance
 
@@ -220,6 +229,15 @@ class ProfileForm(forms.ModelForm):
             'contact_email': _('Email'),
             'contact_phone': _('Phone'),
         }
+
+    def save(self, commit=True):
+        instance = super(ProfileForm, self).save(commit=False)
+        instance.language = get_language(instance.country.code)
+        instance.currency = get_currency(instance.country.code)
+        if commit:
+            instance.save()
+        return instance
+
 
 class DeviceForm(forms.ModelForm):
 

@@ -74,8 +74,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class Language(models.Model):
-    name = models.CharField(max_length=50)
-    code = models.CharField(max_length=2)
+    name = models.CharField(max_length=50, unique=True)
+    code = models.CharField(max_length=2, unique=True)
     fractional_split = models.CharField(max_length=1, default=".")
     thousands_split = models.CharField(max_length=1, default=",")
 
@@ -83,8 +83,20 @@ class Language(models.Model):
         return self.name
 
 
+def get_language(country_code):
+    if country_code == 'FR':
+        language_code = 'fr'
+    elif country_code in ['DE', 'AT', 'CH']:
+        language_code = 'de'
+    elif country_code in ['RU', 'UA', 'BY', 'KZ']:
+        language_code = 'ru'
+    else:
+        language_code = 'en'
+    return Language.objects.get(code=language_code)
+
+
 class Currency(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, unique=True)
     postfix = models.CharField(max_length=50, default="")
     prefix = models.CharField(max_length=50, default="")
 
@@ -93,6 +105,19 @@ class Currency(models.Model):
 
     def __unicode__(self):
         return self.name
+
+
+def get_currency(country_code):
+    if country_code == 'GB':
+        currency_code = 'GBP'
+    elif country_code in ['AT', 'BE', 'DE', 'GR', 'IE', 'ES',
+                          'IT', 'CY', 'LV', 'LU', 'MT', 'NL',
+                          'PT', 'SK', 'SI', 'FI', 'FR', 'EE']:
+        # Eurozone
+        currency_code = 'EUR'
+    else:
+        currency_code = 'USD'
+    return Currency.objects.get(name=currency_code)
 
 
 class MerchantAccount(models.Model):
