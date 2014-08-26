@@ -9,6 +9,7 @@ import requests
 from requests.auth import AuthBase
 
 import payment
+from payment.exceptions import InstantFiatError
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +40,12 @@ def create_invoice(fiat_amount, currency_code, api_key, description):
             data=json.dumps(payload),
             auth=BearerAuth(api_key))
         data = response.json()
-    except (requests.exceptions.RequestException, ValueError):
+    except requests.exceptions.RequestException:
         raise
+    except ValueError:
+        raise InstantFiatError(response.text)
+    if 'errors' in data:
+        raise InstantFiatError(str(data))
     invoice_id = data['id']
     btc_amount = Decimal(data['price']).quantize(payment.BTC_DEC_PLACES)
     address = data['payment_address']
