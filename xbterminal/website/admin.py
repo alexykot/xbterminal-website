@@ -5,6 +5,7 @@ from website import forms, models
 
 
 class DeviceAdmin(admin.ModelAdmin):
+    list_display = ('__unicode__', 'is_online', 'merchant')
     readonly_fields = ('key', 'last_reconciliation')
     form = forms.DeviceAdminForm
 

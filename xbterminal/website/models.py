@@ -144,7 +144,10 @@ class MerchantAccount(models.Model):
     comments = models.TextField(blank=True)
 
     def __unicode__(self):
-        return self.company_name
+        if self.trading_name:
+            return '{0} ({1})'.format(self.company_name, self.trading_name)
+        else:
+            return self.company_name
 
     @property
     def billing_address(self):
@@ -246,7 +249,7 @@ class Device(models.Model):
         ordering = ['id']
 
     def __unicode__(self):
-        return 'device: %s' % self.name
+        return 'Device: {0}'.format(self.name)
 
     def save(self, *args, **kwargs):
         super(Device, self).save(*args, **kwargs)
