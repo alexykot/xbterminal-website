@@ -1,5 +1,9 @@
-from django.forms.widgets import ChoiceFieldRenderer, RadioChoiceInput, RendererMixin,\
-                                 Select, TextInput, TimeInput
+from django.forms.widgets import (
+    ChoiceFieldRenderer,
+    RadioChoiceInput,
+    RendererMixin,
+    Select, TextInput, TimeInput,
+    FileInput)
 from django.utils.encoding import force_text
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -59,3 +63,18 @@ class TimeWidget(TimeInput):
     class Media:
         js = ['lib/jquery.ptTimeSelect.js']
         css = {'all': ['lib/jquery-ui.min.css', 'lib/jquery.ptTimeSelect.css']}
+
+
+class FileWidget(FileInput):
+
+    def render(self, name, value, attrs=None):
+        file_input = super(FileWidget, self).render(name, value, attrs)
+        template = '''
+            <div class="file-widget">
+                <div class="file-dd">
+                    Drag and drop here or click to browse files {0}
+                </div>
+                <ul class="file-uploaded"></ul>
+            </div>'''
+        output = format_html(template, file_input)
+        return mark_safe(output)

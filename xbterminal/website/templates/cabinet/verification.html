@@ -1,0 +1,27 @@
+{% extends "cabinet/base.html" %}
+{% load bootstrap3 staticfiles i18n %}
+
+{% block js %}
+<script src="{% static 'lib/jquery.ui.widget.js' %}"></script>
+<script src="{% static 'lib/jquery.iframe-transport.js' %}"></script>
+<script src="{% static 'lib/jquery.fileupload.js' %}"></script>
+<script src="{% static 'js/verification.js' %}"></script>
+{% endblock %}
+
+{% block cabinet_content %}
+<div class="row">
+    <div class="col-md-10 col-md-offset-1">
+        <h3>{% trans 'Account verification' %}</h3>
+        <p>
+            Documents ...<br>
+            ...<br>
+            ...<br>
+        </p>
+        <form id="verification-form" action="{% url 'website:verification_file' %}">
+            {% csrf_token %}
+            {% bootstrap_form form %}
+            <button type="submit" class="btn btn-default">{% trans 'Submit' %}</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

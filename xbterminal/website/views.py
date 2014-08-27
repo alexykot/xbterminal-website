@@ -376,6 +376,33 @@ class UpdateProfileView(TemplateResponseMixin, CabinetView):
             return self.render_to_response(context)
 
 
+class VerificationView(TemplateResponseMixin, CabinetView):
+    """
+    Verification page
+    """
+    template_name = "cabinet/verification.html"
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['form'] = forms.VerificationFileUploadForm()
+        return self.render_to_response(context)
+
+
+class VerificationFileView(CabinetView):
+
+    def post(self, *args, **kwargs):
+        form = forms.VerificationFileUploadForm(self.request.POST, self.request.FILES)
+        if form.is_valid():
+            data = {'file': form.get_document().name}
+        else:
+            data = {'errors': str(form.errors)}
+        return HttpResponse(json.dumps(data),
+                            content_type='application/json')
+
+    def delete(self, *args, **kwargs):
+        pass
+
+
 class ReconciliationView(DeviceMixin, TemplateResponseMixin, CabinetView):
     """
     Reconciliation page

@@ -24,7 +24,11 @@ from website.models import (
     get_language,
     get_currency)
 from website.fields import BCAddressField
-from website.widgets import ButtonGroupRadioSelect, PercentWidget, TimeWidget
+from website.widgets import (
+    ButtonGroupRadioSelect,
+    PercentWidget,
+    TimeWidget,
+    FileWidget)
 from website.validators import validate_bitcoin_address
 
 
@@ -253,6 +257,27 @@ class ProfileForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+class VerificationFileUploadForm(forms.Form):
+    """
+    Verification file upload form
+    """
+    document_1 = forms.FileField(
+        label=_('Photo ID'),
+        widget=FileWidget,
+        required=False)
+    document_2 = forms.FileField(
+        label=_('Residence proof'),
+        widget=FileWidget,
+        required=False)
+
+    def get_document(self):
+        if self.cleaned_data.get('document_1'):
+            return self.cleaned_data['document_1']
+        if self.cleaned_data.get('document_2'):
+            return self.cleaned_data['document_2']
+        raise ValueError
 
 
 class DeviceForm(forms.ModelForm):

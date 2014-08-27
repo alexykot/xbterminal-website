@@ -17,6 +17,8 @@ urlpatterns = patterns('website.views',
     url(r'^order/(?P<pk>\d+)/check/$', views.OrderCheckView.as_view(), name='order_check'),
     url(r'^subscribe/$', SubscribeNewsView.as_view(), name='subscribe'),
     url(r'^profile/$', views.UpdateProfileView.as_view(), name='profile'),
+    url(r'^verification/$', views.VerificationView.as_view(), name='verification'),
+    url(r'^verification/upload/$', views.VerificationFileView.as_view(), name='verification_file'),
 
     url(r'^terminals/$', views.DeviceList.as_view(), name='devices'),
     url(r'^terminals/add/$', views.CreateDeviceView.as_view(), name='create_device'),
