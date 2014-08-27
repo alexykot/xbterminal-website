@@ -121,6 +121,13 @@ def get_currency(country_code):
 
 
 class MerchantAccount(models.Model):
+
+    PAYMENT_PROCESSOR_CHOICES = [
+        ('bitpay', 'BitPay'),
+        ('cryptopay', 'CryptoPay'),
+        ('gocoin', 'GoCoin'),
+    ]
+
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name="merchant", null=True)
     company_name = models.CharField(_('Company name'), max_length=255)
     trading_name = models.CharField(_('Trading name'), max_length=255, blank=True)
@@ -140,6 +147,9 @@ class MerchantAccount(models.Model):
 
     language = models.ForeignKey(Language, default=1)  # by default, English, see fixtures
     currency = models.ForeignKey(Currency, default=1)  # by default, GBP, see fixtures
+
+    payment_processor = models.CharField(_('Payment processor'), max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, default='gocoin')
+    api_key = models.CharField(_('API key'), max_length=255, blank=True)
 
     comments = models.TextField(blank=True)
 
@@ -204,11 +214,6 @@ class Device(models.Model):
         ('partially', _('convert partially')),
         ('full', _('convert full amount')),
     ]
-    PAYMENT_PROCESSOR_CHOICES = [
-        ('BitPay', 'BitPay'),
-        ('CryptoPay', 'CryptoPay'),
-        ('GoCoin', 'GoCoin'),
-    ]
     BITCOIN_NETWORKS = [
         ('mainnet', 'Main'),
         ('testnet', 'Testnet'),
@@ -219,8 +224,6 @@ class Device(models.Model):
     status = models.CharField(max_length=50, choices=DEVICE_STATUSES, default='active')
     name = models.CharField(_('Your reference'), max_length=100)
 
-    payment_processor = models.CharField(_('Payment processor'), max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, default='GoCoin')
-    api_key = models.CharField(_('API key'), max_length=255, blank=True)
     percent = models.DecimalField(
         _('Percent to convert'),
         max_digits=4,
@@ -261,7 +264,9 @@ class Device(models.Model):
 
     def payment_processor_info(self):
         if self.percent > 0:
-            return '{0}, {1}% converted'.format(self.payment_processor, self.percent)
+            return '{0}, {1}% converted'.format(
+                self.merchant.get_payment_processor_display(),
+                self.percent)
         return ''
 
     def get_transactions_by_date(self, date):

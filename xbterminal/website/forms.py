@@ -96,6 +96,8 @@ class MerchantRegistrationForm(forms.ModelForm):
             'business_address2',
             'language',
             'currency',
+            'payment_processor',
+            'api_key',
             'comments',
         ]
         labels = {
@@ -232,6 +234,8 @@ class ProfileForm(forms.ModelForm):
             'business_address2',
             'language',
             'currency',
+            'payment_processor',
+            'api_key',
             'comments',
         ]
         labels = {
