@@ -335,7 +335,9 @@ class UpdateDeviceView(DeviceMixin, TemplateResponseMixin, CabinetView):
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        context['form'] = forms.DeviceForm(instance=context['device'])
+        context['form'] = forms.DeviceForm(
+            instance=context['device'],
+            initial={'payment_processing': context['device'].payment_processing})
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):

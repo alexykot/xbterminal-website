@@ -219,7 +219,6 @@ class Device(models.Model):
     status = models.CharField(max_length=50, choices=DEVICE_STATUSES, default='active')
     name = models.CharField(_('Your reference'), max_length=100)
 
-    payment_processing = models.CharField(_('Payment processing'), max_length=50, choices=PAYMENT_PROCESSING_CHOICES, default='keep')
     payment_processor = models.CharField(_('Payment processor'), max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, default='GoCoin')
     api_key = models.CharField(_('API key'), max_length=255, blank=True)
     percent = models.DecimalField(
@@ -251,12 +250,18 @@ class Device(models.Model):
     def __unicode__(self):
         return 'Device: {0}'.format(self.name)
 
-    def save(self, *args, **kwargs):
-        super(Device, self).save(*args, **kwargs)
+    @property
+    def payment_processing(self):
+        if self.percent == 0:
+            return 'keep'
+        elif self.percent == 100:
+            return 'full'
+        else:
+            return 'partially'
 
     def payment_processor_info(self):
-        if self.payment_processing in ['partially', 'full']:
-            return '%s, %s%% converted' % (self.payment_processor, self.percent)
+        if self.percent > 0:
+            return '{0}, {1}% converted'.format(self.payment_processor, self.percent)
         return ''
 
     def get_transactions_by_date(self, date):

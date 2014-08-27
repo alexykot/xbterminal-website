@@ -253,6 +253,12 @@ class ProfileForm(forms.ModelForm):
 
 class DeviceForm(forms.ModelForm):
 
+    payment_processing = forms.ChoiceField(
+        label=_('Payment processing'),
+        choices=Device.PAYMENT_PROCESSING_CHOICES,
+        widget=ButtonGroupRadioSelect,
+        initial='keep')
+
     class Meta:
         model = Device
         fields = [
@@ -264,7 +270,6 @@ class DeviceForm(forms.ModelForm):
         ]
         widgets = {
             'device_type': forms.HiddenInput,
-            'payment_processing': ButtonGroupRadioSelect,
             'percent': PercentWidget,
         }
 
@@ -276,20 +281,11 @@ class DeviceForm(forms.ModelForm):
         device_type = self['device_type'].value()
         return device_types[device_type]
 
-    def clean_percent(self):
-        payment_processing = self.cleaned_data['payment_processing']
-        percent = self.cleaned_data['percent']
-        if payment_processing == 'keep':
-            percent = 0
-        elif payment_processing == 'full':
-            percent = 100
-        return percent
-
     def clean(self):
         cleaned_data = super(DeviceForm, self).clean()
-        payment_processing = cleaned_data['payment_processing']
+        percent = cleaned_data['percent']
         bitcoin_address = cleaned_data['bitcoin_address']
-        if payment_processing in ['keep', 'partially'] and not bitcoin_address:
+        if percent < 100 and not bitcoin_address:
             self._errors['bitcoin_address'] = self.error_class(["This field is required."])
             del cleaned_data['bitcoin_address']
         if self.instance and bitcoin_address:
