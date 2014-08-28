@@ -1,3 +1,5 @@
+import os
+
 from django.forms.widgets import (
     ChoiceFieldRenderer,
     RadioChoiceInput,
@@ -68,13 +70,20 @@ class TimeWidget(TimeInput):
 class FileWidget(FileInput):
 
     def render(self, name, value, attrs=None):
-        file_input = super(FileWidget, self).render(name, value, attrs)
         template = '''
             <div class="file-widget">
                 <div class="file-dd">
                     Drag and drop here or click to browse files {0}
                 </div>
-                <ul class="file-uploaded"></ul>
+                <ul class="file-uploaded">{1}</ul>
             </div>'''
-        output = format_html(template, file_input)
+        file_input = super(FileWidget, self).render(name, value, attrs)
+        if value:
+            list_item = format_html(
+                '<li>{0}<a class="glyphicon glyphicon-remove file-remove" data-name="{1}"></a></li>',
+                os.path.basename(value.name),
+                name)
+        else:
+            list_item = ''
+        output = format_html(template, file_input, list_item)
         return mark_safe(output)

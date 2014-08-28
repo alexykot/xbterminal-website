@@ -384,23 +384,40 @@ class VerificationView(TemplateResponseMixin, CabinetView):
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        context['form'] = forms.VerificationFileUploadForm()
+        merchant = self.request.user.merchant
+        context['current_status'] = merchant.verification_status
+        context['form'] = forms.VerificationFileUploadForm(instance=merchant)
         return self.render_to_response(context)
+
+    def post(self, *args, **kwargs):
+        form = forms.VerificationFileUploadForm(
+            self.request.POST,
+            self.request.FILES,
+            instance=self.request.user.merchant)
+        if form.is_valid():
+            instance = form.save()
+            if form.uploaded_file_name:
+                data = {'filename': form.uploaded_file_name}
+            else:
+                data = {'next': reverse('website:verification')}
+        else:
+            data = {'errors': form.errors}
+        return HttpResponse(json.dumps(data),
+                            content_type='application/json')
 
 
 class VerificationFileView(CabinetView):
 
-    def post(self, *args, **kwargs):
-        form = forms.VerificationFileUploadForm(self.request.POST, self.request.FILES)
-        if form.is_valid():
-            data = {'file': form.get_document().name}
-        else:
-            data = {'errors': str(form.errors)}
-        return HttpResponse(json.dumps(data),
-                            content_type='application/json')
-
     def delete(self, *args, **kwargs):
-        pass
+        fieldname = self.kwargs.get('name')
+        if fieldname not in ['verification_file_1', 'verification_file_2']:
+            raise Http404
+        file = getattr(self.request.user.merchant, fieldname)
+        if not file:
+            raise Http404
+        file.delete()
+        return HttpResponse(json.dumps({'deleted': True}),
+                            content_type='application/json')
 
 
 class ReconciliationView(DeviceMixin, TemplateResponseMixin, CabinetView):

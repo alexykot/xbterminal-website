@@ -123,9 +123,15 @@ LOCALE_PATHS = (
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
-STATIC_URL = '/static/'
-# need to set absolute path, because it used in pdf generating
 STATIC_ROOT = os.path.join(BASE_DIR, '..', 'static')
+STATIC_URL = '/static/'
+
+# Media
+# https://docs.djangoproject.com/en/1.6/topics/files/
+
+MEDIA_ROOT = os.path.join(BASE_DIR, '..', 'media')
+# MEDIA_URL = '/media/'
+
 
 DEFAULT_FROM_EMAIL = "no-reply@xbterminal.io"
 CONTACT_EMAIL_RECIPIENTS = ["info@xbterminal.io"]

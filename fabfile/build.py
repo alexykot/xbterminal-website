@@ -9,6 +9,8 @@ def dirs():
     env.run("mkdir -p firmware")
     env.run("mkdir -p reports")
     env.run("chmod -R a+w reports")
+    env.run("mkdir -p media")
+    env.run("chmod -R a+w media")
 
 
 def pip_version():

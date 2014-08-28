@@ -1,4 +1,5 @@
 from decimal import Decimal
+import os
 import smtplib
 
 from django import forms
@@ -8,6 +9,7 @@ from django.contrib.auth.forms import (
     AuthenticationForm as DjangoAuthenticationForm,
     UserCreationForm as DjangoUserCreationForm,
     UserChangeForm as DjangoUserChangeForm)
+from django.core.files.uploadedfile import UploadedFile
 from django.core.mail import send_mail
 from django.core.validators import RegexValidator
 from django.template.loader import render_to_string
@@ -259,25 +261,68 @@ class ProfileForm(forms.ModelForm):
         return instance
 
 
-class VerificationFileUploadForm(forms.Form):
+class VerificationFileUploadForm(forms.ModelForm):
     """
     Verification file upload form
     """
-    document_1 = forms.FileField(
-        label=_('Photo ID'),
-        widget=FileWidget,
-        required=False)
-    document_2 = forms.FileField(
-        label=_('Residence proof'),
-        widget=FileWidget,
+    submit = forms.BooleanField(
+        widget=forms.HiddenInput,
         required=False)
 
-    def get_document(self):
-        if self.cleaned_data.get('document_1'):
-            return self.cleaned_data['document_1']
-        if self.cleaned_data.get('document_2'):
-            return self.cleaned_data['document_2']
-        raise ValueError
+    class Meta:
+        model = MerchantAccount
+        fields = [
+            'verification_file_1',
+            'verification_file_2',
+        ]
+        widgets = {
+            'verification_file_1': FileWidget,
+            'verification_file_2': FileWidget,
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(VerificationFileUploadForm, self).__init__(*args, **kwargs)
+        self._uploaded_file = None
+
+    def clean(self):
+        cleaned_data = super(VerificationFileUploadForm, self).clean()
+        file_1 = cleaned_data.get('verification_file_1')
+        file_2 = cleaned_data.get('verification_file_2')
+        if cleaned_data['submit']:
+            # Check both files
+            if not file_1:
+                self._errors['verification_file_1'] = self.error_class(
+                    [_("This field is required.")])
+            if not file_2:
+                self._errors['verification_file_2'] = self.error_class(
+                    [_("This field is required.")])
+        else:
+            # Get uploaded file type
+            if file_1 and isinstance(file_1, UploadedFile):
+                self._uploaded_file = 'verification_file_1'
+            elif file_2 and isinstance(file_2, UploadedFile):
+                self._uploaded_file = 'verification_file_2'
+            else:
+                self._errors['verification_file_1'] = self.error_class(
+                    [_('File upload failed.')])
+                self._errors['verification_file_2'] = self.error_class(
+                    [_('File upload failed.')])
+        return cleaned_data
+
+    @property
+    def uploaded_file_name(self):
+        if self._uploaded_file is None:
+            return None
+        file = getattr(self.instance, self._uploaded_file)
+        return os.path.basename(file.name)
+
+    def save(self, commit=True):
+        instance = super(VerificationFileUploadForm, self).save(commit=False)
+        if self.cleaned_data['submit']:
+            instance.verification_status = 'pending'
+        if commit:
+            instance.save()
+        return instance
 
 
 class DeviceForm(forms.ModelForm):

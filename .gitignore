@@ -3,6 +3,7 @@ settings_server.py
 local_settings.py
 venv
 /static
+/media
 fabfile/deploy.py
 certs
 .idea/*

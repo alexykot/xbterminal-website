@@ -1,5 +1,6 @@
 import datetime
 from decimal import Decimal
+import os
 import uuid
 
 from bitcoin import base58
@@ -120,12 +121,24 @@ def get_currency(country_code):
     return Currency.objects.get(name=currency_code)
 
 
+def verification_file_path_gen(instance, filename):
+    return os.path.join("verification",
+                        str(instance.pk),
+                        filename)
+
+
 class MerchantAccount(models.Model):
 
     PAYMENT_PROCESSOR_CHOICES = [
         ('bitpay', 'BitPay'),
         ('cryptopay', 'CryptoPay'),
         ('gocoin', 'GoCoin'),
+    ]
+
+    VERIFICATION_STATUSES = [
+        ('unverified', _('Unverified')),
+        ('pending', _('Verification pending')),
+        ('verified', _('Vefified')),
     ]
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name="merchant", null=True)
@@ -150,6 +163,10 @@ class MerchantAccount(models.Model):
 
     payment_processor = models.CharField(_('Payment processor'), max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, default='gocoin')
     api_key = models.CharField(_('API key'), max_length=255, blank=True)
+
+    verification_status = models.CharField(max_length=50, choices=VERIFICATION_STATUSES, default='unverified')
+    verification_file_1 = models.FileField(_('Photo ID'), upload_to=verification_file_path_gen, blank=True, null=True)
+    verification_file_2 = models.FileField(_('Residence proof'), upload_to=verification_file_path_gen, blank=True, null=True)
 
     comments = models.TextField(blank=True)
 
