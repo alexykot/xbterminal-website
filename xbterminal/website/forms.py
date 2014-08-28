@@ -11,7 +11,7 @@ from django.contrib.auth.forms import (
 from django.core.mail import send_mail
 from django.core.validators import RegexValidator
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 from payment import preorder
 
