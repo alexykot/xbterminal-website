@@ -104,6 +104,9 @@ class MerchantRegistrationForm(forms.ModelForm):
             'currency',
             'payment_processor',
             'api_key',
+            'verification_status',
+            'verification_file_1',
+            'verification_file_2',
             'comments',
         ]
         labels = {
@@ -242,6 +245,9 @@ class ProfileForm(forms.ModelForm):
             'currency',
             'payment_processor',
             'api_key',
+            'verification_status',
+            'verification_file_1',
+            'verification_file_2',
             'comments',
         ]
         labels = {
