@@ -195,6 +195,10 @@ html, body {
     text-decoration: none;
 }
 
+#merchant-info-status {
+    font-size: 0.8em;
+}
+
 /* STICKY HEADER */
 
 .header-fixed {

@@ -136,9 +136,9 @@ class MerchantAccount(models.Model):
     ]
 
     VERIFICATION_STATUSES = [
-        ('unverified', _('Unverified')),
-        ('pending', _('Verification pending')),
-        ('verified', _('Vefified')),
+        ('unverified', _('unverified')),
+        ('pending', _('verification pending')),
+        ('verified', _('vefified')),
     ]
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name="merchant", null=True)
@@ -190,6 +190,10 @@ class MerchantAccount(models.Model):
 
     @property
     def info(self):
+        if self.verification_status == 'verified':
+            status = None
+        else:
+            status = self.get_verification_status_display()
         active_dt = timezone.now() - datetime.timedelta(minutes=2)
         active = self.device_set.filter(last_activity__gte=active_dt).count()
         total =  self.device_set.count()
@@ -200,6 +204,7 @@ class MerchantAccount(models.Model):
         tx_count = transactions.count()
         tx_sum = transactions.aggregate(s=models.Sum('fiat_amount'))['s']
         return {'name': self.trading_name or self.company_name,
+                'status': status,
                 'active': active,
                 'total': total,
                 'tx_count': tx_count,
