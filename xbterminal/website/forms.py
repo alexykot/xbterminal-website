@@ -11,11 +11,18 @@ from django.contrib.auth.forms import (
 from django.core.mail import send_mail
 from django.core.validators import RegexValidator
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 from payment import preorder
 
-from website.models import User, MerchantAccount, Device, ReconciliationTime, Order
+from website.models import (
+    User,
+    MerchantAccount,
+    Device,
+    ReconciliationTime,
+    Order,
+    get_language,
+    get_currency)
 from website.fields import BCAddressField
 from website.widgets import ButtonGroupRadioSelect, PercentWidget, TimeWidget
 from website.validators import validate_bitcoin_address
@@ -84,7 +91,15 @@ class MerchantRegistrationForm(forms.ModelForm):
 
     class Meta:
         model = MerchantAccount
-        exclude = ['user', 'business_address2', 'language', 'currency']
+        exclude = [
+            'user',
+            'business_address2',
+            'language',
+            'currency',
+            'payment_processor',
+            'api_key',
+            'comments',
+        ]
         labels = {
             'business_address': _('Trading address'),
             'post_code': _('Post code/Zip code'),
@@ -126,6 +141,8 @@ class MerchantRegistrationForm(forms.ModelForm):
             self._password)
         user.backend = 'django.contrib.auth.backends.ModelBackend'
         instance.user = user
+        instance.language = get_language(instance.country.code)
+        instance.currency = get_currency(instance.country.code)
         instance.save()
         return instance
 
@@ -212,7 +229,15 @@ class ProfileForm(forms.ModelForm):
 
     class Meta:
         model = MerchantAccount
-        exclude = ['user', 'business_address2', 'language', 'currency']
+        exclude = [
+            'user',
+            'business_address2',
+            'language',
+            'currency',
+            'payment_processor',
+            'api_key',
+            'comments',
+        ]
         labels = {
             'business_address': _('Trading address'),
             'contact_first_name': _('First name'),
@@ -221,7 +246,22 @@ class ProfileForm(forms.ModelForm):
             'contact_phone': _('Phone'),
         }
 
+    def save(self, commit=True):
+        instance = super(ProfileForm, self).save(commit=False)
+        instance.language = get_language(instance.country.code)
+        instance.currency = get_currency(instance.country.code)
+        if commit:
+            instance.save()
+        return instance
+
+
 class DeviceForm(forms.ModelForm):
+
+    payment_processing = forms.ChoiceField(
+        label=_('Payment processing'),
+        choices=Device.PAYMENT_PROCESSING_CHOICES,
+        widget=ButtonGroupRadioSelect,
+        initial='keep')
 
     class Meta:
         model = Device
@@ -234,7 +274,6 @@ class DeviceForm(forms.ModelForm):
         ]
         widgets = {
             'device_type': forms.HiddenInput,
-            'payment_processing': ButtonGroupRadioSelect,
             'percent': PercentWidget,
         }
 
@@ -246,20 +285,11 @@ class DeviceForm(forms.ModelForm):
         device_type = self['device_type'].value()
         return device_types[device_type]
 
-    def clean_percent(self):
-        payment_processing = self.cleaned_data['payment_processing']
-        percent = self.cleaned_data['percent']
-        if payment_processing == 'keep':
-            percent = 0
-        elif payment_processing == 'full':
-            percent = 100
-        return percent
-
     def clean(self):
         cleaned_data = super(DeviceForm, self).clean()
-        payment_processing = cleaned_data['payment_processing']
+        percent = cleaned_data['percent']
         bitcoin_address = cleaned_data['bitcoin_address']
-        if payment_processing in ['keep', 'partially'] and not bitcoin_address:
+        if percent < 100 and not bitcoin_address:
             self._errors['bitcoin_address'] = self.error_class(["This field is required."])
             del cleaned_data['bitcoin_address']
         if self.instance and bitcoin_address:

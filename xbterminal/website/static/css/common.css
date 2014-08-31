@@ -189,6 +189,12 @@ html, body {
     width: 200px;
 }
 
+#merchant-info a,
+#merchant-info a:hover {
+    color: #888;
+    text-decoration: none;
+}
+
 /* STICKY HEADER */
 
 .header-fixed {
@@ -227,8 +233,8 @@ html, body {
 .content {
     height: auto;
     min-height: 100%;
-    margin-bottom: -170px;
-    padding-bottom: 170px;
+    margin-bottom: -210px;
+    padding-bottom: 210px;
 }
 
 .content h2 {
@@ -256,37 +262,38 @@ html, body {
 
 .footer-1 {
     background-color: #818181;
+    color: white;
     padding-top: 10px;
-    text-align: center;
+    text-align: left;
+}
+
+.footer-1 h4 {
+    font-size: 1.3em;
+    font-weight: bold;
+    line-height: 50px;
+    margin: 0;
 }
 
 .footer-menu {
-    font-size: 1.5em;
-    line-height: 80px;
+    font-size: 1.3em;
     list-style-type: none;
+    height: 100px;
     margin: 0;
     padding: 0;
 }
 
-.footer-menu li {
-    display: inline-block;
-}
-
 .footer-menu a {
-    color: white;
-    display: block;
-    padding: 0 10px;
-    width: auto;
+    color: #ccc;
 }
 
 .footer-menu a:hover {
-    color: white;
+    color: #ccc;
 }
 
 .copyright {
-    color: white;
     font-size: 1.2em;
-    line-height: 80px;
+    line-height: 50px;
+    text-align: center;
 }
 
 .footer-2 {
@@ -306,6 +313,7 @@ html, body {
 
 @media (max-width: 991px) {
     #container {
+        height: auto;
         padding-top: 75px;
     }
 
@@ -345,9 +353,21 @@ html, body {
         width: 100px;
     }
 
+    .content {
+        min-height: auto;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
     .content h2,
     .content h3 {
         text-align: center;
+    }
+
+    .footer-1 {
+        text-align: center;
+    }
+    .footer-menu {
+        height: auto;
     }
 }
 

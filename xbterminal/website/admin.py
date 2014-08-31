@@ -5,8 +5,12 @@ from website import forms, models
 
 
 class DeviceAdmin(admin.ModelAdmin):
-    readonly_fields = ('key', 'last_reconciliation')
+    list_display = ('__unicode__', 'is_online', 'merchant')
+    readonly_fields = ('key', 'last_reconciliation', 'payment_processor')
     form = forms.DeviceAdminForm
+
+    def payment_processor(self, device):
+        return device.merchant.get_payment_processor_display()
 
 
 class TransactionAdmin(admin.ModelAdmin):

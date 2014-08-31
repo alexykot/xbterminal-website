@@ -79,8 +79,8 @@ def prepare_payment(device, fiat_amount):
                                           ).quantize(FIAT_DEC_PLACES)
     if details['instantfiat_fiat_amount'] >= FIAT_MIN_OUTPUT:
         instantfiat_data = instantfiat.create_invoice(
-            device.payment_processor,
-            device.api_key,
+            device.merchant.payment_processor,
+            device.merchant.api_key,
             details['instantfiat_fiat_amount'],
             details['fiat_currency'],
             description="Payment to {0}".format(device.merchant.company_name))
@@ -253,8 +253,8 @@ def wait_for_exchange(payment_order_uid):
         # Cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
     invoice_paid = instantfiat.is_invoice_paid(
-        payment_order.device.payment_processor,
-        payment_order.device.api_key,
+        payment_order.device.merchant.payment_processor,
+        payment_order.device.merchant.api_key,
         payment_order.instantfiat_invoice_id)
     if invoice_paid:
         django_rq.get_scheduler().cancel(rq.get_current_job())

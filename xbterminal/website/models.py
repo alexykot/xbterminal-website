@@ -74,8 +74,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class Language(models.Model):
-    name = models.CharField(max_length=50)
-    code = models.CharField(max_length=2)
+    name = models.CharField(max_length=50, unique=True)
+    code = models.CharField(max_length=2, unique=True)
     fractional_split = models.CharField(max_length=1, default=".")
     thousands_split = models.CharField(max_length=1, default=",")
 
@@ -83,8 +83,20 @@ class Language(models.Model):
         return self.name
 
 
+def get_language(country_code):
+    if country_code == 'FR':
+        language_code = 'fr'
+    elif country_code in ['DE', 'AT', 'CH']:
+        language_code = 'de'
+    elif country_code in ['RU', 'UA', 'BY', 'KZ']:
+        language_code = 'ru'
+    else:
+        language_code = 'en'
+    return Language.objects.get(code=language_code)
+
+
 class Currency(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, unique=True)
     postfix = models.CharField(max_length=50, default="")
     prefix = models.CharField(max_length=50, default="")
 
@@ -95,10 +107,31 @@ class Currency(models.Model):
         return self.name
 
 
+def get_currency(country_code):
+    if country_code == 'GB':
+        currency_code = 'GBP'
+    elif country_code in ['AT', 'BE', 'DE', 'GR', 'IE', 'ES',
+                          'IT', 'CY', 'LV', 'LU', 'MT', 'NL',
+                          'PT', 'SK', 'SI', 'FI', 'FR', 'EE']:
+        # Eurozone
+        currency_code = 'EUR'
+    else:
+        currency_code = 'USD'
+    return Currency.objects.get(name=currency_code)
+
+
 class MerchantAccount(models.Model):
+
+    PAYMENT_PROCESSOR_CHOICES = [
+        ('bitpay', 'BitPay'),
+        ('cryptopay', 'CryptoPay'),
+        ('gocoin', 'GoCoin'),
+    ]
+
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name="merchant", null=True)
     company_name = models.CharField(_('Company name'), max_length=255)
     trading_name = models.CharField(_('Trading name'), max_length=255, blank=True)
+
     business_address = models.CharField(_('Business address'), max_length=255)
     business_address1 = models.CharField('', max_length=255, blank=True, default='')
     business_address2 = models.CharField('', max_length=255, blank=True, default='')
@@ -106,6 +139,7 @@ class MerchantAccount(models.Model):
     county = models.CharField(_('State / County'), max_length=128, blank=True)
     post_code = models.CharField(_('Post code'), max_length=32, validators=[validate_post_code])
     country = CountryField(_('Country'), default='GB')
+
     contact_first_name = models.CharField(_('Contact first name'), max_length=255)
     contact_last_name = models.CharField(_('Contact last name'), max_length=255)
     contact_phone = models.CharField(_('Contact phone'), max_length=32, validators=[validate_phone])
@@ -114,8 +148,16 @@ class MerchantAccount(models.Model):
     language = models.ForeignKey(Language, default=1)  # by default, English, see fixtures
     currency = models.ForeignKey(Currency, default=1)  # by default, GBP, see fixtures
 
+    payment_processor = models.CharField(_('Payment processor'), max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, default='gocoin')
+    api_key = models.CharField(_('API key'), max_length=255, blank=True)
+
+    comments = models.TextField(blank=True)
+
     def __unicode__(self):
-        return self.company_name
+        if self.trading_name:
+            return '{0} ({1})'.format(self.company_name, self.trading_name)
+        else:
+            return self.company_name
 
     @property
     def billing_address(self):
@@ -172,11 +214,6 @@ class Device(models.Model):
         ('partially', _('convert partially')),
         ('full', _('convert full amount')),
     ]
-    PAYMENT_PROCESSOR_CHOICES = [
-        ('BitPay', 'BitPay'),
-        ('CryptoPay', 'CryptoPay'),
-        ('GoCoin', 'GoCoin'),
-    ]
     BITCOIN_NETWORKS = [
         ('mainnet', 'Main'),
         ('testnet', 'Testnet'),
@@ -187,9 +224,6 @@ class Device(models.Model):
     status = models.CharField(max_length=50, choices=DEVICE_STATUSES, default='active')
     name = models.CharField(_('Your reference'), max_length=100)
 
-    payment_processing = models.CharField(_('Payment processing'), max_length=50, choices=PAYMENT_PROCESSING_CHOICES, default='keep')
-    payment_processor = models.CharField(_('Payment processor'), max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, default='GoCoin')
-    api_key = models.CharField(_('API key'), max_length=255, blank=True)
     percent = models.DecimalField(
         _('Percent to convert'),
         max_digits=4,
@@ -217,14 +251,22 @@ class Device(models.Model):
         ordering = ['id']
 
     def __unicode__(self):
-        return 'device: %s' % self.name
+        return 'Device: {0}'.format(self.name)
 
-    def save(self, *args, **kwargs):
-        super(Device, self).save(*args, **kwargs)
+    @property
+    def payment_processing(self):
+        if self.percent == 0:
+            return 'keep'
+        elif self.percent == 100:
+            return 'full'
+        else:
+            return 'partially'
 
     def payment_processor_info(self):
-        if self.payment_processing in ['partially', 'full']:
-            return '%s, %s%% converted' % (self.payment_processor, self.percent)
+        if self.percent > 0:
+            return '{0}, {1}% converted'.format(
+                self.merchant.get_payment_processor_display(),
+                self.percent)
         return ''
 
     def get_transactions_by_date(self, date):

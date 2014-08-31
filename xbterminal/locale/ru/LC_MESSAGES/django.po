@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-08-22 01:33+0400\n"
+"POT-Creation-Date: 2014-08-27 15:05+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,195 +19,195 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: website/forms.py:74 website/models.py:100
+#: website/forms.py:89 website/models.py:132
 msgid "Company name"
 msgstr ""
 
-#: website/forms.py:81 website/forms.py:209
+#: website/forms.py:104 website/forms.py:242
 msgid "Trading address"
 msgstr ""
 
-#: website/forms.py:82 website/forms.py:150
+#: website/forms.py:105 website/forms.py:175
 msgid "Post code/Zip code"
 msgstr ""
 
-#: website/forms.py:83 website/forms.py:210
+#: website/forms.py:106 website/forms.py:243
 msgid "First name"
 msgstr ""
 
-#: website/forms.py:84 website/forms.py:211
+#: website/forms.py:107 website/forms.py:244
 msgid "Last name"
 msgstr ""
 
-#: website/forms.py:85 website/forms.py:212
+#: website/forms.py:108 website/forms.py:245
 msgid "Email"
 msgstr ""
 
-#: website/forms.py:99
+#: website/forms.py:122
 msgid "Registration for XBTerminal.io"
 msgstr ""
 
-#: website/forms.py:105
+#: website/forms.py:128
 msgid "Invalid email."
 msgstr ""
 
-#: website/forms.py:130
+#: website/forms.py:155
 msgid "Deliver to a different address"
 msgstr ""
 
-#: website/forms.py:148
+#: website/forms.py:173
 msgid "Terminals on order"
 msgstr ""
 
-#: website/forms.py:149 website/models.py:105
+#: website/forms.py:174 website/models.py:138
 msgid "Town"
 msgstr ""
 
-#: website/forms.py:151 website/models.py:106
+#: website/forms.py:176 website/models.py:139
 msgid "State / County"
 msgstr ""
 
-#: website/forms.py:152 website/models.py:108
+#: website/forms.py:177 website/models.py:141
 msgid "Country"
 msgstr ""
 
-#: website/forms.py:179
+#: website/forms.py:204
 msgid "This field is required."
 msgstr ""
 
-#: website/forms.py:213
+#: website/forms.py:246
 msgid "Phone"
 msgstr ""
 
-#: website/models.py:101
-msgid "Trading name"
-msgstr ""
-
-#: website/models.py:102
-msgid "Business address"
-msgstr ""
-
-#: website/models.py:107
-msgid "Post code"
-msgstr ""
-
-#: website/models.py:109
-msgid "Contact first name"
-msgstr ""
-
-#: website/models.py:110
-msgid "Contact last name"
-msgstr ""
-
-#: website/models.py:111
-msgid "Contact phone"
-msgstr ""
-
-#: website/models.py:112
-msgid "Contact email"
-msgstr ""
-
-#: website/models.py:158
-msgid "Terminal"
-msgstr ""
-
-#: website/models.py:159
-msgid "Mobile app"
-msgstr ""
-
-#: website/models.py:160
-msgid "Web app"
-msgstr ""
-
-#: website/models.py:163
-msgid "Preordered"
-msgstr ""
-
-#: website/models.py:164
-msgid "Dispatched"
-msgstr ""
-
-#: website/models.py:165
-msgid "Delivered"
-msgstr ""
-
-#: website/models.py:166
-msgid "Online"
-msgstr ""
-
-#: website/models.py:167
-msgid "Suspended"
-msgstr ""
-
-#: website/models.py:168
-msgid "Disposed"
-msgstr ""
-
-#: website/models.py:171
-msgid "keep bitcoins"
-msgstr ""
-
-#: website/models.py:172
-msgid "convert partially"
-msgstr ""
-
-#: website/models.py:173
-msgid "convert full amount"
-msgstr ""
-
-#: website/models.py:188
-msgid "Your reference"
-msgstr ""
-
-#: website/models.py:190
+#: website/forms.py:261
 msgid "Payment processing"
 msgstr ""
 
-#: website/models.py:191 website/templates/cabinet/device_list.html:14
+#: website/models.py:133
+msgid "Trading name"
+msgstr ""
+
+#: website/models.py:135
+msgid "Business address"
+msgstr ""
+
+#: website/models.py:140
+msgid "Post code"
+msgstr ""
+
+#: website/models.py:143
+msgid "Contact first name"
+msgstr ""
+
+#: website/models.py:144
+msgid "Contact last name"
+msgstr ""
+
+#: website/models.py:145
+msgid "Contact phone"
+msgstr ""
+
+#: website/models.py:146
+msgid "Contact email"
+msgstr ""
+
+#: website/models.py:151 website/templates/cabinet/device_list.html:14
 msgid "Payment processor"
 msgstr ""
 
-#: website/models.py:192
+#: website/models.py:152
 msgid "API key"
 msgstr ""
 
-#: website/models.py:194
+#: website/models.py:200
+msgid "Terminal"
+msgstr ""
+
+#: website/models.py:201
+msgid "Mobile app"
+msgstr ""
+
+#: website/models.py:202
+msgid "Web app"
+msgstr ""
+
+#: website/models.py:205
+msgid "Preordered"
+msgstr ""
+
+#: website/models.py:206
+msgid "Dispatched"
+msgstr ""
+
+#: website/models.py:207
+msgid "Delivered"
+msgstr ""
+
+#: website/models.py:208
+msgid "Online"
+msgstr ""
+
+#: website/models.py:209
+msgid "Suspended"
+msgstr ""
+
+#: website/models.py:210
+msgid "Disposed"
+msgstr ""
+
+#: website/models.py:213
+msgid "keep bitcoins"
+msgstr ""
+
+#: website/models.py:214
+msgid "convert partially"
+msgstr ""
+
+#: website/models.py:215
+msgid "convert full amount"
+msgstr ""
+
+#: website/models.py:225
+msgid "Your reference"
+msgstr ""
+
+#: website/models.py:228
 msgid "Percent to convert"
 msgstr ""
 
-#: website/models.py:199
+#: website/models.py:233
 msgid "Bitcoin address to send to"
 msgstr ""
 
-#: website/models.py:201 website/templates/cabinet/device_form.html:19
+#: website/models.py:235 website/templates/cabinet/device_form.html:19
 msgid "Device key"
 msgstr ""
 
-#: website/models.py:363
+#: website/models.py:405
 msgid "Bitcoin"
 msgstr ""
 
-#: website/models.py:364
+#: website/models.py:406
 msgid "Bank wire transfer"
 msgstr ""
 
-#: website/views.py:61
+#: website/views.py:54
 msgid "Message from xbterminal.io"
 msgstr ""
 
-#: website/views.py:488
+#: website/views.py:510
 msgid "Email has been sent successfully."
 msgstr ""
 
-#: website/views.py:491
+#: website/views.py:513
 msgid "Error: Invalid email. Please, try again."
 msgstr ""
 
-#: website/views.py:504
+#: website/views.py:526
 msgid "XBTerminal newsletter confirmation"
 msgstr ""
 
-#: website/views.py:511
+#: website/views.py:533
 msgid "Subscription to newsletters"
 msgstr ""
 
@@ -268,7 +268,7 @@ msgstr ""
 msgid "Merchant login"
 msgstr ""
 
-#: website/templates/cabinet/login.html:12
+#: website/templates/cabinet/login.html:11
 msgid "Login"
 msgstr ""
 
@@ -670,14 +670,14 @@ msgid "Three easy ways to accept digital currency."
 msgstr ""
 
 #: website/templates/website/landing.html:49
-#: website/templates/website/common/footer.html:7
+#: website/templates/website/common/footer.html:11
 #: website/templates/website/common/header.html:28
 #: website/templates/website/email/reconciliation.html:3
 msgid "terminal"
 msgstr ""
 
 #: website/templates/website/landing.html:50
-#: website/templates/website/common/footer.html:8
+#: website/templates/website/common/footer.html:12
 #: website/templates/website/common/header.html:29
 msgid "mobile"
 msgstr ""
@@ -1604,26 +1604,33 @@ msgid ""
 "        "
 msgstr ""
 
-#: website/templates/website/common/footer.html:6
-#: website/templates/website/common/header.html:27
-msgid "about"
+#: website/templates/website/common/footer.html:9
+msgid "products"
 msgstr ""
 
-#: website/templates/website/common/footer.html:9
+#: website/templates/website/common/footer.html:13
 #: website/templates/website/common/header.html:30
 msgid "web"
 msgstr ""
 
-#: website/templates/website/common/footer.html:10
+#: website/templates/website/common/footer.html:17
+msgid "company"
+msgstr ""
+
+#: website/templates/website/common/footer.html:19
+msgid "contact us"
+msgstr ""
+
+#: website/templates/website/common/footer.html:23
+msgid "legal"
+msgstr ""
+
+#: website/templates/website/common/footer.html:25
 msgid "terms & conditions"
 msgstr ""
 
-#: website/templates/website/common/footer.html:11
+#: website/templates/website/common/footer.html:26
 msgid "privacy policy"
-msgstr ""
-
-#: website/templates/website/common/footer.html:12
-msgid "contact us"
 msgstr ""
 
 #: website/templates/website/common/header.html:5
@@ -1642,6 +1649,10 @@ msgstr ""
 
 #: website/templates/website/common/header.html:25
 msgid "profile"
+msgstr ""
+
+#: website/templates/website/common/header.html:27
+msgid "about"
 msgstr ""
 
 #: website/templates/website/common/header.html:35
