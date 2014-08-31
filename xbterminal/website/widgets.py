@@ -81,7 +81,7 @@ class FileWidget(FileInput):
         if value:
             list_item = format_html(
                 '<li>{0}<a class="glyphicon glyphicon-remove file-remove" data-name="{1}"></a></li>',
-                os.path.basename(value.name),
+                os.path.basename(value.name).encode('ascii', 'ignore'),
                 name)
         else:
             list_item = ''

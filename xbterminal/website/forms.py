@@ -320,7 +320,7 @@ class VerificationFileUploadForm(forms.ModelForm):
         if self._uploaded_file is None:
             return None
         file = getattr(self.instance, self._uploaded_file)
-        return os.path.basename(file.name)
+        return os.path.basename(file.name).encode('ascii', 'ignore')
 
     def save(self, commit=True):
         instance = super(VerificationFileUploadForm, self).save(commit=False)
