@@ -9,15 +9,26 @@ class Migration(DataMigration):
     def forwards(self, orm):
         for merchant in orm.MerchantAccount.objects.all():
             devices = merchant.device_set.all()
-            if devices:
-                merchant.payment_processor = devices[0].payment_processor.lower()
-                merchant.api_key = devices[0].api_key
+            for device in devices:
+                if device.api_key:
+                    merchant.payment_processor = device.payment_processor.lower()
+                    merchant.api_key = device.api_key
+                    break
             else:
                 merchant.payment_processor = 'gocoin'
             merchant.save()
 
     def backwards(self, orm):
-        pass
+        mp = {
+            'bitpay': 'BitPay',
+            'cryptopay': 'CryptoPay',
+            'gocoin': 'GoCoin',
+        }
+        for device in orm.Device.objects.all():
+            device.payment_processor = mp[device.merchant.payment_processor]
+            device.api_key = device.merchant.api_key
+            device.save()
+
 
     models = {
         u'auth.group': {
