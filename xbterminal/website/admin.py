@@ -121,6 +121,7 @@ class MerchantAccountAdmin(admin.ModelAdmin):
 
     list_display = [
         '__unicode__',
+        'id',
         'user_link',
         'trading_name',
         'country_code',
@@ -128,11 +129,19 @@ class MerchantAccountAdmin(admin.ModelAdmin):
         'contact_phone_',
         'verification_status',
         'processing',
+        'date_joined_l',
     ]
     readonly_fields = ['date_joined', 'last_login']
+    ordering = ['id']
 
     def date_joined(self, merchant):
         return merchant.user.date_joined.strftime('%d %b %Y %l:%M %p')
+
+    def date_joined_l(self, merchant):
+        return merchant.user.date_joined.strftime('%d %b %Y')
+
+    date_joined_l.admin_order_field = 'user__date_joined'
+    date_joined_l.short_description = 'date joined'
 
     def last_login(self, merchant):
         return merchant.user.last_login.strftime('%d %b %Y %l:%M %p')
@@ -161,7 +170,7 @@ class MerchantAccountAdmin(admin.ModelAdmin):
     def processing(self, merchant):
         return '{0}, {1}'.format(
             merchant.get_payment_processor_display(),
-            str(merchant.api_key is not None))
+            str(bool(merchant.api_key)))
 
 
 admin.site.register(models.User, UserAdmin)
