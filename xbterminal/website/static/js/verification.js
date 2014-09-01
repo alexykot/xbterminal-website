@@ -6,15 +6,22 @@ var Verification = (function () {
             url: $(this).closest('form').attr('action'),
             dataType: 'json',
             dropZone: $(this).closest('.file-dd'),
-            start: function (e) {
+            submit: function (e, data) {
                 Base.clearFormErrors();
+                $(this).closest('.file-widget')
+                    .find('.progress-bar').css('width', '0px')
+                    .closest('.progress').slideDown();
+            },
+            progress: function (e, data) {
+                var progress = parseInt(data.loaded / data.total * 100, 10);
+                $(this).closest('.file-widget')
+                    .find('.progress-bar').css('width', progress + '%');
             },
             done: function (e, data) {
                 if (data.result.errors) {
                     Base.showFormErrors(data.result.errors);
                 } else {
-                    var fileInput = $('#' + data.fileInput.attr('id'));
-                    var fileList = fileInput.closest('.file-widget')
+                    var fileList = $(this).closest('.file-widget')
                         .find('.file-uploaded').empty();
                     var icon = $('<a/>', {
                         'class': 'glyphicon glyphicon-remove file-remove',
@@ -30,6 +37,7 @@ var Verification = (function () {
             event.preventDefault();
             var button = $(this);
             var form = button.closest('form');
+            form.find('.progress').hide();
             var token = form.find('[name="csrfmiddlewaretoken"]').val();
             $.ajax({
                 type: 'DELETE',
@@ -46,6 +54,7 @@ var Verification = (function () {
             event.preventDefault();
             var form = $(this);
             form.find('[name="submit"]').val(true);
+            form.find('.progress').hide();
             $.ajax({
                 type: 'POST',
                 url: form.attr('action'),

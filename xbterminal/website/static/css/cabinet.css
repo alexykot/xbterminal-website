@@ -190,6 +190,11 @@ label[for="id_county"]:after {
     text-align: right;
 }
 
+.file-widget .progress {
+    display: none;
+    margin: 10px 0;
+}
+
 .file-uploaded {
     list-style-type: none;
     margin-top: 10px;

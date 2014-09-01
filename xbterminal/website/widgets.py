@@ -77,6 +77,9 @@ class FileWidget(FileInput):
                 <div class="file-dd">
                     Drag and drop here or click to browse files {0}
                 </div>
+                <div class="progress">
+                    <div class="progress-bar" role="progressbar"></div>
+                </div>
                 <ul class="file-uploaded">{1}</ul>
             </div>'''
         file_input = super(FileWidget, self).render(name, value, attrs)
