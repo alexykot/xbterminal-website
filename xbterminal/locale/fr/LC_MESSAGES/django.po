@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-08-27 15:05+0400\n"
+"POT-Creation-Date: 2014-09-02 00:04+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,175 +18,203 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: website/forms.py:89 website/models.py:132
+#: website/forms.py:97 website/models.py:154
 msgid "Company name"
 msgstr ""
 
-#: website/forms.py:104 website/forms.py:242
+#: website/forms.py:115 website/forms.py:256
 msgid "Trading address"
 msgstr ""
 
-#: website/forms.py:105 website/forms.py:175
+#: website/forms.py:116 website/forms.py:186
 msgid "Post code/Zip code"
 msgstr ""
 
-#: website/forms.py:106 website/forms.py:243
+#: website/forms.py:117 website/forms.py:257
 msgid "First name"
 msgstr ""
 
-#: website/forms.py:107 website/forms.py:244
+#: website/forms.py:118 website/forms.py:258
 msgid "Last name"
 msgstr ""
 
-#: website/forms.py:108 website/forms.py:245
+#: website/forms.py:119 website/forms.py:259
 msgid "Email"
 msgstr ""
 
-#: website/forms.py:122
+#: website/forms.py:133
 msgid "Registration for XBTerminal.io"
 msgstr ""
 
-#: website/forms.py:128
+#: website/forms.py:139
 msgid "Invalid email."
 msgstr ""
 
-#: website/forms.py:155
+#: website/forms.py:166
 msgid "Deliver to a different address"
 msgstr ""
 
-#: website/forms.py:173
+#: website/forms.py:184
 msgid "Terminals on order"
 msgstr ""
 
-#: website/forms.py:174 website/models.py:138
+#: website/forms.py:185 website/models.py:160
 msgid "Town"
 msgstr ""
 
-#: website/forms.py:176 website/models.py:139
+#: website/forms.py:187 website/models.py:161
 msgid "State / County"
 msgstr ""
 
-#: website/forms.py:177 website/models.py:141
+#: website/forms.py:188 website/models.py:163
 msgid "Country"
 msgstr ""
 
-#: website/forms.py:204
+#: website/forms.py:215 website/forms.py:303 website/forms.py:306
 msgid "This field is required."
 msgstr ""
 
-#: website/forms.py:246
+#: website/forms.py:260
 msgid "Phone"
 msgstr ""
 
-#: website/forms.py:261
+#: website/forms.py:315 website/forms.py:317
+msgid "File upload failed."
+msgstr ""
+
+#: website/forms.py:339
 msgid "Payment processing"
 msgstr ""
 
-#: website/models.py:133
+#: website/models.py:148
+msgid "unverified"
+msgstr ""
+
+#: website/models.py:149
+msgid "verification pending"
+msgstr ""
+
+#: website/models.py:150
+msgid "verified"
+msgstr ""
+
+#: website/models.py:155
 msgid "Trading name"
 msgstr ""
 
-#: website/models.py:135
+#: website/models.py:157
 msgid "Business address"
 msgstr ""
 
-#: website/models.py:140
+#: website/models.py:162
 msgid "Post code"
 msgstr ""
 
-#: website/models.py:143
+#: website/models.py:165
 msgid "Contact first name"
 msgstr ""
 
-#: website/models.py:144
+#: website/models.py:166
 msgid "Contact last name"
 msgstr ""
 
-#: website/models.py:145
+#: website/models.py:167
 msgid "Contact phone"
 msgstr ""
 
-#: website/models.py:146
+#: website/models.py:168
 msgid "Contact email"
 msgstr ""
 
-#: website/models.py:151 website/templates/cabinet/device_list.html:14
+#: website/models.py:173 website/templates/cabinet/device_list.html:14
 msgid "Payment processor"
 msgstr ""
 
-#: website/models.py:152
+#: website/models.py:174
 msgid "API key"
 msgstr ""
 
-#: website/models.py:200
+#: website/models.py:176
+msgid "KYC"
+msgstr ""
+
+#: website/models.py:178
+msgid "Photo ID"
+msgstr ""
+
+#: website/models.py:184
+msgid "Corporate or residence proof document"
+msgstr ""
+
+#: website/models.py:249
 msgid "Terminal"
 msgstr ""
 
-#: website/models.py:201
+#: website/models.py:250
 msgid "Mobile app"
 msgstr ""
 
-#: website/models.py:202
+#: website/models.py:251
 msgid "Web app"
 msgstr ""
 
-#: website/models.py:205
+#: website/models.py:254
 msgid "Preordered"
 msgstr ""
 
-#: website/models.py:206
+#: website/models.py:255
 msgid "Dispatched"
 msgstr ""
 
-#: website/models.py:207
+#: website/models.py:256
 msgid "Delivered"
 msgstr ""
 
-#: website/models.py:208
-msgid "Online"
+#: website/models.py:257
+msgid "Operational"
 msgstr ""
 
-#: website/models.py:209
+#: website/models.py:258
 msgid "Suspended"
 msgstr ""
 
-#: website/models.py:210
+#: website/models.py:259
 msgid "Disposed"
 msgstr ""
 
-#: website/models.py:213
+#: website/models.py:262
 msgid "keep bitcoins"
 msgstr ""
 
-#: website/models.py:214
+#: website/models.py:263
 msgid "convert partially"
 msgstr ""
 
-#: website/models.py:215
+#: website/models.py:264
 msgid "convert full amount"
 msgstr ""
 
-#: website/models.py:225
+#: website/models.py:274
 msgid "Your reference"
 msgstr ""
 
-#: website/models.py:228
+#: website/models.py:277
 msgid "Percent to convert"
 msgstr ""
 
-#: website/models.py:233
+#: website/models.py:282
 msgid "Bitcoin address to send to"
 msgstr ""
 
-#: website/models.py:235 website/templates/cabinet/device_form.html:19
+#: website/models.py:284 website/templates/cabinet/device_form.html:19
 msgid "Device key"
 msgstr ""
 
-#: website/models.py:405
+#: website/models.py:458
 msgid "Bitcoin"
 msgstr ""
 
-#: website/models.py:406
+#: website/models.py:459
 msgid "Bank wire transfer"
 msgstr ""
 
@@ -194,25 +222,25 @@ msgstr ""
 msgid "Message from xbterminal.io"
 msgstr ""
 
-#: website/views.py:510
+#: website/views.py:581
 msgid "Email has been sent successfully."
 msgstr ""
 
-#: website/views.py:513
+#: website/views.py:584
 msgid "Error: Invalid email. Please, try again."
 msgstr ""
 
-#: website/views.py:526
+#: website/views.py:597
 msgid "XBTerminal newsletter confirmation"
 msgstr ""
 
-#: website/views.py:533
+#: website/views.py:604
 msgid "Subscription to newsletters"
 msgstr ""
 
 #: website/templates/cabinet/device_form.html:11
 #: website/templates/cabinet/device_form.html:32
-#: website/templates/cabinet/profile_form.html:33
+#: website/templates/cabinet/profile_form.html:40
 msgid "Update"
 msgstr ""
 
@@ -228,6 +256,7 @@ msgstr ""
 #: website/templates/cabinet/device_form.html:34
 #: website/templates/cabinet/registration.html:41
 #: website/templates/cabinet/registration.html:77
+#: website/templates/cabinet/verification.html:57
 msgid "Cancel"
 msgstr ""
 
@@ -301,7 +330,7 @@ msgstr ""
 msgid "Total"
 msgstr ""
 
-#: website/templates/cabinet/profile_form.html:7
+#: website/templates/cabinet/profile_form.html:8
 msgid "Merchant profile"
 msgstr ""
 
@@ -448,6 +477,92 @@ msgstr ""
 
 #: website/templates/cabinet/registration.html:184
 msgid "Confirm"
+msgstr ""
+
+#: website/templates/cabinet/verification.html:14
+msgid "Account verification"
+msgstr ""
+
+#: website/templates/cabinet/verification.html:16
+msgid ""
+"\n"
+"            <p>Your merchant account must be verified to receive fiat "
+"payouts. To verify your merchant account, you must submit a government "
+"issued ID from the company principal, as well as a corporate document "
+"showing the registered identity of the business in the jurisdiction where "
+"the company operates. If you're a sole trader and not incorporated - then a "
+"proof of residence is needed instead of a corporate document.</p>\n"
+"            <ol>\n"
+"                <li>Identity Document (principal)\n"
+"                    <ul>\n"
+"                        <li>International passport</li>\n"
+"                        <li>National ID card (both sides)</li>\n"
+"                        <li>Driver's license</li>\n"
+"                    </ul>\n"
+"                </li>\n"
+"                <li>Corporate or Address Document\n"
+"                    <ul>\n"
+"                        <li>corporate:\n"
+"                            <ul>\n"
+"                                <li>articles of incorporation</li>\n"
+"                                <li>membership agreement</li>\n"
+"                                <li>business tax return</li>\n"
+"                            </ul>\n"
+"                        </li>\n"
+"                        <li>address:\n"
+"                            <ul>\n"
+"                                <li>bank statement</li>\n"
+"                                <li>utility bill (except mobile phone "
+"bills)</li>\n"
+"                                <li>council tax bill</li>\n"
+"                            </ul>\n"
+"                        </li>\n"
+"                    </ul>\n"
+"                </li>\n"
+"            </ol>\n"
+"            <p>DOCUMENT GUIDELINES:</p>\n"
+"            <p>Documents need to be visible in their entirety. Please do not "
+"crop just the address.<br>\n"
+"                Scans should be of high quality. All text must be legible."
+"<br>\n"
+"                Identification documents must be current, expired IDs will "
+"not be accepted.<br>\n"
+"                Corporate documents must be a scanned image of an original "
+"paper document.<br>\n"
+"                Address document must be no more than three months old.</p>\n"
+"            "
+msgstr ""
+
+#: website/templates/cabinet/verification.html:56
+msgid "Submit"
+msgstr ""
+
+#: website/templates/cabinet/verification.html:62
+msgid "Verification pending"
+msgstr ""
+
+#: website/templates/cabinet/verification.html:64
+msgid ""
+"\n"
+"                You have successfully uploaded your documents for "
+"verification, now it will be processed by our team. You will receive an "
+"email notification once your account will be confirmed. We will contact you "
+"should we have any questions about the documents uploaded or other related "
+"matters. Uploaded documents are:\n"
+"                "
+msgstr ""
+
+#: website/templates/cabinet/verification.html:69
+msgid "Verified"
+msgstr ""
+
+#: website/templates/cabinet/verification.html:71
+msgid ""
+"\n"
+"                Your account has been verified, you can now execute "
+"withdrawals to your bank accounts.<br>\n"
+"                You have previously uploaded these documents:\n"
+"                "
 msgstr ""
 
 #: website/templates/payment/base.html:18
@@ -817,7 +932,7 @@ msgstr ""
 #: website/templates/website/privacy.html:10
 msgid ""
 "\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "            1.\tIntroduction <br>\n"
 "            1.1\tWe are committed to safeguarding the privacy of our website "
 "visitors; in this policy we explain\n"
@@ -825,7 +940,7 @@ msgid ""
 "            1.2\tWe will ask you to consent to our use of cookies in "
 "accordance with the terms of this policy\n"
 "            when you first visit our website.</p>\n"
-"        <p>2.\tOur details <br>\n"
+"        <p class=\"large\">2.\tOur details <br>\n"
 "            2.1\tThis website is owned and operated by XBTerminal Ltd. <br>\n"
 "            2.2\tWe are registered in England and Wales under registration "
 "number 09060982, and our registered\n"
@@ -838,7 +953,7 @@ msgid ""
 "            website contact form, by email to info@xbterminal.io or by "
 "telephone on +44 (0) 20 8123 8185.\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "            3. Collecting personal information <br>\n"
 "            3.1\tWe may collect, store and use the following kinds of "
 "personal information: <br>\n"
@@ -884,7 +999,7 @@ msgid ""
 "of that personal information in\n"
 "            accordance with this policy.\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "            4.\tUsing your personal information <br>\n"
 "            4.1\tPersonal information submitted to us through our website "
 "will be used for the purposes specified\n"
@@ -945,7 +1060,7 @@ msgid ""
 "            payments and dealing with complaints and queries relating to "
 "such payments and refunds.\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "            5.\tDisclosing personal information <br>\n"
 "            5.1\tWe may disclose your personal information to any of our "
 "employees, officers, insurers, professional\n"
@@ -978,7 +1093,7 @@ msgid ""
 "            5.4\tExcept as provided in this policy, we will not provide your "
 "personal information to third parties.\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "            6.\tInternational data transfers\n"
 "            6.1\tInformation that we collect may be stored and processed in "
 "and transferred between any of the\n"
@@ -997,7 +1112,7 @@ msgid ""
 "            6.4\tYou expressly agree to the transfers of personal "
 "information described in this Section 6. <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "            7.\tRetaining personal information\n"
 "            7.1\tThis Section 7 sets out our data retention policies and "
 "procedure, which are designed to help\n"
@@ -1018,7 +1133,7 @@ msgid ""
 "            others for the purposes of fraud prevention and reducing credit "
 "risk). <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "            8.\tSecurity of your personal information <br>\n"
 "            8.1\tWe will take reasonable technical and organisational "
 "precautions to prevent the loss, misuse or\n"
@@ -1038,7 +1153,7 @@ msgid ""
 "            we will not ask you for your password (except when you log in to "
 "our website). <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "            9.\tAmendments <br>\n"
 "            9.1\tWe may update this policy from time to time by publishing a "
 "new version on our website. <br>\n"
@@ -1048,7 +1163,7 @@ msgid ""
 "through the private messaging system\n"
 "            on our website. <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "            10.\tYour rights\n"
 "            10.1\tYou may instruct us to provide you with any personal "
 "information we hold about you;\n"
@@ -1070,7 +1185,7 @@ msgid ""
 "            the use of your personal information for marketing purposes. "
 "<br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "            11.\tThird party websites <br>\n"
 "            11.1\tOur website includes hyperlinks to, and details of, third "
 "party websites. <br>\n"
@@ -1078,13 +1193,13 @@ msgid ""
 "privacy policies and\n"
 "            practices of third parties. <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "            12.\tUpdating information <br>\n"
 "            12.1 Please let us know if the personal information that we hold "
 "about you needs to\n"
 "            be corrected or updated. <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "            13.\tCookies <br>\n"
 "            13.1 Our website uses cookies. <br>\n"
 "            13.2 A cookie is a file containing an identifier (a string of "
@@ -1162,7 +1277,7 @@ msgid ""
 "            13.11 Deleting cookies will have a negative impact on the "
 "usability of many websites. <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "            14.\tData protection registration <br>\n"
 "            14.1 We are registered as a data controller with the UK "
 "Information Commissioner's Office. <br>\n"
@@ -1184,7 +1299,7 @@ msgstr ""
 #: website/templates/website/tc.html:10
 msgid ""
 "\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "        1. Introduction <br>\n"
 "        1.1\tThese terms and conditions govern your use of our website. "
 "<br>\n"
@@ -1206,7 +1321,7 @@ msgid ""
 "            to our use of cookies in accordance with the terms of our "
 "privacy and cookies policy. <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "        2. Copyright notice <br>\n"
 "        2.1\tCopyright (c) 2014 XBTerminal Ltd. <br>\n"
 "        2.2\tSubject to the express provisions of these terms and "
@@ -1218,7 +1333,7 @@ msgid ""
 "website and the material on our website\n"
 "            are reserved. <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "        3. Licence to use website <br>\n"
 "        3.1\tYou may: <br>\n"
 "        (a)\tview pages from our website in a web browser; <br>\n"
@@ -1259,7 +1374,7 @@ msgid ""
 "to circumvent or bypass, any access\n"
 "            restriction measures on our website. <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "        4. Acceptable use <br>\n"
 "        4.1\tYou must not: <br>\n"
 "        (a)\tuse our website in any way or take any action that causes, or "
@@ -1297,7 +1412,7 @@ msgid ""
 "            our website, is true, accurate, current, complete and non-"
 "misleading. <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "        5. Registration and accounts <br>\n"
 "        5.1\tTo be eligible for an account on our website under this Section "
 "5, you must be at least 18 years of age. <br>\n"
@@ -1311,7 +1426,7 @@ msgid ""
 "website, unless you have that person's express\n"
 "            permission to do so. <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "        6. User IDs and passwords <br>\n"
 "        6.1\tIf you register for an account with our website, you will be "
 "asked to choose a user ID and password. <br>\n"
@@ -1327,7 +1442,7 @@ msgid ""
 "            confidential, and may be held liable for any losses arising out "
 "of such a failure. <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "        7. Cancellation and suspension of account <br>\n"
 "        7.1\tWe may: <br>\n"
 "        (a)\tsuspend your account; <br>\n"
@@ -1338,7 +1453,7 @@ msgid ""
 "        7.2\tYou may cancel your account on our website using your account "
 "control panel on the website. <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "        8. Your content: licence <br>\n"
 "        8.1\tIn these terms and conditions, \"your content\" means all works "
 "and materials (including without\n"
@@ -1370,7 +1485,7 @@ msgid ""
 "            these terms and conditions in any way, we may delete, unpublish "
 "or edit any or all of your content. <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "        9. Your content: rules <br>\n"
 "        9.1\tYou warrant and represent that your content will comply with "
 "these terms and conditions. <br>\n"
@@ -1416,7 +1531,7 @@ msgid ""
 "        (r)\tcause annoyance, inconvenience or needless anxiety to any "
 "person. <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "        10.\tLimited warranties <br>\n"
 "        10.1 We do not warrant or represent: <br>\n"
 "        (a)\tthe completeness or accuracy of the information published on "
@@ -1440,7 +1555,7 @@ msgid ""
 "these terms and conditions,\n"
 "            our website and the use of our website. <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "        11.\tLimitations and exclusions of liability <br>\n"
 "        11.1 Nothing in these terms and conditions will: <br>\n"
 "        (a)\tlimit or exclude any liability for death or personal injury "
@@ -1489,7 +1604,7 @@ msgid ""
 "liability entity itself for the acts and\n"
 "            omissions of our officers and employees). <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "        12.\tBreaches of these terms and conditions <br>\n"
 "        12.1 Without prejudice to our other rights under these terms and "
 "conditions, if you breach these terms\n"
@@ -1514,7 +1629,7 @@ msgid ""
 "            (including without limitation creating and/or using a different "
 "account). <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "        13.\tVariation <br>\n"
 "        13.1 We may revise these terms and conditions from time to time. "
 "<br>\n"
@@ -1532,7 +1647,7 @@ msgid ""
 "            will disable or delete your account on the website, and you must "
 "stop using the website. <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "        14.\tAssignment <br>\n"
 "        14.1 You hereby agree that we may assign, transfer, sub-contract or "
 "otherwise deal with our rights\n"
@@ -1542,7 +1657,7 @@ msgid ""
 "            with any of your rights and/or obligations under these terms and "
 "conditions. <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "        15.\tSeverability <br>\n"
 "        15.1\tIf a provision of these terms and conditions is determined by "
 "any court or other competent\n"
@@ -1554,7 +1669,7 @@ msgid ""
 "deemed to be deleted, and the rest\n"
 "            of the provision will continue in effect. <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "        16.\tThird party rights <br>\n"
 "        16.1 These terms and conditions are for our benefit and your "
 "benefit, and are not intended to benefit\n"
@@ -1563,7 +1678,7 @@ msgid ""
 "conditions is not subject to the consent\n"
 "            of any third party. <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "        17.\tEntire agreement <br>\n"
 "        17.1 Subject to Section 11.1, these terms and conditions, together "
 "with our privacy and cookies\n"
@@ -1572,7 +1687,7 @@ msgid ""
 "            website and supersede all previous agreements between you and us "
 "in relation to your use of our website. <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "        18.\tLaw and jurisdiction <br>\n"
 "        18.1 These terms and conditions shall be governed by and construed "
 "in accordance with English law. <br>\n"
@@ -1580,13 +1695,13 @@ msgid ""
 "subject to the exclusive jurisdiction\n"
 "            of the courts of England. <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "        19.\tStatutory and regulatory disclosures <br>\n"
 "        19.1 We are subject to The Data Protection Act 1998, which is "
 "supervised by Information\n"
 "            Comissioner’s Office. <br>\n"
 "        </p>\n"
-"        <p>\n"
+"        <p class=\"large\">\n"
 "        20.\tOur details <br>\n"
 "        20.1 This website is owned and operated by XBTerminal Ltd. <br>\n"
 "        20.2 We are registered in England and Wales under registration "
@@ -1675,15 +1790,15 @@ msgstr ""
 msgid "register"
 msgstr ""
 
-#: website/templates/website/common/header.html:48
+#: website/templates/website/common/header.html:53
 msgid "POS active/total:"
 msgstr ""
 
-#: website/templates/website/common/header.html:49
+#: website/templates/website/common/header.html:54
 msgid "transactions today:"
 msgstr ""
 
-#: website/templates/website/common/header.html:52
+#: website/templates/website/common/header.html:57
 msgid "logout"
 msgstr ""
 

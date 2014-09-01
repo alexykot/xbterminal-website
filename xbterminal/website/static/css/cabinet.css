@@ -160,6 +160,11 @@ label[for="id_county"]:after {
 
 /* Verification page */
 
+#profile-verification-status a {
+    color: #ccc;
+    text-decoration: none;
+}
+
 #verification-form {
     margin-bottom: 10px;
 }

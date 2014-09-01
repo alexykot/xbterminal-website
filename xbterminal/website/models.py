@@ -181,7 +181,7 @@ class MerchantAccount(models.Model):
         blank=True,
         null=True)
     verification_file_2 = models.FileField(
-        _('Residence proof'),
+        _('Corporate or residence proof document'),
         storage=verification_file_storage,
         upload_to=verification_file_2_path_gen,
         blank=True,

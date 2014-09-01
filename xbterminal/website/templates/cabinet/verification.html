@@ -46,7 +46,8 @@
             <p>Documents need to be visible in their entirety. Please do not crop just the address.<br>
                 Scans should be of high quality. All text must be legible.<br>
                 Identification documents must be current, expired IDs will not be accepted.<br>
-                Corporate documents must be a scanned image of an original paper document.</p>
+                Corporate documents must be a scanned image of an original paper document.<br>
+                Address document must be no more than three months old.</p>
             {% endblocktrans %}
             <form id="verification-form" action="{% url 'website:verification' %}" method="POST">
                 {% csrf_token %}
@@ -59,11 +60,21 @@
         {% else %}
             {% if user.merchant.verification_status == 'pending' %}
             <p class="large">{% trans 'Verification pending' %}</p>
+            <p>
+                {% blocktrans %}
+                You have successfully uploaded your documents for verification, now it will be processed by our team. You will receive an email notification once your account will be confirmed. We will contact you should we have any questions about the documents uploaded or other related matters. Uploaded documents are:
+                {% endblocktrans %}
+            </p>
             {% elif user.merchant.verification_status == 'verified' %}
             <p class="large">{% trans 'Verified' %}</p>
+            <p>
+                {% blocktrans %}
+                Your account has been verified, you can now execute withdrawals to your bank accounts.<br>
+                You have previously uploaded these documents:
+                {% endblocktrans %}
+            </p>
             {% endif %}
             <div>
-                {% trans 'Uploaded files' %}:<br>
                 <a href="{% url 'website:verification' %}{{ user.merchant.verification_file_1.name }}">{{ user.merchant.verification_file_1_name }}</a><br>
                 <a href="{% url 'website:verification' %}{{ user.merchant.verification_file_1.name }}">{{ user.merchant.verification_file_2_name }}</a>
             </div>
