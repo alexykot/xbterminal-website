@@ -22,6 +22,7 @@ from django.utils.translation import ugettext as _
 from payment.blockchain import construct_bitcoin_uri
 
 from website import forms, models, utils
+from website.files import get_verification_file_name
 
 
 class LandingView(TemplateResponseMixin, View):
@@ -386,7 +387,13 @@ class VerificationView(TemplateResponseMixin, CabinetView):
         context = self.get_context_data(**kwargs)
         merchant = self.request.user.merchant
         context['current_status'] = merchant.verification_status
-        context['form'] = forms.VerificationFileUploadForm(instance=merchant)
+        if context['current_status'] == 'unverified':
+            context['form'] = forms.VerificationFileUploadForm(instance=merchant)
+        else:
+            context['verification_file_1'] = get_verification_file_name(
+                merchant.verification_file_1)
+            context['verification_file_2'] = get_verification_file_name(
+                merchant.verification_file_2)
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):

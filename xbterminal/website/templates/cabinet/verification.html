@@ -25,6 +25,11 @@
         </form>
         {% elif current_status == 'pending' %}
         <p>Pending</p>
+        <div>
+            {% trans 'Uploaded files' %}:<br>
+            {{ verification_file_1 }}<br>
+            {{ verification_file_2 }}
+        </div>
         {% elif current_status == 'verified' %}
         <p>Verified</p>
         {% endif %}
