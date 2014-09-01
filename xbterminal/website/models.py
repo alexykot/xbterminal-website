@@ -172,7 +172,7 @@ class MerchantAccount(models.Model):
     payment_processor = models.CharField(_('Payment processor'), max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, default='gocoin')
     api_key = models.CharField(_('API key'), max_length=255, blank=True)
 
-    verification_status = models.CharField(max_length=50, choices=VERIFICATION_STATUSES, default='unverified')
+    verification_status = models.CharField(_('KYC'), max_length=50, choices=VERIFICATION_STATUSES, default='unverified')
     verification_file_1 = models.FileField(
         _('Photo ID'),
         storage=verification_file_storage,
@@ -205,10 +205,6 @@ class MerchantAccount(models.Model):
             self.country.name,
         ]
         return [s for s in strings if s]
-
-    @property
-    def contact_name(self):
-        return ' '.join([self.contact_first_name, self.contact_last_name])
 
     @property
     def info(self):

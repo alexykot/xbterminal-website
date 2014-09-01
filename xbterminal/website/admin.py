@@ -123,10 +123,11 @@ class MerchantAccountAdmin(admin.ModelAdmin):
         '__unicode__',
         'user_link',
         'trading_name',
-        'country',
+        'country_code',
         'contact_name',
-        'contact_phone',
+        'contact_phone_',
         'verification_status',
+        'processing',
     ]
     readonly_fields = ['date_joined', 'last_login']
 
@@ -141,6 +142,26 @@ class MerchantAccountAdmin(admin.ModelAdmin):
 
     user_link.allow_tags = True
     user_link.short_description = 'user'
+
+    def country_code(self, merchant):
+        return merchant.country.code
+
+    country_code.short_description = ''
+
+    def contact_name(self, merchant):
+        return merchant.contact_first_name + ' ' + merchant.contact_last_name
+
+    contact_name.short_description = 'name'
+
+    def contact_phone_(self, merchant):
+        return merchant.contact_phone
+
+    contact_phone_.short_description = 'phone'
+
+    def processing(self, merchant):
+        return '{0}, {1}'.format(
+            merchant.get_payment_processor_display(),
+            str(merchant.api_key is not None))
 
 
 admin.site.register(models.User, UserAdmin)
