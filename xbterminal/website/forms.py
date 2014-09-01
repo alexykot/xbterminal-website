@@ -31,7 +31,8 @@ from website.widgets import (
     ButtonGroupRadioSelect,
     PercentWidget,
     TimeWidget,
-    FileWidget)
+    FileWidget,
+    ForeignKeyWidget)
 from website.validators import validate_bitcoin_address
 
 
@@ -383,6 +384,9 @@ class DeviceAdminForm(forms.ModelForm):
 
     class Meta:
         model = Device
+        widgets = {
+            'merchant': ForeignKeyWidget(model=MerchantAccount),
+        }
 
     def clean(self):
         cleaned_data = super(DeviceAdminForm, self).clean()

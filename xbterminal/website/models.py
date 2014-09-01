@@ -249,7 +249,7 @@ class Device(models.Model):
         ('preordered', _('Preordered')),
         ('dispatched', _('Dispatched')),
         ('delivered', _('Delivered')),
-        ('active', _('Online')),
+        ('active', _('Operational')),
         ('suspended', _('Suspended')),
         ('disposed', _('Disposed')),
     ]

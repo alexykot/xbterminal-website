@@ -14,7 +14,12 @@ def url_to_object(obj):
 
 class DeviceAdmin(admin.ModelAdmin):
     list_display = ('__unicode__', 'is_online', 'merchant_link')
-    readonly_fields = ('key', 'last_reconciliation', 'payment_processor')
+    readonly_fields = [
+        'key',
+        'last_reconciliation',
+        'payment_processor',
+        'is_online',
+    ]
     form = forms.DeviceAdminForm
 
     def payment_processor(self, device):

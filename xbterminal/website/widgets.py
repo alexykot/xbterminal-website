@@ -1,5 +1,6 @@
 import os
 
+from django.core.urlresolvers import reverse
 from django.forms.widgets import (
     ChoiceFieldRenderer,
     RadioChoiceInput,
@@ -90,4 +91,23 @@ class FileWidget(FileInput):
         else:
             list_item = ''
         output = format_html(template, file_input, list_item)
+        return mark_safe(output)
+
+
+class ForeignKeyWidget(Select):
+
+    def __init__(self, attrs=None, choices=(), model=None):
+        super(ForeignKeyWidget, self).__init__(attrs=attrs, choices=choices)
+        self.model = model
+
+    def render(self, name, value, attrs=None):
+        select = super(ForeignKeyWidget, self).render(name, value, attrs)
+        instance = self.model.objects.get(pk=value)
+        instance_url = reverse(
+            'admin:{0}_{1}_change'.format(
+                instance._meta.app_label, instance._meta.module_name),
+            args=[instance.pk])
+        output = select + format_html('&nbsp;<a href="{0}">{1}</a>&nbsp;',
+                                      instance_url,
+                                      str(instance))
         return mark_safe(output)
