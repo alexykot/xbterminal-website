@@ -7,6 +7,7 @@ from bitcoin import base58
 
 from django.db import models
 from django.conf import settings
+from django.core.files.storage import FileSystemStorage
 from django.core.urlresolvers import reverse
 from django_countries.fields import CountryField
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
@@ -121,10 +122,17 @@ def get_currency(country_code):
     return Currency.objects.get(name=currency_code)
 
 
-def verification_file_path_gen(instance, filename):
-    return os.path.join("verification",
-                        str(instance.pk),
-                        filename)
+def verification_file_1_path_gen(instance, filename):
+    return os.path.join(str(instance.pk), "1__" + filename)
+
+
+def verification_file_2_path_gen(instance, filename):
+    return os.path.join(str(instance.pk), "2__" + filename)
+
+
+verification_file_storage = FileSystemStorage(
+    location=os.path.join(settings.MEDIA_ROOT, 'verification'),
+    base_url='/verification/')
 
 
 class MerchantAccount(models.Model):
@@ -165,8 +173,18 @@ class MerchantAccount(models.Model):
     api_key = models.CharField(_('API key'), max_length=255, blank=True)
 
     verification_status = models.CharField(max_length=50, choices=VERIFICATION_STATUSES, default='unverified')
-    verification_file_1 = models.FileField(_('Photo ID'), upload_to=verification_file_path_gen, blank=True, null=True)
-    verification_file_2 = models.FileField(_('Residence proof'), upload_to=verification_file_path_gen, blank=True, null=True)
+    verification_file_1 = models.FileField(
+        _('Photo ID'),
+        storage=verification_file_storage,
+        upload_to=verification_file_1_path_gen,
+        blank=True,
+        null=True)
+    verification_file_2 = models.FileField(
+        _('Residence proof'),
+        storage=verification_file_storage,
+        upload_to=verification_file_2_path_gen,
+        blank=True,
+        null=True)
 
     comments = models.TextField(blank=True)
 

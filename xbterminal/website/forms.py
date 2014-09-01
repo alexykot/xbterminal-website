@@ -26,6 +26,7 @@ from website.models import (
     get_language,
     get_currency)
 from website.fields import BCAddressField
+from website.files import get_verification_file_info
 from website.widgets import (
     ButtonGroupRadioSelect,
     PercentWidget,
@@ -316,11 +317,11 @@ class VerificationFileUploadForm(forms.ModelForm):
         return cleaned_data
 
     @property
-    def uploaded_file_name(self):
+    def uploaded_file_info(self):
         if self._uploaded_file is None:
             return None
         file = getattr(self.instance, self._uploaded_file)
-        return os.path.basename(file.name).encode('ascii', 'ignore')
+        return get_verification_file_info(file)
 
     def save(self, commit=True):
         instance = super(VerificationFileUploadForm, self).save(commit=False)

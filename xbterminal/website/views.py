@@ -2,7 +2,7 @@ import json
 import datetime
 
 from django.shortcuts import get_object_or_404, render, redirect
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, StreamingHttpResponse
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
@@ -396,8 +396,9 @@ class VerificationView(TemplateResponseMixin, CabinetView):
             instance=self.request.user.merchant)
         if form.is_valid():
             instance = form.save()
-            if form.uploaded_file_name:
-                data = {'filename': form.uploaded_file_name}
+            if form.uploaded_file_info:
+                filename, path = form.uploaded_file_info
+                data = {'filename': filename, 'path': path}
             else:
                 data = {'next': reverse('website:verification')}
         else:
@@ -406,12 +407,24 @@ class VerificationView(TemplateResponseMixin, CabinetView):
                             content_type='application/json')
 
 
-class VerificationFileView(CabinetView):
+class VerificationFileView(View):
+
+    def get(self, *args, **kwargs):
+        if not self.request.user.is_staff:
+            raise Http404
+        merchant = get_object_or_404(models.MerchantAccount,
+                                     pk=self.kwargs.get('merchant_pk'))
+        fieldname = 'verification_file_{0}'.format(self.kwargs.get('n'))
+        file = getattr(merchant, fieldname)
+        if not file:
+            raise Http404
+        return StreamingHttpResponse(file.read(),
+                                     content_type='application/octet-stream')
 
     def delete(self, *args, **kwargs):
-        fieldname = self.kwargs.get('name')
-        if fieldname not in ['verification_file_1', 'verification_file_2']:
+        if not hasattr(self.request.user, 'merchant'):
             raise Http404
+        fieldname = 'verification_file_{0}'.format(self.kwargs.get('n'))
         file = getattr(self.request.user.merchant, fieldname)
         if not file:
             raise Http404

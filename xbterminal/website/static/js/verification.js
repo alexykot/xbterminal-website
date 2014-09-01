@@ -18,7 +18,7 @@ var Verification = (function () {
                         .find('.file-uploaded').empty();
                     var icon = $('<a/>', {
                         'class': 'glyphicon glyphicon-remove file-remove',
-                        'data-name': fileInput.attr('name')
+                        'data-path': data.result.path,
                     })
                     $('<li/>').text(data.result.filename)
                         .append(icon).appendTo(fileList);
@@ -33,7 +33,7 @@ var Verification = (function () {
             var token = form.find('[name="csrfmiddlewaretoken"]').val();
             $.ajax({
                 type: 'DELETE',
-                url: form.attr('action') + button.data('name') + '/',
+                url: form.attr('action') + button.data('path') + '/',
                 headers: {
                     'X-CSRFToken': token
                 }
