@@ -1,7 +1,15 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from django.core.urlresolvers import reverse
 
 from website import forms, models
+
+
+def url_to_object(obj):
+    url_name = 'admin:{0}_{1}_change'.format(
+        obj._meta.app_label, obj._meta.module_name)
+    return u'<a href="{0}">{1}</a>'.format(
+        reverse(url_name, args=[obj.pk]), str(obj))
 
 
 class DeviceAdmin(admin.ModelAdmin):
@@ -42,9 +50,17 @@ class UserAdmin(UserAdmin):
     )
     form = forms.UserChangeForm
     add_form = forms.UserCreationForm
-    list_display = ('email', 'is_staff')
+    list_display = ('email', 'merchant_link', 'is_staff')
     search_fields = ('email',)
     ordering = ('email',)
+
+    def merchant_link(self, user):
+        if not hasattr(user, 'merchant'):
+            return u'-'
+        return url_to_object(user.merchant)
+
+    merchant_link.allow_tags = True
+    merchant_link.short_description = "merchant account"
 
 
 class MerchantAccountAdmin(admin.ModelAdmin):
