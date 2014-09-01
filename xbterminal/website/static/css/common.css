@@ -189,8 +189,8 @@ html, body {
     width: 200px;
 }
 
-#merchant-info a,
-#merchant-info a:hover {
+#merchant-info-name,
+#merchant-info-name:hover {
     color: #888;
     text-decoration: none;
 }
