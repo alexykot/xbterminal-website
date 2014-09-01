@@ -1,9 +1,13 @@
 var Landing = (function () {
     'use strict';
+    var endsWith = function (string, suffix) {
+        return string.indexOf(suffix, string.length - suffix.length) !== -1;
+    };
+
     var makeLinkActive = function (sectionId) {
         $('.header .navbar-nav a').each(function () {
             var link = $(this);
-            if (link.attr('href') == '/#' + sectionId) {
+            if (endsWith(link.attr('href'), '#' + sectionId)) {
                 link.addClass('active');
             } else {
                 link.removeClass('active');
