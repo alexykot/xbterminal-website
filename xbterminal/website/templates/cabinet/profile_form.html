@@ -4,7 +4,14 @@
 {% block cabinet_content %}
 <div class="row">
     <div class="col-md-8 col-md-offset-2">
-        <h3>{% trans 'Merchant profile' %}</h3>
+        <div class="clearfix">
+            <h3 class="pull-left">{% trans 'Merchant profile' %}</h3>
+            {% if user.merchant.verification_status == 'verified' %}
+            <h3 id="profile-verification-status" class="pull-right">
+                <small><a href="{% url 'website:verification' %}">{{ user.merchant.get_verification_status_display }}</small></a>
+            </h3>
+            {% endif %}
+        </div>
         <form id="profile-form" action="" method="post">
             {% csrf_token %}
             <div class="row">

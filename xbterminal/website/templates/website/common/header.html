@@ -22,7 +22,7 @@
                 <ul class="nav navbar-nav">
                     {% if cabinet_page %}
                     <li><a href="{% url 'website:devices' %}" {% if cabinet_page == 'devices' %}class="active"{% endif %}>{% trans 'terminals' %}</a></li><!--
-                    --><li><a href="{% url 'website:profile' %}" {% if cabinet_page == 'profile' %}class="active"{% endif %}>{% trans 'profile' %}</a></li>
+                    --><li><a href="{% url 'website:profile' %}" {% if cabinet_page == 'profile' or cabinet_page == 'verification' %}class="active"{% endif %}>{% trans 'profile' %}</a></li>
                     {% else %}
                     <li><a href="{% url 'website:landing' %}#about-section">{% trans 'about' %}</a></li><!--
                     --><li><a href="{% url 'website:landing' %}#terminal-section">{% trans 'terminal' %}</a></li><!--
@@ -44,7 +44,12 @@
                     {% else %}
                     <div id="merchant-info">
                         {% with user.merchant.info as info %}
-                        <div id="merchant-info-name"><a href="{% url 'website:profile' %}">{{ info.name }}</a></div>
+                        <div>
+                            <a id="merchant-info-name" href="{% url 'website:profile' %}">{{ info.name }}</a>
+                            {% if info.status %}
+                            <a id="merchant-info-status" href="{% url 'website:verification' %}">({{ info.status }})</a>
+                            {% endif %}
+                        </div>
                         <div id="merchant-info-devices">{% trans 'POS active/total:' %} {{ info.active }} / {{ info.total }}</div>
                         <div id="merchant-info-tx">{% trans 'transactions today:' %} {{ info.tx_count }} / {{ user.merchant.currency.prefix }}{{ info.tx_sum|floatformat:2 }}</div>
                         {% endwith %}

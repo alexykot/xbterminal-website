@@ -189,10 +189,14 @@ html, body {
     width: 200px;
 }
 
-#merchant-info a,
-#merchant-info a:hover {
+#merchant-info-name,
+#merchant-info-name:hover {
     color: #888;
     text-decoration: none;
+}
+
+#merchant-info-status {
+    font-size: 0.8em;
 }
 
 /* STICKY HEADER */
@@ -251,7 +255,7 @@ html, body {
     margin-top: 40px;
 }
 
-.content p {
+.content p.large {
     color: #818181;
     font-size: 1.4em;
     font-weight: 300;

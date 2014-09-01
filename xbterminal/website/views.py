@@ -2,7 +2,7 @@ import json
 import datetime
 
 from django.shortcuts import get_object_or_404, render, redirect
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, StreamingHttpResponse
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
@@ -209,6 +209,12 @@ class RegValidationView(View):
                             content_type='application/json')
 
 
+def get_current_merchant(request):
+    if not hasattr(request.user, 'merchant'):
+        return None
+    return request.user.merchant
+
+
 class CabinetView(ContextMixin, View):
     """
     Base class for cabinet views
@@ -216,7 +222,7 @@ class CabinetView(ContextMixin, View):
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        if not hasattr(request.user, 'merchant'):
+        if not get_current_merchant(request):
             raise Http404
         return super(CabinetView, self).dispatch(request, *args, **kwargs)
 
@@ -361,7 +367,8 @@ class UpdateProfileView(TemplateResponseMixin, CabinetView):
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        context['form'] = forms.ProfileForm(instance=self.request.user.merchant)
+        merchant = self.request.user.merchant
+        context['form'] = forms.ProfileForm(instance=merchant)
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
@@ -374,6 +381,70 @@ class UpdateProfileView(TemplateResponseMixin, CabinetView):
         else:
             context['form'] = form
             return self.render_to_response(context)
+
+
+class VerificationView(TemplateResponseMixin, CabinetView):
+    """
+    Verification page
+    """
+    template_name = "cabinet/verification.html"
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        merchant = self.request.user.merchant
+        if merchant.verification_status == 'unverified':
+            context['form'] = forms.VerificationFileUploadForm(instance=merchant)
+        return self.render_to_response(context)
+
+    def post(self, *args, **kwargs):
+        form = forms.VerificationFileUploadForm(
+            self.request.POST,
+            self.request.FILES,
+            instance=self.request.user.merchant)
+        if form.is_valid():
+            instance = form.save()
+            if form.uploaded_file_info:
+                filename, path = form.uploaded_file_info
+                data = {'filename': filename, 'path': path}
+            else:
+                data = {'next': reverse('website:verification')}
+        else:
+            data = {'errors': form.errors}
+        return HttpResponse(json.dumps(data),
+                            content_type='application/json')
+
+
+class VerificationFileView(View):
+    """
+    View or delete files
+    """
+    def get(self, *args, **kwargs):
+        merchant = get_object_or_404(models.MerchantAccount,
+                                     pk=self.kwargs.get('merchant_pk'))
+        if (
+            get_current_merchant(self.request) != merchant
+            and not self.request.user.is_staff
+        ):
+            raise Http404
+        fieldname = 'verification_file_{0}'.format(self.kwargs.get('n'))
+        file = getattr(merchant, fieldname)
+        if not file:
+            raise Http404
+        return StreamingHttpResponse(file.read(),
+                                     content_type='application/octet-stream')
+
+    def delete(self, *args, **kwargs):
+        merchant = get_object_or_404(models.MerchantAccount,
+                                     pk=self.kwargs.get('merchant_pk'))
+        if get_current_merchant(self.request) != merchant:
+            raise Http404
+        fieldname = 'verification_file_{0}'.format(self.kwargs.get('n'))
+        file = getattr(self.request.user.merchant, fieldname)
+        if not file:
+            raise Http404
+        file.delete()
+        return HttpResponse(json.dumps({'deleted': True}),
+                            content_type='application/json')
 
 
 class ReconciliationView(DeviceMixin, TemplateResponseMixin, CabinetView):

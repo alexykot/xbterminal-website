@@ -1,11 +1,13 @@
 import datetime
 from decimal import Decimal
+import os
 import uuid
 
 from bitcoin import base58
 
 from django.db import models
 from django.conf import settings
+from django.core.files.storage import FileSystemStorage
 from django.core.urlresolvers import reverse
 from django_countries.fields import CountryField
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
@@ -22,6 +24,7 @@ from website.validators import (
     validate_bitcoin_address,
     validate_transaction)
 from website.fields import FirmwarePathField
+from website.files import get_verification_file_name
 
 
 class UserManager(BaseUserManager):
@@ -120,12 +123,31 @@ def get_currency(country_code):
     return Currency.objects.get(name=currency_code)
 
 
+def verification_file_1_path_gen(instance, filename):
+    return os.path.join(str(instance.pk), "1__" + filename)
+
+
+def verification_file_2_path_gen(instance, filename):
+    return os.path.join(str(instance.pk), "2__" + filename)
+
+
+verification_file_storage = FileSystemStorage(
+    location=os.path.join(settings.MEDIA_ROOT, 'verification'),
+    base_url='/verification/')
+
+
 class MerchantAccount(models.Model):
 
     PAYMENT_PROCESSOR_CHOICES = [
         ('bitpay', 'BitPay'),
         ('cryptopay', 'CryptoPay'),
         ('gocoin', 'GoCoin'),
+    ]
+
+    VERIFICATION_STATUSES = [
+        ('unverified', _('unverified')),
+        ('pending', _('verification pending')),
+        ('verified', _('verified')),
     ]
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name="merchant", null=True)
@@ -151,6 +173,20 @@ class MerchantAccount(models.Model):
     payment_processor = models.CharField(_('Payment processor'), max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, default='gocoin')
     api_key = models.CharField(_('API key'), max_length=255, blank=True)
 
+    verification_status = models.CharField(_('KYC'), max_length=50, choices=VERIFICATION_STATUSES, default='unverified')
+    verification_file_1 = models.FileField(
+        _('Photo ID'),
+        storage=verification_file_storage,
+        upload_to=verification_file_1_path_gen,
+        blank=True,
+        null=True)
+    verification_file_2 = models.FileField(
+        _('Corporate or residence proof document'),
+        storage=verification_file_storage,
+        upload_to=verification_file_2_path_gen,
+        blank=True,
+        null=True)
+
     comments = models.TextField(blank=True)
 
     def __unicode__(self):
@@ -173,6 +209,10 @@ class MerchantAccount(models.Model):
 
     @property
     def info(self):
+        if self.verification_status == 'verified':
+            status = None
+        else:
+            status = self.get_verification_status_display()
         active_dt = timezone.now() - datetime.timedelta(minutes=2)
         active = self.device_set.filter(last_activity__gte=active_dt).count()
         total =  self.device_set.count()
@@ -183,10 +223,19 @@ class MerchantAccount(models.Model):
         tx_count = transactions.count()
         tx_sum = transactions.aggregate(s=models.Sum('fiat_amount'))['s']
         return {'name': self.trading_name or self.company_name,
+                'status': status,
                 'active': active,
                 'total': total,
                 'tx_count': tx_count,
                 'tx_sum': 0 if tx_sum is None else tx_sum}
+
+    @property
+    def verification_file_1_name(self):
+        return get_verification_file_name(self.verification_file_1)
+
+    @property
+    def verification_file_2_name(self):
+        return get_verification_file_name(self.verification_file_2)
 
 
 def gen_device_key():
@@ -205,7 +254,7 @@ class Device(models.Model):
         ('preordered', _('Preordered')),
         ('dispatched', _('Dispatched')),
         ('delivered', _('Delivered')),
-        ('active', _('Online')),
+        ('active', _('Operational')),
         ('suspended', _('Suspended')),
         ('disposed', _('Disposed')),
     ]
@@ -301,6 +350,7 @@ class ReconciliationTime(models.Model):
 
 
 class Transaction(models.Model):
+
     device = models.ForeignKey(Device)
     hop_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
     dest_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], blank=True, null=True)
@@ -319,6 +369,9 @@ class Transaction(models.Model):
 
     date_created = models.DateTimeField(auto_now_add=True)
     receipt_key = models.CharField(max_length=32, editable=False, unique=True, default=lambda: uuid.uuid4().hex)
+
+    def __unicode__(self):
+        return str(self.pk)
 
     def get_api_url(self):
         domain = Site.objects.get_current().domain

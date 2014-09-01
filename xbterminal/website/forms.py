@@ -1,4 +1,5 @@
 from decimal import Decimal
+import os
 import smtplib
 
 from django import forms
@@ -8,6 +9,7 @@ from django.contrib.auth.forms import (
     AuthenticationForm as DjangoAuthenticationForm,
     UserCreationForm as DjangoUserCreationForm,
     UserChangeForm as DjangoUserChangeForm)
+from django.core.files.uploadedfile import UploadedFile
 from django.core.mail import send_mail
 from django.core.validators import RegexValidator
 from django.template.loader import render_to_string
@@ -24,7 +26,13 @@ from website.models import (
     get_language,
     get_currency)
 from website.fields import BCAddressField
-from website.widgets import ButtonGroupRadioSelect, PercentWidget, TimeWidget
+from website.files import get_verification_file_info
+from website.widgets import (
+    ButtonGroupRadioSelect,
+    PercentWidget,
+    TimeWidget,
+    FileWidget,
+    ForeignKeyWidget)
 from website.validators import validate_bitcoin_address
 
 
@@ -98,6 +106,9 @@ class MerchantRegistrationForm(forms.ModelForm):
             'currency',
             'payment_processor',
             'api_key',
+            'verification_status',
+            'verification_file_1',
+            'verification_file_2',
             'comments',
         ]
         labels = {
@@ -236,6 +247,9 @@ class ProfileForm(forms.ModelForm):
             'currency',
             'payment_processor',
             'api_key',
+            'verification_status',
+            'verification_file_1',
+            'verification_file_2',
             'comments',
         ]
         labels = {
@@ -250,6 +264,70 @@ class ProfileForm(forms.ModelForm):
         instance = super(ProfileForm, self).save(commit=False)
         instance.language = get_language(instance.country.code)
         instance.currency = get_currency(instance.country.code)
+        if commit:
+            instance.save()
+        return instance
+
+
+class VerificationFileUploadForm(forms.ModelForm):
+    """
+    Verification file upload form
+    """
+    submit = forms.BooleanField(
+        widget=forms.HiddenInput,
+        required=False)
+
+    class Meta:
+        model = MerchantAccount
+        fields = [
+            'verification_file_1',
+            'verification_file_2',
+        ]
+        widgets = {
+            'verification_file_1': FileWidget,
+            'verification_file_2': FileWidget,
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(VerificationFileUploadForm, self).__init__(*args, **kwargs)
+        self._uploaded_file = None
+
+    def clean(self):
+        cleaned_data = super(VerificationFileUploadForm, self).clean()
+        file_1 = cleaned_data.get('verification_file_1')
+        file_2 = cleaned_data.get('verification_file_2')
+        if cleaned_data['submit']:
+            # Check both files
+            if not file_1:
+                self._errors['verification_file_1'] = self.error_class(
+                    [_("This field is required.")])
+            if not file_2:
+                self._errors['verification_file_2'] = self.error_class(
+                    [_("This field is required.")])
+        else:
+            # Get uploaded file type
+            if file_1 and isinstance(file_1, UploadedFile):
+                self._uploaded_file = 'verification_file_1'
+            elif file_2 and isinstance(file_2, UploadedFile):
+                self._uploaded_file = 'verification_file_2'
+            else:
+                self._errors['verification_file_1'] = self.error_class(
+                    [_('File upload failed.')])
+                self._errors['verification_file_2'] = self.error_class(
+                    [_('File upload failed.')])
+        return cleaned_data
+
+    @property
+    def uploaded_file_info(self):
+        if self._uploaded_file is None:
+            return None
+        file = getattr(self.instance, self._uploaded_file)
+        return get_verification_file_info(file)
+
+    def save(self, commit=True):
+        instance = super(VerificationFileUploadForm, self).save(commit=False)
+        if self.cleaned_data['submit']:
+            instance.verification_status = 'pending'
         if commit:
             instance.save()
         return instance
@@ -306,6 +384,9 @@ class DeviceAdminForm(forms.ModelForm):
 
     class Meta:
         model = Device
+        widgets = {
+            'merchant': ForeignKeyWidget(model=MerchantAccount),
+        }
 
     def clean(self):
         cleaned_data = super(DeviceAdminForm, self).clean()

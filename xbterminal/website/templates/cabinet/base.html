@@ -12,11 +12,16 @@
             <div class="col-md-8 col-md-offset-2">
                 {% if messages %}
                     {% for message in messages %}
-                    <div class="alert alert-success alert-dismissable">
+                    <div class="alert alert-{{ message.tags }} alert-dismissable">
                         <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
                         {{ message }}
                     </div>
                     {% endfor %}
+                {% endif %}
+                {% if user.merchant.verification_status == 'unverified' and cabinet_page != 'verification' %}
+                    <div class="alert alert-info">
+                        Your account is not verified - <a href="{% url 'website:verification' %}">upload documents</a>
+                    </div>
                 {% endif %}
                 {% block cabinet_content %}{% endblock %}
             </div>

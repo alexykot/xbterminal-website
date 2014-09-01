@@ -24,25 +24,6 @@ var Registration = (function () {
         $('#calculation').html(formatAmounts(subTotal_GBP, subTotal_mBTC));
     };
 
-    var clearErrors = function () {
-        $('.form-group')
-            .removeClass('has-error')
-            .removeClass('has-success')
-            .find('.help-block').remove();
-    };
-    var showErrors = function (formErrors) {
-        clearErrors();
-        $('.form-group').addClass('has-success');
-        for (var fieldName in formErrors) {
-            var formGroup = $('[name="' + fieldName + '"]').closest('.form-group');
-            formGroup.removeClass('has-success').addClass('has-error');
-            $('<div/>', {
-                class: 'help-block',
-                html: formErrors[fieldName].join('<br>')
-            }).appendTo(formGroup);
-        }
-    };
-
     var billingAddressFields = [
         'company_name',
         'business_address',
@@ -128,7 +109,7 @@ var Registration = (function () {
                 for (var fieldName in errorMap) {
                     formErrors[fieldName] = [errorMap[fieldName]];
                 }
-                showErrors(formErrors);
+                Base.showFormErrors(formErrors);
             },
             rules: {
                 company_name_copy: 'required',
@@ -156,7 +137,7 @@ var Registration = (function () {
         $('#continue-step-2').on('click', function (event) {
             event.preventDefault();
             if (validator.form()) {
-                clearErrors();
+                Base.clearFormErrors();
                 $('#registration-step-1').hide();
                 $('#registration-step-2').show();
                 $('#step span').text('2');
@@ -171,7 +152,7 @@ var Registration = (function () {
         $('#continue-step-3').on('click', function (event) {
             event.preventDefault();
             if (validator.form()) {
-                clearErrors();
+                Base.clearFormErrors();
                 $('#registration-step-2').hide();
                 $('#registration-step-3').show();
                 $('#step span').text('3');
@@ -241,7 +222,7 @@ var Registration = (function () {
             if (!validator.form()) {
                 return false;
             }
-            clearErrors();
+            Base.clearFormErrors();
             var form = $(this);
             $.ajax({
                 type: 'POST',
@@ -255,7 +236,7 @@ var Registration = (function () {
                     window.location.href = data.next;
                 } else {
                     $('#back-step-1').click();
-                    showErrors(data.errors);
+                    Base.showFormErrors(data.errors);
                 }
             }).fail(function () {
                 alert(gettext('Server error!'));
