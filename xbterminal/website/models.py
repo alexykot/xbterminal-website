@@ -345,6 +345,7 @@ class ReconciliationTime(models.Model):
 
 
 class Transaction(models.Model):
+
     device = models.ForeignKey(Device)
     hop_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
     dest_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], blank=True, null=True)
@@ -363,6 +364,9 @@ class Transaction(models.Model):
 
     date_created = models.DateTimeField(auto_now_add=True)
     receipt_key = models.CharField(max_length=32, editable=False, unique=True, default=lambda: uuid.uuid4().hex)
+
+    def __unicode__(self):
+        return str(self.pk)
 
     def get_api_url(self):
         domain = Site.objects.get_current().domain

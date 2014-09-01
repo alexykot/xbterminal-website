@@ -28,7 +28,7 @@ class DeviceAdmin(admin.ModelAdmin):
 
 
 class TransactionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'device_link', 'merchant_link', 'date_created')
+    list_display = ('__unicode__', 'device_link', 'merchant_link', 'date_created')
     readonly_fields = ('receipt_key',)
 
     def device_link(self, transaction):
@@ -47,6 +47,37 @@ class TransactionAdmin(admin.ModelAdmin):
 class FirmwareAdmin(admin.ModelAdmin):
     list_display = ('id', 'version', 'hash', 'added')
     readonly_fields = ('hash',)
+
+
+class PaymentOrderAdmin(admin.ModelAdmin):
+
+    list_display = [
+        '__unicode__',
+        'device_link',
+        'merchant_link',
+        'transaction_link',
+        'created',
+    ]
+
+    def transaction_link(self, payment_order):
+        if not payment_order.transaction:
+            return u'-'
+        return url_to_object(payment_order.transaction)
+
+    transaction_link.allow_tags = True
+    transaction_link.short_description = 'transaction'
+
+    def device_link(self, payment_order):
+        return url_to_object(payment_order.device)
+
+    device_link.allow_tags = True
+    device_link.short_description = 'device'
+
+    def merchant_link(self, payment_order):
+        return url_to_object(payment_order.device.merchant)
+
+    merchant_link.allow_tags = True
+    merchant_link.short_description = 'merchant'
 
 
 class OrderAdmin(admin.ModelAdmin):
@@ -114,5 +145,5 @@ admin.site.register(models.Language)
 admin.site.register(models.Currency)
 admin.site.register(models.Transaction, TransactionAdmin)
 admin.site.register(models.Firmware, FirmwareAdmin)
-admin.site.register(models.PaymentOrder)
+admin.site.register(models.PaymentOrder, PaymentOrderAdmin)
 admin.site.register(models.Order, OrderAdmin)
