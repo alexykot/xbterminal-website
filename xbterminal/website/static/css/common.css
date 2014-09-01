@@ -255,7 +255,7 @@ html, body {
     margin-top: 40px;
 }
 
-.content p {
+.content p.large {
     color: #818181;
     font-size: 1.4em;
     font-weight: 300;
