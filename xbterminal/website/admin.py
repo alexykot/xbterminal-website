@@ -13,12 +13,18 @@ def url_to_object(obj):
 
 
 class DeviceAdmin(admin.ModelAdmin):
-    list_display = ('__unicode__', 'is_online', 'merchant')
+    list_display = ('__unicode__', 'is_online', 'merchant_link')
     readonly_fields = ('key', 'last_reconciliation', 'payment_processor')
     form = forms.DeviceAdminForm
 
     def payment_processor(self, device):
         return device.merchant.get_payment_processor_display()
+
+    def merchant_link(self, device):
+        return url_to_object(device.merchant)
+
+    merchant_link.allow_tags = True
+    merchant_link.short_description = 'merchant'
 
 
 class TransactionAdmin(admin.ModelAdmin):
