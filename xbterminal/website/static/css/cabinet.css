@@ -168,10 +168,15 @@ label[for="id_county"]:after {
     background-color: #F8F8F8;
     border: 1px dashed #ccc;
     border-radius: 4px;
+    cursor: pointer;
     height: 100px;
     padding: 10px;
     position: relative;
     overflow: hidden;
+}
+
+.file-dd:hover {
+    background-color: #DFECF7;
 }
 
 .file-dd input[type="file"] {

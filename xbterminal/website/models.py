@@ -24,6 +24,7 @@ from website.validators import (
     validate_bitcoin_address,
     validate_transaction)
 from website.fields import FirmwarePathField
+from website.files import get_verification_file_name
 
 
 class UserManager(BaseUserManager):
@@ -146,7 +147,7 @@ class MerchantAccount(models.Model):
     VERIFICATION_STATUSES = [
         ('unverified', _('unverified')),
         ('pending', _('verification pending')),
-        ('verified', _('vefified')),
+        ('verified', _('verified')),
     ]
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name="merchant", null=True)
@@ -227,6 +228,14 @@ class MerchantAccount(models.Model):
                 'total': total,
                 'tx_count': tx_count,
                 'tx_sum': 0 if tx_sum is None else tx_sum}
+
+    @property
+    def verification_file_1_name(self):
+        return get_verification_file_name(self.verification_file_1)
+
+    @property
+    def verification_file_2_name(self):
+        return get_verification_file_name(self.verification_file_2)
 
 
 def gen_device_key():

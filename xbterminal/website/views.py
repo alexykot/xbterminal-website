@@ -22,7 +22,6 @@ from django.utils.translation import ugettext as _
 from payment.blockchain import construct_bitcoin_uri
 
 from website import forms, models, utils
-from website.files import get_verification_file_name
 
 
 class LandingView(TemplateResponseMixin, View):
@@ -210,6 +209,12 @@ class RegValidationView(View):
                             content_type='application/json')
 
 
+def get_current_merchant(request):
+    if not hasattr(request.user, 'merchant'):
+        return None
+    return request.user.merchant
+
+
 class CabinetView(ContextMixin, View):
     """
     Base class for cabinet views
@@ -217,7 +222,7 @@ class CabinetView(ContextMixin, View):
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        if not hasattr(request.user, 'merchant'):
+        if not get_current_merchant(request):
             raise Http404
         return super(CabinetView, self).dispatch(request, *args, **kwargs)
 
@@ -362,7 +367,8 @@ class UpdateProfileView(TemplateResponseMixin, CabinetView):
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        context['form'] = forms.ProfileForm(instance=self.request.user.merchant)
+        merchant = self.request.user.merchant
+        context['form'] = forms.ProfileForm(instance=merchant)
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
@@ -386,14 +392,8 @@ class VerificationView(TemplateResponseMixin, CabinetView):
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         merchant = self.request.user.merchant
-        context['current_status'] = merchant.verification_status
-        if context['current_status'] == 'unverified':
+        if merchant.verification_status == 'unverified':
             context['form'] = forms.VerificationFileUploadForm(instance=merchant)
-        else:
-            context['verification_file_1'] = get_verification_file_name(
-                merchant.verification_file_1)
-            context['verification_file_2'] = get_verification_file_name(
-                merchant.verification_file_2)
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
@@ -415,12 +415,17 @@ class VerificationView(TemplateResponseMixin, CabinetView):
 
 
 class VerificationFileView(View):
-
+    """
+    View or delete files
+    """
     def get(self, *args, **kwargs):
-        if not self.request.user.is_staff:
-            raise Http404
         merchant = get_object_or_404(models.MerchantAccount,
                                      pk=self.kwargs.get('merchant_pk'))
+        if (
+            get_current_merchant(self.request) != merchant
+            and not self.request.user.is_staff
+        ):
+            raise Http404
         fieldname = 'verification_file_{0}'.format(self.kwargs.get('n'))
         file = getattr(merchant, fieldname)
         if not file:
@@ -429,7 +434,9 @@ class VerificationFileView(View):
                                      content_type='application/octet-stream')
 
     def delete(self, *args, **kwargs):
-        if not hasattr(self.request.user, 'merchant'):
+        merchant = get_object_or_404(models.MerchantAccount,
+                                     pk=self.kwargs.get('merchant_pk'))
+        if get_current_merchant(self.request) != merchant:
             raise Http404
         fieldname = 'verification_file_{0}'.format(self.kwargs.get('n'))
         file = getattr(self.request.user.merchant, fieldname)

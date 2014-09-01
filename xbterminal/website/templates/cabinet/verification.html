@@ -12,56 +12,61 @@
 <div class="row">
     <div class="col-md-10 col-md-offset-1">
         <h3>{% trans 'Account verification' %}</h3>
-        {% if current_status == 'unverified' %}
-        {% blocktrans %}
-        <p>Your merchant account must be verified to receive fiat payouts. To verify your merchant account, you must submit a government issued ID from the company principal, as well as a corporate document showing the registered identity of the business in the jurisdiction where the company operates. If you're a sole trader and not incorporated - then a proof of residence is needed instead of a corporate document.</p>
-        <ol>
-            <li>Identity Document (principal)
-                <ul>
-                    <li>International passport</li>
-                    <li>National ID card (both sides)</li>
-                    <li>Driver's license</li>
-                </ul>
-            </li>
-            <li>Corporate or Address Document
-                <ul>
-                    <li>corporate:
-                        <ul>
-                            <li>articles of incorporation</li>
-                            <li>membership agreement</li>
-                            <li>business tax return</li>
-                        </ul>
-                    </li>
-                    <li>address:
-                        <ul>
-                            <li>bank statement</li>
-                            <li>utility bill (except mobile phone bills)</li>
-                            <li>council tax bill</li>
-                        </ul>
-                    </li>
-                </ul>
-            </li>
-        </ol>
-        <p>DOCUMENT GUIDELINES:</p>
-        <p>Documents need to be visible in their entirety. Please do not crop just the address.<br>
-            Scans should be of high quality. All text must be legible.<br>
-            Identification documents must be current, expired IDs will not be accepted.<br>
-            Corporate documents must be a scanned image of an original paper document.</p>
-        {% endblocktrans %}
-        <form id="verification-form" action="{% url 'website:verification' %}" method="POST">
-            {% csrf_token %}
-            {% bootstrap_form form %}
-            <button type="submit" class="btn btn-default">{% trans 'Submit' %}</button>
-        </form>
-        {% elif current_status == 'pending' %}
-        <p>{% trans 'Verification pending' %}</p>
-        <div>
-            {% trans 'Uploaded files' %}:<br>
-            {{ verification_file_1 }}<br>
-            {{ verification_file_2 }}
-        </div>
-        {% elif current_status == 'verified' %}
-        <p>{% trans 'Verified' %}</p>
+        {% if user.merchant.verification_status == 'unverified' %}
+            {% blocktrans %}
+            <p>Your merchant account must be verified to receive fiat payouts. To verify your merchant account, you must submit a government issued ID from the company principal, as well as a corporate document showing the registered identity of the business in the jurisdiction where the company operates. If you're a sole trader and not incorporated - then a proof of residence is needed instead of a corporate document.</p>
+            <ol>
+                <li>Identity Document (principal)
+                    <ul>
+                        <li>International passport</li>
+                        <li>National ID card (both sides)</li>
+                        <li>Driver's license</li>
+                    </ul>
+                </li>
+                <li>Corporate or Address Document
+                    <ul>
+                        <li>corporate:
+                            <ul>
+                                <li>articles of incorporation</li>
+                                <li>membership agreement</li>
+                                <li>business tax return</li>
+                            </ul>
+                        </li>
+                        <li>address:
+                            <ul>
+                                <li>bank statement</li>
+                                <li>utility bill (except mobile phone bills)</li>
+                                <li>council tax bill</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+            </ol>
+            <p>DOCUMENT GUIDELINES:</p>
+            <p>Documents need to be visible in their entirety. Please do not crop just the address.<br>
+                Scans should be of high quality. All text must be legible.<br>
+                Identification documents must be current, expired IDs will not be accepted.<br>
+                Corporate documents must be a scanned image of an original paper document.</p>
+            {% endblocktrans %}
+            <form id="verification-form" action="{% url 'website:verification' %}" method="POST">
+                {% csrf_token %}
+                {% bootstrap_form form %}
+                <div class="row">
+                    <div class="col-md-6"><button type="submit" class="btn btn-default pull-right">{% trans 'Submit' %}</button></div>
+                    <div class="col-md-6"><a href="{% url 'website:profile' %}" class="btn pull-left">{% trans 'Cancel' %}</a></div>
+                </div>
+            </form>
+        {% else %}
+            {% if user.merchant.verification_status == 'pending' %}
+            <p class="large">{% trans 'Verification pending' %}</p>
+            {% elif user.merchant.verification_status == 'verified' %}
+            <p class="large">{% trans 'Verified' %}</p>
+            {% endif %}
+            <div>
+                {% trans 'Uploaded files' %}:<br>
+                <a href="{% url 'website:verification' %}{{ user.merchant.verification_file_1.name }}">{{ user.merchant.verification_file_1_name }}</a><br>
+                <a href="{% url 'website:verification' %}{{ user.merchant.verification_file_1.name }}">{{ user.merchant.verification_file_2_name }}</a>
+            </div>
         {% endif %}
     </div>
 </div>
