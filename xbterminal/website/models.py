@@ -207,6 +207,10 @@ class MerchantAccount(models.Model):
         return [s for s in strings if s]
 
     @property
+    def contact_name(self):
+        return ' '.join([self.contact_first_name, self.contact_last_name])
+
+    @property
     def info(self):
         if self.verification_status == 'verified':
             status = None

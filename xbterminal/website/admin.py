@@ -60,11 +60,20 @@ class UserAdmin(UserAdmin):
         return url_to_object(user.merchant)
 
     merchant_link.allow_tags = True
-    merchant_link.short_description = "merchant account"
+    merchant_link.short_description = 'merchant account'
 
 
 class MerchantAccountAdmin(admin.ModelAdmin):
 
+    list_display = [
+        '__unicode__',
+        'user_link',
+        'trading_name',
+        'country',
+        'contact_name',
+        'contact_phone',
+        'verification_status',
+    ]
     readonly_fields = ['date_joined', 'last_login']
 
     def date_joined(self, merchant):
@@ -72,6 +81,12 @@ class MerchantAccountAdmin(admin.ModelAdmin):
 
     def last_login(self, merchant):
         return merchant.user.last_login.strftime('%d %b %Y %l:%M %p')
+
+    def user_link(self, merchant):
+        return url_to_object(merchant.user)
+
+    user_link.allow_tags = True
+    user_link.short_description = 'user'
 
 
 admin.site.register(models.User, UserAdmin)
