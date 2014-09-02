@@ -149,13 +149,9 @@ label[for="id_county"]:after {
 
 /* Team page */
 
-.team-photo-wrapper {
-    float: left;
-    margin: 40px 15px 5px 0;
-}
-
-.team-photo-wrapper img {
-    border-radius: 50%;
+.team-photo {
+    max-width: 300px;
+    width: 100%;
 }
 
 /* Verification page */
