@@ -5,7 +5,6 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, StreamingHttpResponse
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.views.generic import View
@@ -47,15 +46,13 @@ class ContactView(TemplateResponseMixin, View):
     def post(self, *args, **kwargs):
         form = forms.ContactForm(self.request.POST)
         if form.is_valid():
-            mail_text = render_to_string(
-                'website/email/contact.txt',
-                form.cleaned_data)
-            send_mail(
+            email = utils.create_html_message(
                 _("Message from xbterminal.io"),
-                mail_text,
+                'email/contact.html',
+                form.cleaned_data,
                 settings.DEFAULT_FROM_EMAIL,
-                settings.CONTACT_EMAIL_RECIPIENTS,
-                fail_silently=False)
+                settings.CONTACT_EMAIL_RECIPIENTS)
+            email.send(fail_silently=False)
             return self.render_to_response({})
         else:
             return self.render_to_response({'form': form})
@@ -595,14 +592,14 @@ class SubscribeNewsView(View):
             subscriber_email = form.cleaned_data['email']
             email1 = utils.create_html_message(
                 _("XBTerminal newsletter confirmation"),
-                "website/email/subscription.html",
+                "email/subscription.html",
                 {},
                 settings.DEFAULT_FROM_EMAIL,
                 [subscriber_email])
             email1.send(fail_silently=False)
             email2 = utils.create_html_message(
                 _("Subscription to newsletters"),
-                "website/email/subscription.html",
+                "email/subscription.html",
                 {'subscriber_email': subscriber_email},
                 settings.DEFAULT_FROM_EMAIL,
                 settings.CONTACT_EMAIL_RECIPIENTS)

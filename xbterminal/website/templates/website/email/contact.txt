@@ -1,5 +1,0 @@
-Message from user:
-Email: {{ email }}
-Name: {{ name }}
-Company name: {{ company_name|default:"-" }}
-Message: {{ message }}

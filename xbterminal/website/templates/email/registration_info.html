@@ -1,3 +1,6 @@
+{% extends "email/base.html" %}
+
+{% block content %}
 Email: {{ merchant.contact_email }}<br>
 Joined: {{ merchant.user.date_joined }}<br>
 Company name: {{ merchant.company_name }}<br>
@@ -10,3 +13,4 @@ Quantity: {{ order.quantity }}<br>
 Payment method: {{ order.payment_method }}<br>
 Payment reference: {{ order.payment_reference }}<br>
 {% endif %}
+{% endblock %}

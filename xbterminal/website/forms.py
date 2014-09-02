@@ -10,7 +10,6 @@ from django.contrib.auth.forms import (
     UserCreationForm as DjangoUserCreationForm,
     UserChangeForm as DjangoUserChangeForm)
 from django.core.files.uploadedfile import UploadedFile
-from django.core.mail import send_mail
 from django.core.validators import RegexValidator
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
@@ -34,6 +33,7 @@ from website.widgets import (
     FileWidget,
     ForeignKeyWidget)
 from website.validators import validate_bitcoin_address
+from website.utils import create_html_message
 
 
 class UserCreationForm(DjangoUserCreationForm):
@@ -123,18 +123,17 @@ class MerchantRegistrationForm(forms.ModelForm):
         cleaned_data = super(MerchantRegistrationForm, self).clean()
         self._password = get_user_model().objects.make_random_password()
         # Send email
-        mail_text = render_to_string("website/email/registration.txt", {
-            'email': cleaned_data['contact_email'],
-            'password': self._password,
-        })
         if not self._errors:
+            message = create_html_message(
+                _("Registration for XBTerminal.io"),
+                "email/registration.html",
+                {'email': cleaned_data['contact_email'],
+                 'password': self._password,
+                },
+                settings.DEFAULT_FROM_EMAIL,
+                [cleaned_data['contact_email']])
             try:
-                send_mail(
-                        _("Registration for XBTerminal.io"),
-                        mail_text,
-                        settings.DEFAULT_FROM_EMAIL,
-                        [cleaned_data['contact_email']],
-                        fail_silently=False)
+                message.send(fail_silently=False)
             except smtplib.SMTPRecipientsRefused as error:
                 self._errors['contact_email'] = self.error_class([_('Invalid email.')])
                 del cleaned_data['contact_email']

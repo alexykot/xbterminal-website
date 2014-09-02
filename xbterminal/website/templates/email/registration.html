@@ -1,0 +1,11 @@
+{% extends "email/base.html" %}
+{% load i18n %}
+
+{% block content %}
+{% blocktrans %}
+Thank you for registering on xbterminal.io.<br>
+You can logon to the site with your email and password.<br>
+Your email: {{ email }}<br>
+Your current password: {{ password }}
+{% endblocktrans %}
+{% endblock %}
