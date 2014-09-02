@@ -1,4 +1,4 @@
-{% extends "cabinet/base.html" %}
+{% extends "website/base.html" %}
 {% load bootstrap3 staticfiles i18n l10n %}
 
 {% block js %}
@@ -6,7 +6,7 @@
 <script src="{% static 'js/registration.js' %}"></script>
 {% endblock %}
 
-{% block cabinet_content %}
+{% block website_content %}
 {% url 'website:privacy' as privacy_url %}
 {% url 'website:terms' as terms_url %}
 <div class="row">

@@ -92,7 +92,7 @@ class LoginView(TemplateResponseMixin, View):
     """
     Login page
     """
-    template_name = "cabinet/login.html"
+    template_name = "website/login.html"
 
     def get(self, *args, **kwargs):
         if hasattr(self.request.user, 'merchant'):
@@ -120,7 +120,7 @@ class RegistrationView(TemplateResponseMixin, View):
     """
     Registration page
     """
-    template_name = "cabinet/registration.html"
+    template_name = "website/registration.html"
 
     def get(self, *args, **kwargs):
         regtype = self.request.GET.get('regtype', 'default')
@@ -233,7 +233,7 @@ class OrderPaymentView(TemplateResponseMixin, CabinetView):
     """
     Terminal order page
     """
-    template_name = "cabinet/order.html"
+    template_name = "website/order.html"
 
     def get(self, *args, **kwargs):
         order = get_object_or_404(models.Order,

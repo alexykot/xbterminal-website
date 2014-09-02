@@ -93,7 +93,7 @@ var Registration = (function () {
                 async: false
             });
             return isValid;
-        }, gettext('Merchant account with this contact email already exists. Please <a href="/login">login</a> or <a>reset your password</a>.'));
+        }, gettext('Merchant account with this contact email already exists. Please <a href="/login/">login</a> or <a>reset your password</a>.'));
 
         $.validator.addMethod('phone', function (value, element) {
             return this.optional(element) || /^[0-9\s-+().]{5,20}$/.test(value);
