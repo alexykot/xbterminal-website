@@ -149,6 +149,10 @@ label[for="id_county"]:after {
 
 /* Team page */
 
+.team-row {
+    margin: 25px 0;
+}
+
 .team-photo {
     max-width: 300px;
     width: 100%;
