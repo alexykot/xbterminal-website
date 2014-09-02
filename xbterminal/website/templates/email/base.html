@@ -1,16 +1,27 @@
 {% load i18n staticfiles %}
-<div style="width: 484px;">
-    <div style="margin-top: 15px; padding-left: 25px; padding-top: 15px; border-top: 7px solid #71B4E1;">
-        {% block content %}{% endblock %}
-    </div>
-    <div style="margin-top: 50px; padding-left: 25px;">
-        - - - - - - - - - - - - - - - - - - - - - - -
-        <br>
-        {% blocktrans %}Warm regards,<br>XBTerminal Team{% endblocktrans %}
-        <br>
-        <a href="mailto:support@xbterminal.io">support@xbterminal.io</a>
-    </div>
-    <div style="margin-top: 15px;">
-        <img src="http://stage.xbterminal.com/static/img/xbt_email_footer.png">
-    </div>
-</div>
+
+<table width="484px" border="0" cellpadding="0" cellspacing="0" style="font-family: Arial; color: #333333;">
+    <tr><td colspan="3" height="15px">&nbsp;</td></tr>
+    <tr><td colspan="3" height="15px" style="border-top: 7px solid #71B4E1;">&nbsp;</td></tr>
+    <tr>
+        <td width="25px">&nbsp;</td>
+        <td>{% block content %}{% endblock %}</td>
+        <td width="25px">&nbsp;</td>
+    </tr>
+    <tr><td colspan="3" height="50px">&nbsp;</td></tr>
+    <tr>
+        <td width="25px">&nbsp;</td>
+        <td>
+            - - - - - - - - - - - - - - - - - - - - - - -
+            <br>
+            {% blocktrans %}Warm regards,<br>XBTerminal Team{% endblocktrans %}
+            <br>
+            <a href="mailto:support@xbterminal.io">support@xbterminal.io</a>
+        </td>
+        <td width="25px">&nbsp;</td>
+    </tr>
+    <tr><td colspan="3" height="15px">&nbsp;</td></tr>
+    <tr>
+        <td colspan="3"><img src="http://stage.xbterminal.com/static/img/xbt_email_footer.png"></td>
+    </tr>
+</table>
