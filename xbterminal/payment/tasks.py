@@ -144,6 +144,7 @@ def wait_for_payment(payment_order_uid):
     except PaymentOrder.DoesNotExist:
         # PaymentOrder deleted, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
+        return
     if payment_order.created + datetime.timedelta(minutes=15) < timezone.now():
         # Timeout, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
@@ -207,6 +208,7 @@ def wait_for_validation(payment_order_uid):
     except PaymentOrder.DoesNotExist:
          # PaymentOrder deleted, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
+        return
     if payment_order.created + datetime.timedelta(minutes=20) < timezone.now():
         # Timeout, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
@@ -261,6 +263,7 @@ def wait_for_exchange(payment_order_uid):
     except PaymentOrder.DoesNotExist:
          # PaymentOrder deleted, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
+        return
     if payment_order.created + datetime.timedelta(minutes=45) < timezone.now():
         # Timeout, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())

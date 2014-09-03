@@ -59,6 +59,7 @@ def wait_for_payment(order_id):
     except Order.DoesNotExist:
         # Order or merchant deleted, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
+        return
     if order.created + datetime.timedelta(minutes=20) < timezone.now():
         # Timeout, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
