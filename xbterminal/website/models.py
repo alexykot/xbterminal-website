@@ -150,21 +150,21 @@ class MerchantAccount(models.Model):
         ('verified', _('verified')),
     ]
 
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name="merchant", null=True)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name="merchant")
     company_name = models.CharField(_('Company name'), max_length=255)
     trading_name = models.CharField(_('Trading name'), max_length=255, blank=True)
 
-    business_address = models.CharField(_('Business address'), max_length=255)
+    business_address = models.CharField(_('Business address'), max_length=255, null=True)
     business_address1 = models.CharField('', max_length=255, blank=True, default='')
     business_address2 = models.CharField('', max_length=255, blank=True, default='')
-    town = models.CharField(_('Town'), max_length=64)
-    county = models.CharField(_('State / County'), max_length=128, blank=True)
-    post_code = models.CharField(_('Post code'), max_length=32, validators=[validate_post_code])
+    town = models.CharField(_('Town'), max_length=64, null=True)
+    county = models.CharField(_('State / County'), max_length=128, blank=True, default='')
+    post_code = models.CharField(_('Post code'), max_length=32, validators=[validate_post_code], null=True)
     country = CountryField(_('Country'), default='GB')
 
     contact_first_name = models.CharField(_('Contact first name'), max_length=255)
     contact_last_name = models.CharField(_('Contact last name'), max_length=255)
-    contact_phone = models.CharField(_('Contact phone'), max_length=32, validators=[validate_phone])
+    contact_phone = models.CharField(_('Contact phone'), max_length=32, validators=[validate_phone], null=True)
     contact_email = models.EmailField(_('Contact email'), max_length=254, unique=True)
 
     language = models.ForeignKey(Language, default=1)  # by default, English, see fixtures
@@ -206,6 +206,13 @@ class MerchantAccount(models.Model):
             self.country.name,
         ]
         return [s for s in strings if s]
+
+    @property
+    def is_profile_complete(self):
+        return (self.business_address
+                and self.town
+                and self.post_code
+                and self.contact_phone)
 
     @property
     def info(self):
