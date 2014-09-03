@@ -80,7 +80,66 @@ class SubscribeForm(forms.Form):
     email = forms.EmailField()
 
 
-class MerchantRegistrationForm(forms.ModelForm):
+class SimpleMerchantRegistrationForm(forms.ModelForm):
+    """
+    Merchant registration form (simplified)
+    """
+    class Meta:
+        model = MerchantAccount
+        fields = [
+            'company_name',
+            'country',
+            'contact_first_name',
+            'contact_last_name',
+            'contact_email',
+        ]
+
+    def clean(self):
+        cleaned_data = super(SimpleMerchantRegistrationForm, self).clean()
+        self._password = get_user_model().objects.make_random_password()
+        # Send email
+        if not self._errors:
+            message = create_html_message(
+                _("Registration for XBTerminal.io"),
+                "email/registration.html",
+                {'email': cleaned_data['contact_email'],
+                 'password': self._password,
+                },
+                settings.DEFAULT_FROM_EMAIL,
+                [cleaned_data['contact_email']])
+            try:
+                message.send(fail_silently=False)
+            except smtplib.SMTPRecipientsRefused as error:
+                self._errors['contact_email'] = self.error_class([_('Invalid email.')])
+                del cleaned_data['contact_email']
+        return cleaned_data
+
+    def save(self, commit=True):
+        """
+        Create django user and merchant account
+        """
+        assert commit  # Always commit
+        instance = super(SimpleMerchantRegistrationForm, self).save(commit=False)
+        # Create new user
+        user = get_user_model().objects.create_user(
+            self.cleaned_data['contact_email'],
+            self._password)
+        user.backend = 'django.contrib.auth.backends.ModelBackend'
+        instance.user = user
+        instance.language = get_language(instance.country.code)
+        instance.currency = get_currency(instance.country.code)
+        instance.save()
+        # Create oauth client
+        user.application_set.create(
+            name='XBTerminal app',
+            client_id=user.email,
+            client_type='confidential',
+            authorization_grant_type='password',
+            client_secret='#')
+        return instance
+
+
+class MerchantRegistrationForm(SimpleMerchantRegistrationForm):
     """
     Merchant registration form
     """
@@ -120,50 +179,6 @@ class MerchantRegistrationForm(forms.ModelForm):
             'contact_last_name': _('Last name'),
             'contact_email': _('Email'),
         }
-
-    def clean(self):
-        cleaned_data = super(MerchantRegistrationForm, self).clean()
-        self._password = get_user_model().objects.make_random_password()
-        # Send email
-        if not self._errors:
-            message = create_html_message(
-                _("Registration for XBTerminal.io"),
-                "email/registration.html",
-                {'email': cleaned_data['contact_email'],
-                 'password': self._password,
-                },
-                settings.DEFAULT_FROM_EMAIL,
-                [cleaned_data['contact_email']])
-            try:
-                message.send(fail_silently=False)
-            except smtplib.SMTPRecipientsRefused as error:
-                self._errors['contact_email'] = self.error_class([_('Invalid email.')])
-                del cleaned_data['contact_email']
-        return cleaned_data
-
-    def save(self, commit=True):
-        """
-        Create django user and merchant account
-        """
-        assert commit  # Always commit
-        instance = super(MerchantRegistrationForm, self).save(commit=False)
-        # Create new user
-        user = get_user_model().objects.create_user(
-            self.cleaned_data['contact_email'],
-            self._password)
-        user.backend = 'django.contrib.auth.backends.ModelBackend'
-        instance.user = user
-        instance.language = get_language(instance.country.code)
-        instance.currency = get_currency(instance.country.code)
-        instance.save()
-        # Create oauth client
-        user.application_set.create(
-            name='XBTerminal app',
-            client_id=user.email,
-            client_type='confidential',
-            authorization_grant_type='password',
-            client_secret='#')
-        return instance
 
 
 class TerminalOrderForm(forms.ModelForm):
