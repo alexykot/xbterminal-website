@@ -139,12 +139,16 @@ def wait_for_payment(payment_order_uid):
         payment_order_uid: PaymentOrder unique identifier
     """
     # Check current balance
-    payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
+    try:
+        payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
+    except PaymentOrder.DoesNotExist:
+        # PaymentOrder deleted, cancel job
+        django_rq.get_scheduler().cancel(rq.get_current_job())
     if payment_order.created + datetime.timedelta(minutes=15) < timezone.now():
-        # Cancel job
+        # Timeout, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
     if payment_order.incoming_tx_id is not None:
-        # Payment already validated, cancel task
+        # Payment already validated, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
         return
     # Connect to bitcoind
@@ -198,9 +202,13 @@ def wait_for_validation(payment_order_uid):
     Accepts:
         payment_order_uid: PaymentOrder unique identifier
     """
-    payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
+    try:
+        payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
+    except PaymentOrder.DoesNotExist:
+         # PaymentOrder deleted, cancel job
+        django_rq.get_scheduler().cancel(rq.get_current_job())
     if payment_order.created + datetime.timedelta(minutes=20) < timezone.now():
-        # Cancel job
+        # Timeout, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
     if payment_order.incoming_tx_id is not None:
         django_rq.get_scheduler().cancel(rq.get_current_job())
@@ -248,9 +256,13 @@ def wait_for_exchange(payment_order_uid):
     Accepts:
         payment_order_uid: PaymentOrder unique identifier
     """
-    payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
+    try:
+        payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
+    except PaymentOrder.DoesNotExist:
+         # PaymentOrder deleted, cancel job
+        django_rq.get_scheduler().cancel(rq.get_current_job())
     if payment_order.created + datetime.timedelta(minutes=45) < timezone.now():
-        # Cancel job
+        # Timeout, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
     invoice_paid = instantfiat.is_invoice_paid(
         payment_order.device.merchant.payment_processor,
