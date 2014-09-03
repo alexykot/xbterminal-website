@@ -88,23 +88,32 @@ class TeamView(TemplateResponseMixin, View):
         return self.render_to_response({})
 
 
-class LoginView(TemplateResponseMixin, View):
+class LoginView(ContextMixin, TemplateResponseMixin, View):
     """
     Login page
     """
     template_name = "website/login.html"
 
+    def get_context_data(self, **kwargs):
+        context = super(LoginView, self).get_context_data(**kwargs)
+        context['next'] = self.request.REQUEST.get('next', '')
+        return context
+
     def get(self, *args, **kwargs):
         if hasattr(self.request.user, 'merchant'):
             return redirect(reverse('website:devices'))
-        return self.render_to_response({'form': forms.AuthenticationForm})
+        context = self.get_context_data(**kwargs)
+        context['form'] = forms.AuthenticationForm
+        return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
         form = forms.AuthenticationForm(self.request, data=self.request.POST)
         if form.is_valid():
             login(self.request, form.get_user())
-            return redirect(reverse('website:devices'))
-        return self.render_to_response({'form': form})
+            return redirect(context['next'] or reverse('website:devices'))
+        context['form'] = form
+        return self.render_to_response(context)
 
 
 class LogoutView(View):

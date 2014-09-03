@@ -23,6 +23,11 @@
                         Your account is not verified - <a href="{% url 'website:verification' %}">upload documents</a>
                     </div>
                 {% endif %}
+                {% if not user.merchant.is_profile_complete %}
+                    <div class="alert alert-info">
+                        Your profile is not complete - <a href="{% url 'website:profile' %}">update profile</a>
+                    </div>
+                {% endif %}
                 {% block cabinet_content %}{% endblock %}
             </div>
         </div>

@@ -80,47 +80,22 @@ class SubscribeForm(forms.Form):
     email = forms.EmailField()
 
 
-class MerchantRegistrationForm(forms.ModelForm):
+class SimpleMerchantRegistrationForm(forms.ModelForm):
     """
-    Merchant registration form
+    Merchant registration form (simplified)
     """
-    regtype = forms.ChoiceField(
-        choices=[
-            ('default', 'default'),
-            ('terminal', 'terminal'),
-            ('web', 'web'),
-        ],
-        widget=forms.HiddenInput)
-
-    # Used at registration step 1
-    company_name_copy = forms.CharField(
-        label=_('Company name'),
-        required=False)
-
     class Meta:
         model = MerchantAccount
-        exclude = [
-            'user',
-            'business_address2',
-            'language',
-            'currency',
-            'payment_processor',
-            'api_key',
-            'verification_status',
-            'verification_file_1',
-            'verification_file_2',
-            'comments',
+        fields = [
+            'company_name',
+            'country',
+            'contact_first_name',
+            'contact_last_name',
+            'contact_email',
         ]
-        labels = {
-            'business_address': _('Trading address'),
-            'post_code': _('Post code/Zip code'),
-            'contact_first_name': _('First name'),
-            'contact_last_name': _('Last name'),
-            'contact_email': _('Email'),
-        }
 
     def clean(self):
-        cleaned_data = super(MerchantRegistrationForm, self).clean()
+        cleaned_data = super(SimpleMerchantRegistrationForm, self).clean()
         self._password = get_user_model().objects.make_random_password()
         # Send email
         if not self._errors:
@@ -144,7 +119,7 @@ class MerchantRegistrationForm(forms.ModelForm):
         Create django user and merchant account
         """
         assert commit  # Always commit
-        instance = super(MerchantRegistrationForm, self).save(commit=False)
+        instance = super(SimpleMerchantRegistrationForm, self).save(commit=False)
         # Create new user
         user = get_user_model().objects.create_user(
             self.cleaned_data['contact_email'],
@@ -154,7 +129,56 @@ class MerchantRegistrationForm(forms.ModelForm):
         instance.language = get_language(instance.country.code)
         instance.currency = get_currency(instance.country.code)
         instance.save()
+        # Create oauth client
+        user.application_set.create(
+            name='XBTerminal app',
+            client_id=user.email,
+            client_type='confidential',
+            authorization_grant_type='password',
+            client_secret='#')
         return instance
+
+
+class MerchantRegistrationForm(SimpleMerchantRegistrationForm):
+    """
+    Merchant registration form
+    """
+    regtype = forms.ChoiceField(
+        choices=[
+            ('default', 'default'),
+            ('terminal', 'terminal'),
+            ('web', 'web'),
+        ],
+        widget=forms.HiddenInput)
+
+    # Used at registration step 1
+    company_name_copy = forms.CharField(
+        label=_('Company name'),
+        required=False)
+
+    class Meta:
+        model = MerchantAccount
+        fields = [
+            'company_name',
+            'trading_name',
+            'business_address',
+            'business_address1',
+            'town',
+            'county',
+            'post_code',
+            'country',
+            'contact_first_name',
+            'contact_last_name',
+            'contact_phone',
+            'contact_email',
+        ]
+        labels = {
+            'business_address': _('Trading address'),
+            'post_code': _('Post code/Zip code'),
+            'contact_first_name': _('First name'),
+            'contact_last_name': _('Last name'),
+            'contact_email': _('Email'),
+        }
 
 
 class TerminalOrderForm(forms.ModelForm):

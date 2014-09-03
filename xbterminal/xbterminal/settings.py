@@ -71,6 +71,7 @@ INSTALLED_APPS = (
     'constance',
     'constance.backends.database',
     'django_rq',
+    'oauth2_provider',
 
     'website',
     'api'
@@ -196,6 +197,11 @@ PKI_CERTIFICATES = []
 BITCOIND_HOST = "node.xbterminal.io"
 BITCOIND_AUTH = {
     "testnet": ("root", "password"),
+}
+
+# OAuth
+OAUTH2_PROVIDER = {
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 100000000,
 }
 
 # Override default settings

@@ -14,10 +14,11 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from constance import config
+from oauth2_provider.views.generic import ProtectedResourceView
 
-from website.models import Device, Transaction, Firmware, PaymentOrder
-from website.forms import EnterAmountForm
-from website.utils import generate_qr_code
+from website.models import Device, Transaction, Firmware, PaymentOrder, MerchantAccount
+from website.forms import SimpleMerchantRegistrationForm, EnterAmountForm
+from website.utils import generate_qr_code, send_registration_info
 from api.shortcuts import render_to_pdf
 
 import payment.tasks
@@ -25,6 +26,81 @@ import payment.blockchain
 import payment.protocol
 
 logger = logging.getLogger(__name__)
+
+
+class CSRFExemptMixin(object):
+
+    @csrf_exempt
+    def dispatch(self, *args, **kwargs):
+        return super(CSRFExemptMixin, self).dispatch(*args, **kwargs)
+
+
+class MerchantView(CSRFExemptMixin, View):
+
+    def post(self, *args, **kwargs):
+        """
+        Create merchant
+        """
+        form = SimpleMerchantRegistrationForm(self.request.POST)
+        if form.is_valid():
+            merchant = form.save()
+            send_registration_info(merchant)
+            data = {'merchant_id': merchant.pk}
+        else:
+            data = {'errors': form.errors}
+        response = HttpResponse(json.dumps(data),
+                                content_type='application/json')
+        return response
+
+
+class DevicesView(ProtectedResourceView):
+
+    @csrf_exempt
+    def dispatch(self, *args, **kwargs):
+        return super(DevicesView, self).dispatch(*args, **kwargs)
+
+    def get(self, *args, **kwargs):
+        """
+        Device list
+        """
+        merchant = self.request.resource_owner.merchant
+        data = []
+        for device in merchant.device_set.all():
+            data.append({
+                'name': device.name,
+                'key': device.key,
+                'percent': float(device.percent),
+                'type': device.device_type,
+                'online': device.is_online(),
+            })
+        response = HttpResponse(json.dumps(data),
+                                content_type='application/json')
+        return response
+
+    def post(self, *args, **kwargs):
+        """
+        Create new device
+        """
+        merchant = self.request.resource_owner.merchant
+        name = self.request.POST.get('name')
+        if not name:
+            return HttpResponseBadRequest()
+        device = Device(
+            device_type='mobile',
+            status='active',
+            name=name,
+            merchant=merchant)
+        device.save()
+        data = {
+            'name': device.name,
+            'key': device.key,
+            'percent': float(device.percent),
+            'type': device.device_type,
+            'online': device.is_online(),
+        }
+        response = HttpResponse(json.dumps(data),
+                                content_type='application/json')
+        return response
 
 
 @api_view(['GET'])
