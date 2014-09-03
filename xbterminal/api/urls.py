@@ -4,6 +4,9 @@ from api import views
 
 
 urlpatterns = patterns('api.views',
+    url(r'^merchant/$',
+        views.MerchantView.as_view(),
+        name='merchant'),
     url(r'^devices/$',
         views.DevicesView.as_view(),
         name='devices'),
