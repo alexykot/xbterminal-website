@@ -92,6 +92,13 @@ WSGI_APPLICATION = 'xbterminal.wsgi.application'
 
 AUTH_USER_MODEL = 'website.User'
 
+TEMPLATE_CONTEXT_PROCESSORS = (
+    'django.contrib.auth.context_processors.auth',
+    'django.core.context_processors.i18n',
+    'django.contrib.messages.context_processors.messages',
+    'website.context_processors.debug',
+)
+
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
 

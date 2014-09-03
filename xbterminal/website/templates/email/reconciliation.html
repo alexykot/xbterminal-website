@@ -1,4 +1,7 @@
+{% extends "email/base.html" %}
 {% load website_tags i18n %}
+
+{% block content %}
 <p>
 {% trans 'terminal' %}: {{ device.name|safe }}<br>
 {% trans 'report issue date' %}: {{ rec_datetime|date:"d M Y" }} {{ rec_datetime|time:"g:i A" }}<br>
@@ -11,9 +14,9 @@
 {% endif %}
 </p>
 <p>
----------------------------------<br>
 {% blocktrans %}
 Have problems reading this report or need help with your terminal?<br>
 Contact us at <a href="mailto:support@xbterminal.io">support@xbterminal.io</a>.
 {% endblocktrans %}
 </p>
+{% endblock %}

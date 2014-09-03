@@ -6,12 +6,13 @@ from decimal import Decimal
 
 import qrcode
 
-from django.core.mail import EmailMessage, EmailMultiAlternatives
+from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.utils.html import strip_tags
 from django.utils.text import get_valid_filename
 from django.template.loader import render_to_string
 from django.db.models import Sum
+from django.utils.translation import ugettext as _
 
 from constance import config
 
@@ -139,8 +140,8 @@ def send_reconciliation(recipient, device, rec_range):
         'rec_datetime': rec_range[1],
     }
     email = create_html_message(
-        'XBTerminal reconciliation report, {0}'.format(rec_range[1].strftime('%d %b %Y')),
-        'website/email/reconciliation.html',
+        _('XBTerminal reconciliation report, {0}').format(rec_range[1].strftime('%d %b %Y')),
+        'email/reconciliation.html',
         context,
         settings.DEFAULT_FROM_EMAIL,
         [recipient])
@@ -175,12 +176,10 @@ def generate_qr_code(text, size=4):
 
 
 def send_invoice(order):
-    message_text = render_to_string(
-        "website/email/order.txt",
-        {'order': order})
-    message = EmailMessage(
-        "Your XBTerminal Pre-Order",
-        message_text,
+    message = create_html_message(
+        _("Your XBTerminal Pre-Order"),
+        "email/order.html",
+        {'order': order},
         settings.DEFAULT_FROM_EMAIL,
         [order.merchant.contact_email])
     if order.payment_method == 'wire':
@@ -202,7 +201,7 @@ def send_registration_info(merchant, order=None):
     }
     email = create_html_message(
         'XBTerminal registration info',
-        'website/email/registration_info.html',
+        'email/registration_info.html',
         context,
         settings.DEFAULT_FROM_EMAIL,
         settings.CONTACT_EMAIL_RECIPIENTS)

@@ -1,12 +1,52 @@
-{% extends "cabinet/base.html" %}
+{% extends "website/base.html" %}
 {% load staticfiles i18n %}
 
 {% block title %}Team | {% endblock %}
 
-{% block cabinet_content %}
+{% block website_content %}
 <h3>The Team</h3>
-<div class="team-photo-wrapper">
-    <img src="{% static 'img/team_photo.png' %}">
+<div class="row team-row">
+    <div class="col-md-3 text-center"><img class="team-photo" src="{% static 'img/team_aleks_nowak.png' %}"></div>
+    <div class="col-md-3">
+        <p>
+        {% blocktrans %}
+        <strong>Aleksander Nowak</strong><br>
+        <strong>Chief Operations Officer</strong><br>
+        Aleks Nowak is a former army officer who has spent the last four years running SMEs. He is a huge technology enthusiast and heads up our business development.
+        {% endblocktrans %}
+        </p>
+    </div>
+    <div class="col-md-3 text-center"><img class="team-photo" src="{% static 'img/team_alex_kotenko.png' %}"></div>
+    <div class="col-md-3">
+        <p>
+        {% blocktrans %}
+        <strong>Alex Kotenko</strong><br>
+        <strong>Chief Technology Officer</strong><br>
+        Alex Kotenko has ten years of hands on IT experience. With a  successful record in team management, he is the company director and leads our technical development.
+        {% endblocktrans %}
+        </p>
+    </div>
 </div>
-<p class="large">Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar, hendrerit id, lorem. Maecenas nec odio et ante tincidunt tempus. Donec vitae sapien ut libero venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris sit amet nibh. Donec sodales sagittis magna. Sed consequat, leo eget bibendum sodales, augue velit cursus nunc,</p>
+<div class="row team-row">
+    <div class="col-md-3 text-center"><img class="team-photo" src="{% static 'img/team_eric_benz.png' %}"></div>
+    <div class="col-md-3">
+        <p>
+        {% blocktrans %}
+        <strong>Eric Benz</strong><br>
+        <strong>Chief Strategy Officer</strong><br>
+        Eric Benz has been involved in the payments technology sector for the best part of a decade and has delivered retail payment solutions for the world’s largest merchant brands.
+        {% endblocktrans %}
+        </p>
+    </div>
+    <div class="col-md-3 text-center"><img class="team-photo" src="{% static 'img/team_nadav_rosenberg.png' %}"></div>
+    <div class="col-md-3">
+        <p>
+        {% blocktrans %}
+        <strong>Nadav Rosenberg</strong><br>
+        <strong>Board Member</strong><br>
+        Nadav Rosenberg currently heads up Taboola’s operations in Europe and Australia and is a major Bitcoin proponent.
+        {% endblocktrans %}
+        </p>
+    </div>
+</div>
 {% endblock %}

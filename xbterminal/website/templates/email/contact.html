@@ -1,0 +1,9 @@
+{% extends "email/base.html" %}
+
+{% block content %}
+Message from user:<br>
+Email: {{ email }}<br>
+Name: {{ name }}<br>
+Company name: {{ company_name|default:"-" }}<br>
+Message: {{ message }}
+{% endblock %}
