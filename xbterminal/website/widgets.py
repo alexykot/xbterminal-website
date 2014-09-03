@@ -101,13 +101,14 @@ class ForeignKeyWidget(Select):
         self.model = model
 
     def render(self, name, value, attrs=None):
-        select = super(ForeignKeyWidget, self).render(name, value, attrs)
-        instance = self.model.objects.get(pk=value)
-        instance_url = reverse(
-            'admin:{0}_{1}_change'.format(
-                instance._meta.app_label, instance._meta.module_name),
-            args=[instance.pk])
-        output = select + format_html('&nbsp;<a href="{0}">{1}</a>&nbsp;',
-                                      instance_url,
-                                      str(instance))
+        output = super(ForeignKeyWidget, self).render(name, value, attrs)
+        if value:
+            instance = self.model.objects.get(pk=value)
+            instance_url = reverse(
+                'admin:{0}_{1}_change'.format(
+                    instance._meta.app_label, instance._meta.module_name),
+                args=[instance.pk])
+            output += format_html('&nbsp;<a href="{0}">{1}</a>&nbsp;',
+                                  instance_url,
+                                  str(instance))
         return mark_safe(output)
