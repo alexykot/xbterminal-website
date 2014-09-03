@@ -139,12 +139,17 @@ def wait_for_payment(payment_order_uid):
         payment_order_uid: PaymentOrder unique identifier
     """
     # Check current balance
-    payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
+    try:
+        payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
+    except PaymentOrder.DoesNotExist:
+        # PaymentOrder deleted, cancel job
+        django_rq.get_scheduler().cancel(rq.get_current_job())
+        return
     if payment_order.created + datetime.timedelta(minutes=15) < timezone.now():
-        # Cancel job
+        # Timeout, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
     if payment_order.incoming_tx_id is not None:
-        # Payment already validated, cancel task
+        # Payment already validated, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
         return
     # Connect to bitcoind
@@ -198,9 +203,14 @@ def wait_for_validation(payment_order_uid):
     Accepts:
         payment_order_uid: PaymentOrder unique identifier
     """
-    payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
+    try:
+        payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
+    except PaymentOrder.DoesNotExist:
+         # PaymentOrder deleted, cancel job
+        django_rq.get_scheduler().cancel(rq.get_current_job())
+        return
     if payment_order.created + datetime.timedelta(minutes=20) < timezone.now():
-        # Cancel job
+        # Timeout, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
     if payment_order.incoming_tx_id is not None:
         django_rq.get_scheduler().cancel(rq.get_current_job())
@@ -229,11 +239,21 @@ def forward_transaction(payment_order):
     total_available = sum(out['amount'] for out in unspent_outputs)
     payment_order.extra_btc_amount = total_available - payment_order.btc_amount
     # Forward payment
-    outputs = {
-        payment_order.merchant_address: payment_order.merchant_btc_amount,
-        payment_order.fee_address: payment_order.fee_btc_amount + payment_order.extra_btc_amount,
-        payment_order.instantfiat_address: payment_order.instantfiat_btc_amount,
-    }
+    addresses = [
+        (payment_order.merchant_address,
+         payment_order.merchant_btc_amount),
+        (payment_order.fee_address,
+         payment_order.fee_btc_amount + payment_order.extra_btc_amount),
+        (payment_order.instantfiat_address,
+         payment_order.instantfiat_btc_amount),
+    ]
+    outputs = {}
+    for address, amount in addresses:
+        if not address:
+            continue
+        if address not in outputs:
+            outputs[address] = BTC_DEC_PLACES
+        outputs[address] += amount
     outgoing_tx = bc.create_raw_transaction(
         [out['outpoint'] for out in unspent_outputs],
         outputs)
@@ -248,9 +268,14 @@ def wait_for_exchange(payment_order_uid):
     Accepts:
         payment_order_uid: PaymentOrder unique identifier
     """
-    payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
+    try:
+        payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
+    except PaymentOrder.DoesNotExist:
+         # PaymentOrder deleted, cancel job
+        django_rq.get_scheduler().cancel(rq.get_current_job())
+        return
     if payment_order.created + datetime.timedelta(minutes=45) < timezone.now():
-        # Cancel job
+        # Timeout, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
     invoice_paid = instantfiat.is_invoice_paid(
         payment_order.device.merchant.payment_processor,

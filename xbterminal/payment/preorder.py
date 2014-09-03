@@ -54,9 +54,14 @@ def wait_for_payment(order_id):
     Accepts:
         order_id: Order id
     """
-    order = Order.objects.get(pk=order_id)
+    try:
+        order = Order.objects.get(pk=order_id)
+    except Order.DoesNotExist:
+        # Order or merchant deleted, cancel job
+        django_rq.get_scheduler().cancel(rq.get_current_job())
+        return
     if order.created + datetime.timedelta(minutes=20) < timezone.now():
-        # Cancel job
+        # Timeout, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
     invoice_paid = gocoin.is_invoice_paid(
         order.instantfiat_invoice_id,
