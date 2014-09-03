@@ -239,11 +239,21 @@ def forward_transaction(payment_order):
     total_available = sum(out['amount'] for out in unspent_outputs)
     payment_order.extra_btc_amount = total_available - payment_order.btc_amount
     # Forward payment
-    outputs = {
-        payment_order.merchant_address: payment_order.merchant_btc_amount,
-        payment_order.fee_address: payment_order.fee_btc_amount + payment_order.extra_btc_amount,
-        payment_order.instantfiat_address: payment_order.instantfiat_btc_amount,
-    }
+    addresses = [
+        (payment_order.merchant_address,
+         payment_order.merchant_btc_amount),
+        (payment_order.fee_address,
+         payment_order.fee_btc_amount + payment_order.extra_btc_amount),
+        (payment_order.instantfiat_address,
+         payment_order.instantfiat_btc_amount),
+    ]
+    outputs = {}
+    for address, amount in addresses:
+        if not address:
+            continue
+        if address not in outputs:
+            outputs[address] = BTC_DEC_PLACES
+        outputs[address] += amount
     outgoing_tx = bc.create_raw_transaction(
         [out['outpoint'] for out in unspent_outputs],
         outputs)

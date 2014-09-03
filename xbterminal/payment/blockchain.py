@@ -99,10 +99,10 @@ class BlockChain(object):
             })
         # Convert decimal to float, filter outputs
         outputs_ = {}
-        for address in outputs:
-            amount = float(outputs[address])
+        for address, amount in outputs.items():
             if amount > 0:
-                outputs_[address] = amount
+                outputs_[address] = float(amount)
+        assert len(outputs_) > 0
         # Create transaction
         transaction_hex = self._proxy.createrawtransaction(
             inputs_, outputs_)
