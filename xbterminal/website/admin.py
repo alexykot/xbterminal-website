@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.core.urlresolvers import reverse
+from django.utils.html import format_html
 
 from website import forms, models
 
@@ -8,8 +9,9 @@ from website import forms, models
 def url_to_object(obj):
     url_name = 'admin:{0}_{1}_change'.format(
         obj._meta.app_label, obj._meta.module_name)
-    return u'<a href="{0}">{1}</a>'.format(
-        reverse(url_name, args=[obj.pk]), str(obj))
+    return format_html('<a href="{0}">{1}</a>',
+                       reverse(url_name, args=[obj.pk]),
+                       str(obj))
 
 
 class DeviceAdmin(admin.ModelAdmin):
