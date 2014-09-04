@@ -54,7 +54,7 @@ var Registration = (function () {
                 fieldValue = field.val();
             }
             if (fieldValue) {
-                result.push(fieldValue);
+                result.push(Base.htmlEscape(fieldValue));
             }
         });
         return result;

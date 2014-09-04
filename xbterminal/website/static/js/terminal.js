@@ -58,7 +58,7 @@ var paymentInit = function (form) {
 };
 
 var showErrorMessage = function (errorMessage) {
-    $('.error-message').html(errorMessage).show();
+    $('.error-message').text(errorMessage).show();
     $('.enter-amount [name="amount"]')
         .attr('disabled', false)
         .addClass('error')

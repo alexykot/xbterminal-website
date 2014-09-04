@@ -1,6 +1,15 @@
 var Base = (function () {
     'use strict';
 
+    var htmlEscape = function (str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    };
+
     var clearFormErrors = function () {
         $('.form-group')
             .removeClass('has-error')
@@ -32,6 +41,7 @@ var Base = (function () {
         }
     };
     return {
+        htmlEscape: htmlEscape,
         clearFormErrors: clearFormErrors,
         showFormErrors: showFormErrors,
         init: init
