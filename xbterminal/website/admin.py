@@ -4,6 +4,7 @@ from django.core.urlresolvers import reverse
 from django.utils.html import format_html
 
 from website import forms, models
+from website.utils import generate_qr_code
 
 
 def url_to_object(obj):
@@ -18,6 +19,7 @@ class DeviceAdmin(admin.ModelAdmin):
     list_display = ('__unicode__', 'is_online', 'merchant_link')
     readonly_fields = [
         'key',
+        'device_key_qr_code',
         'last_reconciliation',
         'payment_processor',
         'is_online',
@@ -32,6 +34,13 @@ class DeviceAdmin(admin.ModelAdmin):
 
     merchant_link.allow_tags = True
     merchant_link.short_description = 'merchant'
+
+    def device_key_qr_code(self, device):
+        src = generate_qr_code(device.key, 4)
+        output = format_html('<img src="{0}" alt="{1}">', src, device.key)
+        return output
+
+    device_key_qr_code.allow_tags = True
 
 
 class TransactionAdmin(admin.ModelAdmin):
