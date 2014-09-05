@@ -1,5 +1,5 @@
 {% extends "website/base.html" %}
-{% load qr_tags website_tags staticfiles i18n %}
+{% load website_tags staticfiles i18n %}
 
 {% block js %}
 <script src="{% static 'js/order.js' %}"></script>
@@ -9,7 +9,7 @@
 <h3>{% trans 'Order details' %}</h3>
 <div class="row">
     <div class="col-md-5" id="payment-bitcoin" data-check-url="{{ check_url }}">
-        {% qr_from_text bitcoin_uri 'm' %}
+        {% qr_from_text bitcoin_uri 4 %}
         <div>{% trans 'to pay' %} &nbsp; ฿{{ order.instantfiat_btc_total_amount|scale|floatformat:5 }} mBTC</div>
         <a href="{{ bitcoin_uri }}">{{ order.instantfiat_address }}</a>
     </div>

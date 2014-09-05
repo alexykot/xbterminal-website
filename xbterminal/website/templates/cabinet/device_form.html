@@ -1,5 +1,5 @@
 {% extends "cabinet/base.html" %}
-{% load bootstrap3 staticfiles qr_tags i18n %}
+{% load bootstrap3 staticfiles website_tags i18n %}
 
 {% block js %}
 {{ form.media }}
@@ -24,7 +24,7 @@
                         </div>
                     </div>
                     <div class="col-md-4 text-center">
-                         {% qr_from_text device.key 's' %}
+                         {% qr_from_text device.key 4 %}
                     </div>
                 </div>
             {% endif %}
