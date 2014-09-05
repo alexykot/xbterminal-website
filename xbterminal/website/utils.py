@@ -1,3 +1,4 @@
+import base64
 from cStringIO import StringIO
 import os
 import unicodecsv
@@ -170,7 +171,7 @@ def generate_qr_code(text, size=4):
     qr_code = qrcode.make(text, box_size=size)
     qr_code.save(qr_output, "PNG")
     qr_code_src = "data:image/png;base64,{0}".format(
-        qr_output.getvalue().encode("base64"))
+        base64.b64encode(qr_output.getvalue()))
     qr_output.close()
     return qr_code_src
 
