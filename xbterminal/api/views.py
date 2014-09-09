@@ -212,7 +212,7 @@ class PaymentInitView(View):
         payment_order.request = payment.protocol.create_payment_request(
             payment_order.device.bitcoin_network,
             [(payment_order.local_address, payment_order.btc_amount)],
-            payment_order.created,
+            payment_order.time_created,
             payment_order.expires,
             payment_response_url,
             device.merchant.company_name)
@@ -235,7 +235,7 @@ class PaymentInitView(View):
             payment_bluetooth_request = payment.protocol.create_payment_request(
                 payment_order.device.bitcoin_network,
                 [(payment_order.local_address, payment_order.btc_amount)],
-                payment_order.created,
+                payment_order.time_created,
                 payment_order.expires,
                 payment_bluetooth_url,
                 device.merchant.company_name)

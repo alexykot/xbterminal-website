@@ -426,9 +426,6 @@ class PaymentOrder(models.Model):
                            default=lambda: uuid.uuid4().hex)
     device = models.ForeignKey(Device)
     request = models.BinaryField()
-    created = models.DateTimeField()
-    expires = models.DateTimeField()
-    
 
     # Payment details
     local_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
@@ -450,8 +447,19 @@ class PaymentOrder(models.Model):
     outgoing_tx_id = models.CharField(max_length=64, validators=[validate_transaction], null=True)
     transaction = models.OneToOneField(Transaction, null=True)
 
+    time_created = models.DateTimeField()
+    time_recieved = models.DateTimeField(null=True)
+    time_forwarded = models.DateTimeField(null=True)
+    time_broadcasted = models.DateTimeField(null=True)
+    time_exchanged = models.DateTimeField(null=True)
+    time_finished = models.DateTimeField(null=True)
+
     def __unicode__(self):
         return "Payment order {0}".format(self.uid)
+
+    @property
+    def expires(self):
+        return self.time_created + datetime.timedelta(minutes=10)
 
 
 def gen_payment_reference():

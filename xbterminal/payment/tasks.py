@@ -122,8 +122,7 @@ def prepare_payment(device, fiat_amount):
     now = timezone.localtime(timezone.now())
     payment_order = PaymentOrder(
         device=device,
-        created=now,
-        expires=now + datetime.timedelta(minutes=10),
+        time_created=now,
         **details)
     payment_order.save()
     # Schedule tasks
@@ -145,7 +144,7 @@ def wait_for_payment(payment_order_uid):
         # PaymentOrder deleted, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
         return
-    if payment_order.created + datetime.timedelta(minutes=15) < timezone.now():
+    if payment_order.time_created + datetime.timedelta(minutes=15) < timezone.now():
         # Timeout, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
     if payment_order.incoming_tx_id is not None:
@@ -209,7 +208,7 @@ def wait_for_validation(payment_order_uid):
          # PaymentOrder deleted, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
         return
-    if payment_order.created + datetime.timedelta(minutes=20) < timezone.now():
+    if payment_order.time_created + datetime.timedelta(minutes=20) < timezone.now():
         # Timeout, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
     if payment_order.incoming_tx_id is not None:
@@ -274,7 +273,7 @@ def wait_for_exchange(payment_order_uid):
          # PaymentOrder deleted, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
         return
-    if payment_order.created + datetime.timedelta(minutes=45) < timezone.now():
+    if payment_order.time_created + datetime.timedelta(minutes=45) < timezone.now():
         # Timeout, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
     invoice_paid = instantfiat.is_invoice_paid(
