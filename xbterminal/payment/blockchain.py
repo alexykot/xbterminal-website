@@ -129,7 +129,7 @@ class BlockChain(object):
             transaction_id: hex string
         """
         transaction_id = self._proxy.sendrawtransaction(transaction)
-        return b2x(transaction_id)
+        return b2lx(transaction_id)
 
 
 def construct_bitcoin_uri(address, amount_btc, name, *request_urls):
