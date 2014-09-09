@@ -68,7 +68,7 @@ class BlockChain(object):
         txouts = self._proxy.listunspent(minconf=0, addrs=[address])
         transactions = []
         for out in txouts:
-            txid = b2x(out['outpoint'].hash)
+            txid = b2lx(out['outpoint'].hash)
             transactions.append(self.get_raw_transaction(txid))
         return transactions
 
