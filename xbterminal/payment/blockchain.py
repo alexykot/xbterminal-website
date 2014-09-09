@@ -4,7 +4,7 @@ import urllib
 
 import bitcoin
 import bitcoin.rpc
-from bitcoin.core import COIN, x, b2x, b2lx, CTransaction
+from bitcoin.core import COIN, x, lx, b2x, b2lx, CTransaction
 from bitcoin.core.serialize import Hash
 from bitcoin.wallet import CBitcoinAddress
 
@@ -79,7 +79,7 @@ class BlockChain(object):
         Returns:
             transaction: CTransaction
         """
-        transaction = self._proxy.getrawtransaction(x(transaction_id))
+        transaction = self._proxy.getrawtransaction(lx(transaction_id))
         return transaction
 
     def create_raw_transaction(self, inputs, outputs):
@@ -164,8 +164,9 @@ def get_txid(transaction):
     Returns:
         transaction id (hex)
     """
-    h = Hash(transaction.serialize())
-    return b2x(h)
+    serialized = transaction.serialize()
+    h = Hash(serialized)
+    return b2lx(h)
 
 
 def get_tx_outputs(transaction):
