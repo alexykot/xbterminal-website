@@ -185,7 +185,9 @@ class PaymentInitView(View):
     def post(self, *args, **kwargs):
         form = EnterAmountForm(self.request.POST)
         if not form.is_valid():
-            return HttpResponseBadRequest()
+            return HttpResponseBadRequest(
+                json.dumps({'errors': form.errors}),
+                content_type='application/json')
         # Prepare payment order
         try:
             device = Device.objects.get(key=form.cleaned_data['device_key'])

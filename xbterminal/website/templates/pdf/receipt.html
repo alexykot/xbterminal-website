@@ -7,7 +7,7 @@
 <style type="text/css">
     @font-face {
         font-family: FontAwesome;
-        src: url('xbterminal/website/static/fonts/fontawesome-webfont.ttf');
+        src: url('{% pdf_static 'fonts/fontawesome-webfont.ttf' %}');
     }
     body {
         font-size: 16px;
@@ -120,6 +120,6 @@
     {% qr_from_text transaction.get_api_url 4 %}
 </div>
 <div id="footer">{% trans 'payment processed by' %}</div>
-<div id="footer-image"><img src="xbterminal/website/static/img/xbt_logo_small.png"></div>
+<div id="footer-image"><img src="{% pdf_static 'img/xbt_logo_small.png' %}"></div>
 </body>
 </html>

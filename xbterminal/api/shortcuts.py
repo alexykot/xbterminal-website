@@ -1,5 +1,6 @@
 import cStringIO as StringIO
 
+from django.conf import settings
 from django.template.loader import get_template
 from django.template import Context
 from django.http import HttpResponse
@@ -12,10 +13,14 @@ def generate_pdf(template_src, context_dict):
     context = Context(context_dict)
     html = template.render(context)
     result = StringIO.StringIO()
-    pisa.pisaDocument(StringIO.StringIO(html.encode("utf-8")), result, encoding='utf-8')
+    pisa.CreatePDF(
+        src=html.encode("utf-8"),
+        dest=result,
+        encoding='utf-8',
+        path=settings.BASE_DIR)
     return result
 
 
 def render_to_pdf(template_src, context_dict):
     result = generate_pdf(template_src, context_dict)
-    return HttpResponse(result.getvalue(), mimetype='application/pdf')
+    return HttpResponse(result.getvalue(), content_type='application/pdf')

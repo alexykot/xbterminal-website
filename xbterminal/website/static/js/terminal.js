@@ -80,9 +80,11 @@ var paymentCheck = function (checkURL) {
                 currentCheck = undefined;
                 $('.payment-init').hide();
                 $('.payment-success').show();
-                $('.payment-receipt').
-                    attr('alt', data.receipt_url).
-                    attr('src', data.qr_code_src);
+                $('.payment-receipt')
+                    .attr('alt', data.receipt_url)
+                    .attr('src', data.qr_code_src)
+                    .closest('a')
+                    .attr('href', data.receipt_url);
                 $('.payment-reset').text('Clear');
             }
         });
