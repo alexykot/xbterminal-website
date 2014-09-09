@@ -73,6 +73,14 @@ class ContactForm(forms.Form):
     message = forms.CharField(widget=forms.Textarea)
 
 
+class FeedbackForm(forms.Form):
+    """
+    Simple feedback form
+    """
+    email = forms.EmailField()
+    message = forms.CharField(widget=forms.Textarea)
+
+
 class SubscribeForm(forms.Form):
     """
     Subscribe to newsletters

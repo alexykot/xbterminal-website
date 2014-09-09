@@ -76,6 +76,12 @@ label[for="id_county"]:after {
     margin-bottom: 30px;
 }
 
+/* Login page */
+
+#login-form {
+    margin-bottom: 10px;
+}
+
 /* Order */
 
 #order-details {
@@ -145,6 +151,12 @@ label[for="id_county"]:after {
 
 #contact-info p {
     margin-top: 0;
+}
+
+/* Feedback page */
+
+#feedback-form {
+    margin-bottom: 10px;
 }
 
 /* Team page */
