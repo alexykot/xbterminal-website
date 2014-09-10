@@ -298,20 +298,12 @@ class PaymentResponseView(View):
         if content_type != 'application/bitcoin-payment':
             logger.warning("PaymentResponseView: wrong content type")
             return HttpResponseBadRequest()
-        message = self.request.body
-        if len(message) > 50000:
+        if len(self.request.body) > 50000:
             # Payment messages larger than 50,000 bytes should be rejected by server
             logger.warning("PaymentResponseView: message is too large")
             return HttpResponseBadRequest()
         try:
-            transactions, payment_ack = payment.protocol.parse_payment(message)
-        except Exception as error:
-            logger.warning("PaymentResponseView: parser error {0}".\
-                format(error.__class__.__name__))
-            return HttpResponseBadRequest()
-        # Validate payment
-        try:
-            payment.tasks.validate_payment(payment_order, transactions, 'bip0070')
+            payment_ack = payment.tasks.parse_payment(payment_order, self.request.body)
         except Exception as error:
             logger.warning("PaymentResponseView: validation error {0}".\
                 format(error.__class__.__name__))

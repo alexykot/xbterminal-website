@@ -450,6 +450,9 @@ class PaymentOrder(models.Model):
 
     incoming_tx_id = models.CharField(max_length=64, validators=[validate_transaction], null=True)
     outgoing_tx_id = models.CharField(max_length=64, validators=[validate_transaction], null=True)
+    payment_type = models.CharField(max_length=10, choices=PAYMENT_TYPES)
+    refund_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], null=True)
+
     transaction = models.OneToOneField(Transaction, null=True)
 
     time_created = models.DateTimeField()
@@ -458,8 +461,6 @@ class PaymentOrder(models.Model):
     time_broadcasted = models.DateTimeField(null=True)
     time_exchanged = models.DateTimeField(null=True)
     time_finished = models.DateTimeField(null=True)
-
-    payment_type = models.CharField(max_length=10, choices=PAYMENT_TYPES)
 
     def __unicode__(self):
         return "Payment order {0}".format(self.uid)

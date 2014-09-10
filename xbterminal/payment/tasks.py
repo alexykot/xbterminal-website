@@ -21,7 +21,7 @@ from payment import (
     BTC_MIN_OUTPUT)
 from payment import average, blockchain, instantfiat, exceptions
 
-from payment import blockr
+from payment import blockr, protocol
 
 from website.models import PaymentOrder, Transaction
 
@@ -160,6 +160,30 @@ def wait_for_payment(payment_order_uid):
     if transactions:
         validate_payment(payment_order, transactions, 'bip0021')
         django_rq.get_scheduler().cancel(rq.get_current_job())
+
+
+def parse_payment(payment_order, payment_message):
+    """
+    Parse and validate BIP0070 Payment message
+    Accepts:
+        payment_order: PaymentOrder instance
+        payment_message: pb2-encoded message
+    Returns:
+        payment_ack: pb2-encoded message
+    """
+    # Select network
+    bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
+    try:
+        (transactions,
+         refund_addresses,
+         payment_ack) = protocol.parse_payment(payment_message)
+    except Exception as error:
+        raise exceptions.InvalidPayment('invalid payment message')
+    validate_payment(payment_order, transactions, 'bip0070')
+    if refund_addresses:
+        payment_order.refund_address = refund_addresses[0]
+        payment_order.save()
+    return payment_ack
 
 
 def validate_payment(payment_order, transactions, payment_type):
