@@ -345,6 +345,8 @@ class PaymentCheckView(View):
                 'receipt_url': receipt_url,
                 'qr_code_src': qr_code_src,
             }
+            payment_order.time_finished = timezone.now()
+            payment_order.save()
         response = HttpResponse(json.dumps(data),
                                 content_type='application/json')
         return response

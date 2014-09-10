@@ -21,6 +21,8 @@ from payment import (
     BTC_MIN_OUTPUT)
 from payment import average, blockchain, instantfiat, exceptions
 
+from payment import blockr
+
 from website.models import PaymentOrder, Transaction
 
 logger = logging.getLogger(__name__)
@@ -192,6 +194,7 @@ def validate_payment(payment_order, transactions, broadcast=False):
         except JSONRPCException as error:
             logger.exception(error)
     payment_order.incoming_tx_id = blockchain.get_txid(incoming_tx)
+    payment_order.time_recieved = timezone.now()
     payment_order.save()
     logger.info('payment recieved ({0})'.format(payment_order.uid))
 
@@ -217,9 +220,10 @@ def wait_for_validation(payment_order_uid):
             # Payment already forwarded, skip
             return
         forward_transaction(payment_order)
+        run_periodic_task(wait_for_broadcast, [payment_order.uid], interval=10)
         if payment_order.instantfiat_invoice_id is None:
-            # Finish payment immediately
-            finish_payment(payment_order)
+            # Finalize payment immediately
+            finalize_payment(payment_order)
         else:
             run_periodic_task(wait_for_exchange, [payment_order.uid])
 
@@ -258,7 +262,31 @@ def forward_transaction(payment_order):
         outputs)
     outgoing_tx_signed = bc.sign_raw_transaction(outgoing_tx)
     payment_order.outgoing_tx_id = bc.send_raw_transaction(outgoing_tx_signed)
+    payment_order.time_forwarded = timezone.now()
     payment_order.save()
+
+
+def wait_for_broadcast(payment_order_uid):
+    """
+    Asynchronous task
+    Accepts:
+        payment_order_uid: PaymentOrder unique identifier
+    """
+    try:
+        payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
+    except PaymentOrder.DoesNotExist:
+         # PaymentOrder deleted, cancel job
+        django_rq.get_scheduler().cancel(rq.get_current_job())
+        return
+    if payment_order.time_created + datetime.timedelta(minutes=45) < timezone.now():
+        # Timeout, cancel job
+        django_rq.get_scheduler().cancel(rq.get_current_job())
+    if blockr.is_tx_broadcasted(payment_order.outgoing_tx_id,
+                                payment_order.device.bitcoin_network):
+        django_rq.get_scheduler().cancel(rq.get_current_job())
+        if payment_order.time_broadcasted is None:
+            payment_order.time_broadcasted = timezone.now()
+            payment_order.save()
 
 
 def wait_for_exchange(payment_order_uid):
@@ -285,10 +313,12 @@ def wait_for_exchange(payment_order_uid):
         if payment_order.transaction is not None:
             # Payment already finished, skip
             return
-        finish_payment(payment_order)
+        payment_order.time_exchanged = timezone.now()
+        payment_order.save()
+        finalize_payment(payment_order)
 
 
-def finish_payment(payment_order):
+def finalize_payment(payment_order):
     """
     Save transaction info
     """
@@ -311,4 +341,4 @@ def finish_payment(payment_order):
     transaction.save()
     payment_order.transaction = transaction
     payment_order.save()
-    logger.info('payment finished ({0})'.format(payment_order.uid))
+    logger.info('payment order closed ({0})'.format(payment_order.uid))
