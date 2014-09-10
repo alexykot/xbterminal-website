@@ -420,6 +420,11 @@ class Firmware(models.Model):
 
 class PaymentOrder(models.Model):
 
+    PAYMENT_TYPES = [
+        ('bip0021', _('BIP 0021 (Bitcoin URI)')),
+        ('bip0070', _('BIP 0070 (Payment Protocol)')),
+    ]
+
     uid = models.CharField(max_length=32,
                            editable=False,
                            unique=True,
@@ -453,6 +458,8 @@ class PaymentOrder(models.Model):
     time_broadcasted = models.DateTimeField(null=True)
     time_exchanged = models.DateTimeField(null=True)
     time_finished = models.DateTimeField(null=True)
+
+    payment_type = models.CharField(max_length=10, choices=PAYMENT_TYPES)
 
     def __unicode__(self):
         return "Payment order {0}".format(self.uid)

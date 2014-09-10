@@ -311,7 +311,7 @@ class PaymentResponseView(View):
             return HttpResponseBadRequest()
         # Validate payment
         try:
-            payment.tasks.validate_payment(payment_order, transactions, broadcast=True)
+            payment.tasks.validate_payment(payment_order, transactions, 'bip0070')
         except Exception as error:
             logger.warning("PaymentResponseView: validation error {0}".\
                 format(error.__class__.__name__))

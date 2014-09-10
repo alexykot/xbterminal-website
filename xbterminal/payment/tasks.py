@@ -158,11 +158,11 @@ def wait_for_payment(payment_order_uid):
     transactions = bc.get_unspent_transactions(
         CBitcoinAddress(payment_order.local_address))
     if transactions:
-        validate_payment(payment_order, transactions)
+        validate_payment(payment_order, transactions, 'bip0021')
         django_rq.get_scheduler().cancel(rq.get_current_job())
 
 
-def validate_payment(payment_order, transactions, broadcast=False):
+def validate_payment(payment_order, transactions, payment_type):
     """
     Validates payment and stores incoming transaction id
     in PaymentOrder instance
@@ -171,6 +171,7 @@ def validate_payment(payment_order, transactions, broadcast=False):
         transactions: list of CTransaction
         broadcast: boolean
     """
+    assert payment_type in ['bip0021', 'bip0070']
     bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
     if len(transactions) != 1:
         raise exceptions.InvalidPayment('expecting single transaction')
@@ -188,12 +189,13 @@ def validate_payment(payment_order, transactions, broadcast=False):
     except exceptions.InvalidTransaction:
         raise exceptions.InvalidPayment('invalid transaction')
     # Save incoming transaction id
-    if broadcast:
+    if payment_type == 'bip0070':
         try:
             bc.send_raw_transaction(incoming_tx_signed)
         except JSONRPCException as error:
             logger.exception(error)
     payment_order.incoming_tx_id = blockchain.get_txid(incoming_tx)
+    payment_order.payment_type = payment_type
     payment_order.time_recieved = timezone.now()
     payment_order.save()
     logger.info('payment recieved ({0})'.format(payment_order.uid))
