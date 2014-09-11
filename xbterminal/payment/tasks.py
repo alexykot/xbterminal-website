@@ -4,6 +4,7 @@ Payment operations
 import datetime
 from decimal import Decimal
 import logging
+import uuid
 
 from bitcoin.rpc import JSONRPCException
 from bitcoin.wallet import CBitcoinAddress
@@ -366,5 +367,6 @@ def finalize_payment(payment_order):
         time=timezone.now())
     transaction.save()
     payment_order.transaction = transaction
+    payment_order.receipt_key = transaction.receipt_key
     payment_order.save()
     logger.info('payment order closed ({0})'.format(payment_order.uid))

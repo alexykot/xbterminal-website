@@ -326,10 +326,9 @@ class Device(models.Model):
         return ''
 
     def get_transactions_by_date(self, date):
-        return self.transaction_set.filter(
-            time__range=(datetime.datetime.combine(date, datetime.time.min),
-                         datetime.datetime.combine(date, datetime.time.max))
-        )
+        beg = datetime.datetime.combine(date, datetime.time.min)
+        end = datetime.datetime.combine(date, datetime.time.max)
+        return self.transaction_set.filter(time__range=(beg, end))
 
     def is_online(self):
         if self.last_activity is None:
@@ -382,7 +381,7 @@ class Transaction(models.Model):
 
     def get_api_url(self):
         domain = Site.objects.get_current().domain
-        path = reverse('api:transaction_pdf', kwargs={'key': self.receipt_key})
+        path = reverse('api:receipt', kwargs={'key': self.receipt_key})
         return 'https://%s%s' % (domain, path)
 
     def get_blockchain_transaction_url(self):
@@ -461,6 +460,8 @@ class PaymentOrder(models.Model):
     time_broadcasted = models.DateTimeField(null=True)
     time_exchanged = models.DateTimeField(null=True)
     time_finished = models.DateTimeField(null=True)
+
+    receipt_key = models.CharField(max_length=32, unique=True, null=True)
 
     def __unicode__(self):
         return "Payment order {0}".format(self.uid)

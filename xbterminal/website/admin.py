@@ -79,6 +79,7 @@ class PaymentOrderAdmin(admin.ModelAdmin):
         'merchant_link',
         'transaction_link',
         'time_created',
+        'receipt_key',
     ]
 
     readonly_fields = [
@@ -89,6 +90,7 @@ class PaymentOrderAdmin(admin.ModelAdmin):
         'time_exchanged',
         'time_finished',
         'payment_type',
+        'receipt_key',
     ]
 
     def transaction_link(self, payment_order):

@@ -16,7 +16,7 @@ from rest_framework.response import Response
 from constance import config
 from oauth2_provider.views.generic import ProtectedResourceView
 
-from website.models import Device, Transaction, Firmware, PaymentOrder, MerchantAccount
+from website.models import Device, Firmware, PaymentOrder, MerchantAccount
 from website.forms import SimpleMerchantRegistrationForm, EnterAmountForm
 from website.utils import generate_qr_code, send_registration_info
 from api.shortcuts import render_to_pdf
@@ -123,15 +123,22 @@ def device(request, key):
     return Response(response)
 
 
-def transaction_pdf(request, key):
-    transaction = get_object_or_404(Transaction, receipt_key=key)
-
-    response = render_to_pdf('pdf/receipt.html',
-                             {'transaction': transaction})
-    disposition = 'inline; filename="receipt %s %s.pdf"'.format(
-        transaction.id, transaction.device.merchant.company_name)
-    response['Content-Disposition'] = disposition
-    return response
+class ReceiptView(View):
+    """
+    Download PDF receipt
+    """
+    def get(self, *args, **kwargs):
+        payment_order = get_object_or_404(
+            PaymentOrder,
+            receipt_key=self.kwargs.get('key'))
+        response = render_to_pdf(
+            'pdf/receipt.html',
+            {'transaction': payment_order.transaction})
+        disposition = 'inline; filename="receipt #{0} {1}.pdf"'.format(
+            payment_order.transaction.id,
+            payment_order.device.merchant.company_name)
+        response['Content-Disposition'] = disposition
+        return response
 
 
 @api_view(['GET'])
@@ -329,8 +336,8 @@ class PaymentCheckView(View):
             data = {'paid': 0}
         else:
             receipt_url = self.request.build_absolute_uri(reverse(
-                'api:transaction_pdf',
-                kwargs={'key': payment_order.transaction.receipt_key}))
+                'api:receipt',
+                kwargs={'key': payment_order.receipt_key}))
             qr_code_src = generate_qr_code(receipt_url, size=3)
             data = {
                 'paid': 1,
