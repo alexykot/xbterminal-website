@@ -639,5 +639,5 @@ class PaymentView(TemplateResponseMixin, View):
             'device': device,
             'amount': amount,
         })
-        response['X-Frame-Options'] = 'ALLOW-FROM vendhq.com'
+        response['X-Frame-Options'] = 'ALLOW-FROM *'
         return response
