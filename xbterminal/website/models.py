@@ -326,10 +326,9 @@ class Device(models.Model):
         return ''
 
     def get_transactions_by_date(self, date):
-        return self.transaction_set.filter(
-            time__range=(datetime.datetime.combine(date, datetime.time.min),
-                         datetime.datetime.combine(date, datetime.time.max))
-        )
+        beg = datetime.datetime.combine(date, datetime.time.min)
+        end = datetime.datetime.combine(date, datetime.time.max)
+        return self.transaction_set.filter(time__range=(beg, end))
 
     def is_online(self):
         if self.last_activity is None:
@@ -382,7 +381,7 @@ class Transaction(models.Model):
 
     def get_api_url(self):
         domain = Site.objects.get_current().domain
-        path = reverse('api:transaction_pdf', kwargs={'key': self.receipt_key})
+        path = reverse('api:receipt', kwargs={'key': self.receipt_key})
         return 'https://%s%s' % (domain, path)
 
     def get_blockchain_transaction_url(self):
@@ -420,15 +419,17 @@ class Firmware(models.Model):
 
 class PaymentOrder(models.Model):
 
+    PAYMENT_TYPES = [
+        ('bip0021', _('BIP 0021 (Bitcoin URI)')),
+        ('bip0070', _('BIP 0070 (Payment Protocol)')),
+    ]
+
     uid = models.CharField(max_length=32,
                            editable=False,
                            unique=True,
                            default=lambda: uuid.uuid4().hex)
     device = models.ForeignKey(Device)
     request = models.BinaryField()
-    created = models.DateTimeField()
-    expires = models.DateTimeField()
-    
 
     # Payment details
     local_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
@@ -448,10 +449,26 @@ class PaymentOrder(models.Model):
 
     incoming_tx_id = models.CharField(max_length=64, validators=[validate_transaction], null=True)
     outgoing_tx_id = models.CharField(max_length=64, validators=[validate_transaction], null=True)
+    payment_type = models.CharField(max_length=10, choices=PAYMENT_TYPES)
+    refund_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], null=True)
+
     transaction = models.OneToOneField(Transaction, null=True)
+
+    time_created = models.DateTimeField()
+    time_recieved = models.DateTimeField(null=True)
+    time_forwarded = models.DateTimeField(null=True)
+    time_broadcasted = models.DateTimeField(null=True)
+    time_exchanged = models.DateTimeField(null=True)
+    time_finished = models.DateTimeField(null=True)
+
+    receipt_key = models.CharField(max_length=32, unique=True, null=True)
 
     def __unicode__(self):
         return "Payment order {0}".format(self.uid)
+
+    @property
+    def expires(self):
+        return self.time_created + datetime.timedelta(minutes=10)
 
 
 def gen_payment_reference():

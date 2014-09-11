@@ -189,12 +189,6 @@ html, body {
     width: 200px;
 }
 
-#merchant-info-name,
-#merchant-info-name:hover {
-    color: #888;
-    text-decoration: none;
-}
-
 #merchant-info-status {
     font-size: 0.8em;
 }
@@ -311,6 +305,38 @@ html, body {
 
 .footer-logo img {
     max-width: 100%;
+}
+
+/* FEEDBACK BUTTON */
+
+#feedback {
+    background-color: #5DB8FE;
+    border-color: white;
+    border-style: solid;
+    border-width: 0 2px 2px 2px;
+    color: white;
+    display: block;
+    font-size: 1.4em;
+    line-height: 30px;
+    left: 0;
+    margin-left: -36px; /* (w - h) / 2 */
+    top: 40%;
+    position: fixed;
+    text-align: center;
+    text-decoration: none;
+    width: 100px;
+    z-index: 10;
+
+    -webkit-transform: rotate(-90deg);
+    -moz-transform: rotate(-90deg);
+    -ms-transform: rotate(-90deg);
+    -o-transform: rotate(-90deg);
+    transform: rotate(-90deg);
+    filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
+}
+
+#feedback:hover {
+    background-color: #3D3D3D;
 }
 
 /* MOBILE VIEW */

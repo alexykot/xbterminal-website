@@ -4,6 +4,7 @@ Payment operations
 import datetime
 from decimal import Decimal
 import logging
+import uuid
 
 from bitcoin.rpc import JSONRPCException
 from bitcoin.wallet import CBitcoinAddress
@@ -20,6 +21,8 @@ from payment import (
     BTC_DEFAULT_FEE,
     BTC_MIN_OUTPUT)
 from payment import average, blockchain, instantfiat, exceptions
+
+from payment import blockr, protocol
 
 from website.models import PaymentOrder, Transaction
 
@@ -122,8 +125,7 @@ def prepare_payment(device, fiat_amount):
     now = timezone.localtime(timezone.now())
     payment_order = PaymentOrder(
         device=device,
-        created=now,
-        expires=now + datetime.timedelta(minutes=10),
+        time_created=now,
         **details)
     payment_order.save()
     # Schedule tasks
@@ -145,7 +147,7 @@ def wait_for_payment(payment_order_uid):
         # PaymentOrder deleted, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
         return
-    if payment_order.created + datetime.timedelta(minutes=15) < timezone.now():
+    if payment_order.time_created + datetime.timedelta(minutes=15) < timezone.now():
         # Timeout, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
     if payment_order.incoming_tx_id is not None:
@@ -157,11 +159,35 @@ def wait_for_payment(payment_order_uid):
     transactions = bc.get_unspent_transactions(
         CBitcoinAddress(payment_order.local_address))
     if transactions:
-        validate_payment(payment_order, transactions)
+        validate_payment(payment_order, transactions, 'bip0021')
         django_rq.get_scheduler().cancel(rq.get_current_job())
 
 
-def validate_payment(payment_order, transactions, broadcast=False):
+def parse_payment(payment_order, payment_message):
+    """
+    Parse and validate BIP0070 Payment message
+    Accepts:
+        payment_order: PaymentOrder instance
+        payment_message: pb2-encoded message
+    Returns:
+        payment_ack: pb2-encoded message
+    """
+    # Select network
+    bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
+    try:
+        (transactions,
+         refund_addresses,
+         payment_ack) = protocol.parse_payment(payment_message)
+    except Exception as error:
+        raise exceptions.InvalidPayment('invalid payment message')
+    validate_payment(payment_order, transactions, 'bip0070')
+    if refund_addresses:
+        payment_order.refund_address = refund_addresses[0]
+        payment_order.save()
+    return payment_ack
+
+
+def validate_payment(payment_order, transactions, payment_type):
     """
     Validates payment and stores incoming transaction id
     in PaymentOrder instance
@@ -170,6 +196,7 @@ def validate_payment(payment_order, transactions, broadcast=False):
         transactions: list of CTransaction
         broadcast: boolean
     """
+    assert payment_type in ['bip0021', 'bip0070']
     bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
     if len(transactions) != 1:
         raise exceptions.InvalidPayment('expecting single transaction')
@@ -187,12 +214,14 @@ def validate_payment(payment_order, transactions, broadcast=False):
     except exceptions.InvalidTransaction:
         raise exceptions.InvalidPayment('invalid transaction')
     # Save incoming transaction id
-    if broadcast:
+    if payment_type == 'bip0070':
         try:
             bc.send_raw_transaction(incoming_tx_signed)
         except JSONRPCException as error:
             logger.exception(error)
     payment_order.incoming_tx_id = blockchain.get_txid(incoming_tx)
+    payment_order.payment_type = payment_type
+    payment_order.time_recieved = timezone.now()
     payment_order.save()
     logger.info('payment recieved ({0})'.format(payment_order.uid))
 
@@ -209,7 +238,7 @@ def wait_for_validation(payment_order_uid):
          # PaymentOrder deleted, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
         return
-    if payment_order.created + datetime.timedelta(minutes=20) < timezone.now():
+    if payment_order.time_created + datetime.timedelta(minutes=20) < timezone.now():
         # Timeout, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
     if payment_order.incoming_tx_id is not None:
@@ -218,9 +247,10 @@ def wait_for_validation(payment_order_uid):
             # Payment already forwarded, skip
             return
         forward_transaction(payment_order)
+        run_periodic_task(wait_for_broadcast, [payment_order.uid], interval=10)
         if payment_order.instantfiat_invoice_id is None:
-            # Finish payment immediately
-            finish_payment(payment_order)
+            # Finalize payment immediately
+            finalize_payment(payment_order)
         else:
             run_periodic_task(wait_for_exchange, [payment_order.uid])
 
@@ -259,7 +289,31 @@ def forward_transaction(payment_order):
         outputs)
     outgoing_tx_signed = bc.sign_raw_transaction(outgoing_tx)
     payment_order.outgoing_tx_id = bc.send_raw_transaction(outgoing_tx_signed)
+    payment_order.time_forwarded = timezone.now()
     payment_order.save()
+
+
+def wait_for_broadcast(payment_order_uid):
+    """
+    Asynchronous task
+    Accepts:
+        payment_order_uid: PaymentOrder unique identifier
+    """
+    try:
+        payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
+    except PaymentOrder.DoesNotExist:
+         # PaymentOrder deleted, cancel job
+        django_rq.get_scheduler().cancel(rq.get_current_job())
+        return
+    if payment_order.time_created + datetime.timedelta(minutes=45) < timezone.now():
+        # Timeout, cancel job
+        django_rq.get_scheduler().cancel(rq.get_current_job())
+    if blockr.is_tx_broadcasted(payment_order.outgoing_tx_id,
+                                payment_order.device.bitcoin_network):
+        django_rq.get_scheduler().cancel(rq.get_current_job())
+        if payment_order.time_broadcasted is None:
+            payment_order.time_broadcasted = timezone.now()
+            payment_order.save()
 
 
 def wait_for_exchange(payment_order_uid):
@@ -274,7 +328,7 @@ def wait_for_exchange(payment_order_uid):
          # PaymentOrder deleted, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
         return
-    if payment_order.created + datetime.timedelta(minutes=45) < timezone.now():
+    if payment_order.time_created + datetime.timedelta(minutes=45) < timezone.now():
         # Timeout, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
     invoice_paid = instantfiat.is_invoice_paid(
@@ -286,10 +340,12 @@ def wait_for_exchange(payment_order_uid):
         if payment_order.transaction is not None:
             # Payment already finished, skip
             return
-        finish_payment(payment_order)
+        payment_order.time_exchanged = timezone.now()
+        payment_order.save()
+        finalize_payment(payment_order)
 
 
-def finish_payment(payment_order):
+def finalize_payment(payment_order):
     """
     Save transaction info
     """
@@ -311,5 +367,6 @@ def finish_payment(payment_order):
         time=timezone.now())
     transaction.save()
     payment_order.transaction = transaction
+    payment_order.receipt_key = transaction.receipt_key
     payment_order.save()
-    logger.info('payment finished ({0})'.format(payment_order.uid))
+    logger.info('payment order closed ({0})'.format(payment_order.uid))

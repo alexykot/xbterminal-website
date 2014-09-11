@@ -22,6 +22,7 @@
             {% block content %}{% endblock %}
             {% include 'website/common/footer.html' %}
         </div>
+        <a id="feedback" href="{% url 'website:feedback' %}">feedback</a>
         {% include 'website/common/analytics.html' %}
     </body>
 </html>

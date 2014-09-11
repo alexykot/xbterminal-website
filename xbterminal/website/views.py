@@ -1,3 +1,4 @@
+from decimal import Decimal
 import json
 import datetime
 
@@ -49,6 +50,31 @@ class ContactView(TemplateResponseMixin, View):
             email = utils.create_html_message(
                 _("Message from xbterminal.io"),
                 'email/contact.html',
+                form.cleaned_data,
+                settings.DEFAULT_FROM_EMAIL,
+                settings.CONTACT_EMAIL_RECIPIENTS)
+            email.send(fail_silently=False)
+            return self.render_to_response({})
+        else:
+            return self.render_to_response({'form': form})
+
+
+class FeedbackView(TemplateResponseMixin, View):
+    """
+    Feedback form
+    """
+    template_name = "website/feedback.html"
+
+    def get(self, *args, **kwargs):
+        form = forms.FeedbackForm()
+        return self.render_to_response({'form': form})
+
+    def post(self, *args, **kwargs):
+        form = forms.FeedbackForm(self.request.POST)
+        if form.is_valid():
+            email = utils.create_html_message(
+                _("Message from xbterminal.io"),
+                'email/feedback.html',
                 form.cleaned_data,
                 settings.DEFAULT_FROM_EMAIL,
                 settings.CONTACT_EMAIL_RECIPIENTS)
@@ -630,6 +656,13 @@ class PaymentView(TemplateResponseMixin, View):
     def get(self, *args, **kwargs):
         device = get_object_or_404(
             models.Device, key=self.kwargs.get('device_key'))
-        response = self.render_to_response({'device': device})
-        response['X-Frame-Options'] = 'ALLOW-FROM vendhq.com'
+        try:
+            amount = Decimal(self.request.GET.get('amount', '0.00'))
+        except ArithmeticError:
+            return HttpResponseBadRequest('invalid amount')
+        response = self.render_to_response({
+            'device': device,
+            'amount': amount,
+        })
+        response['X-Frame-Options'] = 'ALLOW-FROM *'
         return response

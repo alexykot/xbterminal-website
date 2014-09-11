@@ -9,7 +9,7 @@
         <label class="amount-label">{% trans 'amount' %}</label>
         <div class="amount-wrapper">
             <div class="fiat-symbol">{{ device.merchant.currency.prefix }}</div>
-            <input type="text" name="amount" value="0.00">
+            <input type="text" name="amount" value="{{ amount|floatformat:2 }}">
         </div>
         <div class="error-message"></div>
         <button type="submit">{% trans 'Pay now' %}</button>
@@ -25,7 +25,7 @@
     <div class="payment-success">
         <div class="payment-message-1">{% trans 'payment successful' %}</div>
         <div class="payment-message-2">{% trans 'SCAN QR CODE FOR RECEIPT' %}</div>
-        <img class="payment-receipt">
+        <a><img class="payment-receipt"></a>
     </div>
     <button class="payment-reset">{% trans 'Reset' %}</button>
 </div>

@@ -16,7 +16,7 @@ from rest_framework.response import Response
 from constance import config
 from oauth2_provider.views.generic import ProtectedResourceView
 
-from website.models import Device, Transaction, Firmware, PaymentOrder, MerchantAccount
+from website.models import Device, Firmware, PaymentOrder, MerchantAccount
 from website.forms import SimpleMerchantRegistrationForm, EnterAmountForm
 from website.utils import generate_qr_code, send_registration_info
 from api.shortcuts import render_to_pdf
@@ -123,15 +123,22 @@ def device(request, key):
     return Response(response)
 
 
-def transaction_pdf(request, key):
-    transaction = get_object_or_404(Transaction, receipt_key=key)
-
-    response = render_to_pdf('pdf/receipt.html',
-                             {'transaction': transaction})
-    disposition = 'inline; filename="receipt %s %s.pdf"'.format(
-        transaction.id, transaction.device.merchant.company_name)
-    response['Content-Disposition'] = disposition
-    return response
+class ReceiptView(View):
+    """
+    Download PDF receipt
+    """
+    def get(self, *args, **kwargs):
+        payment_order = get_object_or_404(
+            PaymentOrder,
+            receipt_key=self.kwargs.get('key'))
+        response = render_to_pdf(
+            'pdf/receipt.html',
+            {'transaction': payment_order.transaction})
+        disposition = 'inline; filename="receipt #{0} {1}.pdf"'.format(
+            payment_order.transaction.id,
+            payment_order.device.merchant.company_name)
+        response['Content-Disposition'] = disposition
+        return response
 
 
 @api_view(['GET'])
@@ -185,7 +192,9 @@ class PaymentInitView(View):
     def post(self, *args, **kwargs):
         form = EnterAmountForm(self.request.POST)
         if not form.is_valid():
-            return HttpResponseBadRequest()
+            return HttpResponseBadRequest(
+                json.dumps({'errors': form.errors}),
+                content_type='application/json')
         # Prepare payment order
         try:
             device = Device.objects.get(key=form.cleaned_data['device_key'])
@@ -210,7 +219,7 @@ class PaymentInitView(View):
         payment_order.request = payment.protocol.create_payment_request(
             payment_order.device.bitcoin_network,
             [(payment_order.local_address, payment_order.btc_amount)],
-            payment_order.created,
+            payment_order.time_created,
             payment_order.expires,
             payment_response_url,
             device.merchant.company_name)
@@ -233,7 +242,7 @@ class PaymentInitView(View):
             payment_bluetooth_request = payment.protocol.create_payment_request(
                 payment_order.device.bitcoin_network,
                 [(payment_order.local_address, payment_order.btc_amount)],
-                payment_order.created,
+                payment_order.time_created,
                 payment_order.expires,
                 payment_bluetooth_url,
                 device.merchant.company_name)
@@ -296,20 +305,12 @@ class PaymentResponseView(View):
         if content_type != 'application/bitcoin-payment':
             logger.warning("PaymentResponseView: wrong content type")
             return HttpResponseBadRequest()
-        message = self.request.body
-        if len(message) > 50000:
+        if len(self.request.body) > 50000:
             # Payment messages larger than 50,000 bytes should be rejected by server
             logger.warning("PaymentResponseView: message is too large")
             return HttpResponseBadRequest()
         try:
-            transactions, payment_ack = payment.protocol.parse_payment(message)
-        except Exception as error:
-            logger.warning("PaymentResponseView: parser error {0}".\
-                format(error.__class__.__name__))
-            return HttpResponseBadRequest()
-        # Validate payment
-        try:
-            payment.tasks.validate_payment(payment_order, transactions, broadcast=True)
+            payment_ack = payment.tasks.parse_payment(payment_order, self.request.body)
         except Exception as error:
             logger.warning("PaymentResponseView: validation error {0}".\
                 format(error.__class__.__name__))
@@ -335,14 +336,16 @@ class PaymentCheckView(View):
             data = {'paid': 0}
         else:
             receipt_url = self.request.build_absolute_uri(reverse(
-                'api:transaction_pdf',
-                kwargs={'key': payment_order.transaction.receipt_key}))
+                'api:receipt',
+                kwargs={'key': payment_order.receipt_key}))
             qr_code_src = generate_qr_code(receipt_url, size=3)
             data = {
                 'paid': 1,
                 'receipt_url': receipt_url,
                 'qr_code_src': qr_code_src,
             }
+            payment_order.time_finished = timezone.now()
+            payment_order.save()
         response = HttpResponse(json.dumps(data),
                                 content_type='application/json')
         return response

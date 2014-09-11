@@ -7,7 +7,7 @@ import time
 import os
 
 import bitcoin
-from bitcoin.core import CTransaction
+from bitcoin.core import CTransaction, CScript
 from bitcoin.wallet import CBitcoinAddress
 
 from django.conf import settings
@@ -94,12 +94,25 @@ def create_payment_request(*args):
     return request.SerializeToString()
 
 
+def parse_output(output):
+    """
+    Accepts:
+        output: Output object
+    Returns:
+        address: string
+    """
+    script = CScript(output.script)
+    address = CBitcoinAddress.from_scriptPubKey(script)
+    return str(address)
+
+
 def parse_payment(message):
     """
     Aceepts:
         message: pb2-encoded message
     Returns:
         transations: list of CTransaction
+        refund_addresses: list of strings
         payment_ack: PaymentACK message
     """
     payment = paymentrequest_pb2.Payment()
@@ -107,8 +120,11 @@ def parse_payment(message):
     transactions = []
     for tx in payment.transactions:
         transactions.append(CTransaction.deserialize(tx))
+    refund_addresses = []
+    for output in payment.refund_to:
+        refund_addresses.append(parse_output(output))
     payment_ack = create_payment_ack(payment)
-    return transactions, payment_ack
+    return transactions, refund_addresses, payment_ack
 
 
 def create_payment_ack(payment):
