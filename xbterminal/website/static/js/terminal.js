@@ -166,5 +166,9 @@ $(function () {
         }
     }, 5000);
 
-    $('.enter-amount [name="amount"]').focus();
+    if ($('.enter-amount [name="amount"]').val() == '0.00') {
+        $('.enter-amount [name="amount"]').focus();
+    } else {
+        paymentInit($('.enter-amount'));
+    }
 });
