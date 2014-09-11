@@ -325,6 +325,7 @@ html, body {
     text-align: center;
     text-decoration: none;
     width: 100px;
+    z-index: 10;
 
     -webkit-transform: rotate(-90deg);
     -moz-transform: rotate(-90deg);
@@ -332,6 +333,10 @@ html, body {
     -o-transform: rotate(-90deg);
     transform: rotate(-90deg);
     filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
+}
+
+#feedback:hover {
+    background-color: #3D3D3D;
 }
 
 /* MOBILE VIEW */

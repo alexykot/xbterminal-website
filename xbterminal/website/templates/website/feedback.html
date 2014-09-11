@@ -9,8 +9,9 @@
         <form id="feedback-form" role="form" action="{% url 'website:feedback' %}" method="POST">
             {% csrf_token %}
             {% bootstrap_form form %}
-            <button type="submit" class="btn btn-default">{% trans 'Send' %}</button>
-            <img id="loading-image" src="{% static 'img/loading.gif' %}">
+            <div class="row">
+                <div class="col-md-6"><button type="submit" class="btn btn-default pull-right">{% trans 'Send' %}</button></div>
+            </div>
         </form>
         {% else %}
         {% blocktrans %}<h3>Thanks!</h3><p class="lead">We will contact you as soon as possible</p>{% endblocktrans %}
