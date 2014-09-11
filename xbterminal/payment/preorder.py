@@ -27,7 +27,7 @@ def get_exchange_rate():
         config.TERMINAL_PRICE,
         'GBP',
         config.GOCOIN_API_KEY,
-        'exchange rate')
+        config.GOCOIN_MERCHANT_ID)
     exchange_rate = result[1] / Decimal(config.TERMINAL_PRICE)
     return float(exchange_rate)
 
@@ -40,7 +40,7 @@ def create_invoice(order):
         order.fiat_total_amount,
         'GBP',
         config.GOCOIN_API_KEY,
-        'terminals')
+        config.GOCOIN_MERCHANT_ID)
     (order.instantfiat_invoice_id,
      order.instantfiat_btc_total_amount,
      order.instantfiat_address) = instantfiat_result
@@ -65,7 +65,8 @@ def wait_for_payment(order_id):
         django_rq.get_scheduler().cancel(rq.get_current_job())
     invoice_paid = gocoin.is_invoice_paid(
         order.instantfiat_invoice_id,
-        config.GOCOIN_API_KEY)
+        config.GOCOIN_API_KEY,
+        config.GOCOIN_MERCHANT_ID)
     if invoice_paid:
         django_rq.get_scheduler().cancel(rq.get_current_job())
         order.payment_status = 'paid'

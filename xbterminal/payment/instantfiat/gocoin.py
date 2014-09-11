@@ -23,8 +23,7 @@ class BearerAuth(AuthBase):
         return req
 
 
-def create_invoice(fiat_amount, currency_code, api_key, description):
-    merchant_id, api_key = api_key.split(':')
+def create_invoice(fiat_amount, currency_code, api_key, merchant_id):
     invoice_url = "https://api.gocoin.com/api/v1/merchants/{0}/invoices".\
         format(merchant_id)
     payload = {
@@ -53,8 +52,7 @@ def create_invoice(fiat_amount, currency_code, api_key, description):
     return invoice_id, btc_amount, address
 
 
-def is_invoice_paid(invoice_id, api_key):
-    merchant_id, api_key = api_key.split(':')
+def is_invoice_paid(invoice_id, api_key, merchant_id):
     invoice_status_url = "https://api.gocoin.com/api/v1/invoices/{0}".\
         format(invoice_id)
     try:

@@ -1,41 +1,56 @@
 """
 Instantfiat
 """
-import importlib
+from payment.instantfiat import bitpay, cryptopay, gocoin
 
 
-def create_invoice(service_name, api_key,
-                   fiat_amount, currency_code, description=""):
+def create_invoice(merchant, fiat_amount):
     """
     Create invoice
     Accepts:
+        merchant: MerchantAccount instance
         fiat_amount: Decimal
-        currency_code: ISO 4217 code
-        service_name: string
-        api_key: string
-        description: string (optional)
     """
-    instantfiat_mod = importlib.import_module(
-        '.' + service_name, 'payment.instantfiat')
-    invoice_id, btc_amount, address = instantfiat_mod.create_invoice(
-        fiat_amount, currency_code, api_key, description)
-    result = {
+    service_name = merchant.payment_processor
+    if service_name == 'bitpay':
+        invoice_id, btc_amount, address = bitpay.create_invoice(
+            fiat_amount,
+            merchant.currency.name,
+            merchant.api_key)
+    elif service_name == 'cryptopay':
+        invoice_id, btc_amount, address = cryptopay.create_invoice(
+            fiat_amount,
+            merchant.currency.name,
+            merchant.api_key,
+            "Payment to {0}".format(merchant.company_name))
+    elif service_name == 'gocoin':
+        invoice_id, btc_amount, address = gocoin.create_invoice(
+            fiat_amount,
+            merchant.currency.name,
+            merchant.api_key,
+            merchant.gocoin_merchant_id)
+    return {
         'instantfiat_invoice_id': invoice_id,
-        'instantfiat_address': address,
         'instantfiat_btc_amount': btc_amount,
+        'instantfiat_address': address,
     }
-    return result
 
 
-def is_invoice_paid(service_name, api_key, invoice_id):
+def is_invoice_paid(merchant, invoice_id):
     """
     Check payment
     Accepts:
-        service_name: string
-        api_key: string
+        merchant: MerchantAccount instance
         invoice_id: string
     """
-    instantfiat_mod = importlib.import_module(
-        '.' + service_name, 'payment.instantfiat')
-    result = instantfiat_mod.is_invoice_paid(invoice_id, api_key)
+    service_name = merchant.payment_processor
+    if service_name == 'bitpay':
+        result = bitpay.is_invoice_paid(invoice_id, merchant.api_key)
+    elif service_name == 'cryptopay':
+        result = cryptopay.is_invoice_paid(invoice_id, merchant.api_key)
+    elif service_name == 'gocoin':
+        result = gocoin.is_invoice_paid(
+            invoice_id,
+            merchant.api_key,
+            merchant.gocoin_merchant_id)
     return result

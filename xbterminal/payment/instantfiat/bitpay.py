@@ -12,7 +12,7 @@ import payment
 logger = logging.getLogger(__name__)
 
 
-def create_invoice(fiat_amount, currency_code, api_key, description):
+def create_invoice(fiat_amount, currency_code, api_key):
     invoice_url = "https://bitpay.com/api/invoice"
     payload = {
         'price': float(fiat_amount),
@@ -21,7 +21,7 @@ def create_invoice(fiat_amount, currency_code, api_key, description):
     }
     try:
         response = requests.post(
-            url=invoice_url
+            url=invoice_url,
             data=payload,
             auth=(api_key, ''))
         data = response.json()
