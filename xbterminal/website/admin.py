@@ -44,8 +44,14 @@ class DeviceAdmin(admin.ModelAdmin):
 
 
 class TransactionAdmin(admin.ModelAdmin):
-    list_display = ('__unicode__', 'device_link', 'merchant_link', 'date_created')
-    readonly_fields = ('receipt_key',)
+    list_display = [
+        '__unicode__',
+        'paymentorder',
+        'device_link',
+        'merchant_link',
+        'date_created',
+    ]
+    readonly_fields = ['receipt_key']
 
     def device_link(self, transaction):
         return url_to_object(transaction.device)
