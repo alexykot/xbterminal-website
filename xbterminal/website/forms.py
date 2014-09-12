@@ -105,42 +105,36 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             'contact_email',
         ]
 
-    def clean(self):
-        cleaned_data = super(SimpleMerchantRegistrationForm, self).clean()
-        self._password = get_user_model().objects.make_random_password()
-        # Send email
-        if not self._errors:
-            message = create_html_message(
-                _("Registration for XBTerminal.io"),
-                "email/registration.html",
-                {'email': cleaned_data['contact_email'],
-                 'password': self._password,
-                },
-                settings.DEFAULT_FROM_EMAIL,
-                [cleaned_data['contact_email']])
-            try:
-                message.send(fail_silently=False)
-            except smtplib.SMTPRecipientsRefused as error:
-                self._errors['contact_email'] = self.error_class([_('Invalid email.')])
-                del cleaned_data['contact_email']
-        return cleaned_data
-
     def save(self, commit=True):
         """
         Create django user and merchant account
         """
         assert commit  # Always commit
         instance = super(SimpleMerchantRegistrationForm, self).save(commit=False)
+        instance.language = get_language(instance.country.code)
+        instance.currency = get_currency(instance.country.code)
         # Create GoCoin account
         instance.gocoin_merchant_id = gocoin.create_merchant(instance, config.GOCOIN_API_KEY)
         # Create new user
+        password = get_user_model().objects.make_random_password()
         user = get_user_model().objects.create_user(
-            self.cleaned_data['contact_email'],
-            self._password)
+            instance.contact_email,
+            password,
+            commit=False)
         user.backend = 'django.contrib.auth.backends.ModelBackend'
+        # Send email
+        message = create_html_message(
+            _("Registration for XBTerminal.io"),
+            "email/registration.html",
+            {'email': instance.contact_email,
+             'password': password,
+            },
+            settings.DEFAULT_FROM_EMAIL,
+            [instance.contact_email])
+        message.send(fail_silently=False)
+        # Save objects
+        user.save()
         instance.user = user
-        instance.language = get_language(instance.country.code)
-        instance.currency = get_currency(instance.country.code)
         instance.save()
         # Create oauth client
         user.application_set.create(

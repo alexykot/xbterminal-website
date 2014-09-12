@@ -29,7 +29,7 @@ from website.files import get_verification_file_name
 
 class UserManager(BaseUserManager):
 
-    def _create_user(self, email, password, is_staff, is_superuser):
+    def _create_user(self, email, password, is_staff, is_superuser, commit):
         """
         Creates and saves a User with the given email and password.
         """
@@ -39,14 +39,15 @@ class UserManager(BaseUserManager):
                           is_staff=is_staff,
                           is_superuser=is_superuser)
         user.set_password(password)
-        user.save(using=self._db)
+        if commit:
+            user.save(using=self._db)
         return user
 
-    def create_user(self, email, password=None):
-        return self._create_user(email, password, False, False)
+    def create_user(self, email, password=None, commit=True):
+        return self._create_user(email, password, False, False, commit)
 
     def create_superuser(self, email, password):
-        return self._create_user(email, password, True, True)
+        return self._create_user(email, password, True, True, True)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
