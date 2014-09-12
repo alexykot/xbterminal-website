@@ -210,6 +210,10 @@ class MerchantAccount(models.Model):
         return [s for s in strings if s]
 
     @property
+    def contact_name(self):
+        return self.contact_first_name + ' ' + self.contact_last_name
+
+    @property
     def is_profile_complete(self):
         return (self.business_address
                 and self.town

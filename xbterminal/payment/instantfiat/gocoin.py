@@ -67,3 +67,42 @@ def is_invoice_paid(invoice_id, api_key, merchant_id):
         return True
     else:
         return False
+
+
+def create_merchant(merchant, api_key):
+    """
+    Accepts:
+        merchant: MerchantAccount instance
+        api_key: GoCoin token with access to merchant API
+    Returns:
+        id: GoCoin merchant id
+    """
+    merchants_url = "https://api.gocoin.com/api/v1/merchants"
+    payload = {
+        'name': merchant.company_name,
+        'address_1': merchant.business_address,
+        'address_2': merchant.business_address1,
+        'city': merchant.town,
+        'region': merchant.county,
+        'country_code': merchant.country.code,
+        'postal_code': merchant.post_code,
+        'contact_name': merchant.contact_name,
+        'contact_email': merchant.contact_email,
+        'phone': merchant.contact_phone,
+    }
+    try:
+        response = requests.post(
+            merchants_url,
+            headers={'Content-Type': 'application/json'},
+            data=json.dumps(payload),
+            auth=BearerAuth(api_key))
+        data = response.json()
+    except requests.exceptions.RequestException:
+        raise
+    except ValueError:
+        raise InstantFiatError(response.text)
+    if 'errors' in data:
+        raise InstantFiatError(str(data))
+    merchant_id = data['id']
+    logger.info('gocoin - created merchant {0}'.format(merchant_id))
+    return merchant_id

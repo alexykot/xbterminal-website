@@ -14,7 +14,10 @@ from django.core.validators import RegexValidator
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
+from constance import config
+
 from payment import preorder
+from payment.instantfiat import gocoin
 
 from website.models import (
     User,
@@ -128,6 +131,8 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
         """
         assert commit  # Always commit
         instance = super(SimpleMerchantRegistrationForm, self).save(commit=False)
+        # Create GoCoin account
+        instance.gocoin_merchant_id = gocoin.create_merchant(instance, config.GOCOIN_API_KEY)
         # Create new user
         user = get_user_model().objects.create_user(
             self.cleaned_data['contact_email'],
