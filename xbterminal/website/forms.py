@@ -277,6 +277,7 @@ class ProfileForm(forms.ModelForm):
             'currency',
             'payment_processor',
             'api_key',
+            'gocoin_merchant_id',
             'verification_status',
             'verification_file_1',
             'verification_file_2',
@@ -294,6 +295,11 @@ class ProfileForm(forms.ModelForm):
         instance = super(ProfileForm, self).save(commit=False)
         instance.language = get_language(instance.country.code)
         instance.currency = get_currency(instance.country.code)
+        if instance.gocoin_merchant_id:
+            merchants = gocoin.get_merchants(config.GOCOIN_MERCHANT_ID,
+                                             config.GOCOIN_API_KEY)
+            if instance.gocoin_merchant_id in merchants:
+                gocoin.update_merchant(instance, config.GOCOIN_API_KEY)
         if commit:
             instance.save()
         return instance
