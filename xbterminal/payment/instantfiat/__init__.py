@@ -1,6 +1,8 @@
 """
 Instantfiat
 """
+from constance import config
+
 from payment.instantfiat import bitpay, cryptopay, gocoin
 
 
@@ -27,7 +29,7 @@ def create_invoice(merchant, fiat_amount):
         invoice_id, btc_amount, address = gocoin.create_invoice(
             fiat_amount,
             merchant.currency.name,
-            merchant.api_key,
+            config.GOCOIN_API_KEY,
             merchant.gocoin_merchant_id)
     return {
         'instantfiat_invoice_id': invoice_id,
@@ -51,6 +53,6 @@ def is_invoice_paid(merchant, invoice_id):
     elif service_name == 'gocoin':
         result = gocoin.is_invoice_paid(
             invoice_id,
-            merchant.api_key,
+            config.GOCOIN_API_KEY,
             merchant.gocoin_merchant_id)
     return result
