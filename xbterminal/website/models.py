@@ -26,6 +26,8 @@ from website.validators import (
 from website.fields import FirmwarePathField
 from website.files import get_verification_file_name
 
+from payment import blockr
+
 
 class UserManager(BaseUserManager):
 
@@ -384,14 +386,11 @@ class Transaction(models.Model):
         path = reverse('api:receipt', kwargs={'key': self.receipt_key})
         return 'https://%s%s' % (domain, path)
 
-    def get_blockchain_transaction_url(self):
-        return 'https://blockchain.info/en/tx/%s' % self.bitcoin_transaction_id_1
-
-    def get_blockchain_address_url(self, address):
-        return 'https://blockchain.info/en/address/%s' % address
+    def get_incoming_transaction_url(self):
+        return blockr.get_tx_url(self.bitcoin_transaction_id_1, self.device.bitcoin_network)
 
     def get_dest_address_url(self):
-        return self.get_blockchain_address_url(self.dest_address)
+        return blockr.get_address_url(self.dest_address, self.device.bitcoin_network)
 
     def scaled_total_btc_amount(self):
         return self.btc_amount * settings.BITCOIN_SCALE_DIVIZER

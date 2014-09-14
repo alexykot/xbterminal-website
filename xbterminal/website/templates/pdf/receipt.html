@@ -79,7 +79,7 @@
     </tr>
     <tr>
         <td class="col1">{% trans 'Bitcoin amount paid' %}</td>
-        <td class="col2 btc-amount">m<span class="btc-symbol">&#xf15a;</span> {{ transaction.scaled_btc_amount|amount }}</td>
+        <td class="col2 btc-amount">m<span class="btc-symbol">&#xf15a;</span> {{ transaction.scaled_total_btc_amount|amount }}</td>
     </tr>
     <tr>
         <td class="col1">{% trans 'Effective exchange rate' %}</td>
@@ -92,7 +92,7 @@
     </tr>
     <tr>
         <td class="col1">{% trans 'Bitcoin transaction ID' %}</td>
-        <td class="col2"><a href="{{ transaction.get_blockchain_transaction_url }}">{{ transaction.bitcoin_transaction_id_1 }}</a></td>
+        <td class="col2"><a href="{{ transaction.get_incoming_transaction_url }}">{{ transaction.bitcoin_transaction_id_1 }}</a></td>
     </tr>
     <tr></tr>
     <tr>
