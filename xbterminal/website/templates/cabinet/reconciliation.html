@@ -40,7 +40,7 @@
 
 <div class="form-title">
     {% trans 'daily reconciliation history' %}
-    <a href="{% url 'website:transactions' device.key %}" class="pull-right">{% trans 'download all transactions' %}</a>
+    <a href="{% url 'website:report' device.key %}" class="pull-right">{% trans 'download all transactions' %}</a>
     <a href="{% url 'website:receipts' device.key %}" style="clear:both;" class="pull-right">{% trans 'download all receipts' %}</a>
 </div>
 
@@ -52,7 +52,7 @@
         <td>{% trans 'total converted' %}</td>
         <td></td>
     </tr>
-    {% for info in daily_transaction_info %}
+    {% for info in daily_payments_info %}
     <tr>
         <td>{{ info.date|date:"d N Y" }}</td>
         <td>{{ info.count }}</td>
@@ -60,7 +60,7 @@
         <td>{{ info.instantfiat_fiat_amount }}</td>
         <td>
             {% with info.date as date %}
-            <a href="{% url 'website:dated_transactions' device_key=device.key year=date|date:"Y" month=date|date:"m" day=date|date:"d" %}">{% trans 'download transactions' %}</a>
+            <a href="{% url 'website:dated_report' device_key=device.key year=date|date:"Y" month=date|date:"m" day=date|date:"d" %}">{% trans 'download transactions' %}</a>
             <br>
             <a href="{% url 'website:dated_receipts' device_key=device.key year=date|date:"Y" month=date|date:"m" day=date|date:"d" %}">{% trans 'download receipts' %}</a>
             <br>

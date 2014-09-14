@@ -337,7 +337,7 @@ def wait_for_exchange(payment_order_uid):
         payment_order.instantfiat_invoice_id)
     if invoice_paid:
         django_rq.get_scheduler().cancel(rq.get_current_job())
-        if payment_order.transaction is not None:
+        if payment_order.receipt_key is not None:
             # Payment already finished, skip
             return
         payment_order.time_exchanged = timezone.now()
@@ -347,7 +347,7 @@ def wait_for_exchange(payment_order_uid):
 
 def finalize_payment(payment_order):
     """
-    Save transaction info
+    Finalize payment, generate receipt key
     """
     transaction = Transaction(
         device=payment_order.device,

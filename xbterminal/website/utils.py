@@ -21,25 +21,25 @@ from api.shortcuts import generate_pdf
 
 REPORT_FIELDS = [
     ('ID', 'id'),
-    ('datetime', lambda t: t.time.strftime('%d-%b-%Y %l:%M %p')),
-    ('POS', lambda t: t.device.name),
+    ('datetime', lambda p: p.time_finished.strftime('%d-%b-%Y %l:%M %p')),
+    ('POS', lambda p: p.device.name),
     ('currency', 'fiat_currency'),
     ('amount', 'fiat_amount'),
-    ('amount mBTC', lambda t: "{0:.2f}".format(t.scaled_total_btc_amount())),
-    ('exchange rate', lambda t: "{0:.4f}".format(t.scaled_effective_exchange_rate())),
-    ('bitcoin transaction ID #1', 'bitcoin_transaction_id_1'),
-    ('bitcoin transaction ID #2', 'bitcoin_transaction_id_2'),
+    ('amount mBTC', lambda p: p.scaled_btc_amount),
+    ('exchange rate', lambda p: "{0:.4f}".format(p.scaled_effective_exchange_rate)),
+    ('bitcoin transaction ID #1', 'incoming_tx_id'),
+    ('bitcoin transaction ID #2', 'outgoing_tx_id'),
 ]
 
 REPORT_FIELDS_SHORT = [
     ('ID', 'id'),
-    ('datetime', lambda t: t.time.strftime('%d-%b-%Y %l:%M %p')),
+    ('datetime', lambda t: t.time_finished.strftime('%d-%b-%Y %l:%M %p')),
     ('currency', 'fiat_currency'),
     ('amount', 'fiat_amount'),
 ]
 
 
-def get_transaction_csv(transactions, csv_file=None, short=False):
+def get_report_csv(payment_orders, csv_file=None, short=False):
     if csv_file is None:
         csv_file = StringIO()
     writer = unicodecsv.writer(csv_file, encoding='utf-8')
@@ -49,13 +49,13 @@ def get_transaction_csv(transactions, csv_file=None, short=False):
     writer.writerow(field_names)
     # Write data
     totals = {}
-    for transaction in transactions:
+    for payment_order in payment_orders:
         row = []
         for field_name, field_getter in fields:
             if isinstance(field_getter, str):
-                value = getattr(transaction, field_getter)
+                value = getattr(payment_order, field_getter)
             else:
-                value = field_getter(transaction)
+                value = field_getter(payment_order)
             if isinstance(value, Decimal):
                 if field_name not in totals:
                     totals[field_name] = Decimal(0)
@@ -75,16 +75,18 @@ def get_transaction_csv(transactions, csv_file=None, short=False):
     return csv_file
 
 
-def get_transaction_pdf_archive(transactions, to_file=None):
+def get_receipts_archive(payment_orders, to_file=None):
     if to_file is None:
         to_file = StringIO()
     archive = ZipFile(to_file, "w")
 
-    for transaction in transactions:
+    for payment_order in payment_orders:
         result = generate_pdf(
             'pdf/receipt.html',
-            {'transaction': transaction})
-        archive.writestr('receipt #%s.pdf' % transaction.id, result.getvalue())
+            {'payment_order': payment_order})
+        archive.writestr(
+            'receipt #{0}.pdf'.format(payment_order.id),
+            result.getvalue())
         result.close()
 
     archive.close()
@@ -92,7 +94,7 @@ def get_transaction_pdf_archive(transactions, to_file=None):
     return to_file
 
 
-def get_transactions_filename(device, date=None):
+def get_report_filename(device, date=None):
     s = "XBTerminal transactions, {0}".format(
         device.merchant.company_name)
     if date is not None:
@@ -101,7 +103,7 @@ def get_transactions_filename(device, date=None):
     return get_valid_filename(s)
 
 
-def get_receipts_filename(device, date=None):
+def get_receipts_archive_filename(device, date=None):
     s = "XBTerminal receipts, {0}".format(
         device.merchant.company_name)
     if date is not None:
@@ -124,12 +126,12 @@ def send_reconciliation(recipient, device, rec_range):
     """
     Send reconciliation email
     """
-    transactions = device.transaction_set.filter(time__range=rec_range)
-    btc_sum = transactions.aggregate(sum=Sum('btc_amount'))['sum']
-    fiat_sum = transactions.aggregate(sum=Sum('fiat_amount'))['sum']
+    payment_orders = device.get_payments_by_date(rec_range)
+    btc_sum = payment_orders.aggregate(sum=Sum('btc_amount'))['sum']
+    fiat_sum = payment_orders.aggregate(sum=Sum('fiat_amount'))['sum']
     context = {
         'device': device,
-        'transactions': transactions,
+        'payment_orders': payment_orders,
         'btc_amount': 0 if btc_sum is None else btc_sum,
         'fiat_amount': 0 if fiat_sum is None else fiat_sum,
         'rec_datetime': rec_range[1],
@@ -140,17 +142,17 @@ def send_reconciliation(recipient, device, rec_range):
         context,
         settings.DEFAULT_FROM_EMAIL,
         [recipient])
-    if transactions:
-        csv = get_transaction_csv(transactions, short=True)
+    if payment_orders:
+        csv = get_report_csv(payment_orders, short=True)
         csv.seek(0)
         csv_data = csv.read()
-        csv_filename = get_transactions_filename(device, rec_range[1])
+        csv_filename = get_report_filename(device, rec_range[1])
         with open(os.path.join(settings.REPORTS_PATH, csv_filename), 'w') as f:
             f.write(csv_data)
         email.attach(csv_filename, csv_data, "text/csv")
-        archive = get_transaction_pdf_archive(transactions)
+        archive = get_receipts_archive(payment_orders)
         archive_data = archive.getvalue()
-        archive_filename = get_receipts_filename(device, rec_range[1])
+        archive_filename = get_receipts_archive_filename(device, rec_range[1])
         email.attach(archive_filename, archive_data, "application/x-zip-compressed")
         with open(os.path.join(settings.REPORTS_PATH, archive_filename), 'wb') as f:
             f.write(archive_data)

@@ -327,10 +327,20 @@ class Device(models.Model):
                 self.percent)
         return ''
 
-    def get_transactions_by_date(self, date):
-        beg = datetime.datetime.combine(date, datetime.time.min)
-        end = datetime.datetime.combine(date, datetime.time.max)
-        return self.transaction_set.filter(time__range=(beg, end))
+    def get_payments(self):
+        return self.paymentorder_set.filter(time_finished__isnull=False)
+
+    def get_payments_by_date(self, date):
+        """
+        Accepts:
+            date_range: tuple or single date
+        """
+        if isinstance(date, datetime.date):
+            date_range = (datetime.datetime.combine(date, datetime.time.min),
+                          datetime.datetime.combine(date, datetime.time.max))
+        else:
+            date_range = date
+        return self.paymentorder_set.filter(time_finished__range=date_range)
 
     def is_online(self):
         if self.last_activity is None:
@@ -468,6 +478,28 @@ class PaymentOrder(models.Model):
     @property
     def expires(self):
         return self.time_created + datetime.timedelta(minutes=10)
+
+    @property
+    def receipt_url(self):
+        domain = Site.objects.get_current().domain
+        path = reverse('api:receipt', kwargs={'key': self.receipt_key})
+        return 'https://{0}{1}'.format(domain, path)
+
+    @property
+    def incoming_tx_url(self):
+        return blockr.get_tx_url(self.incoming_tx_id, self.device.bitcoin_network)
+
+    @property
+    def payment_address_url(self):
+        return blockr.get_address_url(self.local_address, self.device.bitcoin_network)
+
+    @property
+    def scaled_btc_amount(self):
+        return self.btc_amount * settings.BITCOIN_SCALE_DIVIZER
+
+    @property
+    def scaled_effective_exchange_rate(self):
+        return self.effective_exchange_rate / settings.BITCOIN_SCALE_DIVIZER
 
 
 def gen_payment_reference():

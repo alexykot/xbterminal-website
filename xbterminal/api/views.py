@@ -133,9 +133,9 @@ class ReceiptView(View):
             receipt_key=self.kwargs.get('key'))
         response = render_to_pdf(
             'pdf/receipt.html',
-            {'transaction': payment_order.transaction})
+            {'payment_order': payment_order})
         disposition = 'inline; filename="receipt #{0} {1}.pdf"'.format(
-            payment_order.transaction.id,
+            payment_order.id,
             payment_order.device.merchant.company_name)
         response['Content-Disposition'] = disposition
         return response
@@ -332,7 +332,7 @@ class PaymentCheckView(View):
             payment_order = PaymentOrder.objects.get(uid=self.kwargs.get('payment_uid'))
         except PaymentOrder.DoesNotExist:
             raise Http404
-        if payment_order.transaction is None:
+        if payment_order.receipt_key is None:
             data = {'paid': 0}
         else:
             receipt_url = self.request.build_absolute_uri(reverse(
