@@ -27,13 +27,14 @@ REPORT_FIELDS = [
     ('currency', 'fiat_currency'),
     ('amount mBTC', lambda t: "{0:.2f}".format(t.scaled_btc_amount())),
     ('exchange rate', lambda t: "{0:.4f}".format(t.scaled_exchange_rate())),
-    ('fee mBTC', 'fee_btc_amount'),
+    ('fee mBTC', lambda t: t.fee_btc_amount * settings.BITCOIN_SCALE_DIVIZER),
     ('effective exchange rate', lambda t: t.scaled_effective_exchange_rate()),
     ('total mBTC', lambda t: t.scaled_total_btc_amount()),
     ('amount converted', 'instantfiat_fiat_amount'),
-    ('amount converted BTC', 'instantfiat_btc_amount'),
+    ('amount converted BTC', lambda t: t.instantfiat_btc_amount * settings.BITCOIN_SCALE_DIVIZER),
     ('processor invoice ID', lambda t: t.instantfiat_invoice_id or 'N/A'),
-    ('transction bitcoin ID #2', 'bitcoin_transaction_id_2'),
+    ('bitcoin transaction ID #1', 'bitcoin_transaction_id_1'),
+    ('bitcoin transaction ID #2', 'bitcoin_transaction_id_2'),
     ('destination address', 'dest_address'),
 ]
 
