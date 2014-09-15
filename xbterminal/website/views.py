@@ -1,6 +1,7 @@
 from decimal import Decimal
 import json
 import datetime
+import re
 
 from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, StreamingHttpResponse
@@ -428,56 +429,94 @@ class VerificationView(TemplateResponseMixin, CabinetView):
         context = self.get_context_data(**kwargs)
         merchant = self.request.user.merchant
         if merchant.verification_status == 'unverified':
-            context['form'] = forms.VerificationFileUploadForm(instance=merchant)
+            context['identity_doc_form'] = forms.KYCDocumentUploadForm(
+                document_type=1,
+                instance=merchant.get_kyc_document(1))
+            context['corporate_doc_form'] = forms.KYCDocumentUploadForm(
+                document_type=2,
+                instance=merchant.get_kyc_document(2))
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
-        form = forms.VerificationFileUploadForm(
-            self.request.POST,
-            self.request.FILES,
-            instance=self.request.user.merchant)
-        if form.is_valid():
-            instance = form.save()
-            if form.uploaded_file_info:
-                filename, path = form.uploaded_file_info
-                data = {'filename': filename, 'path': path}
-            else:
-                data = {'next': reverse('website:verification')}
+        merchant = self.request.user.merchant
+        if merchant.verification_status != 'unverified':
+            raise Http404
+        if merchant.identity_document and merchant.corporate_document:
+            merchant.verification_status = 'pending'
+            merchant.save()
+            data = {'next': reverse('website:verification')}
         else:
-            data = {'errors': form.errors}
+            data = {'error': _('Please, upload documents')}
         return HttpResponse(json.dumps(data),
                             content_type='application/json')
 
 
 class VerificationFileView(View):
     """
-    View or delete files
+    View, upload or delete files
     """
+
+    def dispatch(self, *args, **kwargs):
+        # Get merchant
+        self.merchant = get_object_or_404(
+            models.MerchantAccount,
+            pk=self.kwargs.get('merchant_pk'))
+        # Parse file name
+        match = re.match(r"^(?P<type>[12])(__(?P<name>.+)$|$)",
+                         self.kwargs.get('name'))
+        if not match:
+            raise Http404
+        self.document_type = int(match.group('type'))
+        self.file_name = match.group('name')
+        return super(VerificationFileView, self).dispatch(*args, **kwargs)
+
     def get(self, *args, **kwargs):
-        merchant = get_object_or_404(models.MerchantAccount,
-                                     pk=self.kwargs.get('merchant_pk'))
         if (
-            get_current_merchant(self.request) != merchant
+            get_current_merchant(self.request) != self.merchant
             and not self.request.user.is_staff
         ):
             raise Http404
-        fieldname = 'verification_file_{0}'.format(self.kwargs.get('n'))
-        file = getattr(merchant, fieldname)
-        if not file:
+        for document in self.merchant.kycdocument_set.all():
+            if document.original_name == self.file_name:
+                return StreamingHttpResponse(
+                    document.file.read(),
+                    content_type='application/octet-stream')
+        raise Http404
+
+    def post(self, *args, **kwargs):
+        if (
+            get_current_merchant(self.request) != self.merchant
+            or self.merchant.verification_status != 'unverified'
+        ):
             raise Http404
-        return StreamingHttpResponse(file.read(),
-                                     content_type='application/octet-stream')
+        form = forms.KYCDocumentUploadForm(self.request.POST,
+                                           self.request.FILES)
+        if form.is_valid():
+            # Remove previously uploaded file
+            try:
+                self.merchant.get_kyc_document(self.document_type).delete()
+            except AttributeError:
+                pass
+            instance = form.save(commit=False)
+            instance.merchant = self.merchant
+            instance.document_type = self.document_type
+            instance.save()
+            data = {'filename': instance.original_name}
+        else:
+            data = {'errors': form.errors}
+        return HttpResponse(json.dumps(data),
+                            content_type='application/json')
 
     def delete(self, *args, **kwargs):
-        merchant = get_object_or_404(models.MerchantAccount,
-                                     pk=self.kwargs.get('merchant_pk'))
-        if get_current_merchant(self.request) != merchant:
+        if (
+            get_current_merchant(self.request) != self.merchant
+            or self.merchant.verification_status != 'unverified'
+        ):
             raise Http404
-        fieldname = 'verification_file_{0}'.format(self.kwargs.get('n'))
-        file = getattr(self.request.user.merchant, fieldname)
-        if not file:
+        document = self.merchant.get_kyc_document(self.document_type)
+        if not document:
             raise Http404
-        file.delete()
+        document.delete()
         return HttpResponse(json.dumps({'deleted': True}),
                             content_type='application/json')
 

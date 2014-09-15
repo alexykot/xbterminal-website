@@ -49,9 +49,16 @@
                 Corporate documents must be a scanned image of an original paper document.<br>
                 Address document must be no more than three months old.</p>
             {% endblocktrans %}
+            <form class="upload-form" action="{% url 'website:verification_file' merchant_pk=user.merchant.pk name=1 %}" method="POST">
+                {% csrf_token %}
+                {% bootstrap_form identity_doc_form %}
+            </form>
+            <form class="upload-form" action="{% url 'website:verification_file' merchant_pk=user.merchant.pk name=2 %}" method="POST">
+                {% csrf_token %}
+                {% bootstrap_form corporate_doc_form %}
+            </form>
             <form id="verification-form" action="{% url 'website:verification' %}" method="POST">
                 {% csrf_token %}
-                {% bootstrap_form form %}
                 <div class="row">
                     <div class="col-md-6"><button type="submit" class="btn btn-default pull-right">{% trans 'Submit' %}</button></div>
                     <div class="col-md-6"><a href="{% url 'website:profile' %}" class="btn pull-left">{% trans 'Cancel' %}</a></div>
@@ -75,8 +82,8 @@
             </p>
             {% endif %}
             <div>
-                <a href="{% url 'website:verification' %}{{ user.merchant.verification_file_1.name }}">{{ user.merchant.verification_file_1_name }}</a><br>
-                <a href="{% url 'website:verification' %}{{ user.merchant.verification_file_1.name }}">{{ user.merchant.verification_file_2_name }}</a>
+                <a href="{% url 'website:verification_file' merchant_pk=user.merchant.pk name=user.merchant.identity_document.base_name %}">{{ user.merchant.identity_document.original_name }}</a><br>
+                <a href="{% url 'website:verification_file' merchant_pk=user.merchant.pk name=user.merchant.corporate_document.base_name %}">{{ user.merchant.corporate_document.original_name }}</a>
             </div>
         {% endif %}
     </div>

@@ -223,6 +223,28 @@ class MerchantAccount(models.Model):
                 and self.post_code
                 and self.contact_phone)
 
+    def get_kyc_document(self, document_type, status=None):
+        if status is None:
+            status = {
+                'unverified': 'uploaded',
+                'pending': 'uploaded',
+                'verified': 'uploaded',
+            }[self.verification_status]
+        try:
+            return self.kycdocument_set.get(
+                document_type=document_type,
+                status=status)
+        except KYCDocument.DoesNotExist:
+            return None
+
+    @property
+    def identity_document(self):
+        return self.get_kyc_document(1)
+
+    @property
+    def corporate_document(self):
+        return self.get_kyc_document(2)
+
     @property
     def info(self):
         if self.verification_status == 'verified':
@@ -284,7 +306,11 @@ class KYCDocument(models.Model):
         unique_together = ('merchant', 'document_type', 'status')
 
     @property
-    def name(self):
+    def base_name(self):
+        return os.path.basename(self.file.name)
+
+    @property
+    def original_name(self):
         return get_verification_file_name(self.file)
 
 

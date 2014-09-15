@@ -25,10 +25,10 @@ from website.models import (
     Device,
     ReconciliationTime,
     Order,
+    KYCDocument,
     get_language,
     get_currency)
 from website.fields import BCAddressField
-from website.files import get_verification_file_info
 from website.widgets import (
     ButtonGroupRadioSelect,
     PercentWidget,
@@ -304,6 +304,22 @@ class ProfileForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+class KYCDocumentUploadForm(forms.ModelForm):
+
+    class Meta:
+        model = KYCDocument
+        fields = ['file']
+        widgets = {'file': FileWidget}
+
+    def __init__(self, *args, **kwargs):
+        document_type = kwargs.pop('document_type', None)
+        super(KYCDocumentUploadForm, self).__init__(*args, **kwargs)
+        if document_type == 1:
+            self.fields['file'].label = _('Photo ID')
+        elif document_type == 2:
+            self.fields['file'].label = _('Corporate or residence proof document')
 
 
 class VerificationFileUploadForm(forms.ModelForm):

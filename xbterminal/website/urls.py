@@ -19,7 +19,7 @@ urlpatterns = patterns('website.views',
     url(r'^subscribe/$', SubscribeNewsView.as_view(), name='subscribe'),
     url(r'^profile/$', views.UpdateProfileView.as_view(), name='profile'),
     url(r'^verification/$', views.VerificationView.as_view(), name='verification'),
-    url(r'^verification/(?P<merchant_pk>\d+)/(?P<n>[12])__.*$',
+    url(r'^verification/(?P<merchant_pk>\d+)/(?P<name>.+)$',
         views.VerificationFileView.as_view(),
         name='verification_file'),
 

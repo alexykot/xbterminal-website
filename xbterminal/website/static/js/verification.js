@@ -25,7 +25,6 @@ var Verification = (function () {
                         .find('.file-uploaded').empty();
                     var icon = $('<a/>', {
                         'class': 'glyphicon glyphicon-remove file-remove',
-                        'data-path': data.result.path,
                     })
                     $('<li/>').text(data.result.filename)
                         .append(icon).appendTo(fileList);
@@ -41,7 +40,7 @@ var Verification = (function () {
             var token = form.find('[name="csrfmiddlewaretoken"]').val();
             $.ajax({
                 type: 'DELETE',
-                url: form.attr('action') + button.data('path') + '/',
+                url: form.attr('action'),
                 headers: {
                     'X-CSRFToken': token
                 }
@@ -52,19 +51,13 @@ var Verification = (function () {
 
         $('#verification-form').on('submit', function (event) {
             event.preventDefault();
-            var form = $(this);
-            form.find('[name="submit"]').val(true);
-            form.find('.progress').hide();
+            $('.upload-form .progress').hide();
             $.ajax({
                 type: 'POST',
-                url: form.attr('action'),
-                data: form.serialize(),
-                beforeSend: function () {
-                    form.find('[name="submit"]').val(false);
-                }
+                data: $(this).serialize()
             }).done(function (data) {
-                if (data.errors) {
-                    Base.showFormErrors($('#verification-form'), data.errors);
+                if (data.error) {
+                    alert(data.error);
                 } else {
                     window.location.href = data.next;
                 }
