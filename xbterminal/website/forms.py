@@ -135,7 +135,7 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             client_id=user.email,
             client_type='confidential',
             authorization_grant_type='password',
-            client_secret='#')
+            client_secret='AFoUFXG8orJ2H5ztnycc5a95')
         return instance
 
 
