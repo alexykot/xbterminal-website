@@ -22,27 +22,20 @@ from api.shortcuts import generate_pdf
 REPORT_FIELDS = [
     ('ID', 'id'),
     ('datetime', lambda t: t.time.strftime('%d-%b-%Y %l:%M %p')),
-    ('device name', lambda t: t.device.name),
-    ('amount', 'fiat_amount'),
+    ('POS', lambda t: t.device.name),
     ('currency', 'fiat_currency'),
-    ('amount mBTC', lambda t: "{0:.2f}".format(t.scaled_btc_amount())),
-    ('exchange rate', lambda t: "{0:.4f}".format(t.scaled_exchange_rate())),
-    ('fee mBTC', lambda t: t.fee_btc_amount * settings.BITCOIN_SCALE_DIVIZER),
-    ('effective exchange rate', lambda t: t.scaled_effective_exchange_rate()),
-    ('total mBTC', lambda t: t.scaled_total_btc_amount()),
-    ('amount converted', 'instantfiat_fiat_amount'),
-    ('amount converted BTC', lambda t: t.instantfiat_btc_amount * settings.BITCOIN_SCALE_DIVIZER),
-    ('processor invoice ID', lambda t: t.instantfiat_invoice_id or 'N/A'),
+    ('amount', 'fiat_amount'),
+    ('amount mBTC', lambda t: "{0:.2f}".format(t.scaled_total_btc_amount())),
+    ('exchange rate', lambda t: "{0:.4f}".format(t.scaled_effective_exchange_rate())),
     ('bitcoin transaction ID #1', 'bitcoin_transaction_id_1'),
     ('bitcoin transaction ID #2', 'bitcoin_transaction_id_2'),
-    ('destination address', 'dest_address'),
 ]
 
 REPORT_FIELDS_SHORT = [
     ('ID', 'id'),
     ('datetime', lambda t: t.time.strftime('%d-%b-%Y %l:%M %p')),
-    ('amount', 'fiat_amount'),
     ('currency', 'fiat_currency'),
+    ('amount', 'fiat_amount'),
 ]
 
 
