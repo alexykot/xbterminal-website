@@ -204,6 +204,7 @@ class MerchantAccountAdmin(admin.ModelAdmin):
 
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.MerchantAccount, MerchantAccountAdmin)
+admin.site.register(models.KYCDocument)
 admin.site.register(models.Device, DeviceAdmin)
 admin.site.register(models.Language)
 admin.site.register(models.Currency)

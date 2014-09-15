@@ -24,7 +24,7 @@ from website.validators import (
     validate_bitcoin_address,
     validate_transaction)
 from website.fields import FirmwarePathField
-from website.files import get_verification_file_name
+from website.files import get_verification_file_name, verification_file_path_gen
 
 from payment import blockr
 
@@ -252,6 +252,40 @@ class MerchantAccount(models.Model):
     @property
     def verification_file_2_name(self):
         return get_verification_file_name(self.verification_file_2)
+
+
+class KYCDocument(models.Model):
+
+    IDENTITY_DOCUMENT = 1
+    CORPORATE_DOCUMENT = 2
+
+    DOCUMENT_TYPES = [
+        (IDENTITY_DOCUMENT, 'IdentityDocument'),
+        (CORPORATE_DOCUMENT, 'CorporateDocument'),
+    ]
+
+    VERIFICATION_STATUSES = [
+        ('uploaded', _('Uploaded')),
+        ('unverified', _('Unverified')),
+        ('denied', _('Denied')),
+        ('verified', _('Verified')),
+    ]
+
+    merchant = models.ForeignKey(MerchantAccount)
+    document_type = models.IntegerField(choices=DOCUMENT_TYPES)
+    file = models.FileField(
+        storage=verification_file_storage,
+        upload_to=verification_file_path_gen)
+    uploaded = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=50, choices=VERIFICATION_STATUSES, default='uploaded')
+    gocoin_document_id = models.CharField(max_length=36, blank=True, null=True)
+
+    class Meta:
+        unique_together = ('merchant', 'document_type', 'status')
+
+    @property
+    def name(self):
+        return get_verification_file_name(self.file)
 
 
 def gen_device_key():
