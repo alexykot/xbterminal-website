@@ -389,8 +389,8 @@ class Transaction(models.Model):
     def get_incoming_transaction_url(self):
         return blockr.get_tx_url(self.bitcoin_transaction_id_1, self.device.bitcoin_network)
 
-    def get_dest_address_url(self):
-        return blockr.get_address_url(self.dest_address, self.device.bitcoin_network)
+    def get_hop_address_url(self):
+        return blockr.get_address_url(self.hop_address, self.device.bitcoin_network)
 
     def scaled_total_btc_amount(self):
         return self.btc_amount * settings.BITCOIN_SCALE_DIVIZER

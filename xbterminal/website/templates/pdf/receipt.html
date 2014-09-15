@@ -88,7 +88,7 @@
     <tr></tr>
     <tr>
         <td class="col1">{% trans 'Destination address' %}</td>
-        <td class="col2"><a href="{{ transaction.get_dest_address_url }}">{{ transaction.dest_address }}</a></td>
+        <td class="col2"><a href="{{ transaction.get_hop_address_url }}">{{ transaction.hop_address }}</a></td>
     </tr>
     <tr>
         <td class="col1">{% trans 'Bitcoin transaction ID' %}</td>
