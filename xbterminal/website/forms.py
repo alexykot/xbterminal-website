@@ -270,18 +270,19 @@ class ProfileForm(forms.ModelForm):
 
     class Meta:
         model = MerchantAccount
-        exclude = [
-            'user',
-            'business_address2',
-            'language',
-            'currency',
-            'payment_processor',
-            'api_key',
-            'gocoin_merchant_id',
-            'verification_status',
-            'verification_file_1',
-            'verification_file_2',
-            'comments',
+        fields = [
+            'company_name',
+            'trading_name',
+            'business_address',
+            'business_address1',
+            'town',
+            'county',
+            'post_code',
+            'country',
+            'contact_first_name',
+            'contact_last_name',
+            'contact_phone',
+            'contact_email',
         ]
         labels = {
             'business_address': _('Trading address'),
