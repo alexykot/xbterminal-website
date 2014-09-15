@@ -10,21 +10,22 @@ var Base = (function () {
             .replace(/>/g, '&gt;');
     };
 
-    var clearFormErrors = function () {
-        $('.form-group')
+    var clearFormErrors = function (form) {
+        form.find('.form-group')
             .removeClass('has-error')
             .removeClass('has-success')
             .find('.help-block').remove();
     };
-    var showFormErrors = function (formErrors) {
-        clearFormErrors();
-        $('.form-group').addClass('has-success');
-        for (var fieldName in formErrors) {
-            var formGroup = $('[name="' + fieldName + '"]').closest('.form-group');
+    var showFormErrors = function (form, errors) {
+        clearFormErrors(form);
+        form.find('.form-group').addClass('has-success');
+        for (var fieldName in errors) {
+            var formGroup = form.find('[name="' + fieldName + '"]')
+                .closest('.form-group');
             formGroup.removeClass('has-success').addClass('has-error');
             $('<div/>', {
                 class: 'help-block',
-                html: formErrors[fieldName].join('<br>')
+                html: errors[fieldName].join('<br>')
             }).appendTo(formGroup);
         }
     };

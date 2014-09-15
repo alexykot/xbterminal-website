@@ -7,7 +7,7 @@ var Verification = (function () {
             dataType: 'json',
             dropZone: $(this).closest('.file-dd'),
             submit: function (e, data) {
-                Base.clearFormErrors();
+                Base.clearFormErrors($(this).closest('form'));
                 $(this).closest('.file-widget')
                     .find('.progress-bar').css('width', '0px')
                     .closest('.progress').slideDown();
@@ -19,7 +19,7 @@ var Verification = (function () {
             },
             done: function (e, data) {
                 if (data.result.errors) {
-                    Base.showFormErrors(data.result.errors);
+                    Base.showFormErrors($(this).closest('form'), data.result.errors);
                 } else {
                     var fileList = $(this).closest('.file-widget')
                         .find('.file-uploaded').empty();
@@ -64,7 +64,7 @@ var Verification = (function () {
                 }
             }).done(function (data) {
                 if (data.errors) {
-                    Base.showFormErrors(data.errors);
+                    Base.showFormErrors($('#verification-form'), data.errors);
                 } else {
                     window.location.href = data.next;
                 }

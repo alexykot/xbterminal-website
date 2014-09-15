@@ -117,7 +117,7 @@ var Registration = (function () {
                 for (var fieldName in errorMap) {
                     formErrors[fieldName] = [errorMap[fieldName]];
                 }
-                Base.showFormErrors(formErrors);
+                Base.showFormErrors($('#merchant-form'), formErrors);
             },
             rules: {
                 company_name_copy: {
@@ -149,7 +149,7 @@ var Registration = (function () {
         $('#continue-step-2').on('click', function (event) {
             event.preventDefault();
             if (validator.form()) {
-                Base.clearFormErrors();
+                Base.clearFormErrors($('#merchant-form'));
                 $('#registration-step-1').hide();
                 $('#registration-step-2').show();
                 $('#step span').text('2');
@@ -164,7 +164,7 @@ var Registration = (function () {
         $('#continue-step-3').on('click', function (event) {
             event.preventDefault();
             if (validator.form()) {
-                Base.clearFormErrors();
+                Base.clearFormErrors($('#merchant-form'));
                 $('#registration-step-2').hide();
                 $('#registration-step-3').show();
                 $('#step span').text('3');
@@ -234,7 +234,7 @@ var Registration = (function () {
             if (!validator.form()) {
                 return false;
             }
-            Base.clearFormErrors();
+            Base.clearFormErrors($('#merchant-form'));
             var form = $(this);
             $.ajax({
                 type: 'POST',
@@ -248,7 +248,7 @@ var Registration = (function () {
                     window.location.href = data.next;
                 } else {
                     $('#back-step-1').click();
-                    Base.showFormErrors(data.errors);
+                    Base.showFormErrors($('#merchant-form'), data.errors);
                 }
             }).fail(function () {
                 alert(gettext('Server error!'));
