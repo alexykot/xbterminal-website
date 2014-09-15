@@ -78,14 +78,17 @@ class PaymentOrderAdmin(admin.ModelAdmin):
         'device_link',
         'merchant_link',
         'time_created',
+        'status',
         'receipt_key',
     ]
+    readonly_fields = ['status']
 
     def has_add_permission(self, request, obj=None):
         return False
 
     def get_readonly_fields(self, request, obj=None):
-        return [f.name for f in self.model._meta.fields]
+        all_fields = [f.name for f in self.model._meta.fields]
+        return all_fields + self.readonly_fields
 
     def device_link(self, payment_order):
         return url_to_object(payment_order.device)

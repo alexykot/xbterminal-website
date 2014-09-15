@@ -519,6 +519,28 @@ class PaymentOrder(models.Model):
         return self.uid
 
     @property
+    def status(self):
+        if self.time_finished:
+            return 'completed'
+        if not self.time_recieved:
+            if self.expires >= timezone.now():
+                return 'new'
+            else:
+                return 'timeout'
+        else:
+            if (
+                not self.instantfiat_invoice_id and self.time_broadcasted
+                or self.instantfiat_invoice_id and self.time_exchanged
+            ):
+                return 'completed'
+            elif self.time_forwarded:
+                return 'forwarded'
+            elif self.expires < timezone.now():
+                return 'recieved'
+            else:
+                return 'failed'
+
+    @property
     def expires(self):
         return self.time_created + datetime.timedelta(minutes=10)
 
