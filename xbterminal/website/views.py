@@ -488,9 +488,9 @@ class ReconciliationView(DeviceMixin, TemplateResponseMixin, CabinetView):
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         context['form'] = forms.SendDailyReconciliationForm()
-        context['daily_transaction_info'] = context['device'].\
-            transaction_set.\
-            extra({'date': "date(time)"}).\
+        context['daily_payments_info'] = context['device'].\
+            get_payments().\
+            extra({'date': "date(time_finished)"}).\
             values('date', 'fiat_currency').\
             annotate(
                 count=Count('id'),
@@ -530,9 +530,9 @@ class ReconciliationTimeView(DeviceMixin, CabinetView):
         return HttpResponse('')
 
 
-class TransactionsView(DeviceMixin, CabinetView):
+class ReportView(DeviceMixin, CabinetView):
     """
-    Download transactions as csv file
+    Download csv report
     """
 
     def get(self, *args, **kwargs):
@@ -545,16 +545,16 @@ class TransactionsView(DeviceMixin, CabinetView):
                 date = datetime.date(int(year), int(month), int(day))
             except ValueError:
                 raise Http404
-            transactions = context['device'].get_transactions_by_date(date)
+            payment_orders = context['device'].get_payments_by_date(date)
             content_disposition = 'attachment; filename="{0}"'.format(
-                utils.get_transactions_filename(context['device'], date))
+                utils.get_report_filename(context['device'], date))
         else:
-            transactions = context['device'].transaction_set.all()
+            payment_orders = context['device'].get_payments()
             content_disposition = 'attachment; filename="{0}"'.format(
-                utils.get_transactions_filename(context['device']))
+                utils.get_report_filename(context['device']))
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = content_disposition
-        utils.get_transaction_csv(transactions, response)
+        utils.get_report_csv(payment_orders, response)
         return response
 
 
@@ -572,22 +572,22 @@ class ReceiptsView(DeviceMixin, CabinetView):
                 date = datetime.date(int(year), int(month), int(day))
             except ValueError:
                 raise Http404
-            transactions = context['device'].get_transactions_by_date(date)
+            payment_orders = context['device'].get_payments_by_date(date)
             content_disposition = 'attachment; filename="{0}"'.format(
-                utils.get_receipts_filename(context['device'], date))
+                utils.get_receipts_archive_filename(context['device'], date))
         else:
-            transactions = context['device'].transaction_set.all()
+            payment_orders = context['device'].get_payments()
             content_disposition = 'attachment; filename="{0}"'.format(
-                utils.get_receipts_filename(context['device']))
+                utils.get_receipts_archive_filename(context['device']))
         response = HttpResponse(content_type='application/x-zip-compressed')
         response['Content-Disposition'] = content_disposition
-        utils.get_transaction_pdf_archive(transactions, response)
+        utils.get_receipts_archive(payment_orders, response)
         return response
 
 
 class SendAllToEmailView(DeviceMixin, CabinetView):
     """
-    Send transactions and receipts to email
+    Send reports and receipts to email
     """
     def post(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -662,7 +662,7 @@ class PaymentView(TemplateResponseMixin, View):
             return HttpResponseBadRequest('invalid amount')
         response = self.render_to_response({
             'device': device,
-            'amount': amount,
+            'amount': amount.quantize(Decimal('0.00')),
         })
         response['X-Frame-Options'] = 'ALLOW-FROM *'
         return response

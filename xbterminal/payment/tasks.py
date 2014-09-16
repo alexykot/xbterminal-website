@@ -337,7 +337,7 @@ def wait_for_exchange(payment_order_uid):
         payment_order.instantfiat_invoice_id)
     if invoice_paid:
         django_rq.get_scheduler().cancel(rq.get_current_job())
-        if payment_order.transaction is not None:
+        if payment_order.receipt_key is not None:
             # Payment already finished, skip
             return
         payment_order.time_exchanged = timezone.now()
@@ -347,26 +347,8 @@ def wait_for_exchange(payment_order_uid):
 
 def finalize_payment(payment_order):
     """
-    Save transaction info
+    Finalize payment, generate receipt key
     """
-    transaction = Transaction(
-        device=payment_order.device,
-        hop_address=payment_order.local_address,
-        dest_address=payment_order.merchant_address,
-        instantfiat_address=payment_order.instantfiat_address,
-        bitcoin_transaction_id_1=payment_order.incoming_tx_id,
-        bitcoin_transaction_id_2=payment_order.outgoing_tx_id,
-        fiat_currency=payment_order.fiat_currency,
-        fiat_amount=payment_order.fiat_amount,
-        btc_amount=payment_order.btc_amount + payment_order.extra_btc_amount,
-        effective_exchange_rate=payment_order.effective_exchange_rate,
-        instantfiat_fiat_amount=payment_order.instantfiat_fiat_amount,
-        instantfiat_btc_amount=payment_order.instantfiat_btc_amount,
-        fee_btc_amount=payment_order.fee_btc_amount + payment_order.extra_btc_amount,
-        instantfiat_invoice_id=payment_order.instantfiat_invoice_id,
-        time=timezone.now())
-    transaction.save()
-    payment_order.transaction = transaction
-    payment_order.receipt_key = transaction.receipt_key
+    payment_order.receipt_key = uuid.uuid4().hex
     payment_order.save()
     logger.info('payment order closed ({0})'.format(payment_order.uid))

@@ -26,6 +26,8 @@ from website.validators import (
 from website.fields import FirmwarePathField
 from website.files import get_verification_file_name
 
+from payment import blockr
+
 
 class UserManager(BaseUserManager):
 
@@ -325,10 +327,24 @@ class Device(models.Model):
                 self.percent)
         return ''
 
-    def get_transactions_by_date(self, date):
-        beg = datetime.datetime.combine(date, datetime.time.min)
-        end = datetime.datetime.combine(date, datetime.time.max)
-        return self.transaction_set.filter(time__range=(beg, end))
+    def get_payments(self):
+        return self.paymentorder_set.filter(time_finished__isnull=False)
+
+    def get_payments_by_date(self, date):
+        """
+        Accepts:
+            date_range: tuple or single date
+        """
+        if isinstance(date, datetime.date):
+            beg = timezone.make_aware(
+                datetime.datetime.combine(date, datetime.time.min),
+                timezone.get_current_timezone())
+            end = timezone.make_aware(
+                datetime.datetime.combine(date, datetime.time.max),
+                timezone.get_current_timezone())
+        else:
+            beg, end = date
+        return self.paymentorder_set.filter(time_finished__range=(beg, end))
 
     def is_online(self):
         if self.last_activity is None:
@@ -384,14 +400,11 @@ class Transaction(models.Model):
         path = reverse('api:receipt', kwargs={'key': self.receipt_key})
         return 'https://%s%s' % (domain, path)
 
-    def get_blockchain_transaction_url(self):
-        return 'https://blockchain.info/en/tx/%s' % self.bitcoin_transaction_id_1
+    def get_incoming_transaction_url(self):
+        return blockr.get_tx_url(self.bitcoin_transaction_id_1, self.device.bitcoin_network)
 
-    def get_blockchain_address_url(self, address):
-        return 'https://blockchain.info/en/address/%s' % address
-
-    def get_dest_address_url(self):
-        return self.get_blockchain_address_url(self.dest_address)
+    def get_hop_address_url(self):
+        return blockr.get_address_url(self.hop_address, self.device.bitcoin_network)
 
     def scaled_total_btc_amount(self):
         return self.btc_amount * settings.BITCOIN_SCALE_DIVIZER
@@ -400,7 +413,7 @@ class Transaction(models.Model):
         return self.effective_exchange_rate / settings.BITCOIN_SCALE_DIVIZER
 
     def scaled_btc_amount(self):
-        return self.scaled_total_btc_amount() - self.fee_btc_amount
+        return (self.btc_amount - self.fee_btc_amount) * settings.BITCOIN_SCALE_DIVIZER
 
     def scaled_exchange_rate(self):
         return self.fiat_amount / self.scaled_btc_amount()
@@ -469,6 +482,28 @@ class PaymentOrder(models.Model):
     @property
     def expires(self):
         return self.time_created + datetime.timedelta(minutes=10)
+
+    @property
+    def receipt_url(self):
+        domain = Site.objects.get_current().domain
+        path = reverse('api:receipt', kwargs={'key': self.receipt_key})
+        return 'https://{0}{1}'.format(domain, path)
+
+    @property
+    def incoming_tx_url(self):
+        return blockr.get_tx_url(self.incoming_tx_id, self.device.bitcoin_network)
+
+    @property
+    def payment_address_url(self):
+        return blockr.get_address_url(self.local_address, self.device.bitcoin_network)
+
+    @property
+    def scaled_btc_amount(self):
+        return self.btc_amount * settings.BITCOIN_SCALE_DIVIZER
+
+    @property
+    def scaled_effective_exchange_rate(self):
+        return self.effective_exchange_rate / settings.BITCOIN_SCALE_DIVIZER
 
 
 def gen_payment_reference():

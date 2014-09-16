@@ -5,8 +5,8 @@
 <p>
 {% trans 'terminal' %}: {{ device.name|safe }}<br>
 {% trans 'report issue date' %}: {{ rec_datetime|date:"d M Y" }} {{ rec_datetime|time:"g:i A" }}<br>
-{% if transactions %}
-{% trans 'transactions to date' %}: {{ transactions.count }}<br>
+{% if payment_orders %}
+{% trans 'transactions to date' %}: {{ payment_orders.count }}<br>
 {% trans 'total m฿' %}: {{ btc_amount|scale|floatformat:5 }}<br>
 {% trans 'total GBP' %}: £{{ fiat_amount|floatformat:2 }}
 {% else %}

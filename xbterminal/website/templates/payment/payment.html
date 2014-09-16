@@ -1,5 +1,5 @@
 {% extends "payment/base.html" %}
-{% load i18n %}
+{% load i18n l10n %}
 
 {% block title %}Web POS{% endblock %}
 
@@ -9,7 +9,7 @@
         <label class="amount-label">{% trans 'amount' %}</label>
         <div class="amount-wrapper">
             <div class="fiat-symbol">{{ device.merchant.currency.prefix }}</div>
-            <input type="text" name="amount" value="{{ amount|floatformat:2 }}">
+            <input type="text" name="amount" value="{{ amount|unlocalize }}">
         </div>
         <div class="error-message"></div>
         <button type="submit">{% trans 'Pay now' %}</button>
