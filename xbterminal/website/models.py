@@ -31,7 +31,7 @@ from payment import blockr
 
 class UserManager(BaseUserManager):
 
-    def _create_user(self, email, password, is_staff, is_superuser):
+    def _create_user(self, email, password, is_staff, is_superuser, commit):
         """
         Creates and saves a User with the given email and password.
         """
@@ -41,14 +41,15 @@ class UserManager(BaseUserManager):
                           is_staff=is_staff,
                           is_superuser=is_superuser)
         user.set_password(password)
-        user.save(using=self._db)
+        if commit:
+            user.save(using=self._db)
         return user
 
-    def create_user(self, email, password=None):
-        return self._create_user(email, password, False, False)
+    def create_user(self, email, password=None, commit=True):
+        return self._create_user(email, password, False, False, commit)
 
     def create_superuser(self, email, password):
-        return self._create_user(email, password, True, True)
+        return self._create_user(email, password, True, True, True)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -153,7 +154,7 @@ class MerchantAccount(models.Model):
     ]
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name="merchant")
-    company_name = models.CharField(_('Company name'), max_length=255)
+    company_name = models.CharField(_('Company name'), max_length=255, unique=True)
     trading_name = models.CharField(_('Trading name'), max_length=255, blank=True)
 
     business_address = models.CharField(_('Business address'), max_length=255, null=True)
@@ -174,6 +175,8 @@ class MerchantAccount(models.Model):
 
     payment_processor = models.CharField(_('Payment processor'), max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, default='gocoin')
     api_key = models.CharField(_('API key'), max_length=255, blank=True)
+
+    gocoin_merchant_id = models.CharField(max_length=36, null=True)
 
     verification_status = models.CharField(_('KYC'), max_length=50, choices=VERIFICATION_STATUSES, default='unverified')
     verification_file_1 = models.FileField(
@@ -208,6 +211,10 @@ class MerchantAccount(models.Model):
             self.country.name,
         ]
         return [s for s in strings if s]
+
+    @property
+    def contact_name(self):
+        return self.contact_first_name + ' ' + self.contact_last_name
 
     @property
     def is_profile_complete(self):

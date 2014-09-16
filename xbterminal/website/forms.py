@@ -14,7 +14,10 @@ from django.core.validators import RegexValidator
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
+from constance import config
+
 from payment import preorder
+from payment.instantfiat import gocoin
 
 from website.models import (
     User,
@@ -102,40 +105,36 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             'contact_email',
         ]
 
-    def clean(self):
-        cleaned_data = super(SimpleMerchantRegistrationForm, self).clean()
-        self._password = get_user_model().objects.make_random_password()
-        # Send email
-        if not self._errors:
-            message = create_html_message(
-                _("Registration for XBTerminal.io"),
-                "email/registration.html",
-                {'email': cleaned_data['contact_email'],
-                 'password': self._password,
-                },
-                settings.DEFAULT_FROM_EMAIL,
-                [cleaned_data['contact_email']])
-            try:
-                message.send(fail_silently=False)
-            except smtplib.SMTPRecipientsRefused as error:
-                self._errors['contact_email'] = self.error_class([_('Invalid email.')])
-                del cleaned_data['contact_email']
-        return cleaned_data
-
     def save(self, commit=True):
         """
         Create django user and merchant account
         """
         assert commit  # Always commit
         instance = super(SimpleMerchantRegistrationForm, self).save(commit=False)
-        # Create new user
-        user = get_user_model().objects.create_user(
-            self.cleaned_data['contact_email'],
-            self._password)
-        user.backend = 'django.contrib.auth.backends.ModelBackend'
-        instance.user = user
         instance.language = get_language(instance.country.code)
         instance.currency = get_currency(instance.country.code)
+        # Create GoCoin account
+        instance.gocoin_merchant_id = gocoin.create_merchant(instance, config.GOCOIN_API_KEY)
+        # Create new user
+        password = get_user_model().objects.make_random_password()
+        user = get_user_model().objects.create_user(
+            instance.contact_email,
+            password,
+            commit=False)
+        user.backend = 'django.contrib.auth.backends.ModelBackend'
+        # Send email
+        message = create_html_message(
+            _("Registration for XBTerminal.io"),
+            "email/registration.html",
+            {'email': instance.contact_email,
+             'password': password,
+            },
+            settings.DEFAULT_FROM_EMAIL,
+            [instance.contact_email])
+        message.send(fail_silently=False)
+        # Save objects
+        user.save()
+        instance.user = user
         instance.save()
         # Create oauth client
         user.application_set.create(
@@ -278,6 +277,7 @@ class ProfileForm(forms.ModelForm):
             'currency',
             'payment_processor',
             'api_key',
+            'gocoin_merchant_id',
             'verification_status',
             'verification_file_1',
             'verification_file_2',
@@ -295,6 +295,11 @@ class ProfileForm(forms.ModelForm):
         instance = super(ProfileForm, self).save(commit=False)
         instance.language = get_language(instance.country.code)
         instance.currency = get_currency(instance.country.code)
+        if instance.gocoin_merchant_id:
+            merchants = gocoin.get_merchants(config.GOCOIN_MERCHANT_ID,
+                                             config.GOCOIN_API_KEY)
+            if instance.gocoin_merchant_id in merchants:
+                gocoin.update_merchant(instance, config.GOCOIN_API_KEY)
         if commit:
             instance.save()
         return instance

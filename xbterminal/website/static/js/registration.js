@@ -70,30 +70,38 @@ var Registration = (function () {
         }
     };
 
+    var validateOnServer = function (fieldName, value) {
+        var isValid;
+        $.ajax({
+            type: 'GET',
+            url: '/registration/validate/',
+            data: {
+                field_name: fieldName,
+                value: value
+            },
+            beforeSend: function () {
+                $('#loading-image').show();
+            },
+            success: function (data) {
+                isValid = data.is_valid;
+            },
+            complete: function () {
+                $('#loading-image').hide();
+            },
+            async: false
+        });
+        return isValid;
+    };
+
     var validator;
     var setUpValidator = function () {
         $.validator.addMethod('emailUnique', function (value, element) {
-            if (this.optional(element)) {
-                return true;
-            }
-            var isValid;
-            $.ajax({
-                type: 'GET',
-                url: '/registration/validate/',
-                data: {email: value},
-                beforeSend: function () {
-                    $('#loading-image').show();
-                },
-                success: function (data) {
-                    isValid = data.email;
-                },
-                complete: function () {
-                    $('#loading-image').hide();
-                },
-                async: false
-            });
-            return isValid;
+            return this.optional(element) || validateOnServer('contact_email', value);
         }, gettext('Merchant account with this contact email already exists. Please <a href="/login/">login</a> or <a>reset your password</a>.'));
+
+        $.validator.addMethod('companyNameUnique', function (value, element) {
+            return this.optional(element) || validateOnServer('company_name', value);
+        }, gettext('This company is already registered.'));
 
         $.validator.addMethod('phone', function (value, element) {
             return this.optional(element) || /^[0-9\s-+().]{5,20}$/.test(value);
@@ -112,7 +120,11 @@ var Registration = (function () {
                 Base.showFormErrors(formErrors);
             },
             rules: {
-                company_name_copy: 'required',
+                company_name_copy: {
+                    required: true,
+                    companyNameUnique: true
+                },
+                company_name: 'companyNameUnique',
                 contact_email: 'emailUnique',
                 contact_phone: 'phone',
                 post_code: 'postCode',

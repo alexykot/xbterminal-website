@@ -23,8 +23,7 @@ class BearerAuth(AuthBase):
         return req
 
 
-def create_invoice(fiat_amount, currency_code, api_key, description):
-    merchant_id, api_key = api_key.split(':')
+def create_invoice(fiat_amount, currency_code, api_key, merchant_id):
     invoice_url = "https://api.gocoin.com/api/v1/merchants/{0}/invoices".\
         format(merchant_id)
     payload = {
@@ -49,12 +48,11 @@ def create_invoice(fiat_amount, currency_code, api_key, description):
     invoice_id = data['id']
     btc_amount = Decimal(data['price']).quantize(payment.BTC_DEC_PLACES)
     address = data['payment_address']
-    logger.debug('gocoin invoice created')
+    logger.debug('gocoin - invoice created')
     return invoice_id, btc_amount, address
 
 
-def is_invoice_paid(invoice_id, api_key):
-    merchant_id, api_key = api_key.split(':')
+def is_invoice_paid(invoice_id, api_key, merchant_id):
     invoice_status_url = "https://api.gocoin.com/api/v1/invoices/{0}".\
         format(invoice_id)
     try:
@@ -69,3 +67,98 @@ def is_invoice_paid(invoice_id, api_key):
         return True
     else:
         return False
+
+
+def create_merchant(merchant, api_key):
+    """
+    Accepts:
+        merchant: MerchantAccount instance
+        api_key: GoCoin token with access to merchant API
+    Returns:
+        id: GoCoin merchant id
+    """
+    merchants_url = "https://api.gocoin.com/api/v1/merchants"
+    payload = {
+        'name': merchant.company_name,
+        'address_1': merchant.business_address,
+        'address_2': merchant.business_address1,
+        'city': merchant.town,
+        'region': merchant.county,
+        'country_code': merchant.country.code,
+        'postal_code': merchant.post_code,
+        'contact_name': merchant.contact_name,
+        'contact_email': merchant.contact_email,
+        'phone': merchant.contact_phone,
+    }
+    try:
+        response = requests.post(
+            merchants_url,
+            headers={'Content-Type': 'application/json'},
+            data=json.dumps(payload),
+            auth=BearerAuth(api_key))
+        data = response.json()
+    except requests.exceptions.RequestException:
+        raise
+    except ValueError:
+        raise InstantFiatError(response.text)
+    if 'errors' in data:
+        raise InstantFiatError(str(data))
+    merchant_id = data['id']
+    logger.info('gocoin - created merchant {0}'.format(merchant_id))
+    return merchant_id
+
+
+def update_merchant(merchant, api_key):
+    """
+    Accepts:
+        merchant: MerchantAccount instance
+        api_key: GoCoin token with access to merchant API
+    """
+    merchant_url = "https://api.gocoin.com/api/v1/merchants/{0}".\
+        format(merchant.gocoin_merchant_id)
+    payload = {
+        'name': merchant.company_name,
+        'address_1': merchant.business_address,
+        'address_2': merchant.business_address1,
+        'city': merchant.town,
+        'region': merchant.county,
+        'country_code': merchant.country.code,
+        'postal_code': merchant.post_code,
+        'contact_name': merchant.contact_name,
+        'phone': merchant.contact_phone,
+    }
+    try:
+        response = requests.patch(
+            merchant_url,
+            headers={'Content-Type': 'application/json'},
+            data=json.dumps(payload),
+            auth=BearerAuth(api_key))
+        data = response.json()
+    except requests.exceptions.RequestException:
+        raise
+    except ValueError:
+        raise InstantFiatError(response.text)
+    if 'errors' in data:
+        raise InstantFiatError(str(data))
+    logger.info('gocoin - updated merchant {0}'.format(data['id']))
+
+
+def get_merchants(merchant_id, api_key):
+    """
+    Lists the child merchants of an existing merchant
+    """
+    merchants_url = "https://api.gocoin.com/api/v1/merchants/{0}/children".\
+        format(merchant_id)
+    try:
+        response = requests.get(
+            merchants_url,
+            headers={'Content-Type': 'application/json'},
+            auth=BearerAuth(api_key))
+        data = response.json()
+    except requests.exceptions.RequestException:
+        raise
+    except ValueError:
+        raise InstantFiatError(response.text)
+    if 'errors' in data:
+        raise InstantFiatError(str(data))
+    return [merchant['id'] for merchant in data]
