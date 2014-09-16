@@ -304,6 +304,10 @@ class KYCDocument(models.Model):
 
     class Meta:
         unique_together = ('merchant', 'document_type', 'status')
+        verbose_name = 'KYC document'
+
+    def __unicode__(self):
+        return self.original_name
 
     @property
     def base_name(self):

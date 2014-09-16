@@ -146,6 +146,18 @@ class UserAdmin(UserAdmin):
     merchant_link.short_description = 'merchant account'
 
 
+class KYCDocumentAdmin(admin.ModelAdmin):
+
+    list_display = ['__unicode__', 'merchant', 'document_type']
+    readonly_fields = ['uploaded']
+
+
+class KYCDocumentInline(admin.TabularInline):
+
+    model = models.KYCDocument
+    extra = 0
+
+
 class MerchantAccountAdmin(admin.ModelAdmin):
 
     list_display = [
@@ -162,6 +174,10 @@ class MerchantAccountAdmin(admin.ModelAdmin):
     ]
     readonly_fields = ['date_joined', 'last_login']
     ordering = ['id']
+
+    inlines = [
+        KYCDocumentInline,
+    ]
 
     def date_joined(self, merchant):
         return merchant.user.date_joined.strftime('%d %b %Y %l:%M %p')
@@ -204,7 +220,7 @@ class MerchantAccountAdmin(admin.ModelAdmin):
 
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.MerchantAccount, MerchantAccountAdmin)
-admin.site.register(models.KYCDocument)
+admin.site.register(models.KYCDocument, KYCDocumentAdmin)
 admin.site.register(models.Device, DeviceAdmin)
 admin.site.register(models.Language)
 admin.site.register(models.Currency)
