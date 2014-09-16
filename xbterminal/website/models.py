@@ -176,7 +176,7 @@ class MerchantAccount(models.Model):
     payment_processor = models.CharField(_('Payment processor'), max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, default='gocoin')
     api_key = models.CharField(_('API key'), max_length=255, blank=True)
 
-    gocoin_merchant_id = models.CharField(max_length=36, null=True)
+    gocoin_merchant_id = models.CharField(max_length=36, blank=True, null=True)
 
     verification_status = models.CharField(_('KYC'), max_length=50, choices=VERIFICATION_STATUSES, default='unverified')
     verification_file_1 = models.FileField(
