@@ -336,11 +336,15 @@ class Device(models.Model):
             date_range: tuple or single date
         """
         if isinstance(date, datetime.date):
-            date_range = (datetime.datetime.combine(date, datetime.time.min),
-                          datetime.datetime.combine(date, datetime.time.max))
+            beg = timezone.make_aware(
+                datetime.datetime.combine(date, datetime.time.min),
+                timezone.get_current_timezone())
+            end = timezone.make_aware(
+                datetime.datetime.combine(date, datetime.time.max),
+                timezone.get_current_timezone())
         else:
-            date_range = date
-        return self.paymentorder_set.filter(time_finished__range=date_range)
+            beg, end = date
+        return self.paymentorder_set.filter(time_finished__range=(beg, end))
 
     def is_online(self):
         if self.last_activity is None:

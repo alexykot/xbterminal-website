@@ -64,9 +64,15 @@
         color: #555;
         border: 1px;
     }
-    td, th { padding: 5px; padding-bottom: 0px; }
+    td, th {
+        padding: 5px;
+        padding-bottom: 0px;
+    }
     .col1 {
         text-align: right;
+    }
+    .blockr-link {
+        font-size: 13px;
     }
 </style>
 </head>
@@ -75,7 +81,7 @@
 <table>
     <tr>
         <td style="width: 400px;" class="col1">{% trans 'Amount' %}</td>
-        <td class="col2">{{ payment_order.device.merchant.currency.prefix }}{{ payment_order.fiat_amount|amount }}{{ payment_order.device.merchant.currency.postfix }}</td>
+        <td class="col2">{{ payment_order.device.merchant.currency.prefix }}{{ payment_order.fiat_amount|floatformat:2 }}{{ payment_order.device.merchant.currency.postfix }}</td>
     </tr>
     <tr>
         <td class="col1">{% trans 'Bitcoin amount paid' %}</td>
@@ -88,11 +94,11 @@
     <tr></tr>
     <tr>
         <td class="col1">{% trans 'Destination address' %}</td>
-        <td class="col2"><a href="{{ payment_order.payment_address_url }}">{{ payment_order.local_address }}</a></td>
+        <td class="col2"><a class="blockr-link" href="{{ payment_order.payment_address_url }}">{{ payment_order.local_address }}</a></td>
     </tr>
     <tr>
         <td class="col1">{% trans 'Bitcoin transaction ID' %}</td>
-        <td class="col2"><a href="{{ payment_order.incoming_tx_url }}">{{ payment_order.incoming_tx_id }}</a></td>
+        <td class="col2"><a class="blockr-link" href="{{ payment_order.incoming_tx_url }}">{{ payment_order.incoming_tx_id }}</a></td>
     </tr>
     <tr></tr>
     <tr>
