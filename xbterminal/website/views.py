@@ -662,7 +662,7 @@ class PaymentView(TemplateResponseMixin, View):
             return HttpResponseBadRequest('invalid amount')
         response = self.render_to_response({
             'device': device,
-            'amount': amount,
+            'amount': amount.quantize(Decimal('0.00')),
         })
         response['X-Frame-Options'] = 'ALLOW-FROM *'
         return response
