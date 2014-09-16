@@ -20,6 +20,15 @@ def amount(value):
     return '{0:g}'.format(float(value))
 
 
+@register.filter
+def kyc_document(merchant, document_type):
+    if merchant.verification_status == 'pending':
+        status = 'unverified'
+    elif merchant.verification_status == 'verified':
+        status = 'verified'
+    return merchant.get_kyc_document(int(document_type), status)
+
+
 @register.simple_tag
 def qr_from_text(text, size):
     src = generate_qr_code(text, size)

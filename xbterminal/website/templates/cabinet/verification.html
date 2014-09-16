@@ -1,5 +1,5 @@
 {% extends "cabinet/base.html" %}
-{% load bootstrap3 staticfiles i18n %}
+{% load bootstrap3 staticfiles i18n website_tags %}
 
 {% block js %}
 <script src="{% static 'lib/jquery.ui.widget.js' %}"></script>
@@ -81,10 +81,12 @@
                 {% endblocktrans %}
             </p>
             {% endif %}
+            {% with user.merchant|kyc_document:"1" as identity_document and user.merchant|kyc_document:"2" as corporate_document %}
             <div>
-                <a href="{% url 'website:verification_file' merchant_pk=user.merchant.pk name=user.merchant.identity_document.base_name %}">{{ user.merchant.identity_document.original_name }}</a><br>
-                <a href="{% url 'website:verification_file' merchant_pk=user.merchant.pk name=user.merchant.corporate_document.base_name %}">{{ user.merchant.corporate_document.original_name }}</a>
+                <a href="{% url 'website:verification_file' merchant_pk=user.merchant.pk name=identity_document.base_name %}">{{ identity_document.original_name }}</a><br>
+                <a href="{% url 'website:verification_file' merchant_pk=user.merchant.pk name=corporate_document.base_name %}">{{ corporate_document.original_name }}</a>
             </div>
+            {% endwith %}
         {% endif %}
     </div>
 </div>

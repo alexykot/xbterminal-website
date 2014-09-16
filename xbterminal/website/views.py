@@ -431,17 +431,24 @@ class VerificationView(TemplateResponseMixin, CabinetView):
         if merchant.verification_status == 'unverified':
             context['identity_doc_form'] = forms.KYCDocumentUploadForm(
                 document_type=1,
-                instance=merchant.get_kyc_document(1))
+                instance=merchant.get_kyc_document(1, 'uploaded'))
             context['corporate_doc_form'] = forms.KYCDocumentUploadForm(
                 document_type=2,
-                instance=merchant.get_kyc_document(2))
+                instance=merchant.get_kyc_document(2, 'uploaded'))
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
         merchant = self.request.user.merchant
         if merchant.verification_status != 'unverified':
             raise Http404
-        if merchant.identity_document and merchant.corporate_document:
+        kyc_documents = [
+            merchant.get_kyc_document(1, 'uploaded'),
+            merchant.get_kyc_document(2, 'uploaded'),
+        ]
+        if all(kyc_documents):
+            for document in kyc_documents:
+                document.status = 'unverified'
+                document.save()
             merchant.verification_status = 'pending'
             merchant.save()
             data = {'next': reverse('website:verification')}
@@ -494,7 +501,8 @@ class VerificationFileView(View):
         if form.is_valid():
             # Remove previously uploaded file
             try:
-                self.merchant.get_kyc_document(self.document_type).delete()
+                self.merchant.get_kyc_document(
+                    self.document_type, 'uploaded').delete()
             except AttributeError:
                 pass
             instance = form.save(commit=False)
@@ -513,7 +521,8 @@ class VerificationFileView(View):
             or self.merchant.verification_status != 'unverified'
         ):
             raise Http404
-        document = self.merchant.get_kyc_document(self.document_type)
+        document = self.merchant.get_kyc_document(
+            self.document_type, 'uploaded')
         if not document:
             raise Http404
         document.delete()
