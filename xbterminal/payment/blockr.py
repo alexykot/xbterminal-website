@@ -1,8 +1,12 @@
+import logging
+
 import requests
 
+logger = logging.getLogger(__name__)
+
 BLOCKR = {
-    'mainnet': 'https://btc.blockr.io',
-    'testnet': 'https://tbtc.blockr.io',
+    'mainnet': 'http://btc.blockr.io',
+    'testnet': 'http://tbtc.blockr.io',
 }
 
 
@@ -14,7 +18,8 @@ def is_tx_broadcasted(tx_id, network):
     try:
         response = requests.get(api_url)
         data = response.json()
-    except (requests.exceptions.RequestException, ValueError):
+    except (requests.exceptions.RequestException, ValueError) as error:
+        logger.exception(error)
         return None
     if data['status'] == 'success':
         return True
