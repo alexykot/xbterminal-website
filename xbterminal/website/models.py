@@ -287,13 +287,16 @@ class KYCDocument(models.Model):
     uploaded = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=50, choices=VERIFICATION_STATUSES, default='uploaded')
     gocoin_document_id = models.CharField(max_length=36, blank=True, null=True)
+    comment = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         unique_together = ('merchant', 'document_type', 'status')
         verbose_name = 'KYC document'
 
     def __unicode__(self):
-        return self.original_name
+        return "{0} - {1}".format(
+            self.merchant.company_name,
+            self.get_document_type_display())
 
     @property
     def base_name(self):

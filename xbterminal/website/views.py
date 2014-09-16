@@ -20,7 +20,10 @@ from django.contrib import messages
 from django.utils import timezone
 from django.utils.translation import ugettext as _
 
+from constance import config
+
 from payment.blockchain import construct_bitcoin_uri
+from payment.instantfiat import gocoin
 
 from website import forms, models, utils
 
@@ -447,6 +450,8 @@ class VerificationView(TemplateResponseMixin, CabinetView):
         ]
         if all(kyc_documents):
             for document in kyc_documents:
+                document.gocoin_document_id = gocoin.upload_kyc_document(
+                    document, config.GOCOIN_API_KEY)
                 document.status = 'unverified'
                 document.save()
             merchant.verification_status = 'pending'
