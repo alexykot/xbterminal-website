@@ -152,7 +152,7 @@ class MerchantAccount(models.Model):
     ]
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name="merchant")
-    company_name = models.CharField(_('Company name'), max_length=255)
+    company_name = models.CharField(_('Company name'), max_length=255, unique=True)
     trading_name = models.CharField(_('Trading name'), max_length=255, blank=True)
 
     business_address = models.CharField(_('Business address'), max_length=255, null=True)

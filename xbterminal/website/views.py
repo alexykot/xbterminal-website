@@ -230,13 +230,16 @@ class RegValidationView(View):
     Helper view for server-side validation
     """
     def get(self, *args, **kwargs):
-        email = self.request.GET.get('email', '')
+        field_name = self.request.GET.get('field_name')
+        if field_name not in ['company_name', 'contact_email']:
+            return HttpResponseBadRequest()
+        kwargs = {field_name + '__iexact': self.request.GET.get('value', '')}
         try:
-            models.MerchantAccount.objects.get(contact_email__iexact=email)
+            models.MerchantAccount.objects.get(**kwargs)
         except models.MerchantAccount.DoesNotExist:
-            response = {'email': True}
+            response = {'is_valid': True}
         else:
-            response = {'email': False}
+            response = {'is_valid': False}
         return HttpResponse(json.dumps(response),
                             content_type='application/json')
 
