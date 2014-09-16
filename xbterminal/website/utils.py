@@ -24,8 +24,8 @@ REPORT_FIELDS = [
     ('datetime', lambda p: p.time_finished.strftime('%d-%b-%Y %l:%M %p')),
     ('POS', lambda p: p.device.name),
     ('currency', 'fiat_currency'),
-    ('amount', 'fiat_amount'),
-    ('amount mBTC', lambda p: p.scaled_btc_amount),
+    ('amount', lambda p: "{0:.2f}".format(p.fiat_amount)),
+    ('amount mBTC', lambda p: "{0:.5f}".format(p.scaled_btc_amount)),
     ('exchange rate', lambda p: "{0:.4f}".format(p.scaled_effective_exchange_rate)),
     ('bitcoin transaction ID #1', 'incoming_tx_id'),
     ('bitcoin transaction ID #2', 'outgoing_tx_id'),
@@ -48,7 +48,10 @@ def get_report_csv(payment_orders, csv_file=None, short=False):
     field_names = [field[0] for field in fields]
     writer.writerow(field_names)
     # Write data
-    totals = {}
+    totals = {
+        'amount': Decimal(0),
+        'amount mBTC': Decimal(0),
+    }
     for payment_order in payment_orders:
         row = []
         for field_name, field_getter in fields:
@@ -56,18 +59,15 @@ def get_report_csv(payment_orders, csv_file=None, short=False):
                 value = getattr(payment_order, field_getter)
             else:
                 value = field_getter(payment_order)
-            if isinstance(value, Decimal):
-                if field_name not in totals:
-                    totals[field_name] = Decimal(0)
-                totals[field_name] += value
-                value = '{0:g}'.format(float(value))
+            if field_name in totals:
+                totals[field_name] += Decimal(value)
             row.append(unicode(value))
         writer.writerow(row)
     # Write totals
     totals_row = []
     for field_name in field_names:
         if field_name in totals:
-            value = '{0:g}'.format(float(totals[field_name]))
+            value = '{0:g}'.format(totals[field_name])
         else:
             value = ''
         totals_row.append(value)
