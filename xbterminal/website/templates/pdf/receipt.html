@@ -85,11 +85,11 @@
     </tr>
     <tr>
         <td class="col1">{% trans 'Bitcoin amount paid' %}</td>
-        <td class="col2 btc-amount">m<span class="btc-symbol">&#xf15a;</span> {{ payment_order.scaled_btc_amount|amount }}</td>
+        <td class="col2 btc-amount">m<span class="btc-symbol">&#xf15a;</span> {{ payment_order.scaled_btc_amount|floatformat:5 }}</td>
     </tr>
     <tr>
         <td class="col1">{% trans 'Effective exchange rate' %}</td>
-        <td class="col2">{{ payment_order.device.merchant.currency.prefix }}{{ payment_order.scaled_effective_exchange_rate|amount }}{{ payment_order.device.merchant.currency.postfix }}</td>
+        <td class="col2">{{ payment_order.device.merchant.currency.prefix }}{{ payment_order.scaled_effective_exchange_rate|floatformat:4 }}{{ payment_order.device.merchant.currency.postfix }}</td>
     </tr>
     <tr></tr>
     <tr>
@@ -115,7 +115,7 @@
     </tr>
     <tr>
         <td class="col1">{% trans 'Transaction time' %}</td>
-        <td class="col2">{{ payment_order.time_finished|date:'d M Y, h:i A' }}</td>
+        <td class="col2">{% language 'en' %}{{ payment_order.time_finished|date:'d M Y, h:i A' }}{% endlanguage %}</td>
     </tr>
 </table>
 <div id="qrcode-text">
