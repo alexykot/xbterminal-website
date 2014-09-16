@@ -126,19 +126,6 @@ def get_currency(country_code):
     return Currency.objects.get(name=currency_code)
 
 
-def verification_file_1_path_gen(instance, filename):
-    return os.path.join(str(instance.pk), "1__" + filename)
-
-
-def verification_file_2_path_gen(instance, filename):
-    return os.path.join(str(instance.pk), "2__" + filename)
-
-
-verification_file_storage = FileSystemStorage(
-    location=os.path.join(settings.MEDIA_ROOT, 'verification'),
-    base_url='/verification/')
-
-
 class MerchantAccount(models.Model):
 
     PAYMENT_PROCESSOR_CHOICES = [
@@ -179,18 +166,6 @@ class MerchantAccount(models.Model):
     gocoin_merchant_id = models.CharField(max_length=36, null=True)
 
     verification_status = models.CharField(_('KYC'), max_length=50, choices=VERIFICATION_STATUSES, default='unverified')
-    verification_file_1 = models.FileField(
-        _('Photo ID'),
-        storage=verification_file_storage,
-        upload_to=verification_file_1_path_gen,
-        blank=True,
-        null=True)
-    verification_file_2 = models.FileField(
-        _('Corporate or residence proof document'),
-        storage=verification_file_storage,
-        upload_to=verification_file_2_path_gen,
-        blank=True,
-        null=True)
 
     comments = models.TextField(blank=True)
 
@@ -253,13 +228,10 @@ class MerchantAccount(models.Model):
                 'tx_count': tx_count,
                 'tx_sum': 0 if tx_sum is None else tx_sum}
 
-    @property
-    def verification_file_1_name(self):
-        return get_verification_file_name(self.verification_file_1)
 
-    @property
-    def verification_file_2_name(self):
-        return get_verification_file_name(self.verification_file_2)
+verification_file_storage = FileSystemStorage(
+    location=os.path.join(settings.MEDIA_ROOT, 'verification'),
+    base_url='/verification/')
 
 
 class KYCDocument(models.Model):
@@ -290,7 +262,6 @@ class KYCDocument(models.Model):
     comment = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
-        unique_together = ('merchant', 'document_type', 'status')
         verbose_name = 'KYC document'
 
     def __unicode__(self):
