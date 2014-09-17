@@ -456,7 +456,7 @@ class VerificationView(TemplateResponseMixin, CabinetView):
         if all(kyc_documents):
             for document in kyc_documents:
                 document.gocoin_document_id = gocoin.upload_kyc_document(
-                    document, config.GOCOIN_API_KEY)
+                    document, config.GOCOIN_AUTH_TOKEN)
                 document.status = 'unverified'
                 document.save()
             merchant.verification_status = 'pending'

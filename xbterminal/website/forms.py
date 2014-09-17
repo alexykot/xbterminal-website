@@ -114,7 +114,7 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
         instance.language = get_language(instance.country.code)
         instance.currency = get_currency(instance.country.code)
         # Create GoCoin account
-        instance.gocoin_merchant_id = gocoin.create_merchant(instance, config.GOCOIN_API_KEY)
+        instance.gocoin_merchant_id = gocoin.create_merchant(instance, config.GOCOIN_AUTH_TOKEN)
         # Create new user
         password = get_user_model().objects.make_random_password()
         user = get_user_model().objects.create_user(
@@ -298,9 +298,9 @@ class ProfileForm(forms.ModelForm):
         instance.currency = get_currency(instance.country.code)
         if instance.gocoin_merchant_id:
             merchants = gocoin.get_merchants(config.GOCOIN_MERCHANT_ID,
-                                             config.GOCOIN_API_KEY)
+                                             config.GOCOIN_AUTH_TOKEN)
             if instance.gocoin_merchant_id in merchants:
-                gocoin.update_merchant(instance, config.GOCOIN_API_KEY)
+                gocoin.update_merchant(instance, config.GOCOIN_AUTH_TOKEN)
         if commit:
             instance.save()
         return instance

@@ -16,7 +16,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         for merchant in MerchantAccount.objects.filter(verification_status='pending'):
-            results = gocoin.check_kyc_documents(merchant, config.GOCOIN_API_KEY)
+            results = gocoin.check_kyc_documents(merchant, config.GOCOIN_AUTH_TOKEN)
             # Get latest documents
             documents = [
                 merchant.get_latest_kyc_document(1),
