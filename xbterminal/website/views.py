@@ -474,12 +474,12 @@ class VerificationFileView(View):
             models.MerchantAccount,
             pk=self.kwargs.get('merchant_pk'))
         # Parse file name
-        match = re.match(r"^(?P<type>[12])(__(?P<name>.+)$|$)",
+        match = re.match(r"^(?P<type>[12])(__.+$|$)",
                          self.kwargs.get('name'))
         if not match:
             raise Http404
         self.document_type = int(match.group('type'))
-        self.file_name = match.group('name')
+        self.file_name = match.group(0)
         return super(VerificationFileView, self).dispatch(*args, **kwargs)
 
     def get(self, *args, **kwargs):
@@ -489,7 +489,7 @@ class VerificationFileView(View):
         ):
             raise Http404
         for document in self.merchant.kycdocument_set.all():
-            if document.original_name == self.file_name:
+            if document.base_name == self.file_name:
                 return StreamingHttpResponse(
                     document.file.read(),
                     content_type='application/octet-stream')
