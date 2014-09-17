@@ -38,12 +38,11 @@ class Command(BaseCommand):
                 statuses.add(document.status)
             if statuses == {'verified'}:
                 # Both documents verified
-                send_kyc_notification(merchant, 'verified')
+                send_kyc_notification(merchant)
                 merchant.verification_status = 'verified'
                 merchant.save()
             elif statuses == {'denied'} or statuses == {'denied', 'verified'}:
                 # One or both documents denied
-                reason = ', '.join(doc.comment for doc in documents if doc.comment)
-                send_kyc_notification(merchant, 'denied', reason=reason)
+                send_kyc_notification(merchant)
                 merchant.verification_status = 'unverified'
                 merchant.save()

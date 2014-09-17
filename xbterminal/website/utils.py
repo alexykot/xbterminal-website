@@ -205,24 +205,16 @@ def send_registration_info(merchant, order=None):
     email.send(fail_silently=False)
 
 
-def send_kyc_notification(merchant, status, reason=None):
+def send_kyc_notification(merchant):
     """
     Send verification info to merchant
     Accepts:
         merchant: MerchantAccount instance
-        status: document status (verified or denied)
-        reason: reason for rejection (optional)
     """
-    assert status in ['verified', 'denied']
-    context = {
-        'merchant': merchant,
-        'status': status,
-        'reason': reason,
-    }
     email = create_html_message(
         _('Verification'),
         'email/verification.html',
-        context,
+        {'merchant': merchant},
         settings.DEFAULT_FROM_EMAIL,
         [merchant.contact_email])
     email.send(fail_silently=False)
