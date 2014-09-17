@@ -77,7 +77,6 @@ class PaymentOrderAdmin(admin.ModelAdmin):
         '__unicode__',
         'device_link',
         'merchant_link',
-        'transaction_link',
         'time_created',
         'receipt_key',
     ]
@@ -87,14 +86,6 @@ class PaymentOrderAdmin(admin.ModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         return [f.name for f in self.model._meta.fields]
-
-    def transaction_link(self, payment_order):
-        if not payment_order.transaction:
-            return u'-'
-        return url_to_object(payment_order.transaction)
-
-    transaction_link.allow_tags = True
-    transaction_link.short_description = 'transaction'
 
     def device_link(self, payment_order):
         return url_to_object(payment_order.device)
