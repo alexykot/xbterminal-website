@@ -49,19 +49,26 @@
                 Corporate documents must be a scanned image of an original paper document.<br>
                 Address document must be no more than three months old.</p>
             {% endblocktrans %}
+            {% if form_identity_doc %}
             <form class="upload-form" action="{% url 'website:verification_file' merchant_pk=user.merchant.pk name=1 %}" method="POST">
                 {% csrf_token %}
-                {% bootstrap_form identity_doc_form %}
+                {% bootstrap_form form_identity_doc %}
             </form>
+            {% endif %}
+            {% if form_corporate_doc %}
             <form class="upload-form" action="{% url 'website:verification_file' merchant_pk=user.merchant.pk name=2 %}" method="POST">
                 {% csrf_token %}
-                {% bootstrap_form corporate_doc_form %}
+                {% bootstrap_form form_corporate_doc %}
             </form>
+            {% endif %}
             <form id="verification-form" action="{% url 'website:verification' %}" method="POST">
                 {% csrf_token %}
                 <div class="row">
                     <div class="col-md-6"><button type="submit" class="btn btn-default pull-right">{% trans 'Submit' %}</button></div>
-                    <div class="col-md-6"><a href="{% url 'website:profile' %}" class="btn pull-left">{% trans 'Cancel' %}</a></div>
+                    <div class="col-md-6">
+                        <a href="{% url 'website:profile' %}" class="btn pull-left">{% trans 'Cancel' %}</a>
+                        <img id="loading-image" src="{% static 'img/loading.gif' %}">
+                    </div>
                 </div>
             </form>
         {% else %}

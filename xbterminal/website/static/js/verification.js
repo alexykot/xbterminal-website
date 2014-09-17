@@ -54,13 +54,18 @@ var Verification = (function () {
             $('.upload-form .progress').hide();
             $.ajax({
                 type: 'POST',
-                data: $(this).serialize()
+                data: $(this).serialize(),
+                beforeSend: function () {
+                    $('#loading-image').show();
+                }
             }).done(function (data) {
                 if (data.error) {
                     alert(data.error);
                 } else {
                     window.location.href = data.next;
                 }
+            }).always(function () {
+                $('#loading-image').hide();
             });
         });
     };

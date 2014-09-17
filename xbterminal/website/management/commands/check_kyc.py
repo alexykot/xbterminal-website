@@ -17,29 +17,33 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         for merchant in MerchantAccount.objects.filter(verification_status='pending'):
             results = gocoin.check_kyc_documents(merchant, config.GOCOIN_API_KEY)
+            # Get latest documents
             documents = [
-                merchant.get_kyc_document(1, 'unverified'),
-                merchant.get_kyc_document(2, 'unverified'),
+                merchant.get_latest_kyc_document(1),
+                merchant.get_latest_kyc_document(2),
             ]
-            # Parse results
+            # Parse results, update documents
+            statuses = set()
             for document in documents:
+                assert document is not None
                 for result in results:
-                    if result['id'] == document.gocoin_document_id:
+                    if (
+                        result['id'] == document.gocoin_document_id
+                        and result['status'] in ['denied', 'verified']
+                    ):
                         document.status = result['status']
                         document.comment = result['denied_memo']
+                        document.save()
                         break
-            if all(doc.status == 'verified' for doc in documents):
+                statuses.add(document.status)
+            if statuses == {'verified'}:
                 # Both documents verified
                 send_kyc_notification(merchant, 'verified')
-                for doc in documents:
-                    doc.save()
                 merchant.verification_status = 'verified'
                 merchant.save()
-            elif any(doc.status == 'denied' for doc in documents):
+            elif statuses == {'denied'} or statuses == {'denied', 'verified'}:
                 # One or both documents denied
                 reason = ', '.join(doc.comment for doc in documents if doc.comment)
                 send_kyc_notification(merchant, 'denied', reason=reason)
-                for doc in documents:
-                    doc.save()
                 merchant.verification_status = 'unverified'
                 merchant.save()

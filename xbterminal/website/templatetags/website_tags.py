@@ -22,11 +22,7 @@ def amount(value):
 
 @register.filter
 def kyc_document(merchant, document_type):
-    if merchant.verification_status == 'pending':
-        status = 'unverified'
-    elif merchant.verification_status == 'verified':
-        status = 'verified'
-    return merchant.get_kyc_document(int(document_type), status)
+    return merchant.get_latest_kyc_document(int(document_type))
 
 
 @register.simple_tag

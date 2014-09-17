@@ -200,11 +200,20 @@ class MerchantAccount(models.Model):
 
     def get_kyc_document(self, document_type, status):
         try:
-            return self.kycdocument_set.get(
-                document_type=document_type,
-                status=status)
+            return self.kycdocument_set.\
+                filter(document_type=document_type, status=status).\
+                latest('uploaded')
         except KYCDocument.DoesNotExist:
             return None
+
+    def get_latest_kyc_document(self, document_type):
+        """
+        Search for latest uploaded document
+        """
+        return self.kycdocument_set.\
+                filter(document_type=document_type).\
+                exclude(status='uploaded').\
+                latest('uploaded')
 
     @property
     def info(self):

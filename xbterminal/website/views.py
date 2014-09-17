@@ -432,22 +432,27 @@ class VerificationView(TemplateResponseMixin, CabinetView):
         context = self.get_context_data(**kwargs)
         merchant = self.request.user.merchant
         if merchant.verification_status == 'unverified':
-            context['identity_doc_form'] = forms.KYCDocumentUploadForm(
-                document_type=1,
-                instance=merchant.get_kyc_document(1, 'uploaded'))
-            context['corporate_doc_form'] = forms.KYCDocumentUploadForm(
-                document_type=2,
-                instance=merchant.get_kyc_document(2, 'uploaded'))
+            # Show upload form only for unverified documents
+            if not merchant.get_kyc_document(1, 'verified'):
+                context['form_identity_doc'] = forms.KYCDocumentUploadForm(
+                    document_type=1,
+                    instance=merchant.get_kyc_document(1, 'uploaded'))
+            if not merchant.get_kyc_document(2, 'verified'):
+                context['form_corporate_doc'] = forms.KYCDocumentUploadForm(
+                    document_type=2,
+                    instance=merchant.get_kyc_document(2, 'uploaded'))
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
         merchant = self.request.user.merchant
         if merchant.verification_status != 'unverified':
             raise Http404
-        kyc_documents = [
-            merchant.get_kyc_document(1, 'uploaded'),
-            merchant.get_kyc_document(2, 'uploaded'),
-        ]
+        # All unverified documents must be uploaded
+        kyc_documents = []
+        if not merchant.get_kyc_document(1, 'verified'):
+            kyc_documents.append(merchant.get_kyc_document(1, 'uploaded'))
+        if not merchant.get_kyc_document(2, 'verified'):
+            kyc_documents.append(merchant.get_kyc_document(2, 'uploaded'))
         if all(kyc_documents):
             for document in kyc_documents:
                 document.gocoin_document_id = gocoin.upload_kyc_document(
