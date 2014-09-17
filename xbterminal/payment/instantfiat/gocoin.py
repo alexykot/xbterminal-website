@@ -125,6 +125,7 @@ def update_merchant(merchant, api_key):
         'country_code': merchant.country.code,
         'postal_code': merchant.post_code,
         'contact_name': merchant.contact_name,
+        'contact_email': merchant.contact_email,
         'phone': merchant.contact_phone,
     }
     try:
