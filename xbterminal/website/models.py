@@ -489,6 +489,7 @@ class PaymentOrder(models.Model):
     merchant_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
     fee_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
     instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], null=True)
+    refund_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], null=True)
     fiat_currency = models.CharField(max_length=3)
     fiat_amount = models.DecimalField(max_digits=20, decimal_places=8)
     instantfiat_fiat_amount = models.DecimalField(max_digits=9, decimal_places=2)
@@ -503,9 +504,6 @@ class PaymentOrder(models.Model):
     incoming_tx_id = models.CharField(max_length=64, validators=[validate_transaction], null=True)
     outgoing_tx_id = models.CharField(max_length=64, validators=[validate_transaction], null=True)
     payment_type = models.CharField(max_length=10, choices=PAYMENT_TYPES)
-    refund_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], null=True)
-
-    transaction = models.OneToOneField(Transaction, null=True)
 
     time_created = models.DateTimeField()
     time_recieved = models.DateTimeField(null=True)
@@ -514,6 +512,7 @@ class PaymentOrder(models.Model):
     time_exchanged = models.DateTimeField(null=True)
     time_finished = models.DateTimeField(null=True)
 
+    transaction = models.OneToOneField(Transaction, null=True)
     receipt_key = models.CharField(max_length=32, unique=True, null=True)
 
     def __unicode__(self):

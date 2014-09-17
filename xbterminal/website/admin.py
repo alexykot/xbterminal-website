@@ -82,16 +82,11 @@ class PaymentOrderAdmin(admin.ModelAdmin):
         'receipt_key',
     ]
 
-    readonly_fields = [
-        'time_created',
-        'time_recieved',
-        'time_forwarded',
-        'time_broadcasted',
-        'time_exchanged',
-        'time_finished',
-        'payment_type',
-        'receipt_key',
-    ]
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def get_readonly_fields(self, request, obj=None):
+        return [f.name for f in self.model._meta.fields]
 
     def transaction_link(self, payment_order):
         if not payment_order.transaction:
