@@ -516,7 +516,7 @@ class PaymentOrder(models.Model):
     receipt_key = models.CharField(max_length=32, unique=True, null=True)
 
     def __unicode__(self):
-        return "Payment order {0}".format(self.uid)
+        return self.uid
 
     @property
     def expires(self):
