@@ -222,3 +222,15 @@ def validate_bitcoin_address(address, network):
         prefixes = bitcoin.TestNetParams.BASE58_PREFIXES.values()
     if address.nVersion not in prefixes:
         return "Invalid address for network {0}.".format(network)
+
+
+def get_tx_fee(inputs, outputs):
+    """
+    Calculate transaction fee
+    Accepts:
+        inputs: number of inputs,
+        outputs: number of outputs
+    """
+    tx_size = inputs * 148 + outputs * 34 + 10 + inputs
+    fee = payment.BTC_DEFAULT_FEE * (tx_size // 1024 + 1)
+    return fee

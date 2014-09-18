@@ -116,7 +116,7 @@ def prepare_payment(device, fiat_amount):
     details['btc_amount'] = (details['merchant_btc_amount'] +
                              details['instantfiat_btc_amount'] +
                              details['fee_btc_amount'] +
-                             BTC_DEFAULT_FEE)
+                             blockchain.get_tx_fee(1, 3))
     details['effective_exchange_rate'] = details['fiat_amount'] / details['btc_amount']
     # Prepare payment order
     now = timezone.localtime(timezone.now())
@@ -165,6 +165,7 @@ def wait_for_payment(payment_order_uid):
             for out in bc.get_unspent_outputs(payment_order.local_address):
                 inputs.append(out['outpoint'])
                 amount += out['amount']
+            amount -= blockchain.get_tx_fee(1, 1)
             reverse_tx = bc.create_raw_transaction(
                 inputs, {payment_order.refund_address: amount})
             reverse_tx_signed = bc.sign_raw_transaction(reverse_tx)
