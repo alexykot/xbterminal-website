@@ -150,7 +150,7 @@ class BlockChain(object):
         """
         result = self._proxy.signrawtransaction(transaction)
         if result.get('complete') != 1:
-            raise exceptions.InvalidTransaction
+            raise exceptions.InvalidTransaction(get_txid(transaction))
         return result['tx']
 
     def send_raw_transaction(self, transaction):

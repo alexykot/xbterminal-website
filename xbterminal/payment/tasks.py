@@ -156,7 +156,20 @@ def wait_for_payment(payment_order_uid):
     transactions = bc.get_unspent_transactions(
         CBitcoinAddress(payment_order.local_address))
     if transactions:
-        validate_payment(payment_order, transactions, 'bip0021')
+        try:
+            validate_payment(payment_order, transactions, 'bip0021')
+        except exceptions.InsufficientFunds:
+            # Reverse transaction
+            inputs = []
+            amount = BTC_DEC_PLACES
+            for out in bc.get_unspent_outputs(payment_order.local_address):
+                inputs.append(out['outpoint'])
+                amount += out['amount']
+            reverse_tx = bc.create_raw_transaction(
+                inputs, {payment_order.refund_address: amount})
+            reverse_tx_signed = bc.sign_raw_transaction(reverse_tx)
+            bc.send_raw_transaction(reverse_tx_signed)
+            logger.warning('payment returned ({0})'.format(payment_order.uid))
         django_rq.get_scheduler().cancel(rq.get_current_job())
 
 

@@ -25,6 +25,10 @@ class InvalidTransaction(PaymentError):
 
     message = "Invalid transaction"
 
+    def __init__(self, transaction_id):
+        super(InvalidTransaction, self).__init__()
+        self.message = "{0} {1}".format(self.message, transaction_id)
+
 
 class InsufficientFunds(PaymentError):
 
