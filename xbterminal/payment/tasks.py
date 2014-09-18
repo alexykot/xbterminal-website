@@ -208,7 +208,7 @@ def validate_payment(payment_order, transactions, payment_type):
         payment_order.refund_address = str(bc.get_tx_inputs(incoming_tx)[0]['address'])
     # Check amount
     btc_amount = BTC_DEC_PLACES
-    for output in blockchain.get_tx_outputs(incoming_tx):
+    for output in bc.get_tx_outputs(incoming_tx):
         if str(output['address']) == payment_order.local_address:
             btc_amount += output['amount']
     if btc_amount < payment_order.btc_amount:

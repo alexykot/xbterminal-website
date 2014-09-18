@@ -99,6 +99,21 @@ class BlockChain(object):
             inputs.append({'amount': amount, 'address': address})
         return inputs
 
+    def get_tx_outputs(self, transaction):
+        """
+        Return transaction outputs
+        Accepts:
+            transaction: CTransaction
+        Returns:
+            outputs: list of outputs
+        """
+        outputs = []
+        for txout in transaction.vout:
+            amount = Decimal(txout.nValue) / COIN
+            address = CBitcoinAddress.from_scriptPubKey(txout.scriptPubKey)
+            outputs.append({'amount': amount, 'address': address})
+        return outputs
+
     def create_raw_transaction(self, inputs, outputs):
         """
         Accepts:
@@ -184,22 +199,6 @@ def get_txid(transaction):
     serialized = transaction.serialize()
     h = Hash(serialized)
     return b2lx(h)
-
-
-def get_tx_outputs(transaction):
-    """
-    Return transaction outputs
-    Accepts:
-        transaction: CTransaction
-    Returns:
-        outputs: list of outputs
-    """
-    outputs = []
-    for txout in transaction.vout:
-        amount = Decimal(txout.nValue) / COIN
-        address = CBitcoinAddress.from_scriptPubKey(txout.scriptPubKey)
-        outputs.append({'amount': amount, 'address': address})
-    return outputs
 
 
 def validate_bitcoin_address(address, network):
