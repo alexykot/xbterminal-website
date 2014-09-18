@@ -11,7 +11,7 @@ from django.utils.encoding import force_text
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from website.files import get_verification_file_info
+from website.files import get_verification_file_name
 
 
 class ButtonGroupChoiceInput(RadioChoiceInput):
@@ -86,8 +86,8 @@ class FileWidget(FileInput):
         file_input = super(FileWidget, self).render(name, value, attrs)
         if value:
             list_item = format_html(
-                '<li>{0}<a class="glyphicon glyphicon-remove file-remove" data-path="{1}"></a></li>',
-                *get_verification_file_info(value))
+                '<li>{0}<a class="glyphicon glyphicon-remove file-remove"></a></li>',
+                get_verification_file_name(value))
         else:
             list_item = ''
         output = format_html(template, file_input, list_item)

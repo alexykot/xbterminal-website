@@ -203,3 +203,18 @@ def send_registration_info(merchant, order=None):
         settings.DEFAULT_FROM_EMAIL,
         settings.CONTACT_EMAIL_RECIPIENTS)
     email.send(fail_silently=False)
+
+
+def send_kyc_notification(merchant):
+    """
+    Send verification info to merchant
+    Accepts:
+        merchant: MerchantAccount instance
+    """
+    email = create_html_message(
+        _('Verification'),
+        'email/verification.html',
+        {'merchant': merchant},
+        settings.DEFAULT_FROM_EMAIL,
+        [merchant.contact_email])
+    email.send(fail_silently=False)

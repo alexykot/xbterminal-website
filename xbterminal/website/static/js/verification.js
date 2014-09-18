@@ -7,7 +7,7 @@ var Verification = (function () {
             dataType: 'json',
             dropZone: $(this).closest('.file-dd'),
             submit: function (e, data) {
-                Base.clearFormErrors();
+                Base.clearFormErrors($(this).closest('form'));
                 $(this).closest('.file-widget')
                     .find('.progress-bar').css('width', '0px')
                     .closest('.progress').slideDown();
@@ -19,13 +19,12 @@ var Verification = (function () {
             },
             done: function (e, data) {
                 if (data.result.errors) {
-                    Base.showFormErrors(data.result.errors);
+                    Base.showFormErrors($(this).closest('form'), data.result.errors);
                 } else {
                     var fileList = $(this).closest('.file-widget')
                         .find('.file-uploaded').empty();
                     var icon = $('<a/>', {
                         'class': 'glyphicon glyphicon-remove file-remove',
-                        'data-path': data.result.path,
                     })
                     $('<li/>').text(data.result.filename)
                         .append(icon).appendTo(fileList);
@@ -41,7 +40,7 @@ var Verification = (function () {
             var token = form.find('[name="csrfmiddlewaretoken"]').val();
             $.ajax({
                 type: 'DELETE',
-                url: form.attr('action') + button.data('path') + '/',
+                url: form.attr('action'),
                 headers: {
                     'X-CSRFToken': token
                 }
@@ -52,22 +51,21 @@ var Verification = (function () {
 
         $('#verification-form').on('submit', function (event) {
             event.preventDefault();
-            var form = $(this);
-            form.find('[name="submit"]').val(true);
-            form.find('.progress').hide();
+            $('.upload-form .progress').hide();
             $.ajax({
                 type: 'POST',
-                url: form.attr('action'),
-                data: form.serialize(),
+                data: $(this).serialize(),
                 beforeSend: function () {
-                    form.find('[name="submit"]').val(false);
+                    $('#loading-image').show();
                 }
             }).done(function (data) {
-                if (data.errors) {
-                    Base.showFormErrors(data.errors);
+                if (data.error) {
+                    alert(data.error);
                 } else {
                     window.location.href = data.next;
                 }
+            }).always(function () {
+                $('#loading-image').hide();
             });
         });
     };

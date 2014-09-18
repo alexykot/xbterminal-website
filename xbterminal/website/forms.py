@@ -25,10 +25,10 @@ from website.models import (
     Device,
     ReconciliationTime,
     Order,
+    KYCDocument,
     get_language,
     get_currency)
 from website.fields import BCAddressField
-from website.files import get_verification_file_info
 from website.widgets import (
     ButtonGroupRadioSelect,
     PercentWidget,
@@ -114,7 +114,7 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
         instance.language = get_language(instance.country.code)
         instance.currency = get_currency(instance.country.code)
         # Create GoCoin account
-        instance.gocoin_merchant_id = gocoin.create_merchant(instance, config.GOCOIN_API_KEY)
+        instance.gocoin_merchant_id = gocoin.create_merchant(instance, config.GOCOIN_AUTH_TOKEN)
         # Create new user
         password = get_user_model().objects.make_random_password()
         user = get_user_model().objects.create_user(
@@ -270,18 +270,19 @@ class ProfileForm(forms.ModelForm):
 
     class Meta:
         model = MerchantAccount
-        exclude = [
-            'user',
-            'business_address2',
-            'language',
-            'currency',
-            'payment_processor',
-            'api_key',
-            'gocoin_merchant_id',
-            'verification_status',
-            'verification_file_1',
-            'verification_file_2',
-            'comments',
+        fields = [
+            'company_name',
+            'trading_name',
+            'business_address',
+            'business_address1',
+            'town',
+            'county',
+            'post_code',
+            'country',
+            'contact_first_name',
+            'contact_last_name',
+            'contact_phone',
+            'contact_email',
         ]
         labels = {
             'business_address': _('Trading address'),
@@ -297,76 +298,28 @@ class ProfileForm(forms.ModelForm):
         instance.currency = get_currency(instance.country.code)
         if instance.gocoin_merchant_id:
             merchants = gocoin.get_merchants(config.GOCOIN_MERCHANT_ID,
-                                             config.GOCOIN_API_KEY)
+                                             config.GOCOIN_AUTH_TOKEN)
             if instance.gocoin_merchant_id in merchants:
-                gocoin.update_merchant(instance, config.GOCOIN_API_KEY)
+                gocoin.update_merchant(instance, config.GOCOIN_AUTH_TOKEN)
         if commit:
             instance.save()
         return instance
 
 
-class VerificationFileUploadForm(forms.ModelForm):
-    """
-    Verification file upload form
-    """
-    submit = forms.BooleanField(
-        widget=forms.HiddenInput,
-        required=False)
+class KYCDocumentUploadForm(forms.ModelForm):
 
     class Meta:
-        model = MerchantAccount
-        fields = [
-            'verification_file_1',
-            'verification_file_2',
-        ]
-        widgets = {
-            'verification_file_1': FileWidget,
-            'verification_file_2': FileWidget,
-        }
+        model = KYCDocument
+        fields = ['file']
+        widgets = {'file': FileWidget}
 
     def __init__(self, *args, **kwargs):
-        super(VerificationFileUploadForm, self).__init__(*args, **kwargs)
-        self._uploaded_file = None
-
-    def clean(self):
-        cleaned_data = super(VerificationFileUploadForm, self).clean()
-        file_1 = cleaned_data.get('verification_file_1')
-        file_2 = cleaned_data.get('verification_file_2')
-        if cleaned_data['submit']:
-            # Check both files
-            if not file_1:
-                self._errors['verification_file_1'] = self.error_class(
-                    [_("This field is required.")])
-            if not file_2:
-                self._errors['verification_file_2'] = self.error_class(
-                    [_("This field is required.")])
-        else:
-            # Get uploaded file type
-            if file_1 and isinstance(file_1, UploadedFile):
-                self._uploaded_file = 'verification_file_1'
-            elif file_2 and isinstance(file_2, UploadedFile):
-                self._uploaded_file = 'verification_file_2'
-            else:
-                self._errors['verification_file_1'] = self.error_class(
-                    [_('File upload failed.')])
-                self._errors['verification_file_2'] = self.error_class(
-                    [_('File upload failed.')])
-        return cleaned_data
-
-    @property
-    def uploaded_file_info(self):
-        if self._uploaded_file is None:
-            return None
-        file = getattr(self.instance, self._uploaded_file)
-        return get_verification_file_info(file)
-
-    def save(self, commit=True):
-        instance = super(VerificationFileUploadForm, self).save(commit=False)
-        if self.cleaned_data['submit']:
-            instance.verification_status = 'pending'
-        if commit:
-            instance.save()
-        return instance
+        document_type = kwargs.pop('document_type', None)
+        super(KYCDocumentUploadForm, self).__init__(*args, **kwargs)
+        if document_type == 1:
+            self.fields['file'].label = _('Photo ID')
+        elif document_type == 2:
+            self.fields['file'].label = _('Corporate or residence proof document')
 
 
 class DeviceForm(forms.ModelForm):

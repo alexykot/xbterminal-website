@@ -24,7 +24,7 @@ from website.validators import (
     validate_bitcoin_address,
     validate_transaction)
 from website.fields import FirmwarePathField
-from website.files import get_verification_file_name
+from website.files import get_verification_file_name, verification_file_path_gen
 
 from payment import blockr
 
@@ -126,19 +126,6 @@ def get_currency(country_code):
     return Currency.objects.get(name=currency_code)
 
 
-def verification_file_1_path_gen(instance, filename):
-    return os.path.join(str(instance.pk), "1__" + filename)
-
-
-def verification_file_2_path_gen(instance, filename):
-    return os.path.join(str(instance.pk), "2__" + filename)
-
-
-verification_file_storage = FileSystemStorage(
-    location=os.path.join(settings.MEDIA_ROOT, 'verification'),
-    base_url='/verification/')
-
-
 class MerchantAccount(models.Model):
 
     PAYMENT_PROCESSOR_CHOICES = [
@@ -179,18 +166,6 @@ class MerchantAccount(models.Model):
     gocoin_merchant_id = models.CharField(max_length=36, blank=True, null=True)
 
     verification_status = models.CharField(_('KYC'), max_length=50, choices=VERIFICATION_STATUSES, default='unverified')
-    verification_file_1 = models.FileField(
-        _('Photo ID'),
-        storage=verification_file_storage,
-        upload_to=verification_file_1_path_gen,
-        blank=True,
-        null=True)
-    verification_file_2 = models.FileField(
-        _('Corporate or residence proof document'),
-        storage=verification_file_storage,
-        upload_to=verification_file_2_path_gen,
-        blank=True,
-        null=True)
 
     comments = models.TextField(blank=True)
 
@@ -223,6 +198,23 @@ class MerchantAccount(models.Model):
                 and self.post_code
                 and self.contact_phone)
 
+    def get_kyc_document(self, document_type, status):
+        try:
+            return self.kycdocument_set.\
+                filter(document_type=document_type, status=status).\
+                latest('uploaded')
+        except KYCDocument.DoesNotExist:
+            return None
+
+    def get_latest_kyc_document(self, document_type):
+        """
+        Search for latest uploaded document
+        """
+        return self.kycdocument_set.\
+                filter(document_type=document_type).\
+                exclude(status='uploaded').\
+                latest('uploaded')
+
     @property
     def info(self):
         if self.verification_status == 'verified':
@@ -245,13 +237,54 @@ class MerchantAccount(models.Model):
                 'tx_count': tx_count,
                 'tx_sum': 0 if tx_sum is None else tx_sum}
 
-    @property
-    def verification_file_1_name(self):
-        return get_verification_file_name(self.verification_file_1)
+
+verification_file_storage = FileSystemStorage(
+    location=os.path.join(settings.MEDIA_ROOT, 'verification'),
+    base_url='/verification/')
+
+
+class KYCDocument(models.Model):
+
+    IDENTITY_DOCUMENT = 1
+    CORPORATE_DOCUMENT = 2
+
+    DOCUMENT_TYPES = [
+        (IDENTITY_DOCUMENT, 'IdentityDocument'),
+        (CORPORATE_DOCUMENT, 'CorporateDocument'),
+    ]
+
+    VERIFICATION_STATUSES = [
+        ('uploaded', _('Uploaded')),
+        ('unverified', _('Unverified')),
+        ('denied', _('Denied')),
+        ('verified', _('Verified')),
+    ]
+
+    merchant = models.ForeignKey(MerchantAccount)
+    document_type = models.IntegerField(choices=DOCUMENT_TYPES)
+    file = models.FileField(
+        storage=verification_file_storage,
+        upload_to=verification_file_path_gen)
+    uploaded = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=50, choices=VERIFICATION_STATUSES, default='uploaded')
+    gocoin_document_id = models.CharField(max_length=36, blank=True, null=True)
+    comment = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'KYC document'
+
+    def __unicode__(self):
+        return "{0} - {1}".format(
+            self.merchant.company_name,
+            self.get_document_type_display())
 
     @property
-    def verification_file_2_name(self):
-        return get_verification_file_name(self.verification_file_2)
+    def base_name(self):
+        return os.path.basename(self.file.name)
+
+    @property
+    def original_name(self):
+        return get_verification_file_name(self.file)
 
 
 def gen_device_key():

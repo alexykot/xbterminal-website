@@ -20,6 +20,11 @@ def amount(value):
     return '{0:g}'.format(float(value))
 
 
+@register.filter
+def kyc_document(merchant, document_type):
+    return merchant.get_latest_kyc_document(int(document_type))
+
+
 @register.simple_tag
 def qr_from_text(text, size):
     src = generate_qr_code(text, size)

@@ -125,6 +125,7 @@ def update_merchant(merchant, api_key):
         'country_code': merchant.country.code,
         'postal_code': merchant.post_code,
         'contact_name': merchant.contact_name,
+        'contact_email': merchant.contact_email,
         'phone': merchant.contact_phone,
     }
     try:
@@ -162,3 +163,51 @@ def get_merchants(merchant_id, api_key):
     if 'errors' in data:
         raise InstantFiatError(str(data))
     return [merchant['id'] for merchant in data]
+
+
+def upload_kyc_document(document, api_key):
+    """
+    Accepts:
+        document: KYCDocument instance
+        api_key: GoCoin token with access to merchant API
+    """
+    documents_url = "https://api.gocoin.com/api/v1/merchants/{0}/kyc_documents".\
+        format(document.merchant.gocoin_merchant_id)
+    try:
+        response = requests.post(
+            documents_url,
+            data={'type': document.get_document_type_display()},
+            files={'image': document.file},
+            auth=BearerAuth(api_key))
+        data = response.json()
+    except requests.exceptions.RequestException:
+        raise
+    except ValueError:
+        raise InstantFiatError(response.text)
+    if 'errors' in data:
+        raise InstantFiatError(str(data))
+    return data['id']
+
+
+def check_kyc_documents(merchant, api_key):
+    """
+    Accepts:
+        merchant: MerchantAccount instance
+        api_key: GoCoin token with access to merchant API
+    Returns:
+        list of pending documents and their statuses
+    """
+    documents_url = "https://api.gocoin.com/api/v1/merchants/{0}/kyc_documents".\
+        format(merchant.gocoin_merchant_id)
+    try:
+        response = requests.get(
+            documents_url,
+            auth=BearerAuth(api_key))
+        data = response.json()
+    except requests.exceptions.RequestException:
+        raise
+    except ValueError:
+        raise InstantFiatError(response.text)
+    if 'errors' in data:
+        raise InstantFiatError(str(data))
+    return data
