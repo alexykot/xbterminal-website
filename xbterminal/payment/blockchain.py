@@ -82,6 +82,23 @@ class BlockChain(object):
         transaction = self._proxy.getrawtransaction(lx(transaction_id))
         return transaction
 
+    def get_tx_inputs(self, transaction):
+        """
+        Return transaction inputs
+        Accepts:
+            transaction: CTransaction
+        Returns:
+            list of inputs (Decimal amount, CBitcoinAddress)
+        """
+        inputs = []
+        for txin in transaction.vin:
+            input_tx = self._proxy.getrawtransaction(txin.prevout.hash)
+            input_tx_out = input_tx.vout[txin.prevout.n]
+            amount = Decimal(input_tx_out.nValue) / COIN
+            address = CBitcoinAddress.from_scriptPubKey(input_tx_out.scriptPubKey)
+            inputs.append({'amount': amount, 'address': address})
+        return inputs
+
     def create_raw_transaction(self, inputs, outputs):
         """
         Accepts:
@@ -178,9 +195,9 @@ def get_tx_outputs(transaction):
         outputs: list of outputs
     """
     outputs = []
-    for output in transaction.vout:
-        amount = Decimal(output.nValue) / COIN
-        address = CBitcoinAddress.from_scriptPubKey(output.scriptPubKey)
+    for txout in transaction.vout:
+        amount = Decimal(txout.nValue) / COIN
+        address = CBitcoinAddress.from_scriptPubKey(txout.scriptPubKey)
         outputs.append({'amount': amount, 'address': address})
     return outputs
 

@@ -312,8 +312,7 @@ class PaymentResponseView(View):
         try:
             payment_ack = payment.tasks.parse_payment(payment_order, self.request.body)
         except Exception as error:
-            logger.warning("PaymentResponseView: validation error {0}".\
-                format(error.__class__.__name__))
+            logger.exception(error)
             return HttpResponseBadRequest()
         # Send PaymentACK
         response = HttpResponse(payment_ack,
