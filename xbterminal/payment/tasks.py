@@ -116,7 +116,7 @@ def prepare_payment(device, fiat_amount):
     details['btc_amount'] = (details['merchant_btc_amount'] +
                              details['instantfiat_btc_amount'] +
                              details['fee_btc_amount'] +
-                             BTC_DEFAULT_FEE)
+                             blockchain.get_tx_fee(1, 3))
     details['effective_exchange_rate'] = details['fiat_amount'] / details['btc_amount']
     # Prepare payment order
     now = timezone.localtime(timezone.now())
@@ -156,7 +156,21 @@ def wait_for_payment(payment_order_uid):
     transactions = bc.get_unspent_transactions(
         CBitcoinAddress(payment_order.local_address))
     if transactions:
-        validate_payment(payment_order, transactions, 'bip0021')
+        try:
+            validate_payment(payment_order, transactions, 'bip0021')
+        except exceptions.InsufficientFunds:
+            # Reverse transaction
+            inputs = []
+            amount = BTC_DEC_PLACES
+            for out in bc.get_unspent_outputs(payment_order.local_address):
+                inputs.append(out['outpoint'])
+                amount += out['amount']
+            amount -= blockchain.get_tx_fee(1, 1)
+            reverse_tx = bc.create_raw_transaction(
+                inputs, {payment_order.refund_address: amount})
+            reverse_tx_signed = bc.sign_raw_transaction(reverse_tx)
+            bc.send_raw_transaction(reverse_tx_signed)
+            logger.warning('payment returned ({0})'.format(payment_order.uid))
         django_rq.get_scheduler().cancel(rq.get_current_job())
 
 
@@ -176,7 +190,7 @@ def parse_payment(payment_order, payment_message):
          refund_addresses,
          payment_ack) = protocol.parse_payment(payment_message)
     except Exception as error:
-        raise exceptions.InvalidPayment('invalid payment message')
+        raise exceptions.InvalidPaymentMessage
     validate_payment(payment_order, transactions, 'bip0070')
     if refund_addresses:
         payment_order.refund_address = refund_addresses[0]
@@ -196,26 +210,27 @@ def validate_payment(payment_order, transactions, payment_type):
     assert payment_type in ['bip0021', 'bip0070']
     bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
     if len(transactions) != 1:
-        raise exceptions.InvalidPayment('expecting single transaction')
+        raise exceptions.PaymentError('Expecting single transaction')
     incoming_tx = transactions[0]
+    # Validate transaction
+    incoming_tx_signed = bc.sign_raw_transaction(incoming_tx)
+    # Save refund address (BIP0021)
+    if payment_type == 'bip0021':
+        payment_order.refund_address = str(bc.get_tx_inputs(incoming_tx)[0]['address'])
     # Check amount
     btc_amount = BTC_DEC_PLACES
-    for output in blockchain.get_tx_outputs(incoming_tx):
+    for output in bc.get_tx_outputs(incoming_tx):
         if str(output['address']) == payment_order.local_address:
             btc_amount += output['amount']
     if btc_amount < payment_order.btc_amount:
-        raise exceptions.InvalidPayment('insufficient funds')
-    # Validate transaction
-    try:
-        incoming_tx_signed = bc.sign_raw_transaction(incoming_tx)
-    except exceptions.InvalidTransaction:
-        raise exceptions.InvalidPayment('invalid transaction')
-    # Save incoming transaction id
+        raise exceptions.InsufficientFunds
+    # Broadcast transaction (BIP0070)
     if payment_type == 'bip0070':
         try:
             bc.send_raw_transaction(incoming_tx_signed)
         except JSONRPCException as error:
             logger.exception(error)
+    # Save incoming transaction id
     payment_order.incoming_tx_id = blockchain.get_txid(incoming_tx)
     payment_order.payment_type = payment_type
     payment_order.time_recieved = timezone.now()

@@ -11,7 +11,7 @@ from bitcoin.wallet import CBitcoinAddress
 from django.conf import settings
 
 import payment
-from payment.exceptions import NetworkError, InvalidTransaction
+from payment import exceptions
 
 
 class BlockChain(object):
@@ -82,6 +82,38 @@ class BlockChain(object):
         transaction = self._proxy.getrawtransaction(lx(transaction_id))
         return transaction
 
+    def get_tx_inputs(self, transaction):
+        """
+        Return transaction inputs
+        Accepts:
+            transaction: CTransaction
+        Returns:
+            list of inputs (Decimal amount, CBitcoinAddress)
+        """
+        inputs = []
+        for txin in transaction.vin:
+            input_tx = self._proxy.getrawtransaction(txin.prevout.hash)
+            input_tx_out = input_tx.vout[txin.prevout.n]
+            amount = Decimal(input_tx_out.nValue) / COIN
+            address = CBitcoinAddress.from_scriptPubKey(input_tx_out.scriptPubKey)
+            inputs.append({'amount': amount, 'address': address})
+        return inputs
+
+    def get_tx_outputs(self, transaction):
+        """
+        Return transaction outputs
+        Accepts:
+            transaction: CTransaction
+        Returns:
+            outputs: list of outputs
+        """
+        outputs = []
+        for txout in transaction.vout:
+            amount = Decimal(txout.nValue) / COIN
+            address = CBitcoinAddress.from_scriptPubKey(txout.scriptPubKey)
+            outputs.append({'amount': amount, 'address': address})
+        return outputs
+
     def create_raw_transaction(self, inputs, outputs):
         """
         Accepts:
@@ -118,7 +150,7 @@ class BlockChain(object):
         """
         result = self._proxy.signrawtransaction(transaction)
         if result.get('complete') != 1:
-            raise InvalidTransaction
+            raise exceptions.InvalidTransaction(get_txid(transaction))
         return result['tx']
 
     def send_raw_transaction(self, transaction):
@@ -169,22 +201,6 @@ def get_txid(transaction):
     return b2lx(h)
 
 
-def get_tx_outputs(transaction):
-    """
-    Return transaction outputs
-    Accepts:
-        transaction: CTransaction
-    Returns:
-        outputs: list of outputs
-    """
-    outputs = []
-    for output in transaction.vout:
-        amount = Decimal(output.nValue) / COIN
-        address = CBitcoinAddress.from_scriptPubKey(output.scriptPubKey)
-        outputs.append({'amount': amount, 'address': address})
-    return outputs
-
-
 def validate_bitcoin_address(address, network):
     """
     Validate address
@@ -206,3 +222,15 @@ def validate_bitcoin_address(address, network):
         prefixes = bitcoin.TestNetParams.BASE58_PREFIXES.values()
     if address.nVersion not in prefixes:
         return "Invalid address for network {0}.".format(network)
+
+
+def get_tx_fee(inputs, outputs):
+    """
+    Calculate transaction fee
+    Accepts:
+        inputs: number of inputs,
+        outputs: number of outputs
+    """
+    tx_size = inputs * 148 + outputs * 34 + 10 + inputs
+    fee = payment.BTC_DEFAULT_FEE * (tx_size // 1024 + 1)
+    return fee
