@@ -11,7 +11,7 @@ from bitcoin.wallet import CBitcoinAddress
 from django.conf import settings
 
 import payment
-from payment.exceptions import NetworkError, InvalidTransaction
+from payment import exceptions
 
 
 class BlockChain(object):
@@ -150,7 +150,7 @@ class BlockChain(object):
         """
         result = self._proxy.signrawtransaction(transaction)
         if result.get('complete') != 1:
-            raise InvalidTransaction
+            raise exceptions.InvalidTransaction
         return result['tx']
 
     def send_raw_transaction(self, transaction):

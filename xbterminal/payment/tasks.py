@@ -176,7 +176,7 @@ def parse_payment(payment_order, payment_message):
          refund_addresses,
          payment_ack) = protocol.parse_payment(payment_message)
     except Exception as error:
-        raise exceptions.InvalidPayment('invalid payment message')
+        raise exceptions.InvalidPaymentMessage
     validate_payment(payment_order, transactions, 'bip0070')
     if refund_addresses:
         payment_order.refund_address = refund_addresses[0]
@@ -196,13 +196,10 @@ def validate_payment(payment_order, transactions, payment_type):
     assert payment_type in ['bip0021', 'bip0070']
     bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
     if len(transactions) != 1:
-        raise exceptions.InvalidPayment('expecting single transaction')
+        raise exceptions.PaymentError('Expecting single transaction')
     incoming_tx = transactions[0]
     # Validate transaction
-    try:
-        incoming_tx_signed = bc.sign_raw_transaction(incoming_tx)
-    except exceptions.InvalidTransaction:
-        raise exceptions.InvalidPayment('invalid transaction')
+    incoming_tx_signed = bc.sign_raw_transaction(incoming_tx)
     # Save refund address (BIP0021)
     if payment_type == 'bip0021':
         payment_order.refund_address = str(bc.get_tx_inputs(incoming_tx)[0]['address'])
@@ -212,7 +209,7 @@ def validate_payment(payment_order, transactions, payment_type):
         if str(output['address']) == payment_order.local_address:
             btc_amount += output['amount']
     if btc_amount < payment_order.btc_amount:
-        raise exceptions.InvalidPayment('insufficient funds')
+        raise exceptions.InsufficientFunds
     # Broadcast transaction (BIP0070)
     if payment_type == 'bip0070':
         try:
