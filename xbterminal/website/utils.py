@@ -172,6 +172,16 @@ def generate_qr_code(text, size=4):
     return qr_code_src
 
 
+def send_error_message(payment_order=None):
+    email = create_html_message(
+        'XBTerminal - error',
+        'email/error.html',
+        {'payment_order': payment_order},
+        settings.DEFAULT_FROM_EMAIL,
+        settings.CONTACT_EMAIL_RECIPIENTS)
+    email.send(fail_silently=False)
+
+
 def send_invoice(order):
     message = create_html_message(
         _("Your XBTerminal Pre-Order"),

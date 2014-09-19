@@ -25,6 +25,7 @@ from payment import average, blockchain, instantfiat, exceptions
 from payment import blockr, protocol
 
 from website.models import PaymentOrder, Transaction
+from website.utils import send_error_message
 
 logger = logging.getLogger(__name__)
 
@@ -128,6 +129,7 @@ def prepare_payment(device, fiat_amount):
     # Schedule tasks
     run_periodic_task(wait_for_payment, [payment_order.uid])
     run_periodic_task(wait_for_validation, [payment_order.uid])
+    run_periodic_task(check_payment_status, [payment_order.uid], interval=60)
     return payment_order
 
 
@@ -355,6 +357,23 @@ def wait_for_exchange(payment_order_uid):
         payment_order.time_exchanged = timezone.now()
         payment_order.save()
         finalize_payment(payment_order)
+
+
+def check_payment_status(payment_order_uid):
+    """
+    Asynchronous task
+    """
+    try:
+        payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
+    except PaymentOrder.DoesNotExist:
+         # PaymentOrder deleted, cancel job
+        django_rq.get_scheduler().cancel(rq.get_current_job())
+        return
+    if payment_order.status in ['timeout', 'failed']:
+        django_rq.get_scheduler().cancel(rq.get_current_job())
+        send_error_message(payment_order)
+    elif payment_order.status == 'completed':
+        django_rq.get_scheduler().cancel(rq.get_current_job())
 
 
 def finalize_payment(payment_order):
