@@ -470,6 +470,11 @@ class Firmware(models.Model):
         return 'firmware %s' % self.version
 
 
+def gen_payment_uid():
+    bts = uuid.uuid4().bytes
+    return base58.encode(bts)[:6]
+
+
 class PaymentOrder(models.Model):
 
     PAYMENT_TYPES = [
@@ -480,7 +485,7 @@ class PaymentOrder(models.Model):
     uid = models.CharField(max_length=32,
                            editable=False,
                            unique=True,
-                           default=lambda: uuid.uuid4().hex)
+                           default=gen_payment_uid)
     device = models.ForeignKey(Device)
     request = models.BinaryField(editable=False)
 

@@ -207,7 +207,7 @@ class PaymentInitView(View):
             return HttpResponse(status=500)
         # Urls
         payment_request_url = self.request.build_absolute_uri(reverse(
-            'api:payment_request',
+            'api:short:payment_request',
             kwargs={'payment_uid': payment_order.uid}))
         payment_response_url = self.request.build_absolute_uri(reverse(
             'api:payment_response',

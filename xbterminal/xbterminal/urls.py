@@ -9,10 +9,10 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^api/', include('api.urls', namespace='api')),
     url(r'^django-rq/', include('django_rq.urls')),
     url(r'^oauth/token/', TokenView.as_view(), name='token'),
     url(r'^jsi18n/$', 'django.views.i18n.javascript_catalog', {'packages': ('xbterminal',)}),
+    url(r'', include('api.urls', namespace='api')),
 )
 
 urlpatterns += i18n_patterns('',
