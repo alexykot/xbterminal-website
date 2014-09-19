@@ -176,12 +176,10 @@ def construct_bitcoin_uri(address, amount_btc, name, *request_urls):
         bitcoin uri: string
     """
     amount_btc = amount_btc.quantize(Decimal('0.00000000'))
-    uri = "bitcoin:{0}?amount={1}&label={2}&message={3}".format(
+    uri = "bitcoin:{0}?amount={1}&message={2}".format(
         str(address),
         str(amount_btc),
-        urllib.quote(name),
-        urllib.quote("Payment to {0}".format(name))
-    )
+        urllib.quote("Pay {0}".format(name)))
     for idx, request_url in enumerate(request_urls):
         param_name = "r" if idx == 0 else "r{0}".format(idx)
         uri += "&{0}={1}".format(param_name, request_url)
