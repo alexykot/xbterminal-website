@@ -47,20 +47,23 @@ LOGGING = {
         },
     },
     'loggers': {
+        '': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+        },
         'django.request': {
-            'propagate': True,
+            'handlers': ['file'],
+            'level': 'WARNING',
+            'propagate': False,
         },
         'rq.worker': {
+            'handlers': ['file'],
             'level': 'WARNING',
-            'propagate': True,
+            'propagate': False,
         },
         'requests.packages.urllib3.connectionpool': {
             'level': 'WARNING',
         }
-    },
-    'root': {
-        'handlers': ['file'],
-        'level': 'DEBUG',
     },
 }
 
