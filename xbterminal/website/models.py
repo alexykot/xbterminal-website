@@ -482,7 +482,7 @@ class PaymentOrder(models.Model):
                            unique=True,
                            default=lambda: uuid.uuid4().hex)
     device = models.ForeignKey(Device)
-    request = models.BinaryField()
+    request = models.BinaryField(editable=False)
 
     # Payment details
     local_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
