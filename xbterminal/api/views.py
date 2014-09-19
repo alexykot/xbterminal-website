@@ -336,9 +336,7 @@ class PaymentCheckView(View):
             payment_order = PaymentOrder.objects.get(uid=self.kwargs.get('payment_uid'))
         except PaymentOrder.DoesNotExist:
             raise Http404
-        if payment_order.status != 'completed':
-            data = {'paid': 0}
-        else:
+        if payment_order.status in ['processed', 'completed']:
             receipt_url = self.request.build_absolute_uri(reverse(
                 'api:short:receipt',
                 kwargs={'payment_uid': payment_order.uid}))
@@ -350,6 +348,8 @@ class PaymentCheckView(View):
             }
             payment_order.time_finished = timezone.now()
             payment_order.save()
+        else:
+            data = {'paid': 0}
         response = HttpResponse(json.dumps(data),
                                 content_type='application/json')
         return response
