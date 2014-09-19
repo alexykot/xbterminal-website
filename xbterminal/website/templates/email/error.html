@@ -1,6 +1,7 @@
 {% extends "email/base.html" %}
 
 {% block content %}
+{% if traceback %}{{ traceback|linebreaks }}{% endif %}
 {% if payment_order %}
 Payment order - {{ payment_order.status }}:<br>
 UID: {{ payment_order.uid }}<br>

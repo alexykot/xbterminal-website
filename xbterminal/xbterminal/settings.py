@@ -85,6 +85,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
+    'website.views.ServerErrorMiddleware',
 )
 
 ROOT_URLCONF = 'xbterminal.urls'

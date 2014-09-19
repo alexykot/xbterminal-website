@@ -2,6 +2,7 @@ from decimal import Decimal
 import json
 import datetime
 import re
+import traceback
 
 from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, StreamingHttpResponse
@@ -26,6 +27,14 @@ from payment.blockchain import construct_bitcoin_uri
 from payment.instantfiat import gocoin
 
 from website import forms, models, utils
+
+
+class ServerErrorMiddleware(object):
+
+    def process_exception(self, request, exception):
+        if not isinstance(exception, Http404):
+            utils.send_error_message(tb=traceback.format_exc())
+        return None
 
 
 class LandingView(TemplateResponseMixin, View):

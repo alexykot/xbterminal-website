@@ -371,7 +371,7 @@ def check_payment_status(payment_order_uid):
         return
     if payment_order.status in ['timeout', 'failed']:
         django_rq.get_scheduler().cancel(rq.get_current_job())
-        send_error_message(payment_order)
+        send_error_message(payment_order=payment_order)
     elif payment_order.status == 'completed':
         django_rq.get_scheduler().cancel(rq.get_current_job())
 
