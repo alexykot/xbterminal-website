@@ -5,6 +5,7 @@ from django.forms.widgets import (
     ChoiceFieldRenderer,
     RadioChoiceInput,
     RendererMixin,
+    Widget,
     Select, TextInput, TimeInput,
     FileInput)
 from django.utils.encoding import force_text
@@ -12,6 +13,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 from website.files import get_verification_file_name
+from payment import blockr
 
 
 class ButtonGroupChoiceInput(RadioChoiceInput):
@@ -96,9 +98,9 @@ class FileWidget(FileInput):
 
 class ForeignKeyWidget(Select):
 
-    def __init__(self, attrs=None, choices=(), model=None):
-        super(ForeignKeyWidget, self).__init__(attrs=attrs, choices=choices)
-        self.model = model
+    def __init__(self, *args, **kwargs):
+        self.model = kwargs.pop('model', None)
+        super(ForeignKeyWidget, self).__init__(*args, **kwargs)
 
     def render(self, name, value, attrs=None):
         output = super(ForeignKeyWidget, self).render(name, value, attrs)
@@ -112,3 +114,44 @@ class ForeignKeyWidget(Select):
                                   instance_url,
                                   str(instance))
         return mark_safe(output)
+
+
+class BitcoinAddressWidget(Widget):
+
+    def __init__(self, *args, **kwargs):
+        self.network = kwargs.pop('network', None)
+        super(BitcoinAddressWidget, self).__init__(*args, **kwargs)
+
+    def render(self, name, value, attrs=None):
+        output = format_html('<a target="_blank" href="{0}">{1}</a>',
+                             blockr.get_address_url(value, self.network),
+                             value)
+        return mark_safe(output)
+
+
+class BitcoinTransactionWidget(Widget):
+
+    def __init__(self, *args, **kwargs):
+        self.network = kwargs.pop('network', None)
+        super(BitcoinTransactionWidget, self).__init__(*args, **kwargs)
+
+    def render(self, name, value, attrs=None):
+        output = format_html('<a target="_blank" href="{0}">{1}</a>',
+                             blockr.get_tx_url(value, self.network),
+                             value)
+        return mark_safe(output)
+
+
+class ReadOnlyAdminWidget(Widget):
+
+    def __init__(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance', None)
+        super(ReadOnlyAdminWidget, self).__init__(*args, **kwargs)
+
+    def render(self, name, value, attrs=None):
+        if self.instance:
+            try:
+                value = getattr(self.instance, 'get_{0}_display'.format(name))()
+            except AttributeError:
+                value = getattr(self.instance, name)
+        return str(value)

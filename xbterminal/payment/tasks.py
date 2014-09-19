@@ -25,6 +25,7 @@ from payment import average, blockchain, instantfiat, exceptions
 from payment import blockr, protocol
 
 from website.models import PaymentOrder, Transaction
+from website.utils import send_error_message
 
 logger = logging.getLogger(__name__)
 
@@ -128,6 +129,7 @@ def prepare_payment(device, fiat_amount):
     # Schedule tasks
     run_periodic_task(wait_for_payment, [payment_order.uid])
     run_periodic_task(wait_for_validation, [payment_order.uid])
+    run_periodic_task(check_payment_status, [payment_order.uid], interval=60)
     return payment_order
 
 
@@ -260,10 +262,10 @@ def wait_for_validation(payment_order_uid):
             # Payment already forwarded, skip
             return
         forward_transaction(payment_order)
-        run_periodic_task(wait_for_broadcast, [payment_order.uid], interval=10)
+        run_periodic_task(wait_for_broadcast, [payment_order.uid], interval=15)
         if payment_order.instantfiat_invoice_id is None:
-            # Finalize payment immediately
-            finalize_payment(payment_order)
+            # Payment finished
+            logger.info('payment order closed ({0})'.format(payment_order.uid))
         else:
             run_periodic_task(wait_for_exchange, [payment_order.uid])
 
@@ -349,18 +351,26 @@ def wait_for_exchange(payment_order_uid):
         payment_order.instantfiat_invoice_id)
     if invoice_paid:
         django_rq.get_scheduler().cancel(rq.get_current_job())
-        if payment_order.receipt_key is not None:
-            # Payment already finished, skip
+        if payment_order.time_exchanged is not None:
+            # Already exchanged, skip
             return
         payment_order.time_exchanged = timezone.now()
         payment_order.save()
-        finalize_payment(payment_order)
+        logger.info('payment order closed ({0})'.format(payment_order.uid))
 
 
-def finalize_payment(payment_order):
+def check_payment_status(payment_order_uid):
     """
-    Finalize payment, generate receipt key
+    Asynchronous task
     """
-    payment_order.receipt_key = uuid.uuid4().hex
-    payment_order.save()
-    logger.info('payment order closed ({0})'.format(payment_order.uid))
+    try:
+        payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
+    except PaymentOrder.DoesNotExist:
+         # PaymentOrder deleted, cancel job
+        django_rq.get_scheduler().cancel(rq.get_current_job())
+        return
+    if payment_order.status == 'failed':
+        django_rq.get_scheduler().cancel(rq.get_current_job())
+        send_error_message(payment_order=payment_order)
+    elif payment_order.status in ['timeout', 'completed']:
+        django_rq.get_scheduler().cancel(rq.get_current_job())

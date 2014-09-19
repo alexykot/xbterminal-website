@@ -180,8 +180,7 @@ def construct_bitcoin_uri(address, amount_btc, name, *request_urls):
         str(address),
         str(amount_btc),
         urllib.quote(name),
-        urllib.quote("Payment to {0}".format(name))
-    )
+        urllib.quote(name))
     for idx, request_url in enumerate(request_urls):
         param_name = "r" if idx == 0 else "r{0}".format(idx)
         uri += "&{0}={1}".format(param_name, request_url)

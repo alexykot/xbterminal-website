@@ -1,0 +1,12 @@
+{% extends "email/base.html" %}
+
+{% block content %}
+{% if traceback %}{{ traceback|linebreaks }}{% endif %}
+{% if payment_order %}
+Payment order - {{ payment_order.status }}:<br>
+UID: {{ payment_order.uid }}<br>
+Merchant: {{ payment_order.device.merchant }}<br>
+Amount: {{ payment_order.fiat_amount }} / {{ payment_order.btc_amount }}<br>
+Created: {{ payment_order.time_created }}
+{% endif %}
+{% endblock %}

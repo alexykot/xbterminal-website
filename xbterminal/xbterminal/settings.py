@@ -26,26 +26,50 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'simple': {
+        'default': {
             'format': '%(asctime)s %(name)s [%(levelname)s] :: %(message)s',
+        },
+        'short': {
+            'format': '%(asctime)s %(message)s',
         },
     },
     'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'short',
+        },
         'file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, '..', 'logs', 'django.log'),
-            'formatter': 'simple',
+            'formatter': 'default',
+        },
+        'rq': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, '..', 'logs', 'rq.log'),
+            'formatter': 'short',
         },
     },
     'loggers': {
-        'django.request': {
-            'propagate': True,
+        '': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
         },
-    },
-    'root': {
-        'handlers': ['file'],
-        'level': 'DEBUG',
+        'django.request': {
+            'handlers': ['file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'rq.worker': {
+            'handlers': ['rq'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'requests.packages.urllib3.connectionpool': {
+            'level': 'WARNING',
+        }
     },
 }
 
@@ -85,6 +109,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
+    'website.views.ServerErrorMiddleware',
 )
 
 ROOT_URLCONF = 'xbterminal.urls'

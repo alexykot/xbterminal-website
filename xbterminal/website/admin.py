@@ -5,6 +5,10 @@ from django.utils.html import format_html
 
 from website import forms, models
 from website.utils import generate_qr_code
+from website.widgets import (
+    BitcoinAddressWidget,
+    BitcoinTransactionWidget,
+    ReadOnlyAdminWidget)
 
 
 def url_to_object(obj):
@@ -77,29 +81,14 @@ class PaymentOrderAdmin(admin.ModelAdmin):
         '__unicode__',
         'device_link',
         'merchant_link',
-        'transaction_link',
         'time_created',
-        'receipt_key',
+        'status',
     ]
 
-    readonly_fields = [
-        'time_created',
-        'time_recieved',
-        'time_forwarded',
-        'time_broadcasted',
-        'time_exchanged',
-        'time_finished',
-        'payment_type',
-        'receipt_key',
-    ]
+    readonly_fields = ['status']
 
-    def transaction_link(self, payment_order):
-        if not payment_order.transaction:
-            return u'-'
-        return url_to_object(payment_order.transaction)
-
-    transaction_link.allow_tags = True
-    transaction_link.short_description = 'transaction'
+    def has_add_permission(self, request, obj=None):
+        return False
 
     def device_link(self, payment_order):
         return url_to_object(payment_order.device)
@@ -112,6 +101,20 @@ class PaymentOrderAdmin(admin.ModelAdmin):
 
     merchant_link.allow_tags = True
     merchant_link.short_description = 'merchant'
+
+    def get_form(self, request, obj, **kwargs):
+        form = super(PaymentOrderAdmin, self).get_form(request, obj, **kwargs)
+        network = obj.device.bitcoin_network
+        for field_name in form.base_fields:
+            field = form.base_fields[field_name]
+            if field_name.endswith('address'):
+                field.widget = BitcoinAddressWidget(network=network)
+            elif field_name.endswith('tx_id'):
+                field.widget = BitcoinTransactionWidget(network=network)
+            else:
+                field.widget = ReadOnlyAdminWidget(instance=obj)
+            field.required = False
+        return form
 
 
 class OrderAdmin(admin.ModelAdmin):

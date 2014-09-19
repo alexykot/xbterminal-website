@@ -349,7 +349,7 @@ class Device(models.Model):
         ordering = ['id']
 
     def __unicode__(self):
-        return 'Device: {0}'.format(self.name)
+        return self.name
 
     @property
     def payment_processing(self):
@@ -470,6 +470,11 @@ class Firmware(models.Model):
         return 'firmware %s' % self.version
 
 
+def gen_payment_uid():
+    bts = uuid.uuid4().bytes
+    return base58.encode(bts)[:6]
+
+
 class PaymentOrder(models.Model):
 
     PAYMENT_TYPES = [
@@ -480,15 +485,16 @@ class PaymentOrder(models.Model):
     uid = models.CharField(max_length=32,
                            editable=False,
                            unique=True,
-                           default=lambda: uuid.uuid4().hex)
+                           default=gen_payment_uid)
     device = models.ForeignKey(Device)
-    request = models.BinaryField()
+    request = models.BinaryField(editable=False)
 
     # Payment details
     local_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
     merchant_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
     fee_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
     instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], null=True)
+    refund_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], null=True)
     fiat_currency = models.CharField(max_length=3)
     fiat_amount = models.DecimalField(max_digits=20, decimal_places=8)
     instantfiat_fiat_amount = models.DecimalField(max_digits=9, decimal_places=2)
@@ -503,9 +509,6 @@ class PaymentOrder(models.Model):
     incoming_tx_id = models.CharField(max_length=64, validators=[validate_transaction], null=True)
     outgoing_tx_id = models.CharField(max_length=64, validators=[validate_transaction], null=True)
     payment_type = models.CharField(max_length=10, choices=PAYMENT_TYPES)
-    refund_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], null=True)
-
-    transaction = models.OneToOneField(Transaction, null=True)
 
     time_created = models.DateTimeField()
     time_recieved = models.DateTimeField(null=True)
@@ -514,10 +517,33 @@ class PaymentOrder(models.Model):
     time_exchanged = models.DateTimeField(null=True)
     time_finished = models.DateTimeField(null=True)
 
+    transaction = models.OneToOneField(Transaction, null=True)
     receipt_key = models.CharField(max_length=32, unique=True, null=True)
 
     def __unicode__(self):
-        return "Payment order {0}".format(self.uid)
+        return self.uid
+
+    @property
+    def status(self):
+        if self.time_finished:
+            return 'completed'
+        if not self.time_recieved:
+            if self.expires < timezone.now():
+                return 'timeout'
+            else:
+                return 'new'
+        else:
+            if self.expires < timezone.now():
+                return 'failed'
+            elif (
+                not self.instantfiat_invoice_id and self.time_forwarded
+                or self.instantfiat_invoice_id and self.time_exchanged
+            ):
+                return 'processed'
+            elif self.time_forwarded:
+                return 'forwarded'
+            else:
+                return 'recieved'
 
     @property
     def expires(self):
@@ -526,7 +552,7 @@ class PaymentOrder(models.Model):
     @property
     def receipt_url(self):
         domain = Site.objects.get_current().domain
-        path = reverse('api:receipt', kwargs={'key': self.receipt_key})
+        path = reverse('api:short:receipt', kwargs={'payment_uid': self.uid})
         return 'https://{0}{1}'.format(domain, path)
 
     @property
