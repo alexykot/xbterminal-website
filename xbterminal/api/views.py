@@ -331,11 +331,11 @@ class PaymentCheckView(View):
             payment_order = PaymentOrder.objects.get(uid=self.kwargs.get('payment_uid'))
         except PaymentOrder.DoesNotExist:
             raise Http404
-        if payment_order.receipt_key is None:
+        if payment_order.status != 'completed':
             data = {'paid': 0}
         else:
             receipt_url = self.request.build_absolute_uri(reverse(
-                'api:receipt',
+                'api:short:receipt',
                 kwargs={'key': payment_order.receipt_key}))
             qr_code_src = generate_qr_code(receipt_url, size=3)
             data = {

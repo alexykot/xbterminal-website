@@ -262,10 +262,12 @@ def wait_for_validation(payment_order_uid):
             # Payment already forwarded, skip
             return
         forward_transaction(payment_order)
-        run_periodic_task(wait_for_broadcast, [payment_order.uid], interval=10)
+        run_periodic_task(wait_for_broadcast, [payment_order.uid], interval=15)
         if payment_order.instantfiat_invoice_id is None:
             # Finalize payment immediately
-            finalize_payment(payment_order)
+            payment_order.receipt_key = uuid.uuid4().hex
+            payment_order.save()
+            logger.info('payment order closed ({0})'.format(payment_order.uid))
         else:
             run_periodic_task(wait_for_exchange, [payment_order.uid])
 
@@ -351,12 +353,13 @@ def wait_for_exchange(payment_order_uid):
         payment_order.instantfiat_invoice_id)
     if invoice_paid:
         django_rq.get_scheduler().cancel(rq.get_current_job())
-        if payment_order.receipt_key is not None:
-            # Payment already finished, skip
+        if payment_order.time_exchanged is not None:
+            # Already exchanged, skip
             return
         payment_order.time_exchanged = timezone.now()
+        payment_order.receipt_key = uuid.uuid4().hex
         payment_order.save()
-        finalize_payment(payment_order)
+        logger.info('payment order closed ({0})'.format(payment_order.uid))
 
 
 def check_payment_status(payment_order_uid):
@@ -374,12 +377,3 @@ def check_payment_status(payment_order_uid):
         send_error_message(payment_order=payment_order)
     elif payment_order.status == 'completed':
         django_rq.get_scheduler().cancel(rq.get_current_job())
-
-
-def finalize_payment(payment_order):
-    """
-    Finalize payment, generate receipt key
-    """
-    payment_order.receipt_key = uuid.uuid4().hex
-    payment_order.save()
-    logger.info('payment order closed ({0})'.format(payment_order.uid))

@@ -33,9 +33,12 @@ api_urls = patterns('api.views',
 )
 
 short_urls = patterns('api.views',
-   url(r'^pr/(?P<payment_uid>[0-9a-zA-Z]{6,32})$',
+    url(r'^pr/(?P<payment_uid>[0-9a-zA-Z]{6,32})$',
         views.PaymentRequestView.as_view(),
         name='payment_request'),
+    url(r'^rc/(?P<key>[0-9a-fA-F]{32})/$',
+        views.ReceiptView.as_view(),
+        name='receipt'),
 )
 
 urlpatterns = patterns('',
