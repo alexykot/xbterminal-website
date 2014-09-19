@@ -534,7 +534,7 @@ class PaymentOrder(models.Model):
                 return 'timeout'
         else:
             if (
-                not self.instantfiat_invoice_id and self.time_broadcasted
+                not self.instantfiat_invoice_id and self.time_forwarded
                 or self.instantfiat_invoice_id and self.time_exchanged
             ):
                 return 'completed'
