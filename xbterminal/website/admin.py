@@ -83,7 +83,6 @@ class PaymentOrderAdmin(admin.ModelAdmin):
         'merchant_link',
         'time_created',
         'status',
-        'receipt_key',
     ]
 
     readonly_fields = ['status']

@@ -552,7 +552,7 @@ class PaymentOrder(models.Model):
     @property
     def receipt_url(self):
         domain = Site.objects.get_current().domain
-        path = reverse('api:receipt', kwargs={'key': self.receipt_key})
+        path = reverse('api:short:receipt', kwargs={'payment_uid': self.uid})
         return 'https://{0}{1}'.format(domain, path)
 
     @property

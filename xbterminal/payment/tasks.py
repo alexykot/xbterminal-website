@@ -264,9 +264,7 @@ def wait_for_validation(payment_order_uid):
         forward_transaction(payment_order)
         run_periodic_task(wait_for_broadcast, [payment_order.uid], interval=15)
         if payment_order.instantfiat_invoice_id is None:
-            # Finalize payment immediately
-            payment_order.receipt_key = uuid.uuid4().hex
-            payment_order.save()
+            # Payment finished
             logger.info('payment order closed ({0})'.format(payment_order.uid))
         else:
             run_periodic_task(wait_for_exchange, [payment_order.uid])
@@ -357,7 +355,6 @@ def wait_for_exchange(payment_order_uid):
             # Already exchanged, skip
             return
         payment_order.time_exchanged = timezone.now()
-        payment_order.receipt_key = uuid.uuid4().hex
         payment_order.save()
         logger.info('payment order closed ({0})'.format(payment_order.uid))
 

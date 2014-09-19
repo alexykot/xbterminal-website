@@ -6,6 +6,7 @@ import os
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.db.models import Q
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.utils import timezone
 from django.views.generic import View
@@ -128,9 +129,13 @@ class ReceiptView(View):
     Download PDF receipt
     """
     def get(self, *args, **kwargs):
-        payment_order = get_object_or_404(
-            PaymentOrder,
-            receipt_key=self.kwargs.get('key'))
+        payment_uid = self.kwargs.get('payment_uid')
+        try:
+            payment_order = PaymentOrder.objects.get(
+                Q(uid=payment_uid) | Q(receipt_key=payment_uid),
+                time_finished__isnull=False)
+        except PaymentOrder.DoesNotExist:
+            raise Http404
         response = render_to_pdf(
             'pdf/receipt.html',
             {'payment_order': payment_order})
@@ -336,7 +341,7 @@ class PaymentCheckView(View):
         else:
             receipt_url = self.request.build_absolute_uri(reverse(
                 'api:short:receipt',
-                kwargs={'key': payment_order.receipt_key}))
+                kwargs={'payment_uid': payment_order.uid}))
             qr_code_src = generate_qr_code(receipt_url, size=3)
             data = {
                 'paid': 1,
