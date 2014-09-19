@@ -369,8 +369,8 @@ def check_payment_status(payment_order_uid):
          # PaymentOrder deleted, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
         return
-    if payment_order.status in ['timeout', 'failed']:
+    if payment_order.status == 'failed':
         django_rq.get_scheduler().cancel(rq.get_current_job())
         send_error_message(payment_order=payment_order)
-    elif payment_order.status == 'completed':
+    elif payment_order.status in ['timeout', 'completed']:
         django_rq.get_scheduler().cancel(rq.get_current_job())
