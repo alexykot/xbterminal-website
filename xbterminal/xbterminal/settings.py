@@ -45,6 +45,12 @@ LOGGING = {
             'filename': os.path.join(BASE_DIR, '..', 'logs', 'django.log'),
             'formatter': 'default',
         },
+        'rq': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, '..', 'logs', 'rq.log'),
+            'formatter': 'short',
+        },
     },
     'loggers': {
         '': {
@@ -57,7 +63,7 @@ LOGGING = {
             'propagate': False,
         },
         'rq.worker': {
-            'handlers': ['file'],
+            'handlers': ['rq'],
             'level': 'WARNING',
             'propagate': False,
         },
