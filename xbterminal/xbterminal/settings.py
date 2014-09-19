@@ -26,22 +26,37 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'simple': {
+        'default': {
             'format': '%(asctime)s %(name)s [%(levelname)s] :: %(message)s',
+        },
+        'short': {
+            'format': '%(asctime)s %(message)s',
         },
     },
     'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'short',
+        },
         'file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, '..', 'logs', 'django.log'),
-            'formatter': 'simple',
+            'formatter': 'default',
         },
     },
     'loggers': {
         'django.request': {
             'propagate': True,
         },
+        'rq.worker': {
+            'level': 'WARNING',
+            'propagate': True,
+        },
+        'requests.packages.urllib3.connectionpool': {
+            'level': 'WARNING',
+        }
     },
     'root': {
         'handlers': ['file'],
