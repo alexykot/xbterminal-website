@@ -98,7 +98,8 @@ INSTALLED_APPS = (
     'oauth2_provider',
 
     'website',
-    'api'
+    'api',
+    'blog',
 )
 
 MIDDLEWARE_CLASSES = (

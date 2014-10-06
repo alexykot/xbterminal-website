@@ -13,6 +13,7 @@ urlpatterns = patterns('',
     url(r'^oauth/token/', TokenView.as_view(), name='token'),
     url(r'^jsi18n/$', 'django.views.i18n.javascript_catalog', {'packages': ('xbterminal',)}),
     url(r'', include('api.urls', namespace='api')),
+    url(r'^blog/', include('blog.urls', namespace='blog')),
 )
 
 urlpatterns += i18n_patterns('',

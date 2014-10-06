@@ -1,0 +1,17 @@
+.header {
+    border-bottom: 1px solid #F0EEEF;
+}
+
+.post {
+    padding-top: 60px;
+}
+
+.post-pub-date {
+    color: #ccc;
+}
+
+.post-text {
+    font-size: 1.2em;
+    font-weight: 300;
+    margin-top: 10px;
+}
