@@ -6,7 +6,7 @@
     <div class="post">
         <h3><a href="{% url 'blog:post' post.id %}">{{ post.heading }}</a></h3>
         <div class="post-pub-date">{{ post.pub_date|date:'d M Y, h:i A' }}</div>
-        <div class="post-text">{{ post.text }}</div>
+        <div class="post-text">{{ post.text|safe }}</div>
     </div>
 {% endfor %}
 {% endblock %}

@@ -5,6 +5,6 @@
 <div class="post">
     <h3>{{ post.heading }}</h3>
     <div class="post-pub-date">{{ post.pub_date|date:'d M Y, h:i A' }}</div>
-    <div class="post-text">{{ post.text }}</div>
+    <div class="post-text">{{ post.text|safe }}</div>
 </div>
 {% endblock %}
