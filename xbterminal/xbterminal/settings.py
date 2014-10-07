@@ -96,9 +96,11 @@ INSTALLED_APPS = (
     'constance.backends.database',
     'django_rq',
     'oauth2_provider',
+    'ckeditor',
 
     'website',
-    'api'
+    'api',
+    'blog',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -163,7 +165,7 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/1.6/topics/files/
 
 MEDIA_ROOT = os.path.join(BASE_DIR, '..', 'media')
-# MEDIA_URL = '/media/'
+MEDIA_URL = '/media/'
 
 
 DEFAULT_FROM_EMAIL = "no-reply@xbterminal.io"
@@ -229,6 +231,10 @@ BITCOIND_AUTH = {
 OAUTH2_PROVIDER = {
     'ACCESS_TOKEN_EXPIRE_SECONDS': 100000000,
 }
+
+# CKEditor
+CKEDITOR_UPLOAD_PATH = "blog/"
+CKEDITOR_JQUERY_URL = "/static/lib/jquery.min.js"
 
 # Override default settings
 try:
