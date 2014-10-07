@@ -482,7 +482,8 @@ class PaymentOrder(models.Model):
         ('bip0070', _('BIP 0070 (Payment Protocol)')),
     ]
 
-    uid = models.CharField(max_length=32,
+    uid = models.CharField('UID',
+                           max_length=32,
                            editable=False,
                            unique=True,
                            default=gen_payment_uid)
@@ -521,7 +522,7 @@ class PaymentOrder(models.Model):
     receipt_key = models.CharField(max_length=32, unique=True, null=True)
 
     def __unicode__(self):
-        return self.uid
+        return str(self.pk)
 
     @property
     def status(self):
