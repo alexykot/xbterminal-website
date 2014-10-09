@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, StreamingHttpResponse
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.views.generic import View
@@ -444,6 +445,28 @@ class UpdateProfileView(TemplateResponseMixin, CabinetView):
                                  instance=self.request.user.merchant)
         if form.is_valid():
             device = form.save()
+            return redirect(reverse('website:profile'))
+        else:
+            context['form'] = form
+            return self.render_to_response(context)
+
+
+class ChangePasswordView(TemplateResponseMixin, CabinetView):
+    """
+    Change password
+    """
+    template_name = "cabinet/change_password.html"
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['form'] = PasswordChangeForm(self.request.user)
+        return self.render_to_response(context)
+
+    def post(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        form = PasswordChangeForm(self.request.user, self.request.POST)
+        if form.is_valid():
+            form.save()
             return redirect(reverse('website:profile'))
         else:
             context['form'] = form
