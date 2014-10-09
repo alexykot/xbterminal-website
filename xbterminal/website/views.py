@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, StreamingHttpResponse
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.views.generic import View
@@ -45,6 +46,14 @@ class LandingView(TemplateResponseMixin, View):
 
     def get(self, *args, **kwargs):
         return self.render_to_response({})
+
+
+def android_app(request):
+    return redirect('https://play.google.com/store/apps/details?id=ua.xbterminal.bitcoin')
+
+
+def ios_app(request):
+    return redirect('https://itunes.apple.com/us/app/xbterminal-bitcoin-pos/id909352652')
 
 
 class ContactView(TemplateResponseMixin, View):
@@ -162,6 +171,25 @@ class LogoutView(View):
     def get(self, *args, **kwargs):
         logout(self.request)
         return redirect(reverse('website:landing'))
+
+
+class ResetPasswordView(TemplateResponseMixin, View):
+    """
+    Reset password page
+    """
+    template_name = "website/reset_password.html"
+
+    def get(self, *args, **kwargs):
+        form = forms.ResetPasswordForm()
+        return self.render_to_response({'form': form})
+
+    def post(self, *args, **kwargs):
+        form = forms.ResetPasswordForm(self.request.POST)
+        if form.is_valid():
+            form.set_new_password()
+            return self.render_to_response({})
+        else:
+            return self.render_to_response({'form': form})
 
 
 class RegistrationView(TemplateResponseMixin, View):
@@ -425,6 +453,28 @@ class UpdateProfileView(TemplateResponseMixin, CabinetView):
                                  instance=self.request.user.merchant)
         if form.is_valid():
             device = form.save()
+            return redirect(reverse('website:profile'))
+        else:
+            context['form'] = form
+            return self.render_to_response(context)
+
+
+class ChangePasswordView(TemplateResponseMixin, CabinetView):
+    """
+    Change password
+    """
+    template_name = "cabinet/change_password.html"
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['form'] = PasswordChangeForm(self.request.user)
+        return self.render_to_response(context)
+
+    def post(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        form = PasswordChangeForm(self.request.user, self.request.POST)
+        if form.is_valid():
+            form.save()
             return redirect(reverse('website:profile'))
         else:
             context['form'] = form

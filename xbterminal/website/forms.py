@@ -66,6 +66,36 @@ class AuthenticationForm(DjangoAuthenticationForm):
         return email.lower()
 
 
+class ResetPasswordForm(forms.Form):
+
+    email = forms.EmailField()
+
+    def __init__(self, *args, **kwargs):
+        super(ResetPasswordForm, self).__init__(*args, **kwargs)
+        self._user = None
+
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        user_model = get_user_model()
+        try:
+            self._user = user_model.objects.get(email=email)
+        except user_model.DoesNotExist:
+            raise forms.ValidationError(_('No user with such email exists'))
+        return email
+
+    def set_new_password(self):
+        password = get_user_model().objects.make_random_password()
+        self._user.set_password(password)
+        email = create_html_message(
+            _("Reset password for xbterminal.io"),
+            'email/reset_password.html',
+            {'password': password},
+            settings.DEFAULT_FROM_EMAIL,
+            [self.cleaned_data['email']])
+        email.send(fail_silently=False)
+        self._user.save()
+
+
 class ContactForm(forms.Form):
     """
     Simple contact form
@@ -104,6 +134,13 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             'contact_last_name',
             'contact_email',
         ]
+
+    def clean(self):
+        """
+        Trim whitespaces for all fields
+        """
+        cleaned_data = super(SimpleMerchantRegistrationForm, self).clean()
+        return {key: val.strip() for key, val in cleaned_data.items()}
 
     def save(self, commit=True):
         """
@@ -291,6 +328,13 @@ class ProfileForm(forms.ModelForm):
             'contact_email': _('Email'),
             'contact_phone': _('Phone'),
         }
+
+    def clean(self):
+        """
+        Trim whitespaces for all fields
+        """
+        cleaned_data = super(ProfileForm, self).clean()
+        return {key: val.strip() for key, val in cleaned_data.items()}
 
     def save(self, commit=True):
         instance = super(ProfileForm, self).save(commit=False)

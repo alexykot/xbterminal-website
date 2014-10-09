@@ -79,6 +79,7 @@ class PaymentOrderAdmin(admin.ModelAdmin):
 
     list_display = [
         '__unicode__',
+        'uid',
         'device_link',
         'merchant_link',
         'time_created',

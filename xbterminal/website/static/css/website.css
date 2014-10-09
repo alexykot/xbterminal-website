@@ -128,6 +128,11 @@ label[for="id_county"]:after {
     margin-bottom: 10px;
 }
 
+.change-password {
+    display: block;
+    margin-bottom: 10px;
+}
+
 /* Device list */
 
 #devices {

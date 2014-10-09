@@ -208,7 +208,7 @@ class PaymentInitView(View):
         try:
             payment_order = payment.tasks.prepare_payment(
                 device, form.cleaned_data['amount'])
-        except payment.blockchain.NetworkError:
+        except payment.exceptions.NetworkError:
             return HttpResponse(status=500)
         # Urls
         payment_request_url = self.request.build_absolute_uri(reverse(
@@ -336,7 +336,7 @@ class PaymentCheckView(View):
             payment_order = PaymentOrder.objects.get(uid=self.kwargs.get('payment_uid'))
         except PaymentOrder.DoesNotExist:
             raise Http404
-        if payment_order.status in ['processed', 'completed']:
+        if payment_order.status in ['forwarded', 'processed', 'completed']:
             receipt_url = self.request.build_absolute_uri(reverse(
                 'api:short:receipt',
                 kwargs={'payment_uid': payment_order.uid}))

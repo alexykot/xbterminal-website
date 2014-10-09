@@ -32,7 +32,7 @@
                 </ul>
                 <div class="user-block">
                     {% if not user.merchant %}
-                    <div class="login-form-title">{% trans 'merchant login' %}</div>
+                    <a class="login-form-title" href="{% url 'website:login' %}">{% trans 'merchant login' %}</a>
                     <form class="login-form" action="{% url 'website:login' %}" method="POST">
                         {% csrf_token %}
                         <input type="text" name="username" placeholder="{% trans 'username' %}"><br>

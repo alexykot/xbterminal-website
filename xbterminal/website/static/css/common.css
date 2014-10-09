@@ -141,9 +141,14 @@ html, body {
 }
 
 .login-form-title {
+    display: block;
     color: #888;
     margin: 7px 0;
     width: 200px;
+}
+
+.login-form-title:hover {
+    text-decoration: none;
 }
 
 .login-form {

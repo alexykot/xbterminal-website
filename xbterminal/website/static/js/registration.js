@@ -97,7 +97,7 @@ var Registration = (function () {
     var setUpValidator = function () {
         $.validator.addMethod('emailUnique', function (value, element) {
             return this.optional(element) || validateOnServer('contact_email', value);
-        }, gettext('Merchant account with this contact email already exists. Please <a href="/login/">login</a> or <a>reset your password</a>.'));
+        }, gettext('Merchant account with this contact email already exists. Please <a href="/login/">login</a> or <a href="/reset_password/">reset your password</a>.'));
 
         $.validator.addMethod('companyNameUnique', function (value, element) {
             return this.optional(element) || validateOnServer('company_name', value);
@@ -110,6 +110,10 @@ var Registration = (function () {
         $.validator.addMethod('postCode', function (value, element) {
             return this.optional(element) || /^[a-zA-Z0-9\s-+]{2,10}$/.test(value);
         }, gettext('Please enter a valid post code.'));
+
+        var deliveryAddressDiffers = function (element) {
+            return $('[name="delivery_address_differs"]:checked');
+        };
 
         validator = $('#merchant-form').validate({
             showErrors: function (errorMap, errorList) {
@@ -128,12 +132,21 @@ var Registration = (function () {
                 contact_email: 'emailUnique',
                 contact_phone: 'phone',
                 post_code: 'postCode',
-                delivery_post_code: 'postCode',
                 quantity: {
                     number: true,
                     min: 1
                 },
-                terms: 'required'
+                terms: 'required',
+                delivery_address: {
+                    required: {depends: deliveryAddressDiffers}
+                },
+                delivery_town: {
+                    required: {depends: deliveryAddressDiffers}
+                },
+                delivery_post_code: {
+                    required: {depends: deliveryAddressDiffers},
+                    postCode: true
+                }
             },
             messages: {
                 terms: gettext('Please accept terms & conditions.')

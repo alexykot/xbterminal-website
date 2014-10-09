@@ -12,6 +12,7 @@
             </h3>
             {% endif %}
         </div>
+        <a class="change-password" href="{% url 'website:change_password' %}">Change password</a>
         <form id="profile-form" action="" method="post">
             {% csrf_token %}
             <div class="row">

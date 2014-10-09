@@ -35,4 +35,8 @@ server {
     location /static {
         alias   /repo_root/static;
     }
+
+    location /media/blog {
+        alias   /var/www/xbterminal.com/media/blog;
+    }
 }
