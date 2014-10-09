@@ -134,6 +134,13 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             'contact_email',
         ]
 
+    def clean(self):
+        """
+        Trim whitespaces for all fields
+        """
+        cleaned_data = super(SimpleMerchantRegistrationForm, self).clean()
+        return {key: val.strip() for key, val in cleaned_data.items()}
+
     def save(self, commit=True):
         """
         Create django user and merchant account
@@ -320,6 +327,13 @@ class ProfileForm(forms.ModelForm):
             'contact_email': _('Email'),
             'contact_phone': _('Phone'),
         }
+
+    def clean(self):
+        """
+        Trim whitespaces for all fields
+        """
+        cleaned_data = super(ProfileForm, self).clean()
+        return {key: val.strip() for key, val in cleaned_data.items()}
 
     def save(self, commit=True):
         instance = super(ProfileForm, self).save(commit=False)
