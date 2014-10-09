@@ -208,7 +208,7 @@ class PaymentInitView(View):
         try:
             payment_order = payment.tasks.prepare_payment(
                 device, form.cleaned_data['amount'])
-        except payment.blockchain.NetworkError:
+        except payment.exceptions.NetworkError:
             return HttpResponse(status=500)
         # Urls
         payment_request_url = self.request.build_absolute_uri(reverse(
