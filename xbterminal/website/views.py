@@ -48,6 +48,14 @@ class LandingView(TemplateResponseMixin, View):
         return self.render_to_response({})
 
 
+def android_app(request):
+    return redirect('https://play.google.com/store/apps/details?id=ua.xbterminal.bitcoin')
+
+
+def ios_app(request):
+    return redirect('https://itunes.apple.com/us/app/xbterminal-bitcoin-pos/id909352652')
+
+
 class ContactView(TemplateResponseMixin, View):
     """
     Contact form
