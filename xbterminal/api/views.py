@@ -336,7 +336,7 @@ class PaymentCheckView(View):
             payment_order = PaymentOrder.objects.get(uid=self.kwargs.get('payment_uid'))
         except PaymentOrder.DoesNotExist:
             raise Http404
-        if payment_order.status in ['processed', 'completed']:
+        if payment_order.status in ['forwarded', 'processed', 'completed']:
             receipt_url = self.request.build_absolute_uri(reverse(
                 'api:short:receipt',
                 kwargs={'payment_uid': payment_order.uid}))
