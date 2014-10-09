@@ -164,6 +164,25 @@ class LogoutView(View):
         return redirect(reverse('website:landing'))
 
 
+class ResetPasswordView(TemplateResponseMixin, View):
+    """
+    Reset password page
+    """
+    template_name = "website/reset_password.html"
+
+    def get(self, *args, **kwargs):
+        form = forms.ResetPasswordForm()
+        return self.render_to_response({'form': form})
+
+    def post(self, *args, **kwargs):
+        form = forms.ResetPasswordForm(self.request.POST)
+        if form.is_valid():
+            form.set_new_password()
+            return self.render_to_response({})
+        else:
+            return self.render_to_response({'form': form})
+
+
 class RegistrationView(TemplateResponseMixin, View):
     """
     Registration page
