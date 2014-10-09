@@ -93,6 +93,7 @@ class ResetPasswordForm(forms.Form):
             settings.DEFAULT_FROM_EMAIL,
             [self.cleaned_data['email']])
         email.send(fail_silently=False)
+        self._user.save()
 
 
 class ContactForm(forms.Form):
