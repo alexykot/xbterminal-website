@@ -69,6 +69,11 @@ def is_invoice_paid(invoice_id, api_key, merchant_id):
         return False
 
 
+class GoCoinNameAlreadyTaken(InstantFiatError):
+
+    message = 'Merchant name has already been taken'
+
+
 def create_merchant(merchant, api_key):
     """
     Accepts:
@@ -102,6 +107,8 @@ def create_merchant(merchant, api_key):
     except ValueError:
         raise InstantFiatError(response.text)
     if 'errors' in data:
+        if 'has already been taken' in data['errors'].get('name', []):
+            raise GoCoinNameAlreadyTaken()
         raise InstantFiatError(str(data))
     merchant_id = data['id']
     logger.info('gocoin - created merchant {0}'.format(merchant_id))

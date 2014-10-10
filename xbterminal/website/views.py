@@ -227,7 +227,15 @@ class RegistrationView(TemplateResponseMixin, View):
                 }
                 return HttpResponse(json.dumps(response),
                                     content_type='application/json')
-        merchant = form.save()
+        try:
+            merchant = form.save()
+        except gocoin.GoCoinNameAlreadyTaken:
+            response = {
+                'result': 'error',
+                'errors': {'company_name': ['This company is already registered.']},
+            }
+            return HttpResponse(json.dumps(response),
+                                content_type='application/json')
         if regtype == 'default':
             utils.send_registration_info(merchant)
             response = {
