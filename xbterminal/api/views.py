@@ -11,6 +11,7 @@ from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.utils import timezone
 from django.views.generic import View
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.translation import ugettext as _
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -25,6 +26,7 @@ from api.shortcuts import render_to_pdf
 import payment.tasks
 import payment.blockchain
 import payment.protocol
+from payment.instantfiat import gocoin
 
 logger = logging.getLogger(__name__)
 
@@ -44,9 +46,15 @@ class MerchantView(CSRFExemptMixin, View):
         """
         form = SimpleMerchantRegistrationForm(self.request.POST)
         if form.is_valid():
-            merchant = form.save()
-            send_registration_info(merchant)
-            data = {'merchant_id': merchant.pk}
+            try:
+                merchant = form.save()
+            except gocoin.GoCoinNameAlreadyTaken:
+                data = {
+                    'errors': {'company_name': [_('This company is already registered.')]},
+                }
+            else:
+                send_registration_info(merchant)
+                data = {'merchant_id': merchant.pk}
         else:
             data = {'errors': form.errors}
         response = HttpResponse(json.dumps(data),
