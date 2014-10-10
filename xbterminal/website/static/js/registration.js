@@ -260,7 +260,16 @@ var Registration = (function () {
                 if (data.result === 'ok') {
                     window.location.href = data.next;
                 } else {
-                    $('#back-step-1').click();
+                    var minStep = 3;
+                    for (var fieldName in data.errors) {
+                        var step = form.find('[name="' + fieldName + '"]')
+                            .closest('[id^="registration-step"]')
+                            .attr('id').slice(-1);
+                        if (step < minStep) {
+                            minStep = step;
+                        }
+                    }
+                    $('#back-step-' + minStep).click();
                     Base.showFormErrors($('#merchant-form'), data.errors);
                 }
             }).fail(function () {
