@@ -280,7 +280,10 @@ class TerminalOrderForm(forms.ModelForm):
                 if not cleaned_data.get(field_name):
                     self._errors[field_name] = self.error_class(
                         [_("This field is required.")])
-                    del cleaned_data[field_name]
+                    try:
+                        del cleaned_data[field_name]
+                    except KeyError:
+                        pass
         return cleaned_data
 
     def save(self, merchant, commit=True):
@@ -398,8 +401,11 @@ class DeviceForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super(DeviceForm, self).clean()
-        percent = cleaned_data['percent']
-        bitcoin_address = cleaned_data['bitcoin_address']
+        try:
+            percent = cleaned_data['percent']
+            bitcoin_address = cleaned_data['bitcoin_address']
+        except KeyError:
+            return cleaned_data
         if percent < 100 and not bitcoin_address:
             self._errors['bitcoin_address'] = self.error_class(["This field is required."])
             del cleaned_data['bitcoin_address']
