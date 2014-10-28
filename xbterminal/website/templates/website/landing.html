@@ -35,145 +35,47 @@
     </div>
     <div class="text-section">
         <div class="container">
-            <h2>{% trans 'Bitcoin payments made easy.' %}</h2>
-            <h3>{% trans 'XBTerminal is the fast, simple and cost effective way for your business to start accepting bitcoin today.' %}</h3>
-            <p class="large">
-                {% blocktrans %}
-                Our unique and innovative solutions allow you accept Bitcoin in a safe and risk free way. You are in control
-                of the payment process whether you want to keep the Bitcoins or receive local currency. Through our seamless
-                payment gateway integration we can <b>guarantee</b> a local currency return back to your business bank account.
-                {% endblocktrans %}
-            </p>
-            <h3>{% trans 'Three easy ways to accept digital currency.' %}</h3>
-            <div id="three-ways">
-                <a href="{% url 'website:landing' %}#terminal-section">{% trans 'terminal' %}</a>
-                <a href="{% url 'website:landing' %}#mobile-section">{% trans 'mobile' %}</a>
-                <a href="{% url 'website:landing' %}#web-section">{% trans 'online' %}</a>
-            </div>
+            <img src="{% static 'img/graphics_clock.png' %}" alt="image">
+
+            <h2>{% trans 'The fastest bitcoin transaction times with payments cleared in 1-3 seconds.' %}</h2>
         </div>
     </div>
-    <div id="terminal-section-wrapper">
-        <div
-            class="image-section"
-            id="terminal-section"
-            data-anchor-target="#terminal-section-wrapper"
-            data-0-bottom-top="background-position: center -800px;"
-            data-76-top-top="background-position: center 0px; position[begin]: absolute; top[begin]: 0px;"
-            data-75-top-top="position[begin]: fixed; top[begin]: 76px;"
-            data-76-top-bottom="background-position: center 0px; position[end]: absolute; top[end]: 2000px;"
-            data--656-top-bottom="background-position: center 400px;"
-        >
-            <div class="container">
-                <div id="terminal-image">
-                    <div class="section-image-wrapper">
-                        <img src="{% static 'img/l_terminal.png' %}" alt="image">
-                        <div
-                            id="terminal-screen"
-                            data-anchor-target="#terminal-section-wrapper"
-                            data-76-top-top="background-position[begin]: center 0px;"
-                            data--124-top-top="background-position[begin]: center -355px;"
-                            data--324-top-top="background-position[begin]: center -710px;"
-                            data--524-top-top="background-position[begin]: center -1065px;"
-                            data--724-top-top="background-position[begin]: center -1420px;"
-                            data--924-top-top="background-position[begin]: center -1775px;"
-                            data--1124-top-top="background-position[begin]: center -2130px;"
-                            data--1324-top-top="background-position[end]: center -2485px;"
-                        ></div>
-                        <div
-                            id="terminal-tooltip"
-                            data-anchor-target="#terminal-section-wrapper"
-                            data-0-bottom-top="display[begin]: none;"
-                            data-76-top-top="display[begin]: block;"
-                        >
-                            <span
-                                data-anchor-target="#terminal-section-wrapper"
-                                data-0-bottom-top="display[begin]: none;"
-                                data-76-top-top="display[begin]: block;"
-                                data--124-top-top="display[end]: none;"
-                            >{% trans 'The payment process is simple - Press any key to begin.' %}</span>
-                            <span
-                                data-anchor-target="#terminal-section-wrapper"
-                                data-0-bottom-top="display[begin]: none;"
-                                data--124-top-top="display[begin]: block;"
-                                data--924-top-top="display[end]: none;"
-                            >{% trans 'Enter the amount to be paid in local currency, then hit enter.' %}</span>
-                            <span
-                                data-anchor-target="#terminal-section-wrapper"
-                                data-0-bottom-top="display[begin]: none;"
-                                data--924-top-top="display[begin]: block;"
-                                data--1124-top-top="display[end]: none;"
-                            >{% trans 'Check amount and exchange rate.' %}</span>
-                            <span
-                                data-anchor-target="#terminal-section-wrapper"
-                                data-0-bottom-top="display[begin]: none;"
-                                data--1124-top-top="display[begin]: block;"
-                                data--1324-top-top="display[end]: none;"
-                            >{% trans 'Customer pays by NFC or QR Code.' %}</span>
-                            <span
-                                data-anchor-target="#terminal-section-wrapper"
-                                data-0-bottom-top="display[begin]: none;"
-                                data--1324-top-top="display[begin]: block;"
-                            >{% trans 'Transaction is cleared and an electronic receipt is downloaded.' %}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+
+    <div class="text-section-gray">
+        <div class="container">
+            <img src="{% static 'img/graphics_process.png' %}" alt="image">
+
+            <h2>{% trans 'Simple to use &mdash; your customer pays in bitcoin, you get cash in bank.' %}</h2>
         </div>
     </div>
+
     <div class="text-section">
         <div class="container">
-            <h2>{% trans 'XBTerminal' %}</h2>
-            <h3>{% trans 'XBTerminal is the only hardware Bitcoin POS product which can guarantee the local currency return on your sales.' %}</h3>
-            <p class="large">
-                {% blocktrans %}
-                The XBTerminal is our first generation Bitcoin Point of Sale device. It is simple and intuitive to operate
-                for all your staff. Customers may pay from any mobile Bitcoin wallet by NFC or QR code, payment from offline
-                mobile devices is supported by bluetooth. Transactions are sent directly to our servers for fast verification
-                allowing you to accept Bitcoin without delays at your point of sale. Our payment processor integration means
-                that even though you can accept Bitcoin, you don’t need to worry about exchanging it or selling it for local
-                currency, it can be converted instantly at the point of sale. This solution best suits brick and mortar retail
-                establishments with a fixed point of sale and multiple staff.<br>
-                <small>*Wifi required for operation.</small>
-                {% endblocktrans %}
-            </p>
-            <a id="terminal-pre-order" class="xbt-btn-primary" href="{% url 'website:registration' %}?regtype=terminal">{% trans 'pre order today' %}</a>
-            <form id="terminal-subscribe-form" action="{% url 'website:subscribe' %}" method="POST">
-                {% csrf_token %}
-                <input type="email" name="email" placeholder="{% trans 'your email' %}" required><!--
-                --><button type="submit" class="xbt-btn-secondary">{% trans 'submit' %}</button>
-                <img class="loading-image" src="{% static 'img/loading.gif' %}">
-            </form>
-            <h3 id="terminal-subscribe-message">{% trans 'Join the mailing list' %}</h3>
+            <img src="{% static 'img/graphics_payouts.png' %}" alt="image">
+
+            <h2>{% trans 'Next day payout in your local currency.*' %}</h2>
         </div>
     </div>
-    <div
-        class="image-section"
-        id="mobile-section"
-        data-0-bottom-top="background-position: center -800px;"
-        data-0-top-bottom="background-position: center 200px;"
-    >
+
+    <div class="text-section-gray">
         <div class="container">
-            <div id="mobile-image">
-                <div class="section-image-wrapper">
-                    <img src="{% static 'img/l_mobile.png' %}" alt="image">
-                </div>
-            </div>
+            <img src="{% static 'img/graphics_secure.png' %}" alt="image">
+
+            <h2>{% trans 'The most secure cryptographical payment system. No card fraud, no chargebacks ever!' %}</h2>
         </div>
     </div>
+
     <div class="text-section">
         <div class="container">
-            <h2>{% trans 'XBT Mobile' %}</h2>
-            <h3>{% trans 'XBT Mobile allows you to Start Accepting Bitcoin now with no upfront costs and the same great features as our dedicated hardware.' %}</h3>
-            <p class="large">
-                {% blocktrans %}
-                Our mobile app is just as easy to operate as our hardware product. Customers may pay from any mobile
-                Bitcoin wallet by NFC (Android only) or QR code, payment from offline mobile devices is supported by
-                Bluetooth (Android only). The payment process is fast and secure, replicating the features of our
-                dedicated hardware allowing you to dip your toe into the Bitcoin world without any upfront costs.
-                This solution best suits merchants without a fixed point of sale like pop-up or street traders, it’s
-                also a great starting point before deciding if you want a dedicated device for your business.
-                {% endblocktrans %}
-            </p>
+            <img src="{% static 'img/graphics_wifi.png' %}" alt="image">
+
+            <h2>{% trans 'Only a WiFi or mobile internet connection required.' %}</h2>
+        </div>
+    </div>
+
+    <div class="text-section-gray" id="mobile-section">
+        <div class="container">
+            <h2>{% trans 'Transform your mobile phone or tablet into next generation Point of Sale terminal with our Android and iOS apps.' %}</h2>
             <div class="row" id="mobile-downloads">
                 <div class="col-md-6" id="mobile-app-store">
                     <a href="https://itunes.apple.com/us/app/xbterminal-bitcoin-pos/id909352652" target="_blank"><img src="{% static 'img/app_store.png' %}"></a>
@@ -184,36 +86,23 @@
             </div>
         </div>
     </div>
-    <div
-        class="image-section"
-        id="web-section"
-        data-0-bottom-top="background-position: center -800px;"
-        data-0-top-bottom="background-position: center 200px;"
-    >
+
+    <div class="text-section" id="web-section">
         <div class="container">
-            <div id="web-image">
-                <div class="section-image-wrapper">
-                    <img src="{% static 'img/l_web.png' %}" alt="image">
+            <h2>{% trans 'Seamlessly integrate into your existing POS system.' %}</h2>
+            <div class="row">
+                <div class="col-md-4">
+                    <div id="web-vend-logo">
+                        <img src="{% static 'img/vend_logo.png' %}" alt="image">
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <h2>{% trans 'Web POS or bespoke integration' %}</h2>
                 </div>
             </div>
         </div>
     </div>
-    <div class="text-section">
-        <div class="container">
-            <h2>{% trans 'XBT Online POS' %}</h2>
-            <h3>{% trans 'XBT Online allows you to Start Accepting Bitcoin Now with no upfront costs and is accessible on any web-connected device.' %}</h3>
-            <p class="large">
-                {% blocktrans %}
-                Our web app is just as easy to operate as our hardware product. Customers may pay from any mobile Bitcoin
-                wallet by QR code.  The payment process is fast and secure, replicating the features of our dedicated
-                hardware allowing you to dip your toe into the Bitcoin world without any upfront costs. This solution best
-                suits merchants who already have a computer or tablet based system who cannot for whatever reason run
-                the mobile application.
-                {% endblocktrans %}
-            </p>
-            <a id="web-set-up" class="xbt-btn-primary" href="{% url 'website:registration' %}?regtype=web">{% trans 'set up' %}</a>
-        </div>
-    </div>
+
     <div id="social">
         <a href="https://twitter.com/xbterminal" target="_blank"><img src="{% static 'img/soc_twitter.png' %}" alt="twitter"></a>
         <a href="https://www.facebook.com/xbterminal.io" target="_blank"><img src="{% static 'img/soc_facebook.png' %}" alt="facebook"></a>

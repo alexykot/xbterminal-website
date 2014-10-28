@@ -5,6 +5,12 @@
     padding: 40px 0;
 }
 
+.text-section-gray {
+    text-align: center;
+    padding: 40px 0;
+    background-color: #EBEBEB;
+}
+
 .image-section {
     background-color: black;
     background-repeat: repeat;
@@ -245,8 +251,8 @@
 /* Mobile */
 
 #mobile-section {
-    background-image: url(../img/l_mobile_bg.jpg);
-    height: 665px;
+    /*background-image: url(../img/l_mobile_bg.jpg);*/
+    /*height: 665px;*/
 }
 
 #mobile-image {
@@ -292,8 +298,8 @@
 /* Web */
 
 #web-section {
-    background-image: url(../img/l_web_bg.jpg);
-    height: 663px;
+    /*background-image: url(../img/l_web_bg.jpg);*/
+    /*height: 663px;*/
 }
 
 #web-image {
@@ -302,6 +308,10 @@
 
 #web-image .section-image-wrapper {
     margin-top: 150px;
+}
+
+#web-vend-logo{
+    padding-top:50px;
 }
 
 #web-set-up {

@@ -25,7 +25,6 @@
                     --><li><a href="{% url 'website:profile' %}" {% if cabinet_page == 'profile' or cabinet_page == 'verification' %}class="active"{% endif %}>{% trans 'profile' %}</a></li>
                     {% else %}
                     <li><a href="{% url 'website:landing' %}#about-section">{% trans 'about' %}</a></li><!--
-                    --><li><a href="{% url 'website:landing' %}#terminal-section">{% trans 'terminal' %}</a></li><!--
                     --><li><a href="{% url 'website:landing' %}#mobile-section">{% trans 'mobile' %}</a></li><!--
                     --><li><a href="{% url 'website:landing' %}#web-section">{% trans 'web' %}</a></li>
                     {% endif %}
