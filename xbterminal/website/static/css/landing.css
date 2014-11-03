@@ -29,6 +29,22 @@
     right: -50%;
 }
 
+.content h2 {
+    color: #818181;
+    font-size: 3em;
+    font-weight: 300;
+    margin-top: 60px;
+}
+
+.fine-print{
+    color: #CCCCCC;
+    font-size: 1em;
+    font-weight: 300;
+}
+.fine-print:hover{
+    color: #666666;
+}
+
 /* About */
 
 #about-section {
@@ -251,8 +267,8 @@
 /* Mobile */
 
 #mobile-section {
-    /*background-image: url(../img/l_mobile_bg.jpg);*/
-    /*height: 665px;*/
+    background-image: url(../img/l_mobile_bg.jpg);
+    height: 665px;
 }
 
 #mobile-image {

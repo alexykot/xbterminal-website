@@ -37,7 +37,11 @@
         <div class="container">
             <img src="{% static 'img/graphics_clock.png' %}" alt="image">
 
-            <h2>{% trans 'The fastest bitcoin transaction times with payments cleared in 1-3 seconds.' %}</h2>
+            <h2>
+                {% trans 'The fastest bitcoin transaction times with' %}
+                <br>
+                {% trans 'payments cleared in 1-3 seconds.' %}
+            </h2>
         </div>
     </div>
 
@@ -45,7 +49,8 @@
         <div class="container">
             <img src="{% static 'img/graphics_process.png' %}" alt="image">
 
-            <h2>{% trans 'Simple to use &mdash; your customer pays in bitcoin, you get cash in bank.' %}</h2>
+            <h2>{% trans 'Simple to use &mdash; your customer pays in bitcoin, you get funds in bank, next day, in your local currency.*' %}</h2>
+            <p class="fine-print">{% trans '* estimated, please contact us for more details about your country.' %}</p>
         </div>
     </div>
 
@@ -53,7 +58,7 @@
         <div class="container">
             <img src="{% static 'img/graphics_payouts.png' %}" alt="image">
 
-            <h2>{% trans 'Next day payout in your local currency.*' %}</h2>
+            <h2>{% trans 'Simple pricing - 1% per transaction. <br> No minimal amounts, no hidden charges, no monthly fees.' %}</h2>
         </div>
     </div>
 
@@ -73,7 +78,22 @@
         </div>
     </div>
 
-    <div class="text-section-gray" id="mobile-section">
+    <div
+        class="image-section"
+        id="mobile-section"
+        data-0-bottom-top="background-position: center -800px;"
+        data-0-top-bottom="background-position: center -200px;"
+    >
+        <div class="container">
+            <div id="mobile-image">
+                <div class="section-image-wrapper">
+                    <img src="{% static 'img/l_mobile.png' %}" alt="image">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-section-gray">
         <div class="container">
             <h2>{% trans 'Transform your mobile phone or tablet into next generation Point of Sale terminal with our Android and iOS apps.' %}</h2>
             <div class="row" id="mobile-downloads">
