@@ -171,7 +171,7 @@ class MerchantAccount(models.Model):
 
     def __unicode__(self):
         if self.trading_name:
-            return '{0} ({1})'.format(self.company_name, self.trading_name)
+            return u'{0} ({1})'.format(self.company_name, self.trading_name)
         else:
             return self.company_name
 
