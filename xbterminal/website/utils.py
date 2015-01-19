@@ -228,3 +228,18 @@ def send_kyc_notification(merchant):
         settings.DEFAULT_FROM_EMAIL,
         [merchant.contact_email])
     email.send(fail_silently=False)
+
+
+def send_kyc_admin_notification(merchant):
+    """
+    Send verification info to merchant
+    Accepts:
+        merchant: MerchantAccount instance
+    """
+    email = create_html_message(
+        _('KYC status changed'),
+        'email/admin_kyc_notification.html',
+        {'merchant': merchant},
+        settings.DEFAULT_FROM_EMAIL,
+        settings.CONTACT_EMAIL_RECIPIENTS)
+    email.send(fail_silently=False)

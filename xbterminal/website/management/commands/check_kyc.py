@@ -6,7 +6,7 @@ from django.utils import timezone
 from constance import config
 
 from website.models import MerchantAccount
-from website.utils import send_kyc_notification
+from website.utils import send_kyc_notification, send_kyc_admin_notification
 from payment.instantfiat import gocoin
 
 logger = logging.getLogger(__name__)
@@ -39,10 +39,12 @@ class Command(BaseCommand):
             if statuses == {'verified'}:
                 # Both documents verified
                 send_kyc_notification(merchant)
+                send_kyc_admin_notification(merchant)
                 merchant.verification_status = 'verified'
                 merchant.save()
             elif statuses == {'denied'} or statuses == {'denied', 'verified'}:
                 # One or both documents denied
                 send_kyc_notification(merchant)
+                send_kyc_admin_notification(merchant)
                 merchant.verification_status = 'unverified'
                 merchant.save()
