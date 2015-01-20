@@ -12,9 +12,9 @@ from website.widgets import (
 
 
 def url_to_object(obj):
-    url_name = 'admin:{0}_{1}_change'.format(
+    url_name = u'admin:{0}_{1}_change'.format(
         obj._meta.app_label, obj._meta.module_name)
-    return format_html('<a href="{0}">{1}</a>',
+    return format_html(u'<a href="{0}">{1}</a>',
                        reverse(url_name, args=[obj.pk]),
                        str(obj))
 
