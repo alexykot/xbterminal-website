@@ -3,6 +3,7 @@ import os
 import smtplib
 
 from django import forms
+from django.core.cache import cache
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import (
@@ -111,9 +112,25 @@ class FeedbackForm(forms.Form):
     """
     Simple feedback form
     """
+    CACHE_KEY_TEMPLATE = 'form-feedback-{ip}'
+
     email = forms.EmailField()
     message = forms.CharField(widget=forms.Textarea)
     captcha = ReCaptchaField(attrs={'theme' : 'clean'})
+
+    def __init__(self, *args, **kwargs):
+        user_ip = kwargs.pop('user_ip')
+        super(FeedbackForm, self).__init__(*args, **kwargs)
+        if user_ip:
+            cache_key = self.CACHE_KEY_TEMPLATE.format(ip=user_ip)
+            submit_count = cache.get(cache_key, 0)
+            if submit_count < 3:
+                # Dont show captcha for first 3 submits
+                del self.fields['captcha']
+            if self.is_bound:
+                # Update counter when form is submitted
+                submit_count += 1
+                cache.set(cache_key, submit_count, timeout=None)
 
 
 class SubscribeForm(forms.Form):
