@@ -97,6 +97,7 @@ INSTALLED_APPS = (
     'django_rq',
     'oauth2_provider',
     'ckeditor',
+    'captcha',
 
     'website',
     'api',

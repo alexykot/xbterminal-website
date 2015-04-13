@@ -15,6 +15,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from constance import config
+from captcha.fields import ReCaptchaField
 
 from payment import preorder
 from payment.instantfiat import gocoin
@@ -112,6 +113,7 @@ class FeedbackForm(forms.Form):
     """
     email = forms.EmailField()
     message = forms.CharField(widget=forms.Textarea)
+    captcha = ReCaptchaField(attrs={'theme' : 'clean'})
 
 
 class SubscribeForm(forms.Form):
