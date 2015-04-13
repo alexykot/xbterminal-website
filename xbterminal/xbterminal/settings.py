@@ -142,6 +142,24 @@ DATABASES = {
     }
 }
 
+# Cache & RQ
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/0',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
+
+RQ_QUEUES = {
+    'default': {
+        'USE_REDIS_CACHE': 'default',
+    }
+}
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/
 
@@ -205,14 +223,6 @@ CONSTANCE_CONFIG = {
     'GOCOIN_MERCHANT_ID': ('', 'GoCoin Merchant ID'),
     'GOCOIN_AUTH_TOKEN': ('', 'GoCoin access token'),
     'TERMINAL_PRICE': (200.00, 'Terminal price'),
-}
-
-RQ_QUEUES = {
-    'default': {
-        'HOST': 'localhost',
-        'PORT': 6379,
-        'DB': 1,
-    },
 }
 
 REPORTS_PATH = os.path.join(BASE_DIR, '..', 'reports')
