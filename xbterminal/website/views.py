@@ -64,11 +64,12 @@ class ContactView(TemplateResponseMixin, View):
     template_name = "website/contact.html"
 
     def get(self, *args, **kwargs):
-        form = forms.ContactForm()
+        form = forms.ContactForm(user_ip=get_real_ip(self.request))
         return self.render_to_response({'form': form})
 
     def post(self, *args, **kwargs):
-        form = forms.ContactForm(self.request.POST)
+        form = forms.ContactForm(self.request.POST,
+                                 user_ip=get_real_ip(self.request))
         if form.is_valid():
             email = utils.create_html_message(
                 _("Message from xbterminal.io"),
