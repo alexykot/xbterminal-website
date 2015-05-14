@@ -147,6 +147,8 @@ def update_merchant(merchant, api_key):
     except ValueError:
         raise InstantFiatError(response.text)
     if 'errors' in data:
+        if 'has already been taken' in data['errors'].get('name', []):
+            raise GoCoinNameAlreadyTaken()
         raise InstantFiatError(str(data))
     logger.info('gocoin - updated merchant {0}'.format(data['id']))
 

@@ -235,7 +235,7 @@ class RegistrationView(TemplateResponseMixin, View):
         except gocoin.GoCoinNameAlreadyTaken:
             response = {
                 'result': 'error',
-                'errors': {'company_name': ['This company is already registered.']},
+                'errors': {'company_name': [_('This company is already registered.')]},
             }
             return HttpResponse(json.dumps(response),
                                 content_type='application/json')
@@ -463,7 +463,13 @@ class UpdateProfileView(TemplateResponseMixin, CabinetView):
         form = forms.ProfileForm(self.request.POST,
                                  instance=self.request.user.merchant)
         if form.is_valid():
-            device = form.save()
+            try:
+                form.save()
+            except gocoin.GoCoinNameAlreadyTaken:
+                form._errors['company_name'] = form.error_class(
+                        [_("This company is already registered.")])
+                context['form'] = form
+                return self.render_to_response(context)
             return redirect(reverse('website:profile'))
         else:
             context['form'] = form
