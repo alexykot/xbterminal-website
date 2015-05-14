@@ -2,6 +2,7 @@
 settings_server.py
 local_settings.py
 venv
+.vagrant
 /static
 /media
 fabfile/deploy.py

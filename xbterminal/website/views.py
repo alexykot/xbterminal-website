@@ -23,6 +23,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext as _
 
 from constance import config
+from ipware.ip import get_real_ip
 
 from payment.blockchain import construct_bitcoin_uri
 from payment.instantfiat import gocoin
@@ -63,11 +64,12 @@ class ContactView(TemplateResponseMixin, View):
     template_name = "website/contact.html"
 
     def get(self, *args, **kwargs):
-        form = forms.ContactForm()
+        form = forms.ContactForm(user_ip=get_real_ip(self.request))
         return self.render_to_response({'form': form})
 
     def post(self, *args, **kwargs):
-        form = forms.ContactForm(self.request.POST)
+        form = forms.ContactForm(self.request.POST,
+                                 user_ip=get_real_ip(self.request))
         if form.is_valid():
             email = utils.create_html_message(
                 _("Message from xbterminal.io"),
@@ -88,11 +90,12 @@ class FeedbackView(TemplateResponseMixin, View):
     template_name = "website/feedback.html"
 
     def get(self, *args, **kwargs):
-        form = forms.FeedbackForm()
+        form = forms.FeedbackForm(user_ip=get_real_ip(self.request))
         return self.render_to_response({'form': form})
 
     def post(self, *args, **kwargs):
-        form = forms.FeedbackForm(self.request.POST)
+        form = forms.FeedbackForm(self.request.POST,
+                                  user_ip=get_real_ip(self.request))
         if form.is_valid():
             email = utils.create_html_message(
                 _("Message from xbterminal.io"),

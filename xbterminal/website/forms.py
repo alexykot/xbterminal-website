@@ -3,6 +3,7 @@ import os
 import smtplib
 
 from django import forms
+from django.core.cache import cache
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import (
@@ -15,6 +16,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from constance import config
+from captcha.fields import ReCaptchaField
 
 from payment import preorder
 from payment.instantfiat import gocoin
@@ -96,22 +98,51 @@ class ResetPasswordForm(forms.Form):
         self._user.save()
 
 
-class ContactForm(forms.Form):
+class CaptchaMixin(object):
+    """
+    Adds captcha to form
+    """
+    MAX_SUBMISSIONS = 3
+    CACHE_KEY_TEMPLATE = 'form-{ip}'
+
+    def __init__(self, *args, **kwargs):
+        user_ip = kwargs.pop('user_ip')
+        super(CaptchaMixin, self).__init__(*args, **kwargs)
+        assert 'captcha' in self.fields
+        if user_ip:
+            cache_key = self.CACHE_KEY_TEMPLATE.format(ip=user_ip)
+            submit_count = cache.get(cache_key, 0)
+            if submit_count < self.MAX_SUBMISSIONS:
+                # Dont show captcha for first N submits
+                del self.fields['captcha']
+            if self.is_bound:
+                # Update counter when form is submitted
+                submit_count += 1
+                cache.set(cache_key, submit_count, timeout=None)
+
+
+class ContactForm(CaptchaMixin, forms.Form):
     """
     Simple contact form
     """
+    CACHE_KEY_TEMPLATE = 'form-contact-{ip}'
+
     email = forms.EmailField()
     name = forms.CharField()
     company_name = forms.CharField(required=False)
     message = forms.CharField(widget=forms.Textarea)
+    captcha = ReCaptchaField(attrs={'theme' : 'clean'})
 
 
-class FeedbackForm(forms.Form):
+class FeedbackForm(CaptchaMixin, forms.Form):
     """
     Simple feedback form
     """
+    CACHE_KEY_TEMPLATE = 'form-feedback-{ip}'
+
     email = forms.EmailField()
     message = forms.CharField(widget=forms.Textarea)
+    captcha = ReCaptchaField(attrs={'theme' : 'clean'})
 
 
 class SubscribeForm(forms.Form):

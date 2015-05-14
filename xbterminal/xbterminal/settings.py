@@ -97,6 +97,7 @@ INSTALLED_APPS = (
     'django_rq',
     'oauth2_provider',
     'ckeditor',
+    'captcha',
 
     'website',
     'api',
@@ -138,6 +139,24 @@ DATABASES = {
         'PASSWORD': 'zx#213_Op',
         'HOST': '127.0.0.1',
         'PORT': '5432',
+    }
+}
+
+# Cache & RQ
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/0',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
+
+RQ_QUEUES = {
+    'default': {
+        'USE_REDIS_CACHE': 'default',
     }
 }
 
@@ -204,14 +223,6 @@ CONSTANCE_CONFIG = {
     'GOCOIN_MERCHANT_ID': ('', 'GoCoin Merchant ID'),
     'GOCOIN_AUTH_TOKEN': ('', 'GoCoin access token'),
     'TERMINAL_PRICE': (200.00, 'Terminal price'),
-}
-
-RQ_QUEUES = {
-    'default': {
-        'HOST': 'localhost',
-        'PORT': 6379,
-        'DB': 1,
-    },
 }
 
 REPORTS_PATH = os.path.join(BASE_DIR, '..', 'reports')
