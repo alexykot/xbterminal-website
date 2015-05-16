@@ -7,9 +7,13 @@ from django.db import models
 
 class Migration(SchemaMigration):
 
+    needed_by = (
+        ('oauth2_provider', '0001_initial'),
+    )
+
     def forwards(self, orm):
-        db.delete_table(u'auth_user_groups')
-        db.delete_table(u'auth_user_user_permissions')
+        # db.delete_table(u'auth_user_groups')
+        # db.delete_table(u'auth_user_user_permissions')
         db.delete_table(u'auth_user')
 
     def backwards(self, orm):

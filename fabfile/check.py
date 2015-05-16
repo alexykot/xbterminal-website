@@ -12,6 +12,13 @@ def python():
               'xbterminal')
 
 
+@task
+def django():
+    with prefix('. venv/bin/activate'):
+        local('python xbterminal/manage.py test website')
+
+
 @task(default=True)
 def all():
     python()
+    django()

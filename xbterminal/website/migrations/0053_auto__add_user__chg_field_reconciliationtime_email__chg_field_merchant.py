@@ -40,20 +40,20 @@ class Migration(SchemaMigration):
         db.create_unique(m2m_table_name, ['user_id', 'permission_id'])
 
         # Copy users
-        for old_user in orm['auth.User'].objects.all():
-            new_user = orm.User.objects.create(
-                        id=old_user.id,
-                        password=old_user.password,
-                        email=old_user.email or old_user.username,
-                        last_login=old_user.last_login,
-                        date_joined=old_user.date_joined,
-                        is_active=old_user.is_active,
-                        is_staff=old_user.is_staff,
-                        is_superuser=old_user.is_superuser)
-            for perm in old_user.user_permissions.all():
-                    new_user.user_permissions.add(perm)
-            for group in old_user.groups.all():
-                new_user.groups.add(group)
+        #for old_user in orm['auth.User'].objects.all():
+            #new_user = orm.User.objects.create(
+                        #id=old_user.id,
+                        #password=old_user.password,
+                        #email=old_user.email or old_user.username,
+                        #last_login=old_user.last_login,
+                        #date_joined=old_user.date_joined,
+                        #is_active=old_user.is_active,
+                        #is_staff=old_user.is_staff,
+                        #is_superuser=old_user.is_superuser)
+            #for perm in old_user.user_permissions.all():
+                    #new_user.user_permissions.add(perm)
+            #for group in old_user.groups.all():
+                #new_user.groups.add(group)
 
         db.execute("SELECT setval('website_user_id_seq', (SELECT MAX(id) FROM website_user))")
 
