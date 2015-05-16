@@ -250,7 +250,7 @@ def wait_for_validation(payment_order_uid):
     try:
         payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
     except PaymentOrder.DoesNotExist:
-         # PaymentOrder deleted, cancel job
+        # PaymentOrder deleted, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
         return
     if payment_order.time_created + datetime.timedelta(minutes=20) < timezone.now():
@@ -317,7 +317,7 @@ def wait_for_broadcast(payment_order_uid):
     try:
         payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
     except PaymentOrder.DoesNotExist:
-         # PaymentOrder deleted, cancel job
+        # PaymentOrder deleted, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
         return
     if payment_order.time_created + datetime.timedelta(minutes=45) < timezone.now():
@@ -340,7 +340,7 @@ def wait_for_exchange(payment_order_uid):
     try:
         payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
     except PaymentOrder.DoesNotExist:
-         # PaymentOrder deleted, cancel job
+        # PaymentOrder deleted, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
         return
     if payment_order.time_created + datetime.timedelta(minutes=45) < timezone.now():
@@ -366,7 +366,7 @@ def check_payment_status(payment_order_uid):
     try:
         payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
     except PaymentOrder.DoesNotExist:
-         # PaymentOrder deleted, cancel job
+        # PaymentOrder deleted, cancel job
         django_rq.get_scheduler().cancel(rq.get_current_job())
         return
     if payment_order.status == 'failed':

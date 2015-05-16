@@ -3,7 +3,8 @@ from django.conf.urls import patterns, include, url
 from api import views
 
 
-api_urls = patterns('api.views',
+api_urls = patterns(
+    'api.views',
     url(r'^merchant/$',
         views.MerchantView.as_view(),
         name='merchant'),
@@ -34,7 +35,8 @@ api_urls = patterns('api.views',
         name='receipt'),
 )
 
-short_urls = patterns('api.views',
+short_urls = patterns(
+    'api.views',
     url(r'^pr/(?P<payment_uid>[0-9a-zA-Z]{6,32})$',
         views.PaymentRequestView.as_view(),
         name='payment_request'),
@@ -43,7 +45,8 @@ short_urls = patterns('api.views',
         name='receipt'),
 )
 
-urlpatterns = patterns('',
+urlpatterns = patterns(
+    '',
     url(r'^api/', include(api_urls)),
     url(r'', include(short_urls, namespace='short')),
 )

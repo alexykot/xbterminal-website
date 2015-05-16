@@ -131,7 +131,7 @@ class ContactForm(CaptchaMixin, forms.Form):
     name = forms.CharField()
     company_name = forms.CharField(required=False)
     message = forms.CharField(widget=forms.Textarea)
-    captcha = ReCaptchaField(attrs={'theme' : 'clean'})
+    captcha = ReCaptchaField(attrs={'theme': 'clean'})
 
 
 class FeedbackForm(CaptchaMixin, forms.Form):
@@ -142,7 +142,7 @@ class FeedbackForm(CaptchaMixin, forms.Form):
 
     email = forms.EmailField()
     message = forms.CharField(widget=forms.Textarea)
-    captcha = ReCaptchaField(attrs={'theme' : 'clean'})
+    captcha = ReCaptchaField(attrs={'theme': 'clean'})
 
 
 class SubscribeForm(forms.Form):
