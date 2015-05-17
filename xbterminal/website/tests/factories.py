@@ -1,6 +1,6 @@
 import factory
 
-from website.models import User, MerchantAccount
+from website.models import User, MerchantAccount, Device
 
 
 class UserFactory(factory.DjangoModelFactory):
@@ -30,3 +30,15 @@ class MerchantAccountFactory(factory.DjangoModelFactory):
     contact_last_name = 'Test'
     contact_phone = '+123456789'
     contact_email = factory.LazyAttribute(lambda ma: ma.user.email)
+
+
+class DeviceFactory(factory.DjangoModelFactory):
+
+    class Meta:
+        model = Device
+
+    merchant = factory.SubFactory(MerchantAccountFactory)
+    device_type = 'hardware'
+    name = factory.Sequence(lambda n: 'Terminal #{0}'.format(n))
+    percent = 0
+    bitcoin_address = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'

@@ -1,7 +1,10 @@
 from django.test import TestCase
 
 from website.models import User
-from website.tests.factories import UserFactory, MerchantAccountFactory
+from website.tests.factories import (
+    UserFactory,
+    MerchantAccountFactory,
+    DeviceFactory)
 
 
 class UserTestCase(TestCase):
@@ -32,3 +35,14 @@ class MerchantAccountTestCase(TestCase):
         self.assertEqual(merchant.currency.name, 'GBP')
         self.assertEqual(merchant.payment_processor, 'gocoin')
         self.assertEqual(merchant.verification_status, 'unverified')
+
+
+class DeviceTestCase(TestCase):
+
+    fixtures = ['initial_data.json']
+
+    def test_device_factory(self):
+        device = DeviceFactory.create()
+        self.assertEqual(device.status, 'active')
+        self.assertEqual(len(device.key), 8)
+        self.assertEqual(device.bitcoin_network, 'mainnet')
