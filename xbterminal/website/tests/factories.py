@@ -1,6 +1,8 @@
+from decimal import Decimal
+from django.utils import timezone
 import factory
 
-from website.models import User, MerchantAccount, Device
+from website.models import User, MerchantAccount, Device, PaymentOrder
 
 
 class UserFactory(factory.DjangoModelFactory):
@@ -42,3 +44,27 @@ class DeviceFactory(factory.DjangoModelFactory):
     name = factory.Sequence(lambda n: 'Terminal #{0}'.format(n))
     percent = 0
     bitcoin_address = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
+
+
+class PaymentOrderFactory(factory.DjangoModelFactory):
+
+    class Meta:
+        model = PaymentOrder
+
+    device = factory.SubFactory(DeviceFactory)
+
+    local_address = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
+    merchant_address = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
+    fee_address = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
+    fiat_currency = 'GBP'
+
+    fiat_amount = Decimal(1.11)
+    instantfiat_fiat_amount = Decimal(0)
+    instantfiat_btc_amount = Decimal(0)
+    merchant_btc_amount = Decimal(0.00476722)
+    fee_btc_amount = Decimal(0)
+    btc_amount = Decimal(0.00486722)
+    effective_exchange_rate = Decimal(228.05626210)
+
+    payment_type = 'bip0021'
+    time_created = factory.LazyAttribute(lambda po: timezone.now())

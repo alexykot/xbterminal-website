@@ -4,7 +4,8 @@ from website.models import User
 from website.tests.factories import (
     UserFactory,
     MerchantAccountFactory,
-    DeviceFactory)
+    DeviceFactory,
+    PaymentOrderFactory)
 
 
 class UserTestCase(TestCase):
@@ -46,3 +47,13 @@ class DeviceTestCase(TestCase):
         self.assertEqual(device.status, 'active')
         self.assertEqual(len(device.key), 8)
         self.assertEqual(device.bitcoin_network, 'mainnet')
+
+
+class PaymentOrderTestCase(TestCase):
+
+    fixtures = ['initial_data.json']
+
+    def test_payment_order_factory(self):
+        payment_order = PaymentOrderFactory.create()
+        self.assertEqual(len(payment_order.uid), 6)
+        self.assertEqual(payment_order.status, 'new')
