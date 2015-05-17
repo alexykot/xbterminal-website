@@ -61,10 +61,9 @@ class PaymentOrderFactory(factory.DjangoModelFactory):
     fiat_amount = Decimal(1.11)
     instantfiat_fiat_amount = Decimal(0)
     instantfiat_btc_amount = Decimal(0)
-    merchant_btc_amount = Decimal(0.00476722)
+    merchant_btc_amount = Decimal('0.00476722')
     fee_btc_amount = Decimal(0)
-    btc_amount = Decimal(0.00486722)
-    effective_exchange_rate = Decimal(228.05626210)
+    btc_amount = Decimal('0.00486722')
+    effective_exchange_rate = Decimal('228.05626210')
 
-    payment_type = 'bip0021'
     time_created = factory.LazyAttribute(lambda po: timezone.now())
