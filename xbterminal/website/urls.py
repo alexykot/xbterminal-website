@@ -3,7 +3,8 @@ from django.conf.urls import patterns, url
 from website import views
 from views import SubscribeNewsView
 
-urlpatterns = patterns('website.views',
+urlpatterns = patterns(
+    'website.views',
     url(r'^$', views.LandingView.as_view(), name='landing'),
     url(r'^android-app$', 'android_app', name='android_app'),
     url(r'^ios-app$', 'ios_app', name='ios_app'),

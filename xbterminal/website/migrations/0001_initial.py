@@ -17,6 +17,11 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'website', ['Contact'])
 
+        # Fake auth.User
+        db.create_table('auth_user', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+        ))
+
         # Adding model 'MerchantAccount'
         db.create_table(u'website_merchantaccount', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),

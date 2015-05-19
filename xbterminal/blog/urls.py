@@ -7,12 +7,14 @@ from django.conf.urls.static import static
 
 from blog import views
 
-blog_urls = patterns('blog.views',
+blog_urls = patterns(
+    'blog.views',
     url(r'^$', views.IndexView.as_view(), name='posts'),
     url(r'(?P<slug>.+)/$', views.PostView.as_view(), name='post'),
 )
 
-urlpatterns = patterns('',
+urlpatterns = patterns(
+    '',
     url(r'^blog/', include(blog_urls)),
 )
 

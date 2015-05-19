@@ -41,7 +41,7 @@ def _get_address(invoice_id):
     except (requests.exceptions.RequestException, ValueError):
         raise
     match = re.search(r"bitcoin:(?P<addr>[13][a-zA-Z0-9]{26,33})\?",
-                       response.text)
+                      response.text)
     return match.group('addr')
 
 

@@ -211,9 +211,9 @@ class MerchantAccount(models.Model):
         Search for latest uploaded document
         """
         return self.kycdocument_set.\
-                filter(document_type=document_type).\
-                exclude(status='uploaded').\
-                latest('uploaded')
+            filter(document_type=document_type).\
+            exclude(status='uploaded').\
+            latest('uploaded')
 
     @property
     def info(self):
@@ -223,7 +223,7 @@ class MerchantAccount(models.Model):
             status = self.get_verification_status_display()
         active_dt = timezone.now() - datetime.timedelta(minutes=2)
         active = self.device_set.filter(last_activity__gte=active_dt).count()
-        total =  self.device_set.count()
+        total = self.device_set.count()
         today = timezone.localtime(timezone.now()).\
             replace(hour=0, minute=0, second=0, microsecond=0)
         transactions = Transaction.objects.filter(device__merchant=self,

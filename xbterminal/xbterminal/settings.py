@@ -249,6 +249,6 @@ CKEDITOR_JQUERY_URL = "/static/lib/jquery.min.js"
 
 # Override default settings
 try:
-    from local_settings import *
+    from local_settings import *  # flake8: noqa
 except ImportError:
     pass

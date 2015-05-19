@@ -6,7 +6,8 @@ from oauth2_provider.views import TokenView
 
 admin.autodiscover()
 
-urlpatterns = patterns('',
+urlpatterns = patterns(
+    '',
     url(r'^admin/', include(admin.site.urls)),
     url(r'^django-rq/', include('django_rq.urls')),
     url(r'^oauth/token/', TokenView.as_view(), name='token'),
@@ -17,6 +18,7 @@ urlpatterns = patterns('',
     url(r'', include('blog.urls', namespace='blog')),
 )
 
-urlpatterns += i18n_patterns('',
+urlpatterns += i18n_patterns(
+    '',
     url(r'', include('website.urls', namespace='website')),
 )
