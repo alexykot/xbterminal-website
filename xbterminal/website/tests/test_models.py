@@ -1,4 +1,6 @@
+import datetime
 from django.test import TestCase
+from django.utils import timezone
 
 from website.models import User
 from website.tests.factories import (
@@ -57,3 +59,42 @@ class PaymentOrderTestCase(TestCase):
         payment_order = PaymentOrderFactory.create()
         self.assertEqual(len(payment_order.uid), 6)
         self.assertEqual(payment_order.status, 'new')
+
+    def test_status(self):
+        # Without instantfiat
+        payment_order = PaymentOrderFactory.create()
+        self.assertEqual(payment_order.status, 'new')
+        payment_order.time_recieved = (payment_order.time_created +
+                                       datetime.timedelta(minutes=1))
+        self.assertEqual(payment_order.status, 'recieved')
+        payment_order.time_forwarded = (payment_order.time_recieved +
+                                        datetime.timedelta(minutes=1))
+        self.assertEqual(payment_order.status, 'processed')
+        payment_order.time_finished = (payment_order.time_forwarded +
+                                       datetime.timedelta(minutes=1))
+        self.assertEqual(payment_order.status, 'completed')
+        # With instantfiat
+        payment_order = PaymentOrderFactory.create(
+            instantfiat_invoice_id='invoice01')
+        self.assertEqual(payment_order.status, 'new')
+        payment_order.time_recieved = (payment_order.time_created +
+                                       datetime.timedelta(minutes=1))
+        self.assertEqual(payment_order.status, 'recieved')
+        payment_order.time_forwarded = (payment_order.time_recieved +
+                                        datetime.timedelta(minutes=1))
+        self.assertEqual(payment_order.status, 'forwarded')
+        payment_order.time_exchanged = (payment_order.time_forwarded +
+                                        datetime.timedelta(minutes=1))
+        self.assertEqual(payment_order.status, 'processed')
+        payment_order.time_finished = (payment_order.time_exchanged +
+                                       datetime.timedelta(minutes=1))
+        self.assertEqual(payment_order.status, 'completed')
+        # Timeout
+        payment_order = PaymentOrderFactory.create(
+            time_created=timezone.now() - datetime.timedelta(hours=1))
+        self.assertEqual(payment_order.status, 'timeout')
+        # Failed
+        payment_order = PaymentOrderFactory.create(
+            time_created=timezone.now() - datetime.timedelta(hours=2),
+            time_recieved=timezone.now() - datetime.timedelta(hours=1))
+        self.assertEqual(payment_order.status, 'failed')

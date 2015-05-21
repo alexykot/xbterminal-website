@@ -526,6 +526,17 @@ class PaymentOrder(models.Model):
 
     @property
     def status(self):
+        """
+        Returns status of the payment:
+            new - payment order has just been created
+            recieved - incoming transaction receieved
+            forwarded - payment forwarded
+            processed - recieved confirmation from instantfiat service
+            completed - customer notified about successful payment
+            timeout - incoming transaction did not recieved
+            failed - incoming transaction recieved,
+                but payment order is not marked as finished
+        """
         if self.time_finished:
             return 'completed'
         if not self.time_recieved:
