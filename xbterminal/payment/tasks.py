@@ -41,6 +41,10 @@ def run_periodic_task(func, args, interval=2):
         result_ttl=3600)
 
 
+def cancel_current_task():
+    django_rq.get_scheduler().cancel(rq.get_current_job())
+
+
 def prepare_payment(device, fiat_amount):
     """
     Accepts:
@@ -69,8 +73,8 @@ def prepare_payment(device, fiat_amount):
     # Addresses
     try:
         details['local_address'] = str(bc.get_new_address())
-    except Exception:
-        logger.error('no response from bitcoind')
+    except Exception as error:
+        logger.exception(error)
         raise exceptions.NetworkError
     details['merchant_address'] = device.bitcoin_address
     details['fee_address'] = device.our_fee_address
@@ -144,14 +148,14 @@ def wait_for_payment(payment_order_uid):
         payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
     except PaymentOrder.DoesNotExist:
         # PaymentOrder deleted, cancel job
-        django_rq.get_scheduler().cancel(rq.get_current_job())
+        cancel_current_task()
         return
     if payment_order.time_created + datetime.timedelta(minutes=15) < timezone.now():
         # Timeout, cancel job
-        django_rq.get_scheduler().cancel(rq.get_current_job())
+        cancel_current_task()
     if payment_order.incoming_tx_id is not None:
         # Payment already validated, cancel job
-        django_rq.get_scheduler().cancel(rq.get_current_job())
+        cancel_current_task()
         return
     # Connect to bitcoind
     bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
@@ -174,7 +178,7 @@ def wait_for_payment(payment_order_uid):
             bc.send_raw_transaction(reverse_tx_signed)
             logger.warning('payment returned ({0})'.format(payment_order.uid))
         else:
-            django_rq.get_scheduler().cancel(rq.get_current_job())
+            cancel_current_task()
 
 
 def parse_payment(payment_order, payment_message):
@@ -251,13 +255,13 @@ def wait_for_validation(payment_order_uid):
         payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
     except PaymentOrder.DoesNotExist:
         # PaymentOrder deleted, cancel job
-        django_rq.get_scheduler().cancel(rq.get_current_job())
+        cancel_current_task()
         return
     if payment_order.time_created + datetime.timedelta(minutes=20) < timezone.now():
         # Timeout, cancel job
-        django_rq.get_scheduler().cancel(rq.get_current_job())
+        cancel_current_task()
     if payment_order.incoming_tx_id is not None:
-        django_rq.get_scheduler().cancel(rq.get_current_job())
+        cancel_current_task()
         if payment_order.outgoing_tx_id is not None:
             # Payment already forwarded, skip
             return
@@ -318,14 +322,14 @@ def wait_for_broadcast(payment_order_uid):
         payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
     except PaymentOrder.DoesNotExist:
         # PaymentOrder deleted, cancel job
-        django_rq.get_scheduler().cancel(rq.get_current_job())
+        cancel_current_task()
         return
     if payment_order.time_created + datetime.timedelta(minutes=45) < timezone.now():
         # Timeout, cancel job
-        django_rq.get_scheduler().cancel(rq.get_current_job())
+        cancel_current_task()
     if blockr.is_tx_broadcasted(payment_order.outgoing_tx_id,
                                 payment_order.device.bitcoin_network):
-        django_rq.get_scheduler().cancel(rq.get_current_job())
+        cancel_current_task()
         if payment_order.time_broadcasted is None:
             payment_order.time_broadcasted = timezone.now()
             payment_order.save()
@@ -341,16 +345,16 @@ def wait_for_exchange(payment_order_uid):
         payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
     except PaymentOrder.DoesNotExist:
         # PaymentOrder deleted, cancel job
-        django_rq.get_scheduler().cancel(rq.get_current_job())
+        cancel_current_task()
         return
     if payment_order.time_created + datetime.timedelta(minutes=45) < timezone.now():
         # Timeout, cancel job
-        django_rq.get_scheduler().cancel(rq.get_current_job())
+        cancel_current_task()
     invoice_paid = instantfiat.is_invoice_paid(
         payment_order.device.merchant,
         payment_order.instantfiat_invoice_id)
     if invoice_paid:
-        django_rq.get_scheduler().cancel(rq.get_current_job())
+        cancel_current_task()
         if payment_order.time_exchanged is not None:
             # Already exchanged, skip
             return
@@ -367,10 +371,10 @@ def check_payment_status(payment_order_uid):
         payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
     except PaymentOrder.DoesNotExist:
         # PaymentOrder deleted, cancel job
-        django_rq.get_scheduler().cancel(rq.get_current_job())
+        cancel_current_task()
         return
     if payment_order.status == 'failed':
-        django_rq.get_scheduler().cancel(rq.get_current_job())
+        cancel_current_task()
         send_error_message(payment_order=payment_order)
     elif payment_order.status in ['timeout', 'completed']:
-        django_rq.get_scheduler().cancel(rq.get_current_job())
+        cancel_current_task()
