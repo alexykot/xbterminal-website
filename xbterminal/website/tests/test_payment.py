@@ -241,3 +241,65 @@ class ValidatePaymentTestCase(TestCase):
         self.assertEqual(payment_order.incoming_tx_id, incoming_tx_id)
         self.assertEqual(payment_order.payment_type, 'bip0021')
         self.assertEqual(payment_order.status, 'recieved')
+
+
+class WaitForValidationTestCase(TestCase):
+
+    fixtures = ['initial_data.json']
+
+    @patch('payment.tasks.cancel_current_task')
+    @patch('payment.tasks.forward_transaction')
+    def test_payment_order_does_not_exist(self, forward_mock, cancel_mock):
+        tasks.wait_for_validation(123456)
+        self.assertTrue(cancel_mock.called)
+        self.assertFalse(forward_mock.called)
+
+    @patch('payment.tasks.cancel_current_task')
+    @patch('payment.tasks.forward_transaction')
+    def test_payment_not_validated(self, forward_mock, cancel_mock):
+        payment_order = PaymentOrderFactory.create(incoming_tx_id=None)
+        tasks.wait_for_validation(payment_order.uid)
+        self.assertFalse(cancel_mock.called)
+        self.assertFalse(forward_mock.called)
+
+    @patch('payment.tasks.cancel_current_task')
+    @patch('payment.tasks.forward_transaction')
+    def test_payment_already_forwarded(self, forward_mock, cancel_mock):
+        payment_order = PaymentOrderFactory.create(
+            incoming_tx_id='0' * 64,
+            outgoing_tx_id='0' * 64)
+        tasks.wait_for_validation(payment_order.uid)
+        self.assertTrue(cancel_mock.called)
+        self.assertFalse(forward_mock.called)
+
+    @patch('payment.tasks.cancel_current_task')
+    @patch('payment.tasks.forward_transaction')
+    @patch('payment.tasks.run_periodic_task')
+    def test_forward_btc(self, run_task_mock, forward_mock, cancel_mock):
+        payment_order = PaymentOrderFactory.create(
+            incoming_tx_id='0' * 64)
+        tasks.wait_for_validation(payment_order.uid)
+
+        self.assertTrue(cancel_mock.called)
+        self.assertTrue(forward_mock.called)
+        self.assertEqual(forward_mock.call_args[0][0].uid,
+                         payment_order.uid)
+        self.assertEqual(run_task_mock.call_count, 1)
+        self.assertEqual(run_task_mock.call_args[0][0].__name__,
+                         'wait_for_broadcast')
+
+    @patch('payment.tasks.cancel_current_task')
+    @patch('payment.tasks.forward_transaction')
+    @patch('payment.tasks.run_periodic_task')
+    def test_forward_instantfiat(self, run_task_mock, forward_mock, cancel_mock):
+        payment_order = PaymentOrderFactory.create(
+            incoming_tx_id='0' * 64,
+            instantfiat_invoice_id='test_invoice')
+        tasks.wait_for_validation(payment_order.uid)
+
+        self.assertTrue(cancel_mock.called)
+        self.assertTrue(forward_mock.called)
+        self.assertEqual(run_task_mock.call_count, 2)
+        calls = run_task_mock.call_args_list
+        self.assertEqual(calls[0][0][0].__name__, 'wait_for_broadcast')
+        self.assertEqual(calls[1][0][0].__name__, 'wait_for_exchange')
