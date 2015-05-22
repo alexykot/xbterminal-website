@@ -67,9 +67,11 @@ class PaymentOrderTestCase(TestCase):
         payment_order.time_recieved = (payment_order.time_created +
                                        datetime.timedelta(minutes=1))
         self.assertEqual(payment_order.status, 'recieved')
+        self.assertFalse(payment_order.is_receipt_ready())
         payment_order.time_forwarded = (payment_order.time_recieved +
                                         datetime.timedelta(minutes=1))
         self.assertEqual(payment_order.status, 'processed')
+        self.assertTrue(payment_order.is_receipt_ready())
         payment_order.time_finished = (payment_order.time_forwarded +
                                        datetime.timedelta(minutes=1))
         self.assertEqual(payment_order.status, 'completed')
@@ -80,9 +82,11 @@ class PaymentOrderTestCase(TestCase):
         payment_order.time_recieved = (payment_order.time_created +
                                        datetime.timedelta(minutes=1))
         self.assertEqual(payment_order.status, 'recieved')
+        self.assertFalse(payment_order.is_receipt_ready())
         payment_order.time_forwarded = (payment_order.time_recieved +
                                         datetime.timedelta(minutes=1))
         self.assertEqual(payment_order.status, 'forwarded')
+        self.assertTrue(payment_order.is_receipt_ready())
         payment_order.time_exchanged = (payment_order.time_forwarded +
                                         datetime.timedelta(minutes=1))
         self.assertEqual(payment_order.status, 'processed')

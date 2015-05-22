@@ -561,6 +561,13 @@ class PaymentOrder(models.Model):
     def expires(self):
         return self.time_created + datetime.timedelta(minutes=10)
 
+    def is_receipt_ready(self):
+        """
+        Equivalent to:
+            status in ['forwarded', 'processed', 'completed']
+        """
+        return self.time_forwarded is not None
+
     @property
     def receipt_url(self):
         domain = Site.objects.get_current().domain
