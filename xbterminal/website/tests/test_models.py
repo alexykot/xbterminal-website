@@ -51,7 +51,19 @@ class MerchantAccountTestCase(TestCase):
 
     def test_merchant_factory(self):
         merchant = MerchantAccountFactory.create()
+        self.assertTrue(merchant.is_profile_complete)
         self.assertIsNotNone(merchant.info)
+
+    def test_is_profile_complete(self):
+        merchant = MerchantAccountFactory.create(
+            business_address='Test Address',
+            town='TestTown',
+            post_code='123456',
+            contact_phone='')
+        self.assertFalse(merchant.is_profile_complete)
+        merchant.contact_phone = '123456789'
+        merchant.save()
+        self.assertTrue(merchant.is_profile_complete)
 
 
 class DeviceTestCase(TestCase):

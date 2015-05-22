@@ -206,10 +206,10 @@ class MerchantAccount(models.Model):
 
     @property
     def is_profile_complete(self):
-        return (self.business_address
-                and self.town
-                and self.post_code
-                and self.contact_phone)
+        return (bool(self.business_address) and
+                bool(self.town) and
+                bool(self.post_code) and
+                bool(self.contact_phone))
 
     def get_kyc_document(self, document_type, status):
         try:
