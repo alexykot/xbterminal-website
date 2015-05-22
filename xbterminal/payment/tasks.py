@@ -283,6 +283,7 @@ def forward_transaction(payment_order):
     bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
     # Wait for transaction
     incoming_tx = bc.get_raw_transaction(payment_order.incoming_tx_id)
+    # Get outputs
     unspent_outputs = bc.get_unspent_outputs(
         CBitcoinAddress(payment_order.local_address))
     total_available = sum(out['amount'] for out in unspent_outputs)

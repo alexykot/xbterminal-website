@@ -303,3 +303,56 @@ class WaitForValidationTestCase(TestCase):
         calls = run_task_mock.call_args_list
         self.assertEqual(calls[0][0][0].__name__, 'wait_for_broadcast')
         self.assertEqual(calls[1][0][0].__name__, 'wait_for_exchange')
+
+
+class ForwardTransactionTestCase(TestCase):
+
+    fixtures = ['initial_data.json']
+
+    @patch('payment.tasks.blockchain.BlockChain')
+    def test_forward(self, bc_mock):
+        payment_order = PaymentOrderFactory.create(
+            merchant_btc_amount=Decimal('0.1'),
+            fee_btc_amount=Decimal('0.001'),
+            btc_amount=Decimal('0.1011'),
+            instantfiat_btc_amount=Decimal(0),
+            incoming_tx_id='0' * 64)
+        outgoing_tx_id = '1' * 64
+
+        bc_instance_mock = Mock(**{
+            'get_raw_transaction.return_value': 'test_incoming_tx',
+            'get_unspent_outputs.return_value': [{
+                'outpoint': 'test_outpoint',
+                'amount': payment_order.btc_amount,
+            }],
+            'create_raw_transaction.return_value': 'test_tx',
+            'sign_raw_transaction.return_value': 'test_tx_signed',
+            'send_raw_transaction.return_value': outgoing_tx_id,
+        })
+        bc_mock.return_value = bc_instance_mock
+
+        tasks.forward_transaction(payment_order)
+
+        self.assertTrue(bc_instance_mock.get_raw_transaction.called)
+        self.assertTrue(bc_instance_mock.get_unspent_outputs.called)
+        args = bc_instance_mock.get_unspent_outputs.call_args[0]
+        self.assertEqual(str(args[0]), payment_order.local_address)
+
+        self.assertTrue(bc_instance_mock.create_raw_transaction.called)
+        args = bc_instance_mock.create_raw_transaction.call_args[0]
+        self.assertEqual(args[0], ['test_outpoint'])
+        outputs = args[1]
+        self.assertEqual(len(outputs.keys()), 2)
+        self.assertEqual(outputs[payment_order.merchant_address],
+                         payment_order.merchant_btc_amount)
+        self.assertEqual(outputs[payment_order.fee_address],
+                         payment_order.fee_btc_amount)
+
+        self.assertTrue(bc_instance_mock.sign_raw_transaction.called)
+        self.assertTrue(bc_instance_mock.send_raw_transaction.called)
+
+        payment_order_updated = PaymentOrder.objects.get(
+            pk=payment_order.pk)
+        self.assertEqual(payment_order.extra_btc_amount, 0)
+        self.assertEqual(payment_order.outgoing_tx_id, outgoing_tx_id)
+        self.assertIsNotNone(payment_order.time_forwarded)
