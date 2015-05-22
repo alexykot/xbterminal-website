@@ -174,6 +174,7 @@ class MerchantAccountAdmin(admin.ModelAdmin):
         'contact_phone_',
         'verification_status',
         'processing',
+        'balance',
         'date_joined_l',
     ]
     readonly_fields = ['date_joined', 'last_login']
@@ -215,6 +216,9 @@ class MerchantAccountAdmin(admin.ModelAdmin):
         return merchant.contact_phone
 
     contact_phone_.short_description = 'phone'
+
+    def balance(self, merchant):
+        return '{0:.8f}'.format(merchant.account_balance)
 
     def processing(self, merchant):
         return '{0}, {1}'.format(

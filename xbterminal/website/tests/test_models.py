@@ -2,7 +2,7 @@ import datetime
 from django.test import TestCase
 from django.utils import timezone
 
-from website.models import User
+from website.models import User, MerchantAccount
 from website.tests.factories import (
     UserFactory,
     MerchantAccountFactory,
@@ -32,12 +32,26 @@ class MerchantAccountTestCase(TestCase):
 
     fixtures = ['initial_data.json']
 
-    def test_merchant_factory(self):
-        merchant = MerchantAccountFactory.create()
+    def create_merchant_account(self):
+        user = UserFactory.create()
+        merchant = MerchantAccount.objects.create(
+            user=user,
+            company_name='Test Company',
+            contact_first_name='Test',
+            contact_last_name='Test',
+            contact_email='test@example.net')
+        # Check defaults
+        self.assertEqual(merchant.country, 'GB')
         self.assertEqual(merchant.language.code, 'en')
         self.assertEqual(merchant.currency.name, 'GBP')
+        self.assertEqual(merchant.account_balance, 0)
+        self.assertEqual(merchant.account_balance_max, 0)
         self.assertEqual(merchant.payment_processor, 'gocoin')
         self.assertEqual(merchant.verification_status, 'unverified')
+
+    def test_merchant_factory(self):
+        merchant = MerchantAccountFactory.create()
+        self.assertIsNotNone(merchant.info)
 
 
 class DeviceTestCase(TestCase):
