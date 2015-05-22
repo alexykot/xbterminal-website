@@ -288,9 +288,21 @@ def forward_transaction(payment_order):
         CBitcoinAddress(payment_order.local_address))
     total_available = sum(out['amount'] for out in unspent_outputs)
     payment_order.extra_btc_amount = total_available - payment_order.btc_amount
+    # Select destination address
+    merchant = payment_order.device.merchant
+    if merchant.account_balance + payment_order.merchant_btc_amount > \
+            merchant.account_balance_max:
+        # Forward payment to merchant address (default)
+        destination_address = payment_order.merchant_address
+    else:
+        # Store bitcoins on merchant's internal account
+        if not merchant.account_address:
+            merchant.account_address = str(bc.get_new_address())
+        destination_address = merchant.account_address
+        merchant.account_balance += payment_order.merchant_btc_amount
     # Forward payment
     addresses = [
-        (payment_order.merchant_address,
+        (destination_address,
          payment_order.merchant_btc_amount),
         (payment_order.fee_address,
          payment_order.fee_btc_amount + payment_order.extra_btc_amount),
@@ -311,6 +323,7 @@ def forward_transaction(payment_order):
     payment_order.outgoing_tx_id = bc.send_raw_transaction(outgoing_tx_signed)
     payment_order.time_forwarded = timezone.now()
     payment_order.save()
+    merchant.save()
 
 
 def wait_for_broadcast(payment_order_uid):
