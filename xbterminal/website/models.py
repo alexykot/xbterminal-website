@@ -251,6 +251,30 @@ class MerchantAccount(models.Model):
                 'tx_sum': 0 if tx_sum is None else tx_sum}
 
 
+BITCOIN_NETWORKS = [
+    ('mainnet', 'Main'),
+    ('testnet', 'Testnet'),
+]
+
+
+class BTCAccount(models.Model):
+
+    merchant = models.ForeignKey(MerchantAccount)
+    network = models.CharField(max_length=50,
+                               choices=BITCOIN_NETWORKS,
+                               default='mainnet')
+    balance = models.DecimalField(max_digits=20,
+                                  decimal_places=8,
+                                  default=0)
+    balance_max = models.DecimalField(max_digits=20,
+                                      decimal_places=8,
+                                      default=0)
+    address = models.CharField(max_length=35,
+                               validators=[validate_bitcoin_address],
+                               blank=True,
+                               null=True)
+
+
 verification_file_storage = FileSystemStorage(
     location=os.path.join(settings.MEDIA_ROOT, 'verification'),
     base_url='/verification/')
@@ -324,10 +348,6 @@ class Device(models.Model):
         ('keep', _('keep bitcoins')),
         ('partially', _('convert partially')),
         ('full', _('convert full amount')),
-    ]
-    BITCOIN_NETWORKS = [
-        ('mainnet', 'Main'),
-        ('testnet', 'Testnet'),
     ]
 
     merchant = models.ForeignKey(MerchantAccount)

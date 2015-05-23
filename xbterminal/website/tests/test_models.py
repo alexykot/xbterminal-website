@@ -2,10 +2,11 @@ import datetime
 from django.test import TestCase
 from django.utils import timezone
 
-from website.models import User, MerchantAccount
+from website.models import User, MerchantAccount, BTCAccount
 from website.tests.factories import (
     UserFactory,
     MerchantAccountFactory,
+    BTCAccountFactory,
     DeviceFactory,
     PaymentOrderFactory)
 
@@ -64,6 +65,26 @@ class MerchantAccountTestCase(TestCase):
         merchant.contact_phone = '123456789'
         merchant.save()
         self.assertTrue(merchant.is_profile_complete)
+
+
+class BTCAccountTestCase(TestCase):
+
+    fixtures = ['initial_data.json']
+
+    def test_create_btc_account(self):
+        merchant = MerchantAccountFactory.create()
+        btc_account = BTCAccount.objects.create(merchant=merchant)
+        # Check defaults
+        self.assertEqual(btc_account.network, 'mainnet')
+        self.assertEqual(btc_account.balance, 0)
+        self.assertEqual(btc_account.balance_max, 0)
+        self.assertIsNone(btc_account.address)
+
+    def test_btc_account_factory(self):
+        btc_account = BTCAccountFactory.create()
+        self.assertEqual(btc_account.balance, 0)
+        self.assertEqual(btc_account.balance_max, 0)
+        self.assertIsNone(btc_account.address)
 
 
 class DeviceTestCase(TestCase):

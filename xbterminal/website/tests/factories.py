@@ -2,7 +2,12 @@ from decimal import Decimal
 from django.utils import timezone
 import factory
 
-from website.models import User, MerchantAccount, Device, PaymentOrder
+from website.models import (
+    User,
+    MerchantAccount,
+    BTCAccount,
+    Device,
+    PaymentOrder)
 
 
 class UserFactory(factory.DjangoModelFactory):
@@ -32,6 +37,14 @@ class MerchantAccountFactory(factory.DjangoModelFactory):
     contact_last_name = 'Test'
     contact_phone = '+123456789'
     contact_email = factory.LazyAttribute(lambda ma: ma.user.email)
+
+
+class BTCAccountFactory(factory.DjangoModelFactory):
+
+    class Meta:
+        model = BTCAccount
+
+    merchant = factory.SubFactory(MerchantAccountFactory)
 
 
 class DeviceFactory(factory.DjangoModelFactory):
