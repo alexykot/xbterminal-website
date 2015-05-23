@@ -162,6 +162,18 @@ class KYCDocumentInline(admin.TabularInline):
     extra = 0
 
 
+class BTCAccountAdmin(admin.ModelAdmin):
+
+    readonly_fields = ['balance', 'address']
+
+
+class BTCAccountInline(admin.TabularInline):
+
+    model = models.BTCAccount
+    readonly_fields = ['balance', 'address']
+    extra = 1
+
+
 class MerchantAccountAdmin(admin.ModelAdmin):
 
     list_display = [
@@ -174,13 +186,15 @@ class MerchantAccountAdmin(admin.ModelAdmin):
         'contact_phone_',
         'verification_status',
         'processing',
-        'balance',
+        'btc_balance',
+        'tbtc_balance',
         'date_joined_l',
     ]
     readonly_fields = ['date_joined', 'last_login']
     ordering = ['id']
 
     inlines = [
+        BTCAccountInline,
         KYCDocumentInline,
     ]
 
@@ -217,8 +231,15 @@ class MerchantAccountAdmin(admin.ModelAdmin):
 
     contact_phone_.short_description = 'phone'
 
-    def balance(self, merchant):
-        return '{0:.8f}'.format(merchant.account_balance)
+    def btc_balance(self, merchant):
+        value = merchant.get_account_balance('mainnet')
+        return '{0:.8f}'.format(value) if value is not None else 'N/A'
+    btc_balance.short_description = 'BTC balance'
+
+    def tbtc_balance(self, merchant):
+        value = merchant.get_account_balance('testnet')
+        return '{0:.8f}'.format(value) if value is not None else 'N/A'
+    tbtc_balance.short_description = 'TBTC balance'
 
     def processing(self, merchant):
         return '{0}, {1}'.format(
@@ -228,6 +249,7 @@ class MerchantAccountAdmin(admin.ModelAdmin):
 
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.MerchantAccount, MerchantAccountAdmin)
+admin.site.register(models.BTCAccount, BTCAccountAdmin)
 admin.site.register(models.KYCDocument, KYCDocumentAdmin)
 admin.site.register(models.Device, DeviceAdmin)
 admin.site.register(models.Language)

@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 from django.test import TestCase
 from django.utils import timezone
 
@@ -65,6 +66,14 @@ class MerchantAccountTestCase(TestCase):
         merchant.contact_phone = '123456789'
         merchant.save()
         self.assertTrue(merchant.is_profile_complete)
+
+    def test_get_account_balance(self):
+        merchant = MerchantAccountFactory.create()
+        self.assertIsNone(merchant.get_account_balance('mainnet'))
+        btc_account = BTCAccountFactory.create(
+            merchant=merchant, network='mainnet', balance=Decimal('0.5'))
+        self.assertEqual(merchant.get_account_balance('mainnet'),
+                         Decimal('0.5'))
 
 
 class BTCAccountTestCase(TestCase):

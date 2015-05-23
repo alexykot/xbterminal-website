@@ -160,20 +160,6 @@ class MerchantAccount(models.Model):
     language = models.ForeignKey(Language, default=1)  # by default, English, see fixtures
     currency = models.ForeignKey(Currency, default=1)  # by default, GBP, see fixtures
 
-    account_balance = models.DecimalField(
-        max_digits=20,
-        decimal_places=8,
-        default=0)
-    account_balance_max = models.DecimalField(
-        max_digits=20,
-        decimal_places=8,
-        default=0)
-    account_address = models.CharField(
-        max_length=35,
-        validators=[validate_bitcoin_address],
-        blank=True,
-        null=True)
-
     payment_processor = models.CharField(_('Payment processor'), max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, default='gocoin')
     api_key = models.CharField(_('API key'), max_length=255, blank=True)
     gocoin_merchant_id = models.CharField(max_length=36, blank=True, null=True)
@@ -228,6 +214,12 @@ class MerchantAccount(models.Model):
             exclude(status='uploaded').\
             latest('uploaded')
 
+    def get_account_balance(self, network):
+        account = self.btcaccount_set.\
+            filter(network=network).first()
+        if account:
+            return account.balance
+
     @property
     def info(self):
         if self.verification_status == 'verified':
@@ -273,6 +265,11 @@ class BTCAccount(models.Model):
                                validators=[validate_bitcoin_address],
                                blank=True,
                                null=True)
+
+    def __unicode__(self):
+        return '{0} - {1} account'.format(
+            str(self.merchant),
+            'BTC' if self.network == 'mainnet' else 'TBTC')
 
 
 verification_file_storage = FileSystemStorage(
