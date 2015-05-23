@@ -3,9 +3,10 @@ from django.test import TestCase
 from mock import patch, Mock
 
 from constance import config
-from website.models import MerchantAccount, PaymentOrder
+from website.models import BTCAccount, PaymentOrder
 from website.tests.factories import (
     MerchantAccountFactory,
+    BTCAccountFactory,
     DeviceFactory,
     PaymentOrderFactory)
 from payment import tasks
@@ -362,8 +363,9 @@ class ForwardTransactionTestCase(TestCase):
 
     @patch('payment.tasks.blockchain.BlockChain')
     def test_forward_balance(self, bc_mock):
-        merchant = MerchantAccountFactory.create(
-            account_balance_max=Decimal('1.0'))
+        merchant = MerchantAccountFactory.create()
+        btc_account = BTCAccountFactory.create(merchant=merchant,
+                                               balance_max=Decimal('1.0'))
         payment_order = PaymentOrderFactory.create(
             device__merchant=merchant,
             merchant_btc_amount=Decimal('0.1'),
@@ -393,18 +395,17 @@ class ForwardTransactionTestCase(TestCase):
 
         outputs = bc_instance_mock.create_raw_transaction.call_args[0][1]
         self.assertEqual(len(outputs.keys()), 2)
-        self.assertEqual(outputs[merchant.account_address],
+        self.assertEqual(outputs[account_address],
                          payment_order.merchant_btc_amount)
         self.assertEqual(outputs[payment_order.fee_address],
                          payment_order.fee_btc_amount)
 
-        payment_order = PaymentOrder.objects.get(
-            pk=payment_order.pk)
+        payment_order = PaymentOrder.objects.get(pk=payment_order.pk)
         self.assertEqual(payment_order.extra_btc_amount, 0)
         self.assertEqual(payment_order.outgoing_tx_id, outgoing_tx_id)
         self.assertIsNotNone(payment_order.time_forwarded)
 
-        merchant = MerchantAccount.objects.get(pk=merchant.pk)
-        self.assertEqual(merchant.account_address, account_address)
-        self.assertEqual(merchant.account_balance,
+        btc_account = BTCAccount.objects.get(pk=btc_account.pk)
+        self.assertEqual(btc_account.address, account_address)
+        self.assertEqual(btc_account.balance,
                          payment_order.merchant_btc_amount)

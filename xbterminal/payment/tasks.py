@@ -24,7 +24,7 @@ from payment import average, blockchain, instantfiat, exceptions
 
 from payment import blockr, protocol
 
-from website.models import PaymentOrder, Transaction
+from website.models import PaymentOrder, Transaction, BTCAccount
 from website.utils import send_error_message
 
 logger = logging.getLogger(__name__)
@@ -289,17 +289,20 @@ def forward_transaction(payment_order):
     total_available = sum(out['amount'] for out in unspent_outputs)
     payment_order.extra_btc_amount = total_available - payment_order.btc_amount
     # Select destination address
-    merchant = payment_order.device.merchant
-    if merchant.account_balance + payment_order.merchant_btc_amount > \
-            merchant.account_balance_max:
+    btc_account = BTCAccount.objects.filter(
+        merchant=payment_order.device.merchant,
+        network=payment_order.device.bitcoin_network).first()
+    if btc_account and \
+            btc_account.balance + payment_order.merchant_btc_amount <= \
+            btc_account.balance_max:
+        # Store bitcoins on merchant's internal account
+        if not btc_account.address:
+            btc_account.address = str(bc.get_new_address())
+        destination_address = btc_account.address
+        btc_account.balance += payment_order.merchant_btc_amount
+    else:
         # Forward payment to merchant address (default)
         destination_address = payment_order.merchant_address
-    else:
-        # Store bitcoins on merchant's internal account
-        if not merchant.account_address:
-            merchant.account_address = str(bc.get_new_address())
-        destination_address = merchant.account_address
-        merchant.account_balance += payment_order.merchant_btc_amount
     # Forward payment
     addresses = [
         (destination_address,
@@ -323,7 +326,8 @@ def forward_transaction(payment_order):
     payment_order.outgoing_tx_id = bc.send_raw_transaction(outgoing_tx_signed)
     payment_order.time_forwarded = timezone.now()
     payment_order.save()
-    merchant.save()
+    if btc_account:
+        btc_account.save()
 
 
 def wait_for_broadcast(payment_order_uid):
