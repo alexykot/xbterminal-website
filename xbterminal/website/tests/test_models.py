@@ -1,9 +1,13 @@
+import datetime
+from decimal import Decimal
 from django.test import TestCase
+from django.utils import timezone
 
-from website.models import User
+from website.models import User, MerchantAccount, BTCAccount
 from website.tests.factories import (
     UserFactory,
     MerchantAccountFactory,
+    BTCAccountFactory,
     DeviceFactory,
     PaymentOrderFactory)
 
@@ -30,12 +34,66 @@ class MerchantAccountTestCase(TestCase):
 
     fixtures = ['initial_data.json']
 
-    def test_merchant_factory(self):
-        merchant = MerchantAccountFactory.create()
+    def create_merchant_account(self):
+        user = UserFactory.create()
+        merchant = MerchantAccount.objects.create(
+            user=user,
+            company_name='Test Company',
+            contact_first_name='Test',
+            contact_last_name='Test',
+            contact_email='test@example.net')
+        # Check defaults
+        self.assertEqual(merchant.country, 'GB')
         self.assertEqual(merchant.language.code, 'en')
         self.assertEqual(merchant.currency.name, 'GBP')
+        self.assertEqual(merchant.account_balance, 0)
+        self.assertEqual(merchant.account_balance_max, 0)
         self.assertEqual(merchant.payment_processor, 'gocoin')
         self.assertEqual(merchant.verification_status, 'unverified')
+
+    def test_merchant_factory(self):
+        merchant = MerchantAccountFactory.create()
+        self.assertTrue(merchant.is_profile_complete)
+        self.assertIsNotNone(merchant.info)
+
+    def test_is_profile_complete(self):
+        merchant = MerchantAccountFactory.create(
+            business_address='Test Address',
+            town='TestTown',
+            post_code='123456',
+            contact_phone='')
+        self.assertFalse(merchant.is_profile_complete)
+        merchant.contact_phone = '123456789'
+        merchant.save()
+        self.assertTrue(merchant.is_profile_complete)
+
+    def test_get_account_balance(self):
+        merchant = MerchantAccountFactory.create()
+        self.assertIsNone(merchant.get_account_balance('mainnet'))
+        btc_account = BTCAccountFactory.create(
+            merchant=merchant, network='mainnet', balance=Decimal('0.5'))
+        self.assertEqual(merchant.get_account_balance('mainnet'),
+                         Decimal('0.5'))
+
+
+class BTCAccountTestCase(TestCase):
+
+    fixtures = ['initial_data.json']
+
+    def test_create_btc_account(self):
+        merchant = MerchantAccountFactory.create()
+        btc_account = BTCAccount.objects.create(merchant=merchant)
+        # Check defaults
+        self.assertEqual(btc_account.network, 'mainnet')
+        self.assertEqual(btc_account.balance, 0)
+        self.assertEqual(btc_account.balance_max, 0)
+        self.assertIsNone(btc_account.address)
+
+    def test_btc_account_factory(self):
+        btc_account = BTCAccountFactory.create()
+        self.assertEqual(btc_account.balance, 0)
+        self.assertEqual(btc_account.balance_max, 0)
+        self.assertIsNone(btc_account.address)
 
 
 class DeviceTestCase(TestCase):
@@ -57,3 +115,46 @@ class PaymentOrderTestCase(TestCase):
         payment_order = PaymentOrderFactory.create()
         self.assertEqual(len(payment_order.uid), 6)
         self.assertEqual(payment_order.status, 'new')
+
+    def test_status(self):
+        # Without instantfiat
+        payment_order = PaymentOrderFactory.create()
+        self.assertEqual(payment_order.status, 'new')
+        payment_order.time_recieved = (payment_order.time_created +
+                                       datetime.timedelta(minutes=1))
+        self.assertEqual(payment_order.status, 'recieved')
+        self.assertFalse(payment_order.is_receipt_ready())
+        payment_order.time_forwarded = (payment_order.time_recieved +
+                                        datetime.timedelta(minutes=1))
+        self.assertEqual(payment_order.status, 'processed')
+        self.assertTrue(payment_order.is_receipt_ready())
+        payment_order.time_finished = (payment_order.time_forwarded +
+                                       datetime.timedelta(minutes=1))
+        self.assertEqual(payment_order.status, 'completed')
+        # With instantfiat
+        payment_order = PaymentOrderFactory.create(
+            instantfiat_invoice_id='invoice01')
+        self.assertEqual(payment_order.status, 'new')
+        payment_order.time_recieved = (payment_order.time_created +
+                                       datetime.timedelta(minutes=1))
+        self.assertEqual(payment_order.status, 'recieved')
+        self.assertFalse(payment_order.is_receipt_ready())
+        payment_order.time_forwarded = (payment_order.time_recieved +
+                                        datetime.timedelta(minutes=1))
+        self.assertEqual(payment_order.status, 'forwarded')
+        self.assertTrue(payment_order.is_receipt_ready())
+        payment_order.time_exchanged = (payment_order.time_forwarded +
+                                        datetime.timedelta(minutes=1))
+        self.assertEqual(payment_order.status, 'processed')
+        payment_order.time_finished = (payment_order.time_exchanged +
+                                       datetime.timedelta(minutes=1))
+        self.assertEqual(payment_order.status, 'completed')
+        # Timeout
+        payment_order = PaymentOrderFactory.create(
+            time_created=timezone.now() - datetime.timedelta(hours=1))
+        self.assertEqual(payment_order.status, 'timeout')
+        # Failed
+        payment_order = PaymentOrderFactory.create(
+            time_created=timezone.now() - datetime.timedelta(hours=2),
+            time_recieved=timezone.now() - datetime.timedelta(hours=1))
+        self.assertEqual(payment_order.status, 'failed')

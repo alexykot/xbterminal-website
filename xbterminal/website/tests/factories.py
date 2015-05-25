@@ -2,7 +2,12 @@ from decimal import Decimal
 from django.utils import timezone
 import factory
 
-from website.models import User, MerchantAccount, Device, PaymentOrder
+from website.models import (
+    User,
+    MerchantAccount,
+    BTCAccount,
+    Device,
+    PaymentOrder)
 
 
 class UserFactory(factory.DjangoModelFactory):
@@ -34,6 +39,14 @@ class MerchantAccountFactory(factory.DjangoModelFactory):
     contact_email = factory.LazyAttribute(lambda ma: ma.user.email)
 
 
+class BTCAccountFactory(factory.DjangoModelFactory):
+
+    class Meta:
+        model = BTCAccount
+
+    merchant = factory.SubFactory(MerchantAccountFactory)
+
+
 class DeviceFactory(factory.DjangoModelFactory):
 
     class Meta:
@@ -53,9 +66,9 @@ class PaymentOrderFactory(factory.DjangoModelFactory):
 
     device = factory.SubFactory(DeviceFactory)
 
-    local_address = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
+    local_address = '1PZoCJdbQdYsBur25F6cZLejM1bkSSUktL'
     merchant_address = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
-    fee_address = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
+    fee_address = '1NdS5JCXzbhNv4STQAaknq56iGstfgRCXg'
     fiat_currency = 'GBP'
 
     fiat_amount = Decimal(1.11)

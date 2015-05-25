@@ -344,7 +344,7 @@ class PaymentCheckView(View):
             payment_order = PaymentOrder.objects.get(uid=self.kwargs.get('payment_uid'))
         except PaymentOrder.DoesNotExist:
             raise Http404
-        if payment_order.status in ['forwarded', 'processed', 'completed']:
+        if payment_order.is_receipt_ready():
             receipt_url = self.request.build_absolute_uri(reverse(
                 'api:short:receipt',
                 kwargs={'payment_uid': payment_order.uid}))
@@ -354,8 +354,9 @@ class PaymentCheckView(View):
                 'receipt_url': receipt_url,
                 'qr_code_src': qr_code_src,
             }
-            payment_order.time_finished = timezone.now()
-            payment_order.save()
+            if payment_order.time_finished is None:
+                payment_order.time_finished = timezone.now()
+                payment_order.save()
         else:
             data = {'paid': 0}
         response = HttpResponse(json.dumps(data),

@@ -162,7 +162,6 @@ class MerchantAccount(models.Model):
 
     payment_processor = models.CharField(_('Payment processor'), max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, default='gocoin')
     api_key = models.CharField(_('API key'), max_length=255, blank=True)
-
     gocoin_merchant_id = models.CharField(max_length=36, blank=True, null=True)
 
     verification_status = models.CharField(_('KYC'), max_length=50, choices=VERIFICATION_STATUSES, default='unverified')
@@ -193,10 +192,10 @@ class MerchantAccount(models.Model):
 
     @property
     def is_profile_complete(self):
-        return (self.business_address
-                and self.town
-                and self.post_code
-                and self.contact_phone)
+        return (bool(self.business_address) and
+                bool(self.town) and
+                bool(self.post_code) and
+                bool(self.contact_phone))
 
     def get_kyc_document(self, document_type, status):
         try:
@@ -214,6 +213,12 @@ class MerchantAccount(models.Model):
             filter(document_type=document_type).\
             exclude(status='uploaded').\
             latest('uploaded')
+
+    def get_account_balance(self, network):
+        account = self.btcaccount_set.\
+            filter(network=network).first()
+        if account:
+            return account.balance
 
     @property
     def info(self):
@@ -236,6 +241,35 @@ class MerchantAccount(models.Model):
                 'total': total,
                 'tx_count': tx_count,
                 'tx_sum': 0 if tx_sum is None else tx_sum}
+
+
+BITCOIN_NETWORKS = [
+    ('mainnet', 'Main'),
+    ('testnet', 'Testnet'),
+]
+
+
+class BTCAccount(models.Model):
+
+    merchant = models.ForeignKey(MerchantAccount)
+    network = models.CharField(max_length=50,
+                               choices=BITCOIN_NETWORKS,
+                               default='mainnet')
+    balance = models.DecimalField(max_digits=20,
+                                  decimal_places=8,
+                                  default=0)
+    balance_max = models.DecimalField(max_digits=20,
+                                      decimal_places=8,
+                                      default=0)
+    address = models.CharField(max_length=35,
+                               validators=[validate_bitcoin_address],
+                               blank=True,
+                               null=True)
+
+    def __unicode__(self):
+        return '{0} - {1} account'.format(
+            str(self.merchant),
+            'BTC' if self.network == 'mainnet' else 'TBTC')
 
 
 verification_file_storage = FileSystemStorage(
@@ -311,10 +345,6 @@ class Device(models.Model):
         ('keep', _('keep bitcoins')),
         ('partially', _('convert partially')),
         ('full', _('convert full amount')),
-    ]
-    BITCOIN_NETWORKS = [
-        ('mainnet', 'Main'),
-        ('testnet', 'Testnet'),
     ]
 
     merchant = models.ForeignKey(MerchantAccount)
@@ -526,6 +556,17 @@ class PaymentOrder(models.Model):
 
     @property
     def status(self):
+        """
+        Returns status of the payment:
+            new - payment order has just been created
+            recieved - incoming transaction receieved
+            forwarded - payment forwarded
+            processed - recieved confirmation from instantfiat service
+            completed - customer notified about successful payment
+            timeout - incoming transaction did not recieved
+            failed - incoming transaction recieved,
+                but payment order is not marked as finished
+        """
         if self.time_finished:
             return 'completed'
         if not self.time_recieved:
@@ -549,6 +590,13 @@ class PaymentOrder(models.Model):
     @property
     def expires(self):
         return self.time_created + datetime.timedelta(minutes=10)
+
+    def is_receipt_ready(self):
+        """
+        Equivalent to:
+            status in ['forwarded', 'processed', 'completed']
+        """
+        return self.time_forwarded is not None
 
     @property
     def receipt_url(self):
