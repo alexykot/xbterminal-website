@@ -14,6 +14,8 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
 
+    help = 'Check uploaded KYC documents'
+
     def handle(self, *args, **options):
         for merchant in MerchantAccount.objects.filter(verification_status='pending'):
             results = gocoin.check_kyc_documents(merchant, config.GOCOIN_AUTH_TOKEN)

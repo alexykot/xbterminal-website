@@ -10,6 +10,8 @@ from website.utils import send_reconciliation
 
 class Command(BaseCommand):
 
+    help = 'Send reconciliation emails'
+
     def handle(self, *args, **options):
         now = timezone.localtime(timezone.now())
         for device in Device.objects.all():
