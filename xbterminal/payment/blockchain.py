@@ -35,6 +35,16 @@ class BlockChain(object):
         address = self._proxy.getnewaddress()
         return address
 
+    def get_balance(self, minconf=1):
+        """
+        Accepts:
+            minconf: only include transactions confirmed at least this many times.
+        Returns:
+            balance: BTC amount (Decimal)
+        """
+        balance = self._proxy.getbalance(minconf=minconf)
+        return Decimal(balance).quantize(payment.BTC_DEC_PLACES) / COIN
+
     def get_address_balance(self, address):
         """
         Accepts:
