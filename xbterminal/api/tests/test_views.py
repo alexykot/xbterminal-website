@@ -3,7 +3,7 @@ import json
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils import timezone
-from mock import patch
+from mock import patch, Mock
 
 from website.models import PaymentOrder
 from website.tests.factories import DeviceFactory, PaymentOrderFactory
@@ -191,3 +191,30 @@ class PaymentCheckViewTestCase(TestCase):
         self.assertIn('qr_code_src', data)
         payment_order = PaymentOrder.objects.get(uid=payment_order.uid)
         self.assertIsNotNone(payment_order.time_finished)
+
+
+class ReceiptViewTestCase(TestCase):
+
+    fixtures = ['initial_data.json']
+
+    @patch('api.shortcuts.get_template')
+    def test_receipt(self, get_template_mock):
+        template_mock = Mock(**{
+            'render.return_value': 'test',
+        })
+        get_template_mock.return_value = template_mock
+        payment_order = PaymentOrderFactory.create(
+            time_finished=timezone.now())
+        url = reverse('api:receipt',
+                      kwargs={'payment_uid': payment_order.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertTrue(template_mock.render.called)
+
+    def test_payment_not_finished(self):
+        payment_order = PaymentOrderFactory.create()
+        url = reverse('api:receipt',
+                      kwargs={'payment_uid': payment_order.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
