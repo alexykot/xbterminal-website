@@ -15,7 +15,7 @@ def python():
 @task
 def django():
     with prefix('. venv/bin/activate'):
-        local('python xbterminal/manage.py test website')
+        local('python xbterminal/manage.py test website api')
 
 
 @task(default=True)
