@@ -17,7 +17,7 @@ unicodecsv==0.9.4
 django-picklefield==0.3.1
 pytz>=2014.3
 requests==2.3.0
-python-bitcoinlib==0.2.0
+python-bitcoinlib==0.4.0
 protobuf==2.5.0
 qrcode==4.0.4
 django-rq==0.7.0
