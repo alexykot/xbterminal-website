@@ -50,11 +50,11 @@ class BlockChain(object):
         Accepts:
             address: CBitcoinAddress
         Returns:
-            balance: Decimal
+            balance: BTC amount (Decimal)
         """
         minconf = 0
         balance = self._proxy.getreceivedbyaddress(str(address), minconf)
-        return Decimal(balance).quantize(payment.BTC_DEC_PLACES)
+        return Decimal(balance).quantize(payment.BTC_DEC_PLACES) / COIN
 
     def get_unspent_outputs(self, address):
         """
