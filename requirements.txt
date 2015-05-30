@@ -2,6 +2,7 @@ django==1.6.11
 south==1.0.2
 psycopg2==2.5.1
 pycrypto==2.6.1
+django-constance==1.0.1
 django-countries==2.1.2
 django-bootstrap3==4.8.2
 django-ipware==1.0.0
@@ -13,7 +14,6 @@ xhtml2pdf==0.0.6
 reportlab==2.7
 PyPDF2==1.24
 unicodecsv==0.9.4
--e git+https://github.com/comoga/django-constance.git@987e13f1ae24b419574d09d88097f41b7bd6ffc1#egg=django-constance-dev
 django-picklefield==0.3.1
 pytz>=2014.3
 requests==2.3.0

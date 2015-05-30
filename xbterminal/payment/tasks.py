@@ -11,7 +11,7 @@ from bitcoin.wallet import CBitcoinAddress
 import rq
 
 from django.utils import timezone
-import constance.config
+from constance import config
 import django_rq
 
 from payment import (
@@ -107,7 +107,7 @@ def prepare_payment(device, fiat_amount):
         assert error_message is None
     # Fee
     details['fee_btc_amount'] = (details['fiat_amount'] *
-                                 Decimal(constance.config.OUR_FEE_SHARE) /
+                                 Decimal(config.OUR_FEE_SHARE) /
                                  exchange_rate).quantize(BTC_DEC_PLACES)
     if details['fee_btc_amount'] < BTC_MIN_OUTPUT:
         details['fee_btc_amount'] = BTC_DEC_PLACES
