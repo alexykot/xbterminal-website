@@ -180,7 +180,7 @@ def firmware(request, key, firmware_hash):
 @api_view(['POST'])
 def firmware_updated(request, key):
     device = get_object_or_404(Device, key=key)
-    firmware_hash = request.DATA.get('firmware_version_hash')
+    firmware_hash = request.data.get('firmware_version_hash')
     if not firmware_hash:
         raise Http404
     firmware = get_object_or_404(Firmware, hash=firmware_hash)
