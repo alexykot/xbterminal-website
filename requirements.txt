@@ -1,5 +1,5 @@
-django==1.6.4
-south==0.8.4
+django==1.6.11
+south==1.0.2
 psycopg2==2.5.1
 pycrypto==2.6.1
 django-countries==2.1.2
