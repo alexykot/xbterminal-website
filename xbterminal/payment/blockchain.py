@@ -215,7 +215,7 @@ def validate_bitcoin_address(address, network):
     Validate address
     Accepts:
         address: string
-        network: mainnet or testnet
+        network: mainnet, testnet or None
     Returns:
         error: error message
     """
