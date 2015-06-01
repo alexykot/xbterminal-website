@@ -247,6 +247,18 @@ class MerchantAccountAdmin(admin.ModelAdmin):
             str(bool(merchant.api_key)))
 
 
+class WithdrawalOrderAdmin(admin.ModelAdmin):
+
+    list_display = [
+        '__str__',
+        'time_created',
+        'status',
+    ]
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.MerchantAccount, MerchantAccountAdmin)
 admin.site.register(models.BTCAccount, BTCAccountAdmin)
@@ -258,3 +270,4 @@ admin.site.register(models.Transaction, TransactionAdmin)
 admin.site.register(models.Firmware, FirmwareAdmin)
 admin.site.register(models.PaymentOrder, PaymentOrderAdmin)
 admin.site.register(models.Order, OrderAdmin)
+admin.site.register(models.WithdrawalOrder, WithdrawalOrderAdmin)
