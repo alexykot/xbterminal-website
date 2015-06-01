@@ -4,9 +4,14 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils import timezone
 from mock import patch, Mock
+from rest_framework.test import APITestCase
+from rest_framework import status
 
 from website.models import PaymentOrder
-from website.tests.factories import DeviceFactory, PaymentOrderFactory
+from website.tests.factories import (
+    DeviceFactory,
+    PaymentOrderFactory,
+    WithdrawalOrderFactory)
 
 
 class DeviceSettingsViewTestCase(TestCase):
@@ -218,3 +223,58 @@ class ReceiptViewTestCase(TestCase):
                       kwargs={'payment_uid': payment_order.uid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
+
+
+class WithdrawalViewSetTestCase(APITestCase):
+
+    fixtures = ['initial_data.json']
+
+    @patch('api.views.withdrawal.prepare_withdrawal')
+    def test_create_order(self, prepare_mock):
+        device = DeviceFactory.create()
+        order = WithdrawalOrderFactory.create(
+            device=device, fiat_amount=Decimal('1.00'))
+        prepare_mock.return_value = order
+        form_data = {
+            'device': device.key,
+            'amount': '1.00',
+        }
+        url = reverse('api:withdrawal-list')
+        response = self.client.post(url, form_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['uid'], order.uid)
+        self.assertEqual(response.data['btc_amount'], order.btc_amount)
+        self.assertEqual(response.data['exchange_rate'],
+                         order.effective_exchange_rate)
+
+    def test_create_order_error(self):
+        form_data = {
+            'device': 'invalid_key',
+            'amount': '1.00',
+        }
+        url = reverse('api:withdrawal-list')
+        response = self.client.post(url, form_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @patch('api.views.withdrawal.send_transaction')
+    def test_confirm(self, send_mock):
+        order = WithdrawalOrderFactory.create()
+        form_data = {'address': '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'}
+        url = reverse('api:withdrawal-confirm', kwargs={'uid': order.uid})
+        response = self.client.post(url, form_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('status', response.data)
+        self.assertTrue(send_mock.called)
+
+    def test_check(self):
+        order = WithdrawalOrderFactory.create(time_sent=timezone.now())
+        url = reverse('api:withdrawal-detail', kwargs={'uid': order.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['status'], 'sent')
+
+        order.time_broadcasted = timezone.now()
+        order.save()
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['status'], 'completed')

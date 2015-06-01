@@ -26,7 +26,7 @@ from website.validators import (
 from website.fields import FirmwarePathField
 from website.files import get_verification_file_name, verification_file_path_gen
 
-from payment import blockr
+from payment import BTC_DEC_PLACES, blockr
 
 
 class UserManager(BaseUserManager):
@@ -732,6 +732,10 @@ class WithdrawalOrder(models.Model):
         Total BTC amount
         """
         return self.customer_btc_amount + self.tx_fee_btc_amount
+
+    @property
+    def effective_exchange_rate(self):
+        return (self.fiat_amount / self.btc_amount).quantize(BTC_DEC_PLACES)
 
     @property
     def expires_at(self):

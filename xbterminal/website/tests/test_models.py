@@ -198,6 +198,13 @@ class WithdrawalOrderTestCase(TestCase):
             tx_fee_btc_amount=Decimal('0.0002'))
         self.assertEqual(order.btc_amount, Decimal('0.1002'))
 
+    def test_effective_exchange_rate(self):
+        order = WithdrawalOrderFactory.create(
+            fiat_amount=Decimal('1.00'),
+            customer_btc_amount=Decimal('0.05'),
+            tx_fee_btc_amount=Decimal('0.05'))
+        self.assertEqual(order.effective_exchange_rate, Decimal(10))
+
     def test_status(self):
         order = WithdrawalOrderFactory.create()
         self.assertEqual(order.status, 'new')

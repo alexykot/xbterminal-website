@@ -1,10 +1,16 @@
 from django.conf.urls import patterns, include, url
-
+from rest_framework import routers
 from api import views
+
+router = routers.DefaultRouter()
+router.register('withdrawals',
+                views.WithdrawalViewSet,
+                base_name='withdrawal')
 
 
 api_urls = patterns(
     'api.views',
+    url(r'^', include(router.urls)),
     url(r'^merchant/$',
         views.MerchantView.as_view(),
         name='merchant'),
