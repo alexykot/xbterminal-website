@@ -48,6 +48,13 @@ class PrepareWithdrawalTestCase(TestCase):
         with self.assertRaises(withdrawal.WithdrawalError):
             withdrawal.prepare_withdrawal(device, fiat_amount)
 
+    def test_no_address(self):
+        device = DeviceFactory.create()
+        btc_account = BTCAccountFactory.create(merchant=device.merchant)
+        fiat_amount = Decimal('1.00')
+        with self.assertRaises(withdrawal.WithdrawalError):
+            withdrawal.prepare_withdrawal(device, fiat_amount)
+
     @patch('payment.withdrawal.BlockChain')
     @patch('payment.withdrawal.get_exchange_rate')
     def test_insufficient_funds(self, get_rate_mock, bc_mock):

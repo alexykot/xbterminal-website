@@ -30,7 +30,8 @@ def prepare_withdrawal(device, fiat_amount):
     """
     try:
         account = BTCAccount.objects.get(merchant=device.merchant,
-                                         network=device.bitcoin_network)
+                                         network=device.bitcoin_network,
+                                         address__isnull=False)
     except BTCAccount.DoesNotExist:
         raise WithdrawalError('Merchant doesn\'t have BTC account for {0}'.format(
             device.bitcoin_network))
