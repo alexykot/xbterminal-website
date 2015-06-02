@@ -2,7 +2,7 @@ import datetime
 from decimal import Decimal
 from django.utils import timezone
 
-from payment import blockr, BTC_DEC_PLACES
+from payment import blockr, BTC_DEC_PLACES, BTC_MIN_OUTPUT
 from payment.average import get_exchange_rate
 from payment.blockchain import (
     BlockChain,
@@ -47,6 +47,8 @@ def prepare_withdrawal(device, fiat_amount):
         quantize(BTC_DEC_PLACES)
     order.customer_btc_amount = (order.fiat_amount / order.exchange_rate).\
         quantize(BTC_DEC_PLACES)
+    if order.customer_btc_amount < BTC_MIN_OUTPUT:
+        raise WithdrawalError('Customer BTC amount is below dust threshold')
 
     # Get unspent outputs and check balance
     bc = BlockChain(order.bitcoin_network)

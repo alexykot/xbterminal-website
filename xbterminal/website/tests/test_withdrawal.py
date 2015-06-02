@@ -55,6 +55,17 @@ class PrepareWithdrawalTestCase(TestCase):
         with self.assertRaises(withdrawal.WithdrawalError):
             withdrawal.prepare_withdrawal(device, fiat_amount)
 
+    @patch('payment.withdrawal.get_exchange_rate')
+    def test_dust_threshold(self, get_rate_mock):
+        device = DeviceFactory.create()
+        btc_account = BTCAccountFactory.create(
+            merchant=device.merchant,
+            address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+        fiat_amount = Decimal('0.05')
+        get_rate_mock.return_value = Decimal(1000)
+        with self.assertRaises(withdrawal.WithdrawalError):
+            withdrawal.prepare_withdrawal(device, fiat_amount)
+
     @patch('payment.withdrawal.BlockChain')
     @patch('payment.withdrawal.get_exchange_rate')
     def test_insufficient_funds(self, get_rate_mock, bc_mock):
