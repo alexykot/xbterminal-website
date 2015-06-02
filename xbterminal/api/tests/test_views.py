@@ -243,9 +243,11 @@ class WithdrawalViewSetTestCase(APITestCase):
         response = self.client.post(url, form_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['uid'], order.uid)
-        self.assertEqual(response.data['btc_amount'], order.btc_amount)
+        self.assertEqual(response.data['btc_amount'],
+                         str(order.btc_amount))
         self.assertEqual(response.data['exchange_rate'],
-                         order.effective_exchange_rate)
+                         str(order.effective_exchange_rate))
+        self.assertEqual(response.data['status'], 'new')
 
     def test_create_order_error(self):
         form_data = {

@@ -29,6 +29,7 @@ from website.forms import SimpleMerchantRegistrationForm, EnterAmountForm
 from website.utils import generate_qr_code, send_registration_info
 from api.shortcuts import render_to_pdf
 from api.forms import WithdrawalForm
+from api.serializers import WithdrawalOrderSerializer
 
 import payment.tasks
 import payment.blockchain
@@ -376,6 +377,7 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
 
     queryset = WithdrawalOrder.objects.all()
     lookup_field = 'uid'
+    serializer_class = WithdrawalOrderSerializer
 
     def create(self, request):
         form = WithdrawalForm(data=self.request.data)
@@ -389,11 +391,8 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
         except withdrawal.WithdrawalError as error:
             return Response({'error': error.message},
                             status=status.HTTP_400_BAD_REQUEST)
-        return Response({
-            'uid': order.uid,
-            'btc_amount': order.btc_amount,
-            'exchange_rate': order.effective_exchange_rate,
-        })
+        serializer = self.get_serializer(order)
+        return Response(serializer.data)
 
     @detail_route(methods=['POST'])
     def confirm(self, request, uid=None):
@@ -404,7 +403,8 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
         except withdrawal.WithdrawalError as error:
             return Response({'error': error.message},
                             status=status.HTTP_400_BAD_REQUEST)
-        return Response({'status': order.status})
+        serializer = self.get_serializer(order)
+        return Response(serializer.data)
 
     def retrieve(self, request, uid=None):
         order = self.get_object()
@@ -412,4 +412,5 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
             # Close order
             order.time_completed = timezone.now()
             order.save()
-        return Response({'status': order.status})
+        serializer = self.get_serializer(order)
+        return Response(serializer.data)

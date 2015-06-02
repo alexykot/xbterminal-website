@@ -10,6 +10,7 @@ from website.models import (
     Device,
     PaymentOrder,
     WithdrawalOrder)
+from payment import BTC_DEC_PLACES
 
 
 class UserFactory(factory.DjangoModelFactory):
@@ -97,7 +98,7 @@ class WithdrawalOrderFactory(factory.DjangoModelFactory):
         lambda wo: wo.device.merchant.currency)
     fiat_amount = fuzzy.FuzzyDecimal(0.1, 2.0)
     customer_btc_amount = factory.LazyAttribute(
-        lambda wo: wo.fiat_amount / wo.exchange_rate)
+        lambda wo: (wo.fiat_amount / wo.exchange_rate).quantize(BTC_DEC_PLACES))
     tx_fee_btc_amount = Decimal('0.0001')
     exchange_rate = Decimal('220')
 
