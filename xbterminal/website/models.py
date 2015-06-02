@@ -710,9 +710,12 @@ class WithdrawalOrder(models.Model):
         max_digits=18, decimal_places=8)
     tx_fee_btc_amount = models.DecimalField(
         max_digits=18, decimal_places=8)
+    change_btc_amount = models.DecimalField(
+        max_digits=18, decimal_places=8)
     exchange_rate = models.DecimalField(
         max_digits=18, decimal_places=8)
 
+    reserved_outputs = models.BinaryField(editable=False)
     outgoing_tx_id = models.CharField(
         max_length=64,
         validators=[validate_transaction],

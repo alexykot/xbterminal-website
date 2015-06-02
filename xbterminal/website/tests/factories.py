@@ -11,6 +11,7 @@ from website.models import (
     PaymentOrder,
     WithdrawalOrder)
 from payment import BTC_DEC_PLACES
+from payment.blockchain import serialize_outputs
 
 
 class UserFactory(factory.DjangoModelFactory):
@@ -100,6 +101,7 @@ class WithdrawalOrderFactory(factory.DjangoModelFactory):
     customer_btc_amount = factory.LazyAttribute(
         lambda wo: (wo.fiat_amount / wo.exchange_rate).quantize(BTC_DEC_PLACES))
     tx_fee_btc_amount = Decimal('0.0001')
+    change_btc_amount = Decimal(0)
     exchange_rate = Decimal('220')
 
     @factory.post_generation
@@ -108,3 +110,7 @@ class WithdrawalOrderFactory(factory.DjangoModelFactory):
             self.time_created = extracted
             if create:
                 self.save()
+
+    @factory.post_generation
+    def reserved_outputs(self, create, extracted, **kwargs):
+        self.reserved_outputs = serialize_outputs(extracted or [])

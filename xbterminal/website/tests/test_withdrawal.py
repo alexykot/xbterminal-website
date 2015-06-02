@@ -3,6 +3,8 @@ from django.test import TestCase
 from django.utils import timezone
 from mock import patch, Mock
 
+from bitcoin.core import COutPoint
+
 from website.models import WithdrawalOrder
 from website.tests.factories import (
     BTCAccountFactory,
@@ -26,8 +28,9 @@ class PrepareWithdrawalTestCase(TestCase):
         exchange_rate = Decimal(200)
         get_rate_mock.return_value = exchange_rate
         bc_mock.return_value = Mock(**{
-            'get_unspent_outputs.return_value':
-                [{'amount': Decimal('0.1')}],
+            'get_unspent_outputs.return_value': [
+                {'amount': Decimal('0.1'), 'outpoint': COutPoint(n=1)},
+            ],
         })
 
         order = withdrawal.prepare_withdrawal(device, fiat_amount)
@@ -40,6 +43,8 @@ class PrepareWithdrawalTestCase(TestCase):
         self.assertEqual(order.exchange_rate, exchange_rate)
         self.assertEqual(order.customer_btc_amount, Decimal('0.005'))
         self.assertEqual(order.tx_fee_btc_amount, Decimal('0.0001'))
+        self.assertEqual(order.change_btc_amount, Decimal('0.0949'))
+        self.assertIsNotNone(order.reserved_outputs)
         self.assertEqual(order.status, 'new')
 
     def test_no_account(self):
@@ -77,11 +82,32 @@ class PrepareWithdrawalTestCase(TestCase):
         get_rate_mock.return_value = Decimal(200)
         bc_mock.return_value = Mock(**{
             'get_unspent_outputs.return_value':
-                [{'amount': Decimal('0.9')}],
+                [{'amount': Decimal('0.9'), 'outpoint': COutPoint(n=1)}],
         })
 
         with self.assertRaises(withdrawal.WithdrawalError):
             withdrawal.prepare_withdrawal(device, fiat_amount)
+
+    @patch('payment.withdrawal.BlockChain')
+    @patch('payment.withdrawal.get_exchange_rate')
+    def test_dust_change(self, get_rate_mock, bc_mock):
+        device = DeviceFactory.create()
+        btc_account = BTCAccountFactory.create(
+            merchant=device.merchant,
+            address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+        fiat_amount = Decimal('1.00')
+        exchange_rate = Decimal(200)
+        get_rate_mock.return_value = exchange_rate
+        bc_mock.return_value = Mock(**{
+            'get_unspent_outputs.return_value': [
+                {'amount': Decimal('0.005105'), 'outpoint': COutPoint(n=1)},
+            ],
+        })
+
+        order = withdrawal.prepare_withdrawal(device, fiat_amount)
+        self.assertEqual(order.customer_btc_amount, Decimal('0.005005'))
+        self.assertEqual(order.tx_fee_btc_amount, Decimal('0.0001'))
+        self.assertEqual(order.change_btc_amount, Decimal(0))
 
 
 class SendTransactionTestCase(TestCase):
@@ -91,17 +117,16 @@ class SendTransactionTestCase(TestCase):
     @patch('payment.withdrawal.BlockChain')
     @patch('payment.withdrawal.run_periodic_task')
     def test_send_tx(self, run_task_mock, bc_mock):
+        incoming_tx_hash = b'\x01' * 32
         order = WithdrawalOrderFactory.create(
             fiat_amount=Decimal('1.00'),
             tx_fee_btc_amount=Decimal('0.0001'),
+            change_btc_amount=Decimal('0.0049'),
+            reserved_outputs=[COutPoint(hash=incoming_tx_hash)],
             exchange_rate=Decimal(200))
         customer_address = '1NdS5JCXzbhNv4STQAaknq56iGstfgRCXg'
         outgoing_tx_id = '0' * 64
         bc_instance_mock = Mock(**{
-            'get_unspent_outputs.return_value': [{
-                'outpoint': 'test_outpoint',
-                'amount': Decimal('0.01'),
-            }],
             'create_raw_transaction.return_value': 'test_tx',
             'sign_raw_transaction.return_value': 'test_tx_signed',
             'send_raw_transaction.return_value': outgoing_tx_id,
@@ -119,7 +144,7 @@ class SendTransactionTestCase(TestCase):
 
         inputs, outputs = bc_instance_mock.create_raw_transaction.call_args[0]
         self.assertEqual(len(inputs), 1)
-        self.assertEqual(inputs[0], 'test_outpoint')
+        self.assertEqual(inputs[0].hash, incoming_tx_hash)
         self.assertEqual(len(outputs.keys()), 2)
         self.assertEqual(outputs[order.customer_address],
                          order.customer_btc_amount)
@@ -129,21 +154,6 @@ class SendTransactionTestCase(TestCase):
     def test_invalid_address(self):
         order = WithdrawalOrderFactory.create()
         customer_address = 'mhXPmYBSUsjEKmyi568cEoZYR3QHHkhMyG'
-        with self.assertRaises(withdrawal.WithdrawalError):
-            withdrawal.send_transaction(order, customer_address)
-
-    @patch('payment.withdrawal.BlockChain')
-    def test_insufficient_funds(self, bc_mock):
-        order = WithdrawalOrderFactory.create(
-            fiat_amount=Decimal('200.00'),
-            exchange_rate=Decimal(200))
-        customer_address = '1NdS5JCXzbhNv4STQAaknq56iGstfgRCXg'
-        bc_mock.return_value = Mock(**{
-            'get_unspent_outputs.return_value': [{
-                'outpoint': 'test_outpoint',
-                'amount': Decimal('0.8'),
-            }],
-        })
         with self.assertRaises(withdrawal.WithdrawalError):
             withdrawal.send_transaction(order, customer_address)
 

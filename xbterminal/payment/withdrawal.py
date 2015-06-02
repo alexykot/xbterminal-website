@@ -7,7 +7,9 @@ from payment.average import get_exchange_rate
 from payment.blockchain import (
     BlockChain,
     get_tx_fee,
-    validate_bitcoin_address)
+    validate_bitcoin_address,
+    serialize_outputs,
+    deserialize_outputs)
 from payment.tasks import cancel_current_task, run_periodic_task
 from website.models import BTCAccount, WithdrawalOrder
 
@@ -52,16 +54,22 @@ def prepare_withdrawal(device, fiat_amount):
 
     # Get unspent outputs and check balance
     bc = BlockChain(order.bitcoin_network)
-    unspent_outputs = bc.get_unspent_outputs(order.merchant_address)
+    reserved_outputs = []
     unspent_sum = Decimal(0)
-    for idx, output in enumerate(unspent_outputs):
-        # TODO: freeze outputs while order is processed
+    for output in bc.get_unspent_outputs(order.merchant_address):
         unspent_sum += output['amount']
-        order.tx_fee_btc_amount = get_tx_fee(idx + 1, 2)
+        reserved_outputs.append(output['outpoint'])
+        order.tx_fee_btc_amount = get_tx_fee(len(reserved_outputs), 2)
         if unspent_sum >= order.btc_amount:
             break
     else:
         raise WithdrawalError('Insufficient funds')
+    order.reserved_outputs = serialize_outputs(reserved_outputs)
+    # Calculate change amount
+    order.change_btc_amount = unspent_sum - order.btc_amount
+    if order.change_btc_amount < BTC_MIN_OUTPUT:
+        order.customer_btc_amount += order.change_btc_amount
+        order.change_btc_amount = BTC_DEC_PLACES
 
     order.save()
     return order
@@ -81,24 +89,13 @@ def send_transaction(order, customer_address):
     else:
         order.customer_address = customer_address
 
-    # Check merchant's balance
-    unspent_sum = Decimal(0)
-    tx_inputs = []
-    bc = BlockChain(order.bitcoin_network)
-    for output in bc.get_unspent_outputs(order.merchant_address):
-        tx_inputs.append(output['outpoint'])
-        unspent_sum += output['amount']
-        if unspent_sum >= order.btc_amount:
-            break
-    else:
-        raise WithdrawalError('Insufficient account balance')
-
     # Send transaction
-    change_btc_amount = unspent_sum - order.btc_amount
+    tx_inputs = deserialize_outputs(order.reserved_outputs)
     tx_outputs = {
         order.customer_address: order.customer_btc_amount,
-        order.merchant_address: change_btc_amount,
+        order.merchant_address: order.change_btc_amount,
     }
+    bc = BlockChain(order.bitcoin_network)
     tx = bc.create_raw_transaction(tx_inputs, tx_outputs)
     tx_signed = bc.sign_raw_transaction(tx)
     order.outgoing_tx_id = bc.send_raw_transaction(tx_signed)
