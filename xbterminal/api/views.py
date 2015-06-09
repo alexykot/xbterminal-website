@@ -30,6 +30,7 @@ from website.utils import generate_qr_code, send_registration_info
 from api.shortcuts import render_to_pdf
 from api.forms import WithdrawalForm
 from api.serializers import WithdrawalOrderSerializer
+from api.utils import verify_signature
 
 import payment.tasks
 import payment.blockchain
@@ -379,11 +380,23 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
     lookup_field = 'uid'
     serializer_class = WithdrawalOrderSerializer
 
+    def _verify_signature(self, device):
+        if not device.api_key:
+            return False
+        signature = self.request.META.get('HTTP_X_SIGNATURE')
+        if not signature:
+            return False
+        return verify_signature(device.api_key,
+                                self.request.body,
+                                signature)
+
     def create(self, request):
         form = WithdrawalForm(data=self.request.data)
         if not form.is_valid():
             return Response({'error': form.error_message},
                             status=status.HTTP_400_BAD_REQUEST)
+        if not self._verify_signature(form.cleaned_data['device']):
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
         try:
             order = withdrawal.prepare_withdrawal(
                 form.cleaned_data['device'],
@@ -397,6 +410,8 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
     @detail_route(methods=['POST'])
     def confirm(self, request, uid=None):
         order = self.get_object()
+        if not self._verify_signature(order.device):
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
         customer_address = self.request.data.get('address')
         try:
             withdrawal.send_transaction(order, customer_address)

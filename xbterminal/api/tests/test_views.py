@@ -4,7 +4,7 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils import timezone
 from mock import patch, Mock
-from rest_framework.test import APITestCase
+from rest_framework.test import APITestCase, APIRequestFactory
 from rest_framework import status
 
 from website.models import PaymentOrder
@@ -12,6 +12,8 @@ from website.tests.factories import (
     DeviceFactory,
     PaymentOrderFactory,
     WithdrawalOrderFactory)
+from api.views import WithdrawalViewSet
+from api.utils import create_test_signature
 
 
 class DeviceSettingsViewTestCase(TestCase):
@@ -229,18 +231,28 @@ class WithdrawalViewSetTestCase(APITestCase):
 
     fixtures = ['initial_data.json']
 
+    def setUp(self):
+        self.factory = APIRequestFactory()
+
     @patch('api.views.withdrawal.prepare_withdrawal')
     def test_create_order(self, prepare_mock):
         device = DeviceFactory.create()
         order = WithdrawalOrderFactory.create(
             device=device, fiat_amount=Decimal('1.00'))
         prepare_mock.return_value = order
+
+        view = WithdrawalViewSet.as_view(actions={'post': 'create'})
         form_data = {
             'device': device.key,
             'amount': '1.00',
         }
         url = reverse('api:withdrawal-list')
-        response = self.client.post(url, form_data, format='json')
+        request = self.factory.post(url, form_data, format='json')
+        device.api_key, request.META['HTTP_X_SIGNATURE'] = \
+            create_test_signature(request.body)
+        device.save()
+
+        response = view(request)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['uid'], order.uid)
         self.assertEqual(response.data['btc_amount'],
@@ -258,12 +270,37 @@ class WithdrawalViewSetTestCase(APITestCase):
         response = self.client.post(url, form_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_invalid_signature(self):
+        device = DeviceFactory.create()
+
+        view = WithdrawalViewSet.as_view(actions={'post': 'create'})
+        form_data = {
+            'device': device.key,
+            'amount': '1.00',
+        }
+        url = reverse('api:withdrawal-list')
+        request = self.factory.post(url, form_data, format='json')
+        device.api_key, signature = create_test_signature(request.body)
+        device.save()
+        request.META['HTTP_X_SIGNATURE'] = 'invalid_sig'
+
+        response = view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
     @patch('api.views.withdrawal.send_transaction')
     def test_confirm(self, send_mock):
         order = WithdrawalOrderFactory.create()
+
+        view = WithdrawalViewSet.as_view(
+            actions={'post': 'confirm'})
         form_data = {'address': '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'}
         url = reverse('api:withdrawal-confirm', kwargs={'uid': order.uid})
-        response = self.client.post(url, form_data, format='json')
+        request = self.factory.post(url, form_data, format='json')
+        order.device.api_key, request.META['HTTP_X_SIGNATURE'] = \
+            create_test_signature(request.body)
+        order.device.save()
+
+        response = view(request, uid=order.uid)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('status', response.data)
         self.assertTrue(send_mock.called)
