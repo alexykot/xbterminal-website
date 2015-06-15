@@ -247,6 +247,36 @@ class MerchantAccountAdmin(admin.ModelAdmin):
             str(bool(merchant.api_key)))
 
 
+class WithdrawalOrderAdmin(admin.ModelAdmin):
+
+    list_display = [
+        '__str__',
+        'device_link',
+        'merchant_link',
+        'time_created',
+        'status',
+    ]
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def get_readonly_fields(self, request, obj=None):
+        return [field.name for field in self.opts.local_fields]
+
+    def device_link(self, payment_order):
+        return url_to_object(payment_order.device)
+    device_link.allow_tags = True
+    device_link.short_description = 'device'
+
+    def merchant_link(self, payment_order):
+        return url_to_object(payment_order.device.merchant)
+    merchant_link.allow_tags = True
+    merchant_link.short_description = 'merchant'
+
+
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.MerchantAccount, MerchantAccountAdmin)
 admin.site.register(models.BTCAccount, BTCAccountAdmin)
@@ -258,3 +288,4 @@ admin.site.register(models.Transaction, TransactionAdmin)
 admin.site.register(models.Firmware, FirmwareAdmin)
 admin.site.register(models.PaymentOrder, PaymentOrderAdmin)
 admin.site.register(models.Order, OrderAdmin)
+admin.site.register(models.WithdrawalOrder, WithdrawalOrderAdmin)

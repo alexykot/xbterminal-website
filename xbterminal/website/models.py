@@ -26,7 +26,7 @@ from website.validators import (
 from website.fields import FirmwarePathField
 from website.files import get_verification_file_name, verification_file_path_gen
 
-from payment import blockr
+from payment import BTC_DEC_PLACES, blockr
 
 
 class UserManager(BaseUserManager):
@@ -681,3 +681,93 @@ class Order(models.Model):
     @property
     def invoice_due_date(self):
         return self.created + datetime.timedelta(days=14)
+
+
+def gen_withdrawal_uid():
+    bts = uuid.uuid4().bytes
+    return base58.encode(bts)[:6]
+
+
+class WithdrawalOrder(models.Model):
+
+    uid = models.CharField('UID',
+                           max_length=32,
+                           editable=False,
+                           unique=True,
+                           default=gen_withdrawal_uid)
+    device = models.ForeignKey(Device)
+
+    bitcoin_network = models.CharField(
+        max_length=10, choices=BITCOIN_NETWORKS)
+    merchant_address = models.CharField(
+        max_length=35, validators=[validate_bitcoin_address])
+    customer_address = models.CharField(
+        max_length=35, validators=[validate_bitcoin_address], null=True)
+    fiat_currency = models.ForeignKey(Currency)
+    fiat_amount = models.DecimalField(
+        max_digits=12, decimal_places=2)
+    customer_btc_amount = models.DecimalField(
+        max_digits=18, decimal_places=8)
+    tx_fee_btc_amount = models.DecimalField(
+        max_digits=18, decimal_places=8)
+    change_btc_amount = models.DecimalField(
+        max_digits=18, decimal_places=8)
+    exchange_rate = models.DecimalField(
+        max_digits=18, decimal_places=8)
+
+    reserved_outputs = models.BinaryField(editable=False)
+    outgoing_tx_id = models.CharField(
+        max_length=64,
+        validators=[validate_transaction],
+        null=True)
+
+    time_created = models.DateTimeField(auto_now_add=True)
+    time_sent = models.DateTimeField(null=True)
+    time_broadcasted = models.DateTimeField(null=True)
+    time_completed = models.DateTimeField(null=True)
+
+    def __unicode__(self):
+        return self.uid
+
+    @property
+    def btc_amount(self):
+        """
+        Total BTC amount
+        """
+        return self.customer_btc_amount + self.tx_fee_btc_amount
+
+    @property
+    def effective_exchange_rate(self):
+        return (self.fiat_amount / self.btc_amount).quantize(BTC_DEC_PLACES)
+
+    @property
+    def expires_at(self):
+        return self.time_created + datetime.timedelta(minutes=10)
+
+    @property
+    def status(self):
+        """
+        Returns status of the withdrawal:
+            new - withdrawal order has just been created
+            sent - transaction has been sent
+            broadcasted: transaction has been broadcasted
+            completed: cutomer notified about successful withdrawal
+            timeout - transaction has not been sent
+            failed - transaction has been sent,
+                but withdrawal order is not marked as completed
+        """
+        if self.time_completed:
+            return 'completed'
+        if self.time_sent:
+            if self.expires_at >= timezone.now():
+                if self.time_broadcasted:
+                    return 'broadcasted'
+                else:
+                    return 'sent'
+            else:
+                return 'failed'
+        else:
+            if self.expires_at >= timezone.now():
+                return 'new'
+            else:
+                return 'timeout'

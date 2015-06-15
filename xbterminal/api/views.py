@@ -13,20 +13,29 @@ from django.views.generic import View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import ugettext as _
 
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, detail_route
 from rest_framework.response import Response
+from rest_framework import status, viewsets
 from constance import config
 from oauth2_provider.views.generic import ProtectedResourceView
 
-from website.models import Device, Firmware, PaymentOrder, MerchantAccount
+from website.models import (
+    Device,
+    Firmware,
+    PaymentOrder,
+    MerchantAccount,
+    WithdrawalOrder)
 from website.forms import SimpleMerchantRegistrationForm, EnterAmountForm
 from website.utils import generate_qr_code, send_registration_info
 from api.shortcuts import render_to_pdf
+from api.forms import WithdrawalForm
+from api.serializers import WithdrawalOrderSerializer
 
 import payment.tasks
 import payment.blockchain
 import payment.protocol
 from payment.instantfiat import gocoin
+from payment import withdrawal
 
 logger = logging.getLogger(__name__)
 
@@ -362,3 +371,46 @@ class PaymentCheckView(View):
         response = HttpResponse(json.dumps(data),
                                 content_type='application/json')
         return response
+
+
+class WithdrawalViewSet(viewsets.GenericViewSet):
+
+    queryset = WithdrawalOrder.objects.all()
+    lookup_field = 'uid'
+    serializer_class = WithdrawalOrderSerializer
+
+    def create(self, request):
+        form = WithdrawalForm(data=self.request.data)
+        if not form.is_valid():
+            return Response({'error': form.error_message},
+                            status=status.HTTP_400_BAD_REQUEST)
+        try:
+            order = withdrawal.prepare_withdrawal(
+                form.cleaned_data['device'],
+                form.cleaned_data['amount'])
+        except withdrawal.WithdrawalError as error:
+            return Response({'error': error.message},
+                            status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(order)
+        return Response(serializer.data)
+
+    @detail_route(methods=['POST'])
+    def confirm(self, request, uid=None):
+        order = self.get_object()
+        customer_address = self.request.data.get('address')
+        try:
+            withdrawal.send_transaction(order, customer_address)
+        except withdrawal.WithdrawalError as error:
+            return Response({'error': error.message},
+                            status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(order)
+        return Response(serializer.data)
+
+    def retrieve(self, request, uid=None):
+        order = self.get_object()
+        if order.time_broadcasted and not order.time_completed:
+            # Close order
+            order.time_completed = timezone.now()
+            order.save()
+        serializer = self.get_serializer(order)
+        return Response(serializer.data)

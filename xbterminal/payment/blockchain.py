@@ -1,10 +1,11 @@
 from decimal import Decimal
 import hashlib
 import urllib
+from cStringIO import StringIO
 
 import bitcoin
 import bitcoin.rpc
-from bitcoin.core import COIN, x, lx, b2x, b2lx, CTransaction
+from bitcoin.core import COIN, x, lx, b2x, b2lx, CTransaction, COutPoint
 from bitcoin.core.serialize import Hash
 from bitcoin.wallet import CBitcoinAddress
 
@@ -215,7 +216,7 @@ def validate_bitcoin_address(address, network):
     Validate address
     Accepts:
         address: string
-        network: mainnet or testnet
+        network: mainnet, testnet or None
     Returns:
         error: error message
     """
@@ -243,3 +244,31 @@ def get_tx_fee(inputs, outputs):
     tx_size = inputs * 148 + outputs * 34 + 10 + inputs
     fee = payment.BTC_DEFAULT_FEE * (tx_size // 1024 + 1)
     return fee
+
+
+def serialize_outputs(outputs):
+    """
+    Accepts:
+        outputs: list of COutPoint instances
+    Returns:
+        byte string
+    """
+    buffer = StringIO()
+    for outpoint in outputs:
+        outpoint.stream_serialize(buffer)
+    return buffer.getvalue()
+
+
+def deserialize_outputs(string):
+    """
+    Accepts:
+        string: serialized outputs
+    Returns:
+        list of COutPoint instances
+    """
+    buffer = StringIO(string)
+    outputs = []
+    while buffer.tell() < len(string):
+        outpoint = COutPoint.stream_deserialize(buffer)
+        outputs.append(outpoint)
+    return outputs

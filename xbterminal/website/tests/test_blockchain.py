@@ -2,7 +2,11 @@ from decimal import Decimal
 from django.test import TestCase
 from mock import patch, Mock
 
-from payment.blockchain import BlockChain
+from bitcoin.core import COutPoint
+from payment.blockchain import (
+    BlockChain,
+    serialize_outputs,
+    deserialize_outputs)
 
 
 class BlockChainTestCase(TestCase):
@@ -34,3 +38,12 @@ class BlockChainTestCase(TestCase):
         bc = BlockChain('mainnet')
         balance = bc.get_address_balance('test')
         self.assertEqual(balance, Decimal('0.005'))
+
+
+class OutputsSerializationTestCase(TestCase):
+
+    def test_serialization(self):
+        outputs = [COutPoint(n=1), COutPoint(n=2)]
+        serialized = serialize_outputs(outputs)
+        deserialized = deserialize_outputs(serialized)
+        self.assertEqual(len(deserialized), 2)
