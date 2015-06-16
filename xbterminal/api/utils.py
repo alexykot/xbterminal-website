@@ -1,3 +1,4 @@
+import base64
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
@@ -15,6 +16,10 @@ def verify_signature(public_key_pem, message, signature):
     Returns:
         True if signature is valid, false otherwise
     """
+    try:
+        signature = base64.b64decode(signature)
+    except TypeError:
+        return False
     public_key = serialization.load_pem_public_key(
         str(public_key_pem),
         backend=default_backend())
@@ -52,4 +57,4 @@ def create_test_signature(message):
         hashes.SHA256())
     signer.update(message)
     signature = signer.finalize()
-    return public_key_pem, signature
+    return public_key_pem, base64.b64encode(signature)
