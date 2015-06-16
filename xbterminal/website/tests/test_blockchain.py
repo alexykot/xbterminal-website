@@ -34,7 +34,7 @@ class BlockChainTestCase(TestCase):
     @patch('payment.blockchain.bitcoin.rpc.Proxy')
     def test_get_address_balance(self, proxy_mock):
         proxy_mock.return_value = Mock(**{
-            'getreceivedbyaddress.return_value': 500000,
+            'listunspent.return_value': [{'amount': 500000}],
         })
         bc = BlockChain('mainnet')
         balance = bc.get_address_balance('test')
