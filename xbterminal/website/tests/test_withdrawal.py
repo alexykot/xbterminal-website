@@ -117,8 +117,14 @@ class SendTransactionTestCase(TestCase):
     @patch('payment.withdrawal.BlockChain')
     @patch('payment.withdrawal.run_periodic_task')
     def test_send_tx(self, run_task_mock, bc_mock):
+        device = DeviceFactory.create()
+        btc_account = BTCAccountFactory.create(
+            merchant=device.merchant,
+            balance=Decimal('0.01'),
+            address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
         incoming_tx_hash = b'\x01' * 32
         order = WithdrawalOrderFactory.create(
+            device=device,
             fiat_amount=Decimal('1.00'),
             tx_fee_btc_amount=Decimal('0.0001'),
             change_btc_amount=Decimal('0.0049'),
@@ -149,6 +155,9 @@ class SendTransactionTestCase(TestCase):
         self.assertEqual(outputs[order.customer_address],
                          order.customer_btc_amount)
         self.assertEqual(outputs[order.merchant_address],
+                         Decimal('0.0049'))
+
+        self.assertEqual(device.merchant.get_account_balance('mainnet'),
                          Decimal('0.0049'))
 
     def test_invalid_address(self):
