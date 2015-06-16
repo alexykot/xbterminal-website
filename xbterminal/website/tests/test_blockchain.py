@@ -6,7 +6,8 @@ from bitcoin.core import COutPoint
 from payment.blockchain import (
     BlockChain,
     serialize_outputs,
-    deserialize_outputs)
+    deserialize_outputs,
+    validate_bitcoin_address)
 
 
 class BlockChainTestCase(TestCase):
@@ -40,10 +41,21 @@ class BlockChainTestCase(TestCase):
         self.assertEqual(balance, Decimal('0.005'))
 
 
-class OutputsSerializationTestCase(TestCase):
+class UtilsTestCase(TestCase):
 
-    def test_serialization(self):
+    def test_output_serialization(self):
         outputs = [COutPoint(n=1), COutPoint(n=2)]
         serialized = serialize_outputs(outputs)
         deserialized = deserialize_outputs(serialized)
         self.assertEqual(len(deserialized), 2)
+
+    def test_address_validation(self):
+        main_addr = '1JpY93MNoeHJ914CHLCQkdhS7TvBM68Xp6'
+        self.assertIsNone(
+            validate_bitcoin_address(main_addr, 'mainnet'))
+        test_addr = 'mxqpfcxzKnPfgZw8JKs7DU6m7DTysxBBWn'
+        self.assertIsNone(
+            validate_bitcoin_address(test_addr, 'testnet'))
+        invalid_addr = '1wFSdAv9rGpA4CvX3UtxZpUwaumsWM68pC'
+        self.assertIsNotNone(
+            validate_bitcoin_address(invalid_addr, None))

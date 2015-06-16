@@ -5,6 +5,7 @@ from cStringIO import StringIO
 
 import bitcoin
 import bitcoin.rpc
+from bitcoin.base58 import CBase58Data
 from bitcoin.core import COIN, x, lx, b2x, b2lx, CTransaction, COutPoint
 from bitcoin.core.serialize import Hash
 from bitcoin.wallet import CBitcoinAddress
@@ -218,20 +219,19 @@ def validate_bitcoin_address(address, network):
         address: string
         network: mainnet, testnet or None
     Returns:
-        error: error message
+        error message or None
     """
-    try:
-        address = CBitcoinAddress(address)
-    except:
-        return "Invalid bitcoin address."
-    if network is None:
-        return None
-    elif network == "mainnet":
-        prefixes = bitcoin.MainParams.BASE58_PREFIXES.values()
-    elif network == "testnet":
-        prefixes = bitcoin.TestNetParams.BASE58_PREFIXES.values()
-    if address.nVersion not in prefixes:
-        return "Invalid address for network {0}.".format(network)
+    if network:
+        bitcoin.SelectParams(network)
+        try:
+            address = CBitcoinAddress(address)
+        except:
+            return 'Invalid address for network {0}.'.format(network)
+    else:
+        try:
+            address = CBase58Data(address)
+        except:
+            return 'Invalid bitcoin address.'
 
 
 def get_tx_fee(inputs, outputs):
