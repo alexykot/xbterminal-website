@@ -101,6 +101,14 @@ def send_transaction(order, customer_address):
     order.outgoing_tx_id = bc.send_raw_transaction(tx_signed)
     order.time_sent = timezone.now()
     order.save()
+
+    # Update balance
+    btc_account = BTCAccount.objects.filter(
+        merchant=order.device.merchant,
+        network=order.bitcoin_network).first()
+    btc_account.balance -= order.btc_amount
+    btc_account.save()
+
     run_periodic_task(wait_for_broadcast, [order.uid], interval=5)
 
 

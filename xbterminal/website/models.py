@@ -375,6 +375,11 @@ class Device(models.Model):
 
     our_fee_override = models.CharField(max_length=50, blank=True, null=True)
 
+    api_key = models.TextField(
+        blank=True,
+        null=True,
+        help_text='API public key')
+
     class Meta:
         ordering = ['id']
 

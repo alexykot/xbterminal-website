@@ -164,13 +164,13 @@ class KYCDocumentInline(admin.TabularInline):
 
 class BTCAccountAdmin(admin.ModelAdmin):
 
-    readonly_fields = ['balance', 'address']
+    readonly_fields = ['address']
 
 
 class BTCAccountInline(admin.TabularInline):
 
     model = models.BTCAccount
-    readonly_fields = ['balance', 'address']
+    readonly_fields = ['address']
     extra = 1
 
 
