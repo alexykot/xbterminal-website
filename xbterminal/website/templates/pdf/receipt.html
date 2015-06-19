@@ -34,14 +34,14 @@
             bottom: 0.25cm;
             text-align: center;
             height: 2cm;
-            left: 5cm;
+            left: 6cm;
             vertical-align: middle;
         }
         @frame footer-image {
             -pdf-frame-content: footer-image;
             bottom: 0cm;
             height: 2.5cm;
-            left: 9.5cm;
+            left: 9cm;
         }
     }
     #qrcode-text {
@@ -110,7 +110,7 @@
         <td class="col2">{{ order.device.merchant.billing_address|join:', ' }}</td>
     </tr>
     <tr>
-        <td class="col1">{% trans 'Merchant invoice number' %}</td>
+        <td class="col1">{% trans 'Receipt number' %}</td>
         <td class="col2">{{ order.id }}</td>
     </tr>
     <tr>
@@ -125,7 +125,7 @@
 <div id="qrcode">
     {% qr_from_text order.receipt_url 4 %}
 </div>
-<div id="footer">{% trans 'payment processed by' %}</div>
+<div id="footer">{% trans 'processed by' %}</div>
 <div id="footer-image"><img src="{% pdf_static 'img/xbt_logo_small.png' %}"></div>
 </body>
 </html>
