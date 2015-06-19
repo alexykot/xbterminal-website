@@ -1,4 +1,3 @@
-from decimal import Decimal
 from django.test import TestCase
 
 from website.tests.factories import WithdrawalOrderFactory

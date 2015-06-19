@@ -4,7 +4,6 @@ import logging
 import os
 
 from django.shortcuts import get_object_or_404
-from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
@@ -16,14 +15,12 @@ from django.utils.translation import ugettext as _
 from rest_framework.decorators import api_view, detail_route
 from rest_framework.response import Response
 from rest_framework import status, viewsets
-from constance import config
 from oauth2_provider.views.generic import ProtectedResourceView
 
 from website.models import (
     Device,
     Firmware,
     PaymentOrder,
-    MerchantAccount,
     WithdrawalOrder)
 from website.forms import SimpleMerchantRegistrationForm, EnterAmountForm
 from website.utils import generate_qr_code, send_registration_info

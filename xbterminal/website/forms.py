@@ -1,6 +1,4 @@
 from decimal import Decimal
-import os
-import smtplib
 
 from django import forms
 from django.core.cache import cache
@@ -10,9 +8,7 @@ from django.contrib.auth.forms import (
     AuthenticationForm as DjangoAuthenticationForm,
     UserCreationForm as DjangoUserCreationForm,
     UserChangeForm as DjangoUserChangeForm)
-from django.core.files.uploadedfile import UploadedFile
 from django.core.validators import RegexValidator
-from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from constance import config
@@ -30,7 +26,6 @@ from website.models import (
     KYCDocument,
     get_language,
     get_currency)
-from website.fields import BCAddressField
 from website.widgets import (
     ButtonGroupRadioSelect,
     PercentWidget,

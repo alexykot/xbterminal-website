@@ -4,19 +4,16 @@ import datetime
 import re
 import traceback
 
-from django.shortcuts import get_object_or_404, render, redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, StreamingHttpResponse
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
-from django.template.loader import render_to_string
 from django.conf import settings
 from django.views.generic import View
 from django.views.generic.base import ContextMixin, TemplateResponseMixin
 from django.utils.decorators import method_decorator
-from django.core.urlresolvers import resolve, reverse, reverse_lazy
-from django.views.decorators.clickjacking import xframe_options_exempt
-from django.views.decorators.http import require_http_methods
+from django.core.urlresolvers import resolve, reverse
 from django.db.models import Count, Sum
 from django.contrib import messages
 from django.utils import timezone

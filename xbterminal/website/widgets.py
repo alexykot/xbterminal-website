@@ -1,5 +1,3 @@
-import os
-
 from django.core.urlresolvers import reverse
 from django.forms.widgets import (
     ChoiceFieldRenderer,

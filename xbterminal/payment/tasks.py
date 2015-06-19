@@ -4,7 +4,6 @@ Payment operations
 import datetime
 from decimal import Decimal
 import logging
-import uuid
 
 from bitcoin.rpc import JSONRPCException
 from bitcoin.wallet import CBitcoinAddress
@@ -18,7 +17,6 @@ from payment import (
     FIAT_DEC_PLACES,
     FIAT_MIN_OUTPUT,
     BTC_DEC_PLACES,
-    BTC_DEFAULT_FEE,
     BTC_MIN_OUTPUT)
 from payment import average, blockchain, instantfiat, exceptions
 

@@ -1,12 +1,11 @@
 from decimal import Decimal
-import hashlib
 import urllib
 from cStringIO import StringIO
 
 import bitcoin
 import bitcoin.rpc
 from bitcoin.base58 import CBase58Data
-from bitcoin.core import COIN, x, lx, b2x, b2lx, CTransaction, COutPoint
+from bitcoin.core import COIN, x, lx, b2lx, CTransaction, COutPoint
 from bitcoin.core.serialize import Hash
 from bitcoin.wallet import CBitcoinAddress
 
