@@ -118,6 +118,7 @@ class PaymentOrderTestCase(TestCase):
 
     def test_payment_order_factory(self):
         payment_order = PaymentOrderFactory.create()
+        self.assertEqual(payment_order.order_type, 'payment')
         self.assertEqual(len(payment_order.uid), 6)
         self.assertEqual(payment_order.status, 'new')
 
@@ -164,6 +165,21 @@ class PaymentOrderTestCase(TestCase):
             time_recieved=timezone.now() - datetime.timedelta(hours=1))
         self.assertEqual(payment_order.status, 'failed')
 
+    def test_scaled_btc_amount(self):
+        order = PaymentOrderFactory.create(btc_amount=Decimal('0.1003'))
+        self.assertEqual(order.scaled_btc_amount, Decimal('100.3'))
+
+    def test_scaled_effective_exchange_rate(self):
+        order = PaymentOrderFactory.create(
+            effective_exchange_rate=Decimal('220'))
+        self.assertEqual(order.scaled_effective_exchange_rate,
+                         Decimal('0.22'))
+
+    def test_urls_for_receipts(self):
+        order = PaymentOrderFactory.create(incoming_tx_id='0' * 64)
+        self.assertIsNotNone(order.payment_address_url)
+        self.assertIsNotNone(order.incoming_tx_url)
+
 
 class WithdrawalOrderTestCase(TestCase):
 
@@ -182,6 +198,7 @@ class WithdrawalOrderTestCase(TestCase):
             change_btc_amount=Decimal(0),
             exchange_rate=Decimal('10'))
         # Defaults
+        self.assertEqual(order.order_type, 'withdrawal')
         self.assertEqual(len(order.uid), 6)
         self.assertIsNotNone(order.time_created)
         self.assertEqual(str(order), order.uid)
@@ -199,13 +216,16 @@ class WithdrawalOrderTestCase(TestCase):
             tx_fee_btc_amount=Decimal('0.0002'),
             change_btc_amount=Decimal('0.2'))
         self.assertEqual(order.btc_amount, Decimal('0.1002'))
+        self.assertEqual(order.scaled_btc_amount, Decimal('100.2'))
 
     def test_effective_exchange_rate(self):
         order = WithdrawalOrderFactory.create(
             fiat_amount=Decimal('1.00'),
             customer_btc_amount=Decimal('0.05'),
             tx_fee_btc_amount=Decimal('0.05'))
-        self.assertEqual(order.effective_exchange_rate, Decimal(10))
+        self.assertEqual(order.effective_exchange_rate, Decimal('10'))
+        self.assertEqual(order.scaled_effective_exchange_rate,
+                         Decimal('0.01'))
 
     def test_status(self):
         order = WithdrawalOrderFactory.create()
@@ -225,3 +245,8 @@ class WithdrawalOrderTestCase(TestCase):
             time_created=timezone.now() - datetime.timedelta(hours=2),
             time_sent=timezone.now() - datetime.timedelta(hours=1))
         self.assertEqual(order.status, 'failed')
+
+    def test_urls_for_receipts(self):
+        order = WithdrawalOrderFactory.create(outgoing_tx_id='0' * 64)
+        self.assertIsNotNone(order.customer_address_url)
+        self.assertIsNotNone(order.outgoing_tx_url)

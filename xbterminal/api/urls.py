@@ -36,6 +36,7 @@ api_urls = patterns(
     url(r'^payments/(?P<payment_uid>[0-9a-zA-Z]{6,32})/check$',
         views.PaymentCheckView.as_view(),
         name='payment_check'),
+
     url(r'^receipts/(?P<payment_uid>[0-9a-zA-Z]{6,32})/$',
         views.ReceiptView.as_view(),
         name='receipt'),
