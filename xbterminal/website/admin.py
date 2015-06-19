@@ -47,29 +47,6 @@ class DeviceAdmin(admin.ModelAdmin):
     device_key_qr_code.allow_tags = True
 
 
-class TransactionAdmin(admin.ModelAdmin):
-    list_display = [
-        '__unicode__',
-        'paymentorder',
-        'device_link',
-        'merchant_link',
-        'date_created',
-    ]
-    readonly_fields = ['receipt_key']
-
-    def device_link(self, transaction):
-        return url_to_object(transaction.device)
-
-    device_link.allow_tags = True
-    device_link.short_description = 'device'
-
-    def merchant_link(self, transaction):
-        return url_to_object(transaction.device.merchant)
-
-    merchant_link.allow_tags = True
-    merchant_link.short_description = 'merchant'
-
-
 class FirmwareAdmin(admin.ModelAdmin):
     list_display = ('id', 'version', 'hash', 'added')
     readonly_fields = ('hash',)
@@ -284,7 +261,6 @@ admin.site.register(models.KYCDocument, KYCDocumentAdmin)
 admin.site.register(models.Device, DeviceAdmin)
 admin.site.register(models.Language)
 admin.site.register(models.Currency)
-admin.site.register(models.Transaction, TransactionAdmin)
 admin.site.register(models.Firmware, FirmwareAdmin)
 admin.site.register(models.PaymentOrder, PaymentOrderAdmin)
 admin.site.register(models.Order, OrderAdmin)

@@ -24,7 +24,7 @@ from payment import average, blockchain, instantfiat, exceptions
 
 from payment import blockr, protocol
 
-from website.models import PaymentOrder, Transaction, BTCAccount
+from website.models import PaymentOrder, BTCAccount
 from website.utils import send_error_message
 
 logger = logging.getLogger(__name__)

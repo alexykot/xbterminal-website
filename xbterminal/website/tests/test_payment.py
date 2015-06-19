@@ -64,7 +64,6 @@ class PreparePaymentTestCase(TestCase):
         self.assertIsNone(payment_order.instantfiat_invoice_id)
         self.assertIsNone(payment_order.incoming_tx_id)
         self.assertIsNone(payment_order.outgoing_tx_id)
-        self.assertIsNone(payment_order.transaction)
         self.assertIsNone(payment_order.receipt_key)
         self.assertEqual(payment_order.status, 'new')
 
