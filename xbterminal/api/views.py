@@ -146,17 +146,17 @@ class ReceiptView(View):
     def get(self, *args, **kwargs):
         payment_uid = self.kwargs.get('payment_uid')
         try:
-            payment_order = PaymentOrder.objects.get(
+            order = PaymentOrder.objects.get(
                 Q(uid=payment_uid) | Q(receipt_key=payment_uid),
                 time_finished__isnull=False)
         except PaymentOrder.DoesNotExist:
             raise Http404
         response = render_to_pdf(
             'pdf/receipt.html',
-            {'payment_order': payment_order})
+            {'order': order})
         disposition = 'inline; filename="receipt #{0} {1}.pdf"'.format(
-            payment_order.id,
-            payment_order.device.merchant.company_name)
+            order.id,
+            order.device.merchant.company_name)
         response['Content-Disposition'] = disposition
         return response
 
