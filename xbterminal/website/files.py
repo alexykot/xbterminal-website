@@ -2,8 +2,6 @@ import os
 import re
 import unicodedata
 
-from django.utils.encoding import filepath_to_uri
-
 
 def verification_file_path_gen(instance, filename):
     """

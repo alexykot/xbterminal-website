@@ -231,8 +231,8 @@ class MerchantAccount(models.Model):
         total = self.device_set.count()
         today = timezone.localtime(timezone.now()).\
             replace(hour=0, minute=0, second=0, microsecond=0)
-        transactions = Transaction.objects.filter(device__merchant=self,
-                                                  time__gte=today)
+        transactions = PaymentOrder.objects.filter(device__merchant=self,
+                                                   time_finished__gte=today)
         tx_count = transactions.count()
         tx_sum = transactions.aggregate(s=models.Sum('fiat_amount'))['s']
         return {'name': self.trading_name or self.company_name,
@@ -446,54 +446,6 @@ class ReconciliationTime(models.Model):
         ordering = ['time']
 
 
-class Transaction(models.Model):
-
-    device = models.ForeignKey(Device)
-    hop_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
-    dest_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], blank=True, null=True)
-    instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], blank=True, null=True)
-    bitcoin_transaction_id_1 = models.CharField(max_length=64, validators=[validate_transaction])
-    bitcoin_transaction_id_2 = models.CharField(max_length=64, validators=[validate_transaction])
-    fiat_currency = models.CharField(max_length=3)
-    fiat_amount = models.DecimalField(max_digits=20, decimal_places=8)
-    btc_amount = models.DecimalField(max_digits=20, decimal_places=8)
-    effective_exchange_rate = models.DecimalField(max_digits=20, decimal_places=8)
-    instantfiat_fiat_amount = models.DecimalField(max_digits=9, decimal_places=2, blank=True, default=0)
-    instantfiat_btc_amount = models.DecimalField(max_digits=18, decimal_places=8, blank=True, default=0)
-    fee_btc_amount = models.DecimalField(max_digits=18, decimal_places=8, blank=True, default=0)
-    instantfiat_invoice_id = models.CharField(max_length=255, blank=True, null=True)
-    time = models.DateTimeField()
-
-    date_created = models.DateTimeField(auto_now_add=True)
-    receipt_key = models.CharField(max_length=32, editable=False, unique=True, default=lambda: uuid.uuid4().hex)
-
-    def __unicode__(self):
-        return str(self.pk)
-
-    def get_api_url(self):
-        domain = Site.objects.get_current().domain
-        path = reverse('api:receipt', kwargs={'key': self.receipt_key})
-        return 'https://%s%s' % (domain, path)
-
-    def get_incoming_transaction_url(self):
-        return blockr.get_tx_url(self.bitcoin_transaction_id_1, self.device.bitcoin_network)
-
-    def get_hop_address_url(self):
-        return blockr.get_address_url(self.hop_address, self.device.bitcoin_network)
-
-    def scaled_total_btc_amount(self):
-        return self.btc_amount * settings.BITCOIN_SCALE_DIVIZER
-
-    def scaled_effective_exchange_rate(self):
-        return self.effective_exchange_rate / settings.BITCOIN_SCALE_DIVIZER
-
-    def scaled_btc_amount(self):
-        return (self.btc_amount - self.fee_btc_amount) * settings.BITCOIN_SCALE_DIVIZER
-
-    def scaled_exchange_rate(self):
-        return self.fiat_amount / self.scaled_btc_amount()
-
-
 class Firmware(models.Model):
     hash = models.CharField(max_length=32, editable=False, unique=True, default=lambda: uuid.uuid4().hex)
     version = models.CharField(max_length=50)
@@ -553,7 +505,6 @@ class PaymentOrder(models.Model):
     time_exchanged = models.DateTimeField(null=True)
     time_finished = models.DateTimeField(null=True)
 
-    transaction = models.OneToOneField(Transaction, null=True)
     receipt_key = models.CharField(max_length=32, unique=True, null=True)
 
     def __unicode__(self):
