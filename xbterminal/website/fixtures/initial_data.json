@@ -60,7 +60,23 @@
     "pk": 1,
     "fields": {
       "domain": "xbterminal.io",
-      "name": "xbterminal.io"
+      "name": "XBTerminal production"
+    }
+  },
+  {
+    "model": "sites.Site",
+    "pk": 2,
+    "fields": {
+      "domain": "stage.xbterminal.com",
+      "name": "XBTerminal staging"
+    }
+  },
+  {
+    "model": "sites.Site",
+    "pk": 3,
+    "fields": {
+      "domain": "localhost:8000",
+      "name": "XBTerminal development"
     }
   }
 ]
