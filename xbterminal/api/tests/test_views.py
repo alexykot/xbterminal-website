@@ -205,7 +205,7 @@ class ReceiptViewTestCase(TestCase):
     fixtures = ['initial_data.json']
 
     @patch('api.shortcuts.get_template')
-    def test_receipt(self, get_template_mock):
+    def test_payment_order(self, get_template_mock):
         template_mock = Mock(**{
             'render.return_value': 'test',
         })
@@ -213,7 +213,7 @@ class ReceiptViewTestCase(TestCase):
         payment_order = PaymentOrderFactory.create(
             time_finished=timezone.now())
         url = reverse('api:receipt',
-                      kwargs={'payment_uid': payment_order.uid})
+                      kwargs={'order_uid': payment_order.uid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pdf')
@@ -222,7 +222,29 @@ class ReceiptViewTestCase(TestCase):
     def test_payment_not_finished(self):
         payment_order = PaymentOrderFactory.create()
         url = reverse('api:receipt',
-                      kwargs={'payment_uid': payment_order.uid})
+                      kwargs={'order_uid': payment_order.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    @patch('api.shortcuts.get_template')
+    def test_withdrawal_order(self, get_template_mock):
+        template_mock = Mock(**{
+            'render.return_value': 'test',
+        })
+        get_template_mock.return_value = template_mock
+        withdrawal_order = WithdrawalOrderFactory.create(
+            time_completed=timezone.now())
+        url = reverse('api:receipt',
+                      kwargs={'order_uid': withdrawal_order.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertTrue(template_mock.render.called)
+
+    def test_withdrawal_not_finished(self):
+        withdrawal_order = WithdrawalOrderFactory.create()
+        url = reverse('api:receipt',
+                      kwargs={'order_uid': withdrawal_order.uid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 

@@ -77,14 +77,23 @@
 </style>
 </head>
 <body>
-<div class="title">{% trans 'Customer Receipt' %} - #{{ order.id }}</div>
+
+<div class="title">
+    {% if order.order_type == 'payment' %}{% trans 'Customer Receipt' %}
+    {% elif order.order_type == 'withdrawal' %}{% trans 'Withdrawal Receipt' %}
+    {% endif %} - #{{ order.id }}
+</div>
 <table>
     <tr>
         <td style="width: 400px;" class="col1">{% trans 'Amount' %}</td>
         <td class="col2">{{ order.device.merchant.currency.prefix }}{{ order.fiat_amount|floatformat:2 }}{{ order.device.merchant.currency.postfix }}</td>
     </tr>
     <tr>
-        <td class="col1">{% trans 'Bitcoin amount paid' %}</td>
+        <td class="col1">
+            {% if order.order_type == 'payment' %}{% trans 'Bitcoin amount paid' %}
+            {% elif order.order_type == 'withdrawal' %}{% trans 'Bitcoin amount withdrawn' %}
+            {% endif %}
+        </td>
         <td class="col2 btc-amount">m<span class="btc-symbol">&#xf15a;</span> {{ order.scaled_btc_amount|floatformat:5 }}</td>
     </tr>
     <tr>
@@ -94,11 +103,19 @@
     <tr></tr>
     <tr>
         <td class="col1">{% trans 'Destination address' %}</td>
+        {% if order.order_type == 'payment' %}
         <td class="col2"><a class="blockr-link" href="{{ order.payment_address_url }}">{{ order.local_address }}</a></td>
+        {% elif order.order_type == 'withdrawal' %}
+        <td class="col2"><a class="blockr-link" href="{{ order.customer_address_url }}">{{ order.customer_address }}</a></td>
+        {% endif %}
     </tr>
     <tr>
         <td class="col1">{% trans 'Bitcoin transaction ID' %}</td>
+        {% if order.order_type == 'payment' %}
         <td class="col2"><a class="blockr-link" href="{{ order.incoming_tx_url }}">{{ order.incoming_tx_id }}</a></td>
+        {% elif order.order_type == 'withdrawal' %}
+        <td class="col2"><a class="blockr-link" href="{{ order.outgoing_tx_url }}">{{ order.outgoing_tx_id }}</a></td>
+        {% endif %}
     </tr>
     <tr></tr>
     <tr>

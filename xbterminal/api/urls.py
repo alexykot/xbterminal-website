@@ -37,7 +37,7 @@ api_urls = patterns(
         views.PaymentCheckView.as_view(),
         name='payment_check'),
 
-    url(r'^receipts/(?P<payment_uid>[0-9a-zA-Z]{6,32})/$',
+    url(r'^receipts/(?P<order_uid>[0-9a-zA-Z]{6,32})/$',
         views.ReceiptView.as_view(),
         name='receipt'),
 )
@@ -47,7 +47,7 @@ short_urls = patterns(
     url(r'^pr/(?P<payment_uid>[0-9a-zA-Z]{6,32})$',
         views.PaymentRequestView.as_view(),
         name='payment_request'),
-    url(r'^rc/(?P<payment_uid>[0-9a-zA-Z]{6,32})$',
+    url(r'^rc/(?P<order_uid>[0-9a-zA-Z]{6,32})$',
         views.ReceiptView.as_view(),
         name='receipt'),
 )

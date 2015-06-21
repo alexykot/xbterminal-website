@@ -559,7 +559,7 @@ class PaymentOrder(models.Model):
     @property
     def receipt_url(self):
         domain = Site.objects.get_current().domain
-        path = reverse('api:short:receipt', kwargs={'payment_uid': self.uid})
+        path = reverse('api:short:receipt', kwargs={'order_uid': self.uid})
         return 'https://{0}{1}'.format(domain, path)
 
     @property
@@ -719,6 +719,12 @@ class WithdrawalOrder(models.Model):
     def customer_address_url(self):
         """For receipts"""
         return blockr.get_address_url(self.customer_address, self.bitcoin_network)
+
+    @property
+    def receipt_url(self):
+        domain = Site.objects.get_current().domain
+        path = reverse('api:short:receipt', kwargs={'order_uid': self.uid})
+        return 'https://{0}{1}'.format(domain, path)
 
     @property
     def expires_at(self):
