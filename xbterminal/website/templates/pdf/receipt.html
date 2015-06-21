@@ -132,7 +132,13 @@
     </tr>
     <tr>
         <td class="col1">{% trans 'Transaction time' %}</td>
-        <td class="col2">{% language 'en' %}{{ order.time_finished|date:'d M Y, h:i A' }}{% endlanguage %}</td>
+        <td class="col2">
+            {% language 'en' %}
+            {% if order.order_type == 'payment' %}{{ order.time_finished|date:'d M Y, h:i A' }}
+            {% elif order.order_type == 'withdrawal' %}{{ order.time_completed|date:'d M Y, h:i A' }}
+            {% endif %}
+            {% endlanguage %}
+        </td>git 
     </tr>
 </table>
 <div id="qrcode-text">
