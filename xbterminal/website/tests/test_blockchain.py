@@ -3,7 +3,7 @@ from django.test import TestCase
 from mock import patch, Mock
 
 from bitcoin.core import COutPoint
-from payment.blockchain import (
+from operations.blockchain import (
     BlockChain,
     serialize_outputs,
     deserialize_outputs,
@@ -12,8 +12,8 @@ from payment.blockchain import (
 
 class BlockChainTestCase(TestCase):
 
-    @patch('payment.blockchain.bitcoin.SelectParams')
-    @patch('payment.blockchain.bitcoin.rpc.Proxy')
+    @patch('operations.blockchain.bitcoin.SelectParams')
+    @patch('operations.blockchain.bitcoin.rpc.Proxy')
     def test_init(self, proxy_mock, select_params_mock):
         bc = BlockChain('mainnet')
         self.assertTrue(select_params_mock.called)
@@ -22,7 +22,7 @@ class BlockChainTestCase(TestCase):
         service_url = proxy_mock.call_args[0][0]
         self.assertTrue(service_url.startswith('https'))
 
-    @patch('payment.blockchain.bitcoin.rpc.Proxy')
+    @patch('operations.blockchain.bitcoin.rpc.Proxy')
     def test_get_balance(self, proxy_mock):
         proxy_mock.return_value = Mock(**{
             'getbalance.return_value': 500000,
@@ -31,7 +31,7 @@ class BlockChainTestCase(TestCase):
         balance = bc.get_balance()
         self.assertEqual(balance, Decimal('0.005'))
 
-    @patch('payment.blockchain.bitcoin.rpc.Proxy')
+    @patch('operations.blockchain.bitcoin.rpc.Proxy')
     def test_get_address_balance(self, proxy_mock):
         proxy_mock.return_value = Mock(**{
             'listunspent.return_value': [{'amount': 500000}],

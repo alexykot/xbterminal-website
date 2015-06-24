@@ -1,13 +1,11 @@
 import datetime
 from decimal import Decimal
-import rq
 
 from django.utils import timezone
-import django_rq
 from constance import config
 
-from payment.instantfiat import gocoin
-from payment.tasks import run_periodic_task
+from operations.instantfiat import gocoin
+from operations.rq_helpers import run_periodic_task, cancel_current_task
 
 from website.models import Order
 from website.utils import send_invoice
@@ -58,17 +56,17 @@ def wait_for_payment(order_id):
         order = Order.objects.get(pk=order_id)
     except Order.DoesNotExist:
         # Order or merchant deleted, cancel job
-        django_rq.get_scheduler().cancel(rq.get_current_job())
+        cancel_current_task()
         return
     if order.created + datetime.timedelta(minutes=20) < timezone.now():
         # Timeout, cancel job
-        django_rq.get_scheduler().cancel(rq.get_current_job())
+        cancel_current_task()
     invoice_paid = gocoin.is_invoice_paid(
         order.instantfiat_invoice_id,
         config.GOCOIN_AUTH_TOKEN,
         config.GOCOIN_MERCHANT_ID)
     if invoice_paid:
-        django_rq.get_scheduler().cancel(rq.get_current_job())
+        cancel_current_task()
         order.payment_status = 'paid'
         order.save()
         send_invoice(order)

@@ -7,7 +7,7 @@ import re
 
 import requests
 
-import payment
+from operations import BTC_DEC_PLACES
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ def create_invoice(fiat_amount, currency_code, api_key):
     except (requests.exceptions.RequestException, ValueError):
         raise
     invoice_id = data['invoice_id']
-    btc_amount = Decimal(data['amount']).quantize(payment.BTC_DEC_PLACES)
+    btc_amount = Decimal(data['amount']).quantize(BTC_DEC_PLACES)
     address = _get_address(invoice_id)
     logger.debug("bitpay invoice created")
     return invoice_id, btc_amount, address

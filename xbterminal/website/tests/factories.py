@@ -10,8 +10,8 @@ from website.models import (
     Device,
     PaymentOrder,
     WithdrawalOrder)
-from payment import BTC_DEC_PLACES
-from payment.blockchain import serialize_outputs
+from operations import BTC_DEC_PLACES
+from operations.blockchain import serialize_outputs
 
 
 class UserFactory(factory.DjangoModelFactory):

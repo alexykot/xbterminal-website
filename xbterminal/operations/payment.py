@@ -7,40 +7,27 @@ import logging
 
 from bitcoin.rpc import JSONRPCException
 from bitcoin.wallet import CBitcoinAddress
-import rq
 
 from django.utils import timezone
 from constance import config
-import django_rq
 
-from payment import (
+from operations import (
     FIAT_DEC_PLACES,
     FIAT_MIN_OUTPUT,
     BTC_DEC_PLACES,
-    BTC_MIN_OUTPUT)
-from payment import average, blockchain, instantfiat, exceptions
-
-from payment import blockr, protocol
+    BTC_MIN_OUTPUT,
+    average,
+    blockchain,
+    blockr,
+    instantfiat,
+    exceptions,
+    protocol)
+from operations.rq_helpers import run_periodic_task, cancel_current_task
 
 from website.models import PaymentOrder, BTCAccount
 from website.utils import send_error_message
 
 logger = logging.getLogger(__name__)
-
-
-def run_periodic_task(func, args, interval=2):
-    scheduler = django_rq.get_scheduler()
-    scheduler.schedule(
-        scheduled_time=timezone.now(),
-        func=func,
-        args=args,
-        interval=interval,
-        repeat=None,
-        result_ttl=3600)
-
-
-def cancel_current_task():
-    django_rq.get_scheduler().cancel(rq.get_current_job())
 
 
 def prepare_payment(device, fiat_amount):

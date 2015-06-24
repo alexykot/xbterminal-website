@@ -12,7 +12,7 @@ from bitcoin.wallet import CBitcoinAddress
 
 from django.conf import settings
 
-from payment import paymentrequest_pb2, x509
+from operations import paymentrequest_pb2, x509
 
 logger = logging.getLogger(__name__)
 

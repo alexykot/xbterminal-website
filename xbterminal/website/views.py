@@ -22,8 +22,8 @@ from django.utils.translation import ugettext as _
 from constance import config
 from ipware.ip import get_real_ip
 
-from payment.blockchain import construct_bitcoin_uri
-from payment.instantfiat import gocoin
+from operations.blockchain import construct_bitcoin_uri
+from operations.instantfiat import gocoin
 
 from website import forms, models, utils
 

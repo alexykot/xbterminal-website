@@ -10,15 +10,15 @@ from website.tests.factories import (
     BTCAccountFactory,
     DeviceFactory,
     WithdrawalOrderFactory)
-from payment import withdrawal
+from operations import withdrawal
 
 
 class PrepareWithdrawalTestCase(TestCase):
 
     fixtures = ['initial_data.json']
 
-    @patch('payment.withdrawal.BlockChain')
-    @patch('payment.withdrawal.get_exchange_rate')
+    @patch('operations.withdrawal.BlockChain')
+    @patch('operations.withdrawal.get_exchange_rate')
     def test_prepare(self, get_rate_mock, bc_mock):
         device = DeviceFactory.create()
         btc_account = BTCAccountFactory.create(
@@ -60,7 +60,7 @@ class PrepareWithdrawalTestCase(TestCase):
         with self.assertRaises(withdrawal.WithdrawalError):
             withdrawal.prepare_withdrawal(device, fiat_amount)
 
-    @patch('payment.withdrawal.get_exchange_rate')
+    @patch('operations.withdrawal.get_exchange_rate')
     def test_dust_threshold(self, get_rate_mock):
         device = DeviceFactory.create()
         btc_account = BTCAccountFactory.create(
@@ -71,8 +71,8 @@ class PrepareWithdrawalTestCase(TestCase):
         with self.assertRaises(withdrawal.WithdrawalError):
             withdrawal.prepare_withdrawal(device, fiat_amount)
 
-    @patch('payment.withdrawal.BlockChain')
-    @patch('payment.withdrawal.get_exchange_rate')
+    @patch('operations.withdrawal.BlockChain')
+    @patch('operations.withdrawal.get_exchange_rate')
     def test_insufficient_funds(self, get_rate_mock, bc_mock):
         device = DeviceFactory.create()
         btc_account = BTCAccountFactory.create(
@@ -88,8 +88,8 @@ class PrepareWithdrawalTestCase(TestCase):
         with self.assertRaises(withdrawal.WithdrawalError):
             withdrawal.prepare_withdrawal(device, fiat_amount)
 
-    @patch('payment.withdrawal.BlockChain')
-    @patch('payment.withdrawal.get_exchange_rate')
+    @patch('operations.withdrawal.BlockChain')
+    @patch('operations.withdrawal.get_exchange_rate')
     def test_dust_change(self, get_rate_mock, bc_mock):
         device = DeviceFactory.create()
         btc_account = BTCAccountFactory.create(
@@ -114,8 +114,8 @@ class SendTransactionTestCase(TestCase):
 
     fixtures = ['initial_data.json']
 
-    @patch('payment.withdrawal.BlockChain')
-    @patch('payment.withdrawal.run_periodic_task')
+    @patch('operations.withdrawal.BlockChain')
+    @patch('operations.withdrawal.run_periodic_task')
     def test_send_tx(self, run_task_mock, bc_mock):
         device = DeviceFactory.create()
         btc_account = BTCAccountFactory.create(
@@ -171,8 +171,8 @@ class WaitForBroadcastTestCase(TestCase):
 
     fixtures = ['initial_data.json']
 
-    @patch('payment.withdrawal.cancel_current_task')
-    @patch('payment.withdrawal.blockr.is_tx_broadcasted')
+    @patch('operations.withdrawal.cancel_current_task')
+    @patch('operations.withdrawal.blockr.is_tx_broadcasted')
     def test_task(self, bcast_mock, cancel_mock):
         order = WithdrawalOrderFactory.create(
             time_sent=timezone.now())
@@ -182,8 +182,8 @@ class WaitForBroadcastTestCase(TestCase):
         self.assertEqual(order.status, 'broadcasted')
         self.assertTrue(cancel_mock.called)
 
-    @patch('payment.withdrawal.cancel_current_task')
-    @patch('payment.withdrawal.blockr.is_tx_broadcasted')
+    @patch('operations.withdrawal.cancel_current_task')
+    @patch('operations.withdrawal.blockr.is_tx_broadcasted')
     def test_does_not_exist(self, bcast_mock, cancel_mock):
         withdrawal.wait_for_broadcast('invalid_uid')
         self.assertTrue(cancel_mock.called)

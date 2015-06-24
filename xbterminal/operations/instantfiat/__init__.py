@@ -3,7 +3,7 @@ Instantfiat
 """
 from constance import config
 
-from payment.instantfiat import bitpay, cryptopay, gocoin
+from operations.instantfiat import bitpay, cryptopay, gocoin
 
 
 def create_invoice(merchant, fiat_amount):

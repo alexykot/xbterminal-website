@@ -5,7 +5,7 @@ from django.db.models import Sum
 
 from website.models import BTCAccount
 from website.utils import send_balance_admin_notification
-from payment.blockchain import BlockChain
+from operations.blockchain import BlockChain
 
 logger = logging.getLogger(__name__)
 
