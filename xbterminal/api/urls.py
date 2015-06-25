@@ -24,16 +24,16 @@ api_urls = patterns(
         name='firmware'),
     url(r'^device/(?P<key>[0-9a-zA-Z]{8,32})/firmware_updated/$', 'firmware_updated', name='firmware_updated'),
 
-    url(r'^payments/init$',
+    url(r'^payments/init/$',
         views.PaymentInitView.as_view(),
         name='payment_init'),
-    url(r'^payments/(?P<payment_uid>[0-9a-zA-Z]{6,32})/request$',
+    url(r'^payments/(?P<payment_uid>[0-9a-zA-Z]{6,32})/request/$',
         views.PaymentRequestView.as_view(),
         name='payment_request'),
-    url(r'^payments/(?P<payment_uid>[0-9a-zA-Z]{6,32})/response$',
+    url(r'^payments/(?P<payment_uid>[0-9a-zA-Z]{6,32})/response/$',
         views.PaymentResponseView.as_view(),
         name='payment_response'),
-    url(r'^payments/(?P<payment_uid>[0-9a-zA-Z]{6,32})/check$',
+    url(r'^payments/(?P<payment_uid>[0-9a-zA-Z]{6,32})/check/$',
         views.PaymentCheckView.as_view(),
         name='payment_check'),
 
@@ -44,10 +44,10 @@ api_urls = patterns(
 
 short_urls = patterns(
     'api.views',
-    url(r'^pr/(?P<payment_uid>[0-9a-zA-Z]{6,32})$',
+    url(r'^pr/(?P<payment_uid>[0-9a-zA-Z]{6,32})/$',
         views.PaymentRequestView.as_view(),
         name='payment_request'),
-    url(r'^rc/(?P<order_uid>[0-9a-zA-Z]{6,32})$',
+    url(r'^rc/(?P<order_uid>[0-9a-zA-Z]{6,32})/$',
         views.ReceiptView.as_view(),
         name='receipt'),
 )
