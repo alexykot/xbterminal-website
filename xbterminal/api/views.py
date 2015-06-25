@@ -144,19 +144,23 @@ class ReceiptView(View):
     Download PDF receipt
     """
     def get(self, *args, **kwargs):
-        payment_uid = self.kwargs.get('payment_uid')
+        order_uid = self.kwargs.get('order_uid')
         try:
-            payment_order = PaymentOrder.objects.get(
-                Q(uid=payment_uid) | Q(receipt_key=payment_uid),
+            order = PaymentOrder.objects.get(
+                Q(uid=order_uid) | Q(receipt_key=order_uid),
                 time_finished__isnull=False)
         except PaymentOrder.DoesNotExist:
-            raise Http404
+            try:
+                order = WithdrawalOrder.objects.get(
+                    uid=order_uid, time_completed__isnull=False)
+            except WithdrawalOrder.DoesNotExist:
+                raise Http404
         response = render_to_pdf(
             'pdf/receipt.html',
-            {'payment_order': payment_order})
+            {'order': order})
         disposition = 'inline; filename="receipt #{0} {1}.pdf"'.format(
-            payment_order.id,
-            payment_order.device.merchant.company_name)
+            order.id,
+            order.device.merchant.company_name)
         response['Content-Disposition'] = disposition
         return response
 
@@ -354,7 +358,7 @@ class PaymentCheckView(View):
         if payment_order.is_receipt_ready():
             receipt_url = self.request.build_absolute_uri(reverse(
                 'api:short:receipt',
-                kwargs={'payment_uid': payment_order.uid}))
+                kwargs={'order_uid': payment_order.uid}))
             qr_code_src = generate_qr_code(receipt_url, size=3)
             data = {
                 'paid': 1,

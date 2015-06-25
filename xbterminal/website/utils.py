@@ -83,7 +83,7 @@ def get_receipts_archive(payment_orders, to_file=None):
     for payment_order in payment_orders:
         result = generate_pdf(
             'pdf/receipt.html',
-            {'payment_order': payment_order})
+            {'order': payment_order})
         archive.writestr(
             'receipt #{0}.pdf'.format(payment_order.id),
             result.getvalue())

@@ -464,6 +464,8 @@ def gen_payment_uid():
 
 class PaymentOrder(models.Model):
 
+    order_type = 'payment'
+
     PAYMENT_TYPES = [
         ('bip0021', _('BIP 0021 (Bitcoin URI)')),
         ('bip0070', _('BIP 0070 (Payment Protocol)')),
@@ -557,15 +559,17 @@ class PaymentOrder(models.Model):
     @property
     def receipt_url(self):
         domain = Site.objects.get_current().domain
-        path = reverse('api:short:receipt', kwargs={'payment_uid': self.uid})
+        path = reverse('api:short:receipt', kwargs={'order_uid': self.uid})
         return 'https://{0}{1}'.format(domain, path)
 
     @property
     def incoming_tx_url(self):
+        """For receipts"""
         return blockr.get_tx_url(self.incoming_tx_id, self.device.bitcoin_network)
 
     @property
     def payment_address_url(self):
+        """For receipts"""
         return blockr.get_address_url(self.local_address, self.device.bitcoin_network)
 
     @property
@@ -646,6 +650,8 @@ def gen_withdrawal_uid():
 
 class WithdrawalOrder(models.Model):
 
+    order_type = 'withdrawal'
+
     uid = models.CharField('UID',
                            max_length=32,
                            editable=False,
@@ -695,6 +701,30 @@ class WithdrawalOrder(models.Model):
     @property
     def effective_exchange_rate(self):
         return (self.fiat_amount / self.btc_amount).quantize(BTC_DEC_PLACES)
+
+    @property
+    def scaled_btc_amount(self):
+        return self.btc_amount * settings.BITCOIN_SCALE_DIVIZER
+
+    @property
+    def scaled_effective_exchange_rate(self):
+        return self.effective_exchange_rate / settings.BITCOIN_SCALE_DIVIZER
+
+    @property
+    def outgoing_tx_url(self):
+        """For receipts"""
+        return blockr.get_tx_url(self.outgoing_tx_id, self.bitcoin_network)
+
+    @property
+    def customer_address_url(self):
+        """For receipts"""
+        return blockr.get_address_url(self.customer_address, self.bitcoin_network)
+
+    @property
+    def receipt_url(self):
+        domain = Site.objects.get_current().domain
+        path = reverse('api:short:receipt', kwargs={'order_uid': self.uid})
+        return 'https://{0}{1}'.format(domain, path)
 
     @property
     def expires_at(self):
