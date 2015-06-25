@@ -77,7 +77,6 @@
 </style>
 </head>
 <body>
-
 <div class="title">
     {% if order.order_type == 'payment' %}{% trans 'Customer Receipt' %}
     {% elif order.order_type == 'withdrawal' %}{% trans 'Withdrawal Receipt' %}
@@ -138,7 +137,7 @@
             {% elif order.order_type == 'withdrawal' %}{{ order.time_completed|date:'d M Y, h:i A' }}
             {% endif %}
             {% endlanguage %}
-        </td>git 
+        </td>
     </tr>
 </table>
 <div id="qrcode-text">
