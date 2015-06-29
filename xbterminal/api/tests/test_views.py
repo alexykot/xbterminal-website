@@ -44,7 +44,7 @@ class PaymentInitViewTestCase(TestCase):
     def setUp(self):
         self.url = reverse('api:payment_init')
 
-    @patch('api.views.payment.tasks.prepare_payment')
+    @patch('api.views.operations.payment.prepare_payment')
     def test_payment_website(self, prepare_mock):
         device = DeviceFactory.create()
         fiat_amount = 0.5
@@ -74,7 +74,7 @@ class PaymentInitViewTestCase(TestCase):
         payment_order = PaymentOrder.objects.get(uid=payment_order.uid)
         self.assertGreater(len(payment_order.request), 0)
 
-    @patch('api.views.payment.tasks.prepare_payment')
+    @patch('api.views.operations.payment.prepare_payment')
     def test_payment_terminal(self, prepare_mock):
         device = DeviceFactory.create()
         fiat_amount = 0.5
@@ -150,7 +150,7 @@ class PaymentResponseViewTestCase(TestCase):
             'api:payment_response',
             kwargs={'payment_uid': self.payment_order.uid})
 
-    @patch('api.views.payment.tasks.parse_payment')
+    @patch('api.views.operations.payment.parse_payment')
     def test_payment_response(self, parse_mock):
         parse_mock.return_value = 'test'
         data = '009A8B'.decode('hex')

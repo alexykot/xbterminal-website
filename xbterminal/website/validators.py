@@ -2,7 +2,7 @@ import re
 
 from django.core.exceptions import ValidationError
 
-from payment import blockchain
+from operations import blockchain
 
 
 def validate_percent(value):

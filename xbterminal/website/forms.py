@@ -14,8 +14,8 @@ from django.utils.translation import ugettext as _
 from constance import config
 from captcha.fields import ReCaptchaField
 
-from payment import preorder
-from payment.instantfiat import gocoin
+from operations import preorder
+from operations.instantfiat import gocoin
 
 from website.models import (
     User,

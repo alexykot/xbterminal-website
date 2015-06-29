@@ -2,15 +2,15 @@ import datetime
 from decimal import Decimal
 from django.utils import timezone
 
-from payment import blockr, BTC_DEC_PLACES, BTC_MIN_OUTPUT
-from payment.average import get_exchange_rate
-from payment.blockchain import (
+from operations import blockr, BTC_DEC_PLACES, BTC_MIN_OUTPUT
+from operations.average import get_exchange_rate
+from operations.blockchain import (
     BlockChain,
     get_tx_fee,
     validate_bitcoin_address,
     serialize_outputs,
     deserialize_outputs)
-from payment.tasks import cancel_current_task, run_periodic_task
+from operations.rq_helpers import cancel_current_task, run_periodic_task
 from website.models import BTCAccount, WithdrawalOrder
 
 
@@ -121,7 +121,7 @@ def wait_for_broadcast(order_uid):
     try:
         order = WithdrawalOrder.objects.get(uid=order_uid)
     except WithdrawalOrder.DoesNotExist:
-        # PaymentOrder deleted, cancel job
+        # WithdrawalOrder deleted, cancel job
         cancel_current_task()
         return
     if order.time_created + datetime.timedelta(minutes=45) < timezone.now():

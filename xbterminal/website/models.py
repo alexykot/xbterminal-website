@@ -26,7 +26,7 @@ from website.validators import (
 from website.fields import FirmwarePathField
 from website.files import get_verification_file_name, verification_file_path_gen
 
-from payment import BTC_DEC_PLACES, blockr
+from operations import BTC_DEC_PLACES, blockr
 
 
 class UserManager(BaseUserManager):

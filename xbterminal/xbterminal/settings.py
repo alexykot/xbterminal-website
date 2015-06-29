@@ -100,6 +100,7 @@ INSTALLED_APPS = (
     'captcha',
 
     'website',
+    'operations',
     'api',
     'blog',
 )

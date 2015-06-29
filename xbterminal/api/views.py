@@ -29,11 +29,11 @@ from api.forms import WithdrawalForm
 from api.serializers import WithdrawalOrderSerializer
 from api.utils import verify_signature
 
-import payment.tasks
-import payment.blockchain
-import payment.protocol
-from payment.instantfiat import gocoin
-from payment import withdrawal
+import operations.payment
+import operations.blockchain
+import operations.protocol
+from operations.instantfiat import gocoin
+from operations import withdrawal
 
 logger = logging.getLogger(__name__)
 
@@ -225,9 +225,9 @@ class PaymentInitView(View):
         except Device.DoesNotExist:
             raise Http404
         try:
-            payment_order = payment.tasks.prepare_payment(
+            payment_order = operations.payment.prepare_payment(
                 device, form.cleaned_data['amount'])
-        except payment.exceptions.NetworkError:
+        except operations.exceptions.NetworkError:
             return HttpResponse(status=500)
         # Urls
         payment_request_url = self.request.build_absolute_uri(reverse(
@@ -240,7 +240,7 @@ class PaymentInitView(View):
             'api:payment_check',
             kwargs={'payment_uid': payment_order.uid}))
         # Create payment request
-        payment_order.request = payment.protocol.create_payment_request(
+        payment_order.request = operations.protocol.create_payment_request(
             payment_order.device.bitcoin_network,
             [(payment_order.local_address, payment_order.btc_amount)],
             payment_order.time_created,
@@ -263,7 +263,7 @@ class PaymentInitView(View):
             # Payment with terminal
             payment_bluetooth_url = 'bt:{mac}'.\
                 format(mac=form.cleaned_data['bt_mac'].replace(':', ''))
-            payment_bluetooth_request = payment.protocol.create_payment_request(
+            payment_bluetooth_request = operations.protocol.create_payment_request(
                 payment_order.device.bitcoin_network,
                 [(payment_order.local_address, payment_order.btc_amount)],
                 payment_order.time_created,
@@ -271,7 +271,7 @@ class PaymentInitView(View):
                 payment_bluetooth_url,
                 device.merchant.company_name)
             # Append bitcoin uri, payment uid, and payment request
-            data['payment_uri'] = payment.blockchain.construct_bitcoin_uri(
+            data['payment_uri'] = operations.blockchain.construct_bitcoin_uri(
                 payment_order.local_address,
                 payment_order.btc_amount,
                 device.merchant.company_name,
@@ -281,7 +281,7 @@ class PaymentInitView(View):
             data['payment_request'] = payment_bluetooth_request.encode('base64')
         else:
             # Payment via website
-            data['payment_uri'] = payment.blockchain.construct_bitcoin_uri(
+            data['payment_uri'] = operations.blockchain.construct_bitcoin_uri(
                 payment_order.local_address,
                 payment_order.btc_amount,
                 device.merchant.company_name,
@@ -334,7 +334,7 @@ class PaymentResponseView(View):
             logger.warning("PaymentResponseView: message is too large")
             return HttpResponseBadRequest()
         try:
-            payment_ack = payment.tasks.parse_payment(payment_order, self.request.body)
+            payment_ack = operations.payment.parse_payment(payment_order, self.request.body)
         except Exception as error:
             logger.exception(error)
             return HttpResponseBadRequest()

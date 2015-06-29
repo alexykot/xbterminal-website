@@ -11,8 +11,8 @@ from bitcoin.wallet import CBitcoinAddress
 
 from django.conf import settings
 
-import payment
-from payment import exceptions
+from operations import BTC_DEC_PLACES, BTC_DEFAULT_FEE
+from operations import exceptions
 
 
 class BlockChain(object):
@@ -44,7 +44,7 @@ class BlockChain(object):
             balance: BTC amount (Decimal)
         """
         balance = self._proxy.getbalance(minconf=minconf)
-        return Decimal(balance).quantize(payment.BTC_DEC_PLACES) / COIN
+        return Decimal(balance).quantize(BTC_DEC_PLACES) / COIN
 
     def get_address_balance(self, address):
         """
@@ -57,7 +57,7 @@ class BlockChain(object):
         balance = Decimal(0)
         for out in txouts:
             balance += Decimal(out['amount']) / COIN
-        return balance.quantize(payment.BTC_DEC_PLACES)
+        return balance.quantize(BTC_DEC_PLACES)
 
     def get_unspent_outputs(self, address):
         """
@@ -243,7 +243,7 @@ def get_tx_fee(inputs, outputs):
         outputs: number of outputs
     """
     tx_size = inputs * 148 + outputs * 34 + 10 + inputs
-    fee = payment.BTC_DEFAULT_FEE * (tx_size // 1024 + 1)
+    fee = BTC_DEFAULT_FEE * (tx_size // 1024 + 1)
     return fee
 
 

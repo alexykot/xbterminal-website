@@ -38,7 +38,7 @@ def venv():
 
 @task
 def proto():
-    with lcd("xbterminal/payment"):
+    with lcd("xbterminal/operations"):
         local("wget -O paymentrequest.proto "
               "https://raw.githubusercontent.com"
               "/bitcoin/bips/master/bip-0070/paymentrequest.proto")

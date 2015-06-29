@@ -11,7 +11,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 from website.files import get_verification_file_name
-from payment import blockr
+from operations import blockr
 
 
 class ButtonGroupChoiceInput(RadioChoiceInput):

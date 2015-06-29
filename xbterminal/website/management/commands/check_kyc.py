@@ -6,7 +6,7 @@ from constance import config
 
 from website.models import MerchantAccount
 from website.utils import send_kyc_notification, send_kyc_admin_notification
-from payment.instantfiat import gocoin
+from operations.instantfiat import gocoin
 
 logger = logging.getLogger(__name__)
 

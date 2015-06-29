@@ -8,8 +8,8 @@ import logging
 import requests
 from requests.auth import AuthBase
 
-import payment
-from payment.exceptions import InstantFiatError
+from operations import BTC_DEC_PLACES
+from operations.exceptions import InstantFiatError
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ def create_invoice(fiat_amount, currency_code, api_key, merchant_id):
     if 'errors' in data:
         raise InstantFiatError(str(data))
     invoice_id = data['id']
-    btc_amount = Decimal(data['price']).quantize(payment.BTC_DEC_PLACES)
+    btc_amount = Decimal(data['price']).quantize(BTC_DEC_PLACES)
     address = data['payment_address']
     logger.debug('gocoin - invoice created')
     return invoice_id, btc_amount, address

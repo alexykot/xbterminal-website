@@ -9,17 +9,17 @@ from website.tests.factories import (
     BTCAccountFactory,
     DeviceFactory,
     PaymentOrderFactory)
-from payment import tasks
-from payment import BTC_DEC_PLACES
+from operations import payment
+from operations import BTC_DEC_PLACES
 
 
 class PreparePaymentTestCase(TestCase):
 
     fixtures = ['initial_data.json']
 
-    @patch('payment.tasks.blockchain.BlockChain')
-    @patch('payment.tasks.average.get_exchange_rate')
-    @patch('payment.tasks.run_periodic_task')
+    @patch('operations.payment.blockchain.BlockChain')
+    @patch('operations.payment.average.get_exchange_rate')
+    @patch('operations.payment.run_periodic_task')
     def test_keep_btc(self, run_task_mock, get_rate_mock, bc_mock):
         device = DeviceFactory.create(
             percent=0,
@@ -33,7 +33,7 @@ class PreparePaymentTestCase(TestCase):
         })
         get_rate_mock.return_value = exchange_rate
 
-        payment_order = tasks.prepare_payment(device, fiat_amount)
+        payment_order = payment.prepare_payment(device, fiat_amount)
         expected_fee_btc_amount = (fiat_amount *
                                    Decimal(config.OUR_FEE_SHARE) /
                                    exchange_rate).quantize(BTC_DEC_PLACES)
@@ -72,9 +72,9 @@ class PreparePaymentTestCase(TestCase):
         self.assertEqual(calls[1][0][0].__name__, 'wait_for_validation')
         self.assertEqual(calls[2][0][0].__name__, 'check_payment_status')
 
-    @patch('payment.tasks.blockchain.BlockChain')
-    @patch('payment.tasks.average.get_exchange_rate')
-    @patch('payment.tasks.run_periodic_task')
+    @patch('operations.payment.blockchain.BlockChain')
+    @patch('operations.payment.average.get_exchange_rate')
+    @patch('operations.payment.run_periodic_task')
     def test_keep_btc_without_fee(self, run_task_mock, get_rate_mock, bc_mock):
         device = DeviceFactory.create(
             device_type='hardware',
@@ -89,7 +89,7 @@ class PreparePaymentTestCase(TestCase):
         })
         get_rate_mock.return_value = exchange_rate
 
-        payment_order = tasks.prepare_payment(device, fiat_amount)
+        payment_order = payment.prepare_payment(device, fiat_amount)
         expected_merchant_btc_amount = (fiat_amount /
                                         exchange_rate).quantize(BTC_DEC_PLACES)
         expected_btc_amount = (expected_merchant_btc_amount +
@@ -104,9 +104,9 @@ class PreparePaymentTestCase(TestCase):
         self.assertEqual(payment_order.btc_amount,
                          expected_btc_amount)
 
-    @patch('payment.tasks.blockchain.BlockChain')
-    @patch('payment.tasks.instantfiat.create_invoice')
-    @patch('payment.tasks.run_periodic_task')
+    @patch('operations.payment.blockchain.BlockChain')
+    @patch('operations.payment.instantfiat.create_invoice')
+    @patch('operations.payment.run_periodic_task')
     def test_convert_full(self, run_task_mock, invoice_mock, bc_mock):
         device = DeviceFactory.create(percent=100, bitcoin_address='')
         fiat_amount = Decimal('10')
@@ -124,7 +124,7 @@ class PreparePaymentTestCase(TestCase):
             'instantfiat_address': instantfiat_address,
         }
 
-        payment_order = tasks.prepare_payment(device, fiat_amount)
+        payment_order = payment.prepare_payment(device, fiat_amount)
         expected_fee_btc_amount = (instantfiat_btc_amount *
                                    Decimal(config.OUR_FEE_SHARE)).quantize(BTC_DEC_PLACES)
         expected_btc_amount = (instantfiat_btc_amount +
@@ -155,25 +155,25 @@ class WaitForPaymentTestCase(TestCase):
 
     fixtures = ['initial_data.json']
 
-    @patch('payment.tasks.cancel_current_task')
-    @patch('payment.tasks.blockchain.BlockChain')
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.blockchain.BlockChain')
     def test_payment_order_does_not_exist(self, bc_mock, cancel_mock):
-        tasks.wait_for_payment(123456)
+        payment.wait_for_payment(123456)
         self.assertTrue(cancel_mock.called)
         self.assertFalse(bc_mock.called)
 
-    @patch('payment.tasks.cancel_current_task')
-    @patch('payment.tasks.blockchain.BlockChain')
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.blockchain.BlockChain')
     def test_payment_already_validated(self, bc_mock, cancel_mock):
         payment_order = PaymentOrderFactory.create(
             incoming_tx_id='0' * 64)
-        tasks.wait_for_payment(payment_order.uid)
+        payment.wait_for_payment(payment_order.uid)
         self.assertTrue(cancel_mock.called)
         self.assertFalse(bc_mock.called)
 
-    @patch('payment.tasks.cancel_current_task')
-    @patch('payment.tasks.blockchain.BlockChain')
-    @patch('payment.tasks.validate_payment')
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.blockchain.BlockChain')
+    @patch('operations.payment.validate_payment')
     def test_no_transactions(self, validate_mock, bc_mock, cancel_mock):
         bc_instance_mock = Mock(**{
             'get_unspent_transactions.return_value': [],
@@ -181,14 +181,14 @@ class WaitForPaymentTestCase(TestCase):
         bc_mock.return_value = bc_instance_mock
 
         payment_order = PaymentOrderFactory.create()
-        tasks.wait_for_payment(payment_order.uid)
+        payment.wait_for_payment(payment_order.uid)
         self.assertFalse(cancel_mock.called)
         self.assertTrue(bc_instance_mock.get_unspent_transactions.called)
         self.assertFalse(validate_mock.called)
 
-    @patch('payment.tasks.cancel_current_task')
-    @patch('payment.tasks.blockchain.BlockChain')
-    @patch('payment.tasks.validate_payment')
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.blockchain.BlockChain')
+    @patch('operations.payment.validate_payment')
     def test_validate_payment(self, validate_mock, bc_mock, cancel_mock):
         bc_instance_mock = Mock(**{
             'get_unspent_transactions.return_value': ['test_tx'],
@@ -196,7 +196,7 @@ class WaitForPaymentTestCase(TestCase):
         bc_mock.return_value = bc_instance_mock
 
         payment_order = PaymentOrderFactory.create()
-        tasks.wait_for_payment(payment_order.uid)
+        payment.wait_for_payment(payment_order.uid)
 
         self.assertTrue(bc_instance_mock.get_unspent_transactions.called)
         args = bc_instance_mock.get_unspent_transactions.call_args[0]
@@ -215,8 +215,8 @@ class ValidatePaymentTestCase(TestCase):
 
     fixtures = ['initial_data.json']
 
-    @patch('payment.tasks.blockchain.BlockChain')
-    @patch('payment.tasks.blockchain.get_txid')
+    @patch('operations.payment.blockchain.BlockChain')
+    @patch('operations.payment.blockchain.get_txid')
     def test_bip0021(self, get_txid_mock, bc_mock):
         payment_order = PaymentOrderFactory.create()
         incoming_tx = Mock()
@@ -234,7 +234,7 @@ class ValidatePaymentTestCase(TestCase):
         bc_mock.return_value = bc_instance_mock
         get_txid_mock.return_value = incoming_tx_id
 
-        tasks.validate_payment(payment_order, [incoming_tx], 'bip0021')
+        payment.validate_payment(payment_order, [incoming_tx], 'bip0021')
 
         self.assertTrue(bc_instance_mock.sign_raw_transaction.called)
         self.assertFalse(bc_instance_mock.send_raw_transaction.called)
@@ -250,38 +250,38 @@ class WaitForValidationTestCase(TestCase):
 
     fixtures = ['initial_data.json']
 
-    @patch('payment.tasks.cancel_current_task')
-    @patch('payment.tasks.forward_transaction')
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.forward_transaction')
     def test_payment_order_does_not_exist(self, forward_mock, cancel_mock):
-        tasks.wait_for_validation(123456)
+        payment.wait_for_validation(123456)
         self.assertTrue(cancel_mock.called)
         self.assertFalse(forward_mock.called)
 
-    @patch('payment.tasks.cancel_current_task')
-    @patch('payment.tasks.forward_transaction')
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.forward_transaction')
     def test_payment_not_validated(self, forward_mock, cancel_mock):
         payment_order = PaymentOrderFactory.create(incoming_tx_id=None)
-        tasks.wait_for_validation(payment_order.uid)
+        payment.wait_for_validation(payment_order.uid)
         self.assertFalse(cancel_mock.called)
         self.assertFalse(forward_mock.called)
 
-    @patch('payment.tasks.cancel_current_task')
-    @patch('payment.tasks.forward_transaction')
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.forward_transaction')
     def test_payment_already_forwarded(self, forward_mock, cancel_mock):
         payment_order = PaymentOrderFactory.create(
             incoming_tx_id='0' * 64,
             outgoing_tx_id='0' * 64)
-        tasks.wait_for_validation(payment_order.uid)
+        payment.wait_for_validation(payment_order.uid)
         self.assertTrue(cancel_mock.called)
         self.assertFalse(forward_mock.called)
 
-    @patch('payment.tasks.cancel_current_task')
-    @patch('payment.tasks.forward_transaction')
-    @patch('payment.tasks.run_periodic_task')
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.forward_transaction')
+    @patch('operations.payment.run_periodic_task')
     def test_forward_btc(self, run_task_mock, forward_mock, cancel_mock):
         payment_order = PaymentOrderFactory.create(
             incoming_tx_id='0' * 64)
-        tasks.wait_for_validation(payment_order.uid)
+        payment.wait_for_validation(payment_order.uid)
 
         self.assertTrue(cancel_mock.called)
         self.assertTrue(forward_mock.called)
@@ -291,14 +291,14 @@ class WaitForValidationTestCase(TestCase):
         self.assertEqual(run_task_mock.call_args[0][0].__name__,
                          'wait_for_broadcast')
 
-    @patch('payment.tasks.cancel_current_task')
-    @patch('payment.tasks.forward_transaction')
-    @patch('payment.tasks.run_periodic_task')
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.forward_transaction')
+    @patch('operations.payment.run_periodic_task')
     def test_forward_instantfiat(self, run_task_mock, forward_mock, cancel_mock):
         payment_order = PaymentOrderFactory.create(
             incoming_tx_id='0' * 64,
             instantfiat_invoice_id='test_invoice')
-        tasks.wait_for_validation(payment_order.uid)
+        payment.wait_for_validation(payment_order.uid)
 
         self.assertTrue(cancel_mock.called)
         self.assertTrue(forward_mock.called)
@@ -312,7 +312,7 @@ class ForwardTransactionTestCase(TestCase):
 
     fixtures = ['initial_data.json']
 
-    @patch('payment.tasks.blockchain.BlockChain')
+    @patch('operations.payment.blockchain.BlockChain')
     def test_forward_standard(self, bc_mock):
         payment_order = PaymentOrderFactory.create(
             merchant_btc_amount=Decimal('0.1'),
@@ -334,7 +334,7 @@ class ForwardTransactionTestCase(TestCase):
         })
         bc_mock.return_value = bc_instance_mock
 
-        tasks.forward_transaction(payment_order)
+        payment.forward_transaction(payment_order)
 
         self.assertTrue(bc_instance_mock.get_raw_transaction.called)
         self.assertTrue(bc_instance_mock.get_unspent_outputs.called)
@@ -360,7 +360,7 @@ class ForwardTransactionTestCase(TestCase):
         self.assertEqual(payment_order.outgoing_tx_id, outgoing_tx_id)
         self.assertIsNotNone(payment_order.time_forwarded)
 
-    @patch('payment.tasks.blockchain.BlockChain')
+    @patch('operations.payment.blockchain.BlockChain')
     def test_forward_balance(self, bc_mock):
         merchant = MerchantAccountFactory.create()
         btc_account = BTCAccountFactory.create(merchant=merchant,
@@ -388,7 +388,7 @@ class ForwardTransactionTestCase(TestCase):
         })
         bc_mock.return_value = bc_instance_mock
 
-        tasks.forward_transaction(payment_order)
+        payment.forward_transaction(payment_order)
 
         self.assertTrue(bc_instance_mock.get_new_address.called)
 
