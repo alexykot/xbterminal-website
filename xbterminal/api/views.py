@@ -224,11 +224,8 @@ class PaymentInitView(View):
             device = Device.objects.get(key=form.cleaned_data['device_key'])
         except Device.DoesNotExist:
             raise Http404
-        try:
-            payment_order = operations.payment.prepare_payment(
-                device, form.cleaned_data['amount'])
-        except operations.exceptions.NetworkError:
-            return HttpResponse(status=500)
+        payment_order = operations.payment.prepare_payment(
+            device, form.cleaned_data['amount'])
         # Urls
         payment_request_url = self.request.build_absolute_uri(reverse(
             'api:short:payment_request',
