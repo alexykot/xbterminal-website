@@ -191,7 +191,7 @@ MEDIA_URL = '/media/'
 DEFAULT_FROM_EMAIL = "no-reply@xbterminal.io"
 CONTACT_EMAIL_RECIPIENTS = ["info@xbterminal.io"]
 
-APPEND_SLASH = True
+APPEND_SLASH = False
 
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/terminals/'
