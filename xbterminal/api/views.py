@@ -251,13 +251,14 @@ class PaymentInitView(View):
         exchange_rate = payment_order.effective_exchange_rate.\
             quantize(Decimal('0.000000'))
         data = {
+            'payment_uid': payment_order.uid,
             'fiat_amount': float(fiat_amount),
             'btc_amount': float(btc_amount),
             'exchange_rate': float(exchange_rate),
             'check_url': payment_check_url,
         }
         if form.cleaned_data['bt_mac']:
-            # Payment with terminal
+            # Enable payment via bluetooth
             payment_bluetooth_url = 'bt:{mac}'.\
                 format(mac=form.cleaned_data['bt_mac'].replace(':', ''))
             payment_bluetooth_request = operations.protocol.create_payment_request(
@@ -267,17 +268,15 @@ class PaymentInitView(View):
                 payment_order.expires,
                 payment_bluetooth_url,
                 device.merchant.company_name)
-            # Append bitcoin uri, payment uid, and payment request
+            # Send payment request in response
             data['payment_uri'] = operations.blockchain.construct_bitcoin_uri(
                 payment_order.local_address,
                 payment_order.btc_amount,
                 device.merchant.company_name,
                 payment_bluetooth_url,
                 payment_request_url)
-            data['payment_uid'] = payment_order.uid
             data['payment_request'] = payment_bluetooth_request.encode('base64')
         else:
-            # Payment via website
             data['payment_uri'] = operations.blockchain.construct_bitcoin_uri(
                 payment_order.local_address,
                 payment_order.btc_amount,
