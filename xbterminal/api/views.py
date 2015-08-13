@@ -283,6 +283,8 @@ class PaymentInitView(View):
                 payment_order.btc_amount,
                 device.merchant.company_name,
                 payment_request_url)
+        if form.cleaned_data['qr_code']:
+            # Append QR code as data URI if needed
             data['qr_code_src'] = generate_qr_code(data['payment_uri'], size=4)
         response = HttpResponse(json.dumps(data),
                                 content_type='application/json')

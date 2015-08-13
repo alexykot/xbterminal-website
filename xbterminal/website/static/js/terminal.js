@@ -38,7 +38,8 @@ var paymentInit = function (form) {
         method: 'POST',
         data: {
             device_key: form.data('device-key'),
-            amount: amount
+            amount: amount,
+            qr_code: true
         }
     }).done(function (data) {
         amountField.attr('disabled', false);
