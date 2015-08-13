@@ -22,10 +22,10 @@ from website.models import (
     Firmware,
     PaymentOrder,
     WithdrawalOrder)
-from website.forms import SimpleMerchantRegistrationForm, EnterAmountForm
+from website.forms import SimpleMerchantRegistrationForm
 from website.utils import generate_qr_code, send_registration_info
 from api.shortcuts import render_to_pdf
-from api.forms import WithdrawalForm
+from api.forms import PaymentForm, WithdrawalForm
 from api.serializers import WithdrawalOrderSerializer
 from api.utils import verify_signature
 
@@ -214,7 +214,7 @@ class PaymentInitView(View):
         return super(PaymentInitView, self).dispatch(*args, **kwargs)
 
     def post(self, *args, **kwargs):
-        form = EnterAmountForm(self.request.POST)
+        form = PaymentForm(self.request.POST)
         if not form.is_valid():
             return HttpResponseBadRequest(
                 json.dumps({'errors': form.errors}),
