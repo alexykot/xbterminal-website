@@ -446,8 +446,12 @@ class ReconciliationTime(models.Model):
         ordering = ['time']
 
 
+def gen_firmware_hash():
+    return uuid.uuid4().hex
+
+
 class Firmware(models.Model):
-    hash = models.CharField(max_length=32, editable=False, unique=True, default=lambda: uuid.uuid4().hex)
+    hash = models.CharField(max_length=32, editable=False, unique=True, default=gen_firmware_hash)
     version = models.CharField(max_length=50)
     comment = models.TextField(blank=True)
     added = models.DateField(auto_now_add=True)
