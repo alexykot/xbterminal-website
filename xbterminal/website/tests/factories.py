@@ -87,7 +87,7 @@ class PaymentOrderFactory(factory.DjangoModelFactory):
     fee_address = '1NdS5JCXzbhNv4STQAaknq56iGstfgRCXg'
     fiat_currency = 'GBP'
 
-    fiat_amount = Decimal(1.11)
+    fiat_amount = Decimal('1.11')
     instantfiat_fiat_amount = Decimal(0)
     instantfiat_btc_amount = Decimal(0)
     merchant_btc_amount = Decimal('0.00476722')

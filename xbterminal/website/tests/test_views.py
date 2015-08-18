@@ -3,9 +3,13 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.test import TestCase
 from django.core import mail
+from django.utils import timezone
 from mock import patch
 
-from website.tests.factories import MerchantAccountFactory
+from website.tests.factories import (
+    MerchantAccountFactory,
+    DeviceFactory,
+    PaymentOrderFactory)
 
 
 class RegistrationViewTestCase(TestCase):
@@ -77,3 +81,86 @@ class CreateDeviceViewTestCase(TestCase):
         }
         response = self.client.post(self.url, form_data)
         self.assertEqual(response.status_code, 302)
+
+
+class ReconciliationViewTestCase(TestCase):
+
+    fixtures = ['initial_data.json']
+
+    def setUp(self):
+        self.merchant = MerchantAccountFactory.create()
+
+    def test_view(self):
+        device = DeviceFactory.create(merchant=self.merchant)
+        payment_order = PaymentOrderFactory.create(
+            device=device,
+            time_finished=timezone.now())
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:reconciliation',
+                      kwargs={'device_key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/reconciliation.html')
+        payments = response.context['daily_payments_info']
+        self.assertEqual(payments[0]['count'], 1)
+        self.assertEqual(payments[0]['fiat_amount'],
+                         payment_order.fiat_amount)
+
+
+class ReportViewTestCase(TestCase):
+
+    fixtures = ['initial_data.json']
+
+    def setUp(self):
+        self.merchant = MerchantAccountFactory.create()
+
+    def test_view(self):
+        device = DeviceFactory.create(merchant=self.merchant)
+        payment_order = PaymentOrderFactory.create(
+            device=device,
+            time_finished=timezone.now())
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:report',
+                      kwargs={'device_key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header('Content-Disposition'))
+
+
+class ReceiptsViewTestCase(TestCase):
+
+    fixtures = ['initial_data.json']
+
+    def setUp(self):
+        self.merchant = MerchantAccountFactory.create()
+
+    def test_view(self):
+        device = DeviceFactory.create(merchant=self.merchant)
+        payment_order = PaymentOrderFactory.create(
+            device=device,
+            time_finished=timezone.now())
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:receipts',
+                      kwargs={'device_key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header('Content-Disposition'))
+
+
+class PaymentViewTestCase(TestCase):
+
+    fixtures = ['initial_data.json']
+
+    def setUp(self):
+        self.merchant = MerchantAccountFactory.create()
+
+    def test_view(self):
+        device = DeviceFactory.create(merchant=self.merchant)
+        url = reverse('website:payment',
+                      kwargs={'device_key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'payment/payment.html')
