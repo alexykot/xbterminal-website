@@ -9,11 +9,43 @@ from rest_framework import status
 
 from website.models import PaymentOrder
 from website.tests.factories import (
+    UserFactory,
     DeviceFactory,
     PaymentOrderFactory,
     WithdrawalOrderFactory)
 from api.views import WithdrawalViewSet
 from api.utils import create_test_signature
+
+
+class DevicesViewTestCase(TestCase):
+
+    fixtures = ['initial_data.json']
+
+    def test_list(self):
+        user = UserFactory.create()
+        device = DeviceFactory.create(merchant__user=user)
+        # Get token
+        token_url = reverse('token')
+        response = self.client.post(token_url, data={
+            'grant_type': 'password',
+            'username': user.email,
+            'password': 'password',
+            'client_id': user.email,
+            'client_secret': 'secret',
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = json.loads(response.content)
+        self.assertEqual(data['token_type'], 'Bearer')
+        access_token = data['access_token']
+        # Get devices
+        devices_url = reverse('api:devices')
+        response = self.client.get(
+            devices_url,
+            AUTHORIZATION='Bearer {}'.format(access_token))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = json.loads(response.content)
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]['name'], device.name)
 
 
 class DeviceSettingsViewTestCase(TestCase):
