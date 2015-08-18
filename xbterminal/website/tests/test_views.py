@@ -5,6 +5,8 @@ from django.test import TestCase
 from django.core import mail
 from mock import patch
 
+from website.tests.factories import MerchantAccountFactory
+
 
 class RegistrationViewTestCase(TestCase):
 
@@ -16,6 +18,7 @@ class RegistrationViewTestCase(TestCase):
     def test_get(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'website/registration.html')
 
     @patch('website.forms.gocoin.create_merchant')
     def test_post(self, gocoin_mock):
@@ -42,3 +45,35 @@ class RegistrationViewTestCase(TestCase):
                          form_data['contact_email'])
         self.assertEqual(mail.outbox[1].to[0],
                          settings.CONTACT_EMAIL_RECIPIENTS[0])
+
+
+class CreateDeviceViewTestCase(TestCase):
+
+    fixtures = ['initial_data.json']
+
+    def setUp(self):
+        self.url = reverse('website:create_device')
+        self.merchant = MerchantAccountFactory.create()
+
+    def test_get(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/device_form.html')
+        self.assertEqual(response.context['form'].initial['device_type'],
+                         'hardware')
+
+    def test_post(self):
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        form_data = {
+            'device_type': 'hardware',
+            'name': 'Terminal',
+            'payment_processing': 'full',
+            'percent': '100',
+        }
+        response = self.client.post(self.url, form_data)
+        self.assertEqual(response.status_code, 302)

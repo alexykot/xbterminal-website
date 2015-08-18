@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.core import mail
 
 from oauth2_provider.models import Application
-from website.forms import MerchantRegistrationForm
+from website.forms import MerchantRegistrationForm, DeviceForm
 
 
 class MerchantRegistrationFormTestCase(TestCase):
@@ -58,3 +58,32 @@ class MerchantRegistrationFormTestCase(TestCase):
         self.assertIn('contact_last_name', form.errors)
         self.assertIn('contact_email', form.errors)
         self.assertIn('contact_phone', form.errors)
+
+
+class DeviceFormTestCase(TestCase):
+
+    fixtures = ['initial_data.json']
+
+    def test_valid_data(self):
+        form_data = {
+            'device_type': 'hardware',
+            'name': 'Terminal',
+            'payment_processing': 'keep',
+            'percent': '0',
+            'bitcoin_address': '1JpY93MNoeHJ914CHLCQkdhS7TvBM68Xp6',
+        }
+        form = DeviceForm(data=form_data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.device_type_verbose(), 'Terminal')
+        device = form.save(commit=False)
+        self.assertEqual(device.device_type, 'hardware')
+        self.assertEqual(device.name, form_data['name'])
+        self.assertEqual(device.payment_processing, 'keep')
+
+    def test_required(self):
+        form = DeviceForm(data={})
+        self.assertFalse(form.is_valid())
+        self.assertIn('device_type', form.errors)
+        self.assertIn('name', form.errors)
+        self.assertIn('payment_processing', form.errors)
+        self.assertIn('percent', form.errors)
