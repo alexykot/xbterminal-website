@@ -3,6 +3,7 @@ from django.utils import timezone
 import factory
 from factory import fuzzy
 
+from oauth2_provider.models import Application
 from website.models import (
     User,
     MerchantAccount,
@@ -21,6 +22,17 @@ class UserFactory(factory.DjangoModelFactory):
 
     email = factory.Sequence(lambda n: 'user_{0}@xbterminal.io'.format(n))
     password = factory.PostGenerationMethodCall('set_password', 'password')
+
+    @factory.post_generation
+    def oauth_app(self, create, extracted, **kwargs):
+        if create:
+            Application.objects.create(
+                user=self,
+                name='XBTerminal test app',
+                client_id=self.email,
+                client_type='confidential',
+                authorization_grant_type='password',
+                client_secret='secret')
 
 
 class MerchantAccountFactory(factory.DjangoModelFactory):
