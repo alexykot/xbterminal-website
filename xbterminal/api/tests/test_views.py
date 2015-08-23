@@ -136,7 +136,7 @@ class PaymentInitViewTestCase(TestCase):
         self.assertIn('payment_uri', data)
         self.assertEqual(data['payment_uid'], payment_order.uid)
         self.assertIn('payment_request', data)
-        self.assertNotIn('qr_code_src', data)
+        self.assertIn('qr_code_src', data)
 
     def test_invalid_amount(self):
         device = DeviceFactory.create()
