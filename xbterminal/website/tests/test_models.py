@@ -20,8 +20,6 @@ from website.tests.factories import (
 
 class UserTestCase(TestCase):
 
-    fixtures = ['initial_data.json']
-
     def test_create_user(self):
         user = User.objects.create(email='test@example.com')
         self.assertTrue(user.is_active)
@@ -43,8 +41,6 @@ class UserTestCase(TestCase):
 
 
 class MerchantAccountTestCase(TestCase):
-
-    fixtures = ['initial_data.json']
 
     def create_merchant_account(self):
         user = UserFactory.create()
@@ -90,8 +86,6 @@ class MerchantAccountTestCase(TestCase):
 
 class BTCAccountTestCase(TestCase):
 
-    fixtures = ['initial_data.json']
-
     def test_create_btc_account(self):
         merchant = MerchantAccountFactory.create()
         btc_account = BTCAccount.objects.create(merchant=merchant)
@@ -110,8 +104,6 @@ class BTCAccountTestCase(TestCase):
 
 class DeviceTestCase(TestCase):
 
-    fixtures = ['initial_data.json']
-
     def test_device_factory(self):
         device = DeviceFactory.create()
         self.assertEqual(device.status, 'active')
@@ -120,8 +112,6 @@ class DeviceTestCase(TestCase):
 
 
 class PaymentOrderTestCase(TestCase):
-
-    fixtures = ['initial_data.json']
 
     def test_payment_order_factory(self):
         payment_order = PaymentOrderFactory.create()
@@ -189,8 +179,6 @@ class PaymentOrderTestCase(TestCase):
 
 
 class WithdrawalOrderTestCase(TestCase):
-
-    fixtures = ['initial_data.json']
 
     def test_create_order(self):
         device = DeviceFactory.create()

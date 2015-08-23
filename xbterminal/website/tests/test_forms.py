@@ -8,8 +8,6 @@ from website.forms import MerchantRegistrationForm, DeviceForm
 
 class MerchantRegistrationFormTestCase(TestCase):
 
-    fixtures = ['initial_data.json']
-
     def test_init(self):
         form = MerchantRegistrationForm()
         regtype_choices = dict(form.fields['regtype'].choices)
@@ -61,8 +59,6 @@ class MerchantRegistrationFormTestCase(TestCase):
 
 
 class DeviceFormTestCase(TestCase):
-
-    fixtures = ['initial_data.json']
 
     def test_valid_data(self):
         form_data = {

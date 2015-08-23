@@ -11,8 +11,6 @@ from website.management.commands.check_wallet import \
 
 class CheckWalletTestCase(TestCase):
 
-    fixtures = ['initial_data.json']
-
     @patch('website.management.commands.check_wallet.BlockChain')
     @patch('website.utils.send_balance_admin_notification')
     def test_check_ok(self, send_ntf_mock, bc_mock):
