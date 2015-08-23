@@ -10,6 +10,7 @@ from django.utils.translation import ugettext as _
 
 from constance import config
 from captcha.fields import ReCaptchaField
+from oauth2_provider.models import Application
 
 from operations import preorder
 from operations.instantfiat import gocoin
@@ -197,7 +198,8 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
         instance.user = user
         instance.save()
         # Create oauth client
-        user.application_set.create(
+        Application.objects.create(
+            user=user,
             name='XBTerminal app',
             client_id=user.email,
             client_type='confidential',

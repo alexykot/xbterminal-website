@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.test import TestCase
 from django.utils import timezone
 
+from oauth2_provider.models import Application
 from website.models import (
     User,
     MerchantAccount,
@@ -19,6 +20,8 @@ from website.tests.factories import (
 
 class UserTestCase(TestCase):
 
+    fixtures = ['initial_data.json']
+
     def test_create_user(self):
         user = User.objects.create(email='test@example.com')
         self.assertTrue(user.is_active)
@@ -29,6 +32,10 @@ class UserTestCase(TestCase):
         self.assertTrue(user.is_active)
         self.assertFalse(user.is_staff)
         self.assertTrue(user.check_password('password'))
+        oauth_apps = Application.objects.filter(user=user)
+        self.assertEqual(oauth_apps.count(), 1)
+        self.assertEqual(oauth_apps.first().client_id,
+                         user.email)
 
     def test_get_full_name(self):
         user = UserFactory.create()

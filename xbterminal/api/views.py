@@ -1,7 +1,6 @@
 from decimal import Decimal
 import json
 import logging
-import os
 
 from django.shortcuts import get_object_or_404
 from django.core.urlresolvers import reverse
@@ -19,7 +18,6 @@ from oauth2_provider.views.generic import ProtectedResourceView
 
 from website.models import (
     Device,
-    Firmware,
     PaymentOrder,
     WithdrawalOrder)
 from website.forms import SimpleMerchantRegistrationForm
@@ -163,45 +161,6 @@ class ReceiptView(View):
             order.device.merchant.company_name)
         response['Content-Disposition'] = disposition
         return response
-
-
-@api_view(['GET'])
-def device_firmware(request, key):
-    device = get_object_or_404(Device, key=key)
-
-    response = {
-        "current_firmware_version": getattr(device.current_firmware, 'version', None),
-        "current_firmware_version_hash": getattr(device.current_firmware, 'hash', None),
-        "next_firmware_version": getattr(device.next_firmware, 'version', None),
-        "next_firmware_version_hash": getattr(device.next_firmware, 'hash', None),
-    }
-    return Response(response)
-
-
-def firmware(request, key, firmware_hash):
-    device = get_object_or_404(Device, key=key)
-    firmware = get_object_or_404(Firmware, hash=firmware_hash)
-
-    response = HttpResponse(open(firmware.filename, 'rb'),
-                            content_type='application/octet-stream')
-    response['Content-Disposition'] = 'attachment; filename="%s"' % os.path.basename(firmware.filename)
-    return response
-
-
-@api_view(['POST'])
-def firmware_updated(request, key):
-    device = get_object_or_404(Device, key=key)
-    firmware_hash = request.data.get('firmware_version_hash')
-    if not firmware_hash:
-        raise Http404
-    firmware = get_object_or_404(Firmware, hash=firmware_hash)
-
-    device.current_firmware = firmware
-    device.last_firmware_update_date = timezone.now()
-    device.next_firmware = None
-    device.save()
-
-    return Response()
 
 
 class PaymentInitView(View):

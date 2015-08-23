@@ -23,7 +23,6 @@ from website.validators import (
     validate_percent,
     validate_bitcoin_address,
     validate_transaction)
-from website.fields import FirmwarePathField
 from website.files import get_verification_file_name, verification_file_path_gen
 
 from operations import BTC_DEC_PLACES, blockr
@@ -368,11 +367,6 @@ class Device(models.Model):
     last_activity = models.DateTimeField(blank=True, null=True)
     last_reconciliation = models.DateTimeField(auto_now_add=True)
 
-    # firmware data
-    current_firmware = models.ForeignKey("Firmware", related_name='current_for_device_set', blank=True, null=True)
-    last_firmware_update_date = models.DateTimeField(blank=True, null=True)
-    next_firmware = models.ForeignKey("Firmware", related_name='next_to_device_set', blank=True, null=True)
-
     our_fee_override = models.CharField(max_length=50, blank=True, null=True)
 
     api_key = models.TextField(
@@ -444,17 +438,6 @@ class ReconciliationTime(models.Model):
 
     class Meta:
         ordering = ['time']
-
-
-class Firmware(models.Model):
-    hash = models.CharField(max_length=32, editable=False, unique=True, default=lambda: uuid.uuid4().hex)
-    version = models.CharField(max_length=50)
-    comment = models.TextField(blank=True)
-    added = models.DateField(auto_now_add=True)
-    filename = FirmwarePathField(path=settings.FIRMWARE_PATH)
-
-    def __unicode__(self):
-        return 'firmware %s' % self.version
 
 
 def gen_payment_uid():

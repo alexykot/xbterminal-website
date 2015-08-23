@@ -10,6 +10,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+import sys
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 # Quick-start development settings - unsuitable for production
@@ -21,6 +22,8 @@ SECRET_KEY = '2d$h2q_vukyb190m^6#q)k_rc!+dn8!m5=pc!&e!vckabjqqll'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 TEMPLATE_DEBUG = False
+
+TESTING = 'test' in sys.argv
 
 LOGGING = {
     'version': 1,
@@ -50,6 +53,10 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, '..', 'logs', 'rq.log'),
             'formatter': 'short',
+        },
+        'null': {
+            'level': 'DEBUG',
+            'class': 'logging.NullHandler',
         },
     },
     'loggers': {
@@ -164,7 +171,7 @@ RQ_QUEUES = {
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en'
 TIME_ZONE = 'Europe/London'
 USE_I18N = True
 USE_L10N = True
@@ -253,3 +260,20 @@ try:
     from local_settings import *  # flake8: noqa
 except ImportError:
     pass
+
+if DEBUG:
+    # Log to console in development mode
+    LOGGING['loggers']['']['handlers'] = ['console']
+    LOGGING['loggers']['django.request']['handlers'] = ['console']
+    LOGGING['loggers']['rq.worker']['handlers'] = ['console']
+
+if TESTING:
+    # Disable logging
+    LOGGING['loggers']['']['handlers'] = ['null']
+    LOGGING['loggers']['django.request']['handlers'] = ['null']
+    LOGGING['loggers']['rq.worker']['handlers'] = ['null']
+    # Don't connect to bitcoind
+    BITCOIND_AUTH = {
+        'mainnet': (None, None),
+        'testnet': (None, None),
+    }

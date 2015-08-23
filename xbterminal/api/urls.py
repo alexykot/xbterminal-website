@@ -18,11 +18,6 @@ api_urls = patterns(
         views.DevicesView.as_view(),
         name='devices'),
     url(r'^devices/(?P<key>[0-9a-zA-Z]{8,32})/?$', 'device', name='device'),
-    url(r'^device/(?P<key>[0-9a-zA-Z]{8,32})/firmware/$', 'device_firmware', name='device_firmware'),
-    url(r'^device/(?P<key>[0-9a-zA-Z]{8,32})/firmware/(?P<firmware_hash>[0-9a-fA-F]{32})/$',
-        'firmware',
-        name='firmware'),
-    url(r'^device/(?P<key>[0-9a-zA-Z]{8,32})/firmware_updated/$', 'firmware_updated', name='firmware_updated'),
 
     url(r'^payments/init/?$',
         views.PaymentInitView.as_view(),
