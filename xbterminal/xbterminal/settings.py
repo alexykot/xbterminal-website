@@ -95,7 +95,6 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.sites',
 
-    'south',
     'bootstrap3',
     'rest_framework',
     'qrcode',
