@@ -60,6 +60,7 @@ class PaymentInitViewTestCase(TestCase):
         form_data = {
             'device_key': device.key,
             'amount': fiat_amount,
+            'qr_code': 'true',
         }
         response = self.client.post(self.url, form_data)
         self.assertEqual(response.status_code, 200)
@@ -103,6 +104,7 @@ class PaymentInitViewTestCase(TestCase):
         self.assertIn('payment_uri', data)
         self.assertEqual(data['payment_uid'], payment_order.uid)
         self.assertIn('payment_request', data)
+        self.assertNotIn('qr_code_src', data)
 
     def test_invalid_amount(self):
         device = DeviceFactory.create()
