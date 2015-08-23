@@ -1,5 +1,4 @@
 Django==1.7.9
-south==1.0.2
 django-ckeditor==4.4.6
 django-constance==1.0.1
 django-countries==3.3
