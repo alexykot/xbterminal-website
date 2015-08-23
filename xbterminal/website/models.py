@@ -368,11 +368,6 @@ class Device(models.Model):
     last_activity = models.DateTimeField(blank=True, null=True)
     last_reconciliation = models.DateTimeField(auto_now_add=True)
 
-    # firmware data
-    current_firmware = models.ForeignKey("Firmware", related_name='current_for_device_set', blank=True, null=True)
-    last_firmware_update_date = models.DateTimeField(blank=True, null=True)
-    next_firmware = models.ForeignKey("Firmware", related_name='next_to_device_set', blank=True, null=True)
-
     our_fee_override = models.CharField(max_length=50, blank=True, null=True)
 
     api_key = models.TextField(

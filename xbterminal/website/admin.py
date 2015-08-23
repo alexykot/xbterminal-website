@@ -47,11 +47,6 @@ class DeviceAdmin(admin.ModelAdmin):
     device_key_qr_code.allow_tags = True
 
 
-class FirmwareAdmin(admin.ModelAdmin):
-    list_display = ('id', 'version', 'hash', 'added')
-    readonly_fields = ('hash',)
-
-
 class PaymentOrderAdmin(admin.ModelAdmin):
 
     list_display = [
@@ -261,7 +256,6 @@ admin.site.register(models.KYCDocument, KYCDocumentAdmin)
 admin.site.register(models.Device, DeviceAdmin)
 admin.site.register(models.Language)
 admin.site.register(models.Currency)
-admin.site.register(models.Firmware, FirmwareAdmin)
 admin.site.register(models.PaymentOrder, PaymentOrderAdmin)
 admin.site.register(models.Order, OrderAdmin)
 admin.site.register(models.WithdrawalOrder, WithdrawalOrderAdmin)
