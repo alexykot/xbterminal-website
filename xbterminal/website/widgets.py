@@ -44,7 +44,7 @@ class ButtonGroupFieldRenderer(ChoiceFieldRenderer):
         output = [start_tag]
 
         for widget in self:
-            output.append(format_html('{0}', force_text(widget)))
+            output.append(force_text(widget))
         output.append('</div></div>')
         return mark_safe('\n'.join(output))
 
