@@ -23,7 +23,6 @@ from website.validators import (
     validate_percent,
     validate_bitcoin_address,
     validate_transaction)
-from website.fields import FirmwarePathField
 from website.files import get_verification_file_name, verification_file_path_gen
 
 from operations import BTC_DEC_PLACES, blockr
@@ -439,21 +438,6 @@ class ReconciliationTime(models.Model):
 
     class Meta:
         ordering = ['time']
-
-
-def gen_firmware_hash():
-    return uuid.uuid4().hex
-
-
-class Firmware(models.Model):
-    hash = models.CharField(max_length=32, editable=False, unique=True, default=gen_firmware_hash)
-    version = models.CharField(max_length=50)
-    comment = models.TextField(blank=True)
-    added = models.DateField(auto_now_add=True)
-    filename = FirmwarePathField(path=settings.FIRMWARE_PATH)
-
-    def __unicode__(self):
-        return 'firmware %s' % self.version
 
 
 def gen_payment_uid():
