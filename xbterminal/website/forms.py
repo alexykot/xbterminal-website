@@ -42,6 +42,7 @@ class UserCreationForm(DjangoUserCreationForm):
 
     class Meta:
         model = User
+        fields = ['username']
 
 
 class UserChangeForm(DjangoUserChangeForm):
@@ -52,6 +53,7 @@ class UserChangeForm(DjangoUserChangeForm):
 
     class Meta:
         model = User
+        fields = '__all__'
 
 
 class AuthenticationForm(DjangoAuthenticationForm):
@@ -442,6 +444,7 @@ class DeviceAdminForm(forms.ModelForm):
 
     class Meta:
         model = Device
+        fields = '__all__'
         widgets = {
             'merchant': ForeignKeyWidget(model=MerchantAccount),
         }

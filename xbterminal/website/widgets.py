@@ -106,7 +106,7 @@ class ForeignKeyWidget(Select):
             instance = self.model.objects.get(pk=value)
             instance_url = reverse(
                 'admin:{0}_{1}_change'.format(
-                    instance._meta.app_label, instance._meta.module_name),
+                    instance._meta.app_label, instance._meta.model_name),
                 args=[instance.pk])
             output += format_html('&nbsp;<a href="{0}">{1}</a>&nbsp;',
                                   instance_url,
