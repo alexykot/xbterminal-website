@@ -42,6 +42,7 @@ class UserCreationForm(DjangoUserCreationForm):
 
     class Meta:
         model = User
+        fields = ['username']
 
 
 class UserChangeForm(DjangoUserChangeForm):
@@ -52,6 +53,7 @@ class UserChangeForm(DjangoUserChangeForm):
 
     class Meta:
         model = User
+        fields = '__all__'
 
 
 class AuthenticationForm(DjangoAuthenticationForm):
@@ -303,12 +305,7 @@ class TerminalOrderForm(forms.ModelForm):
             ]
             for field_name in required_fields:
                 if not cleaned_data.get(field_name):
-                    self._errors[field_name] = self.error_class(
-                        [_("This field is required.")])
-                    try:
-                        del cleaned_data[field_name]
-                    except KeyError:
-                        pass
+                    self.add_error(field_name, _('This field is required.'))
         return cleaned_data
 
     def save(self, merchant, commit=True):
@@ -432,15 +429,14 @@ class DeviceForm(forms.ModelForm):
         except KeyError:
             return cleaned_data
         if percent < 100 and not bitcoin_address:
-            self._errors['bitcoin_address'] = self.error_class(["This field is required."])
-            del cleaned_data['bitcoin_address']
+            self.add_error('bitcoin_address', 'This field is required.')
         if self.instance and bitcoin_address:
             try:
                 validate_bitcoin_address(bitcoin_address,
                                          network=self.instance.bitcoin_network)
             except forms.ValidationError as error:
-                self._errors['bitcoin_address'] = self.error_class(error.messages)
-                del cleaned_data['bitcoin_address']
+                for error_message in error.messages:
+                    self.add_error('bitcoin_address', error_message)
         return cleaned_data
 
 
@@ -448,6 +444,7 @@ class DeviceAdminForm(forms.ModelForm):
 
     class Meta:
         model = Device
+        fields = '__all__'
         widgets = {
             'merchant': ForeignKeyWidget(model=MerchantAccount),
         }
@@ -462,8 +459,8 @@ class DeviceAdminForm(forms.ModelForm):
                     validate_bitcoin_address(cleaned_data[address],
                                              network=network)
             except forms.ValidationError as error:
-                self._errors[address] = self.error_class(error.messages)
-                del cleaned_data[address]
+                for error_message in error.messages:
+                    self.add_error(address, error_message)
         return cleaned_data
 
 

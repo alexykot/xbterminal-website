@@ -7,8 +7,6 @@ from api.forms import WithdrawalForm
 
 class WithdrawalFormTestCase(TestCase):
 
-    fixtures = ['initial_data.json']
-
     def test_form(self):
         device = DeviceFactory.create()
         form_data = {

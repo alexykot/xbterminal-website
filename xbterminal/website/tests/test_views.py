@@ -14,8 +14,6 @@ from website.tests.factories import (
 
 class RegistrationViewTestCase(TestCase):
 
-    fixtures = ['initial_data.json']
-
     def setUp(self):
         self.url = reverse('website:registration')
 
@@ -53,8 +51,6 @@ class RegistrationViewTestCase(TestCase):
 
 class CreateDeviceViewTestCase(TestCase):
 
-    fixtures = ['initial_data.json']
-
     def setUp(self):
         self.url = reverse('website:create_device')
         self.merchant = MerchantAccountFactory.create()
@@ -85,8 +81,6 @@ class CreateDeviceViewTestCase(TestCase):
 
 class ReconciliationViewTestCase(TestCase):
 
-    fixtures = ['initial_data.json']
-
     def setUp(self):
         self.merchant = MerchantAccountFactory.create()
 
@@ -110,8 +104,6 @@ class ReconciliationViewTestCase(TestCase):
 
 class ReportViewTestCase(TestCase):
 
-    fixtures = ['initial_data.json']
-
     def setUp(self):
         self.merchant = MerchantAccountFactory.create()
 
@@ -131,8 +123,6 @@ class ReportViewTestCase(TestCase):
 
 class ReceiptsViewTestCase(TestCase):
 
-    fixtures = ['initial_data.json']
-
     def setUp(self):
         self.merchant = MerchantAccountFactory.create()
 
@@ -151,8 +141,6 @@ class ReceiptsViewTestCase(TestCase):
 
 
 class PaymentViewTestCase(TestCase):
-
-    fixtures = ['initial_data.json']
 
     def setUp(self):
         self.merchant = MerchantAccountFactory.create()

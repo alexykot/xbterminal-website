@@ -19,8 +19,6 @@ from api.utils import create_test_signature
 
 class DevicesViewTestCase(TestCase):
 
-    fixtures = ['initial_data.json']
-
     def test_list(self):
         user = UserFactory.create()
         device = DeviceFactory.create(merchant__user=user)
@@ -50,8 +48,6 @@ class DevicesViewTestCase(TestCase):
 
 class DeviceSettingsViewTestCase(TestCase):
 
-    fixtures = ['initial_data.json']
-
     def test_settings(self):
         device = DeviceFactory.create()
         url = reverse('api:device', kwargs={'key': device.key})
@@ -70,8 +66,6 @@ class DeviceSettingsViewTestCase(TestCase):
 
 
 class PaymentInitViewTestCase(TestCase):
-
-    fixtures = ['initial_data.json']
 
     def setUp(self):
         self.url = reverse('api:payment_init')
@@ -159,8 +153,6 @@ class PaymentInitViewTestCase(TestCase):
 
 class PaymentRequestViewTestCase(TestCase):
 
-    fixtures = ['initial_data.json']
-
     def test_payment_request(self):
         data = '009A8B'.decode('hex')
         payment_order = PaymentOrderFactory.create(
@@ -175,8 +167,6 @@ class PaymentRequestViewTestCase(TestCase):
 
 
 class PaymentResponseViewTestCase(TestCase):
-
-    fixtures = ['initial_data.json']
 
     def setUp(self):
         self.payment_order = PaymentOrderFactory.create()
@@ -207,8 +197,6 @@ class PaymentResponseViewTestCase(TestCase):
 
 class PaymentCheckViewTestCase(TestCase):
 
-    fixtures = ['initial_data.json']
-
     def test_payment_not_finished(self):
         payment_order = PaymentOrderFactory.create()
         url = reverse('api:payment_check',
@@ -235,8 +223,6 @@ class PaymentCheckViewTestCase(TestCase):
 
 
 class ReceiptViewTestCase(TestCase):
-
-    fixtures = ['initial_data.json']
 
     @patch('api.shortcuts.get_template')
     def test_payment_order(self, get_template_mock):
@@ -284,8 +270,6 @@ class ReceiptViewTestCase(TestCase):
 
 
 class WithdrawalViewSetTestCase(APITestCase):
-
-    fixtures = ['initial_data.json']
 
     def setUp(self):
         self.factory = APIRequestFactory()

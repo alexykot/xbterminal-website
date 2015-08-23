@@ -15,8 +15,6 @@ from operations import withdrawal
 
 class PrepareWithdrawalTestCase(TestCase):
 
-    fixtures = ['initial_data.json']
-
     @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.get_exchange_rate')
     def test_prepare(self, get_rate_mock, bc_mock):
@@ -112,8 +110,6 @@ class PrepareWithdrawalTestCase(TestCase):
 
 class SendTransactionTestCase(TestCase):
 
-    fixtures = ['initial_data.json']
-
     @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.run_periodic_task')
     def test_send_tx(self, run_task_mock, bc_mock):
@@ -168,8 +164,6 @@ class SendTransactionTestCase(TestCase):
 
 
 class WaitForBroadcastTestCase(TestCase):
-
-    fixtures = ['initial_data.json']
 
     @patch('operations.withdrawal.cancel_current_task')
     @patch('operations.withdrawal.blockr.is_tx_broadcasted')

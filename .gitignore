@@ -12,7 +12,6 @@ config/xbterminal.ini
 config/xbterminal.conf
 config/supervisor.ini
 *.log
-firmware
 logs
 /reports
 *.mo

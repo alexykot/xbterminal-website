@@ -44,7 +44,7 @@ class ButtonGroupFieldRenderer(ChoiceFieldRenderer):
         output = [start_tag]
 
         for widget in self:
-            output.append(format_html('{0}', force_text(widget)))
+            output.append(force_text(widget))
         output.append('</div></div>')
         return mark_safe('\n'.join(output))
 
@@ -106,7 +106,7 @@ class ForeignKeyWidget(Select):
             instance = self.model.objects.get(pk=value)
             instance_url = reverse(
                 'admin:{0}_{1}_change'.format(
-                    instance._meta.app_label, instance._meta.module_name),
+                    instance._meta.app_label, instance._meta.model_name),
                 args=[instance.pk])
             output += format_html('&nbsp;<a href="{0}">{1}</a>&nbsp;',
                                   instance_url,

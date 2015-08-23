@@ -13,7 +13,7 @@ from website.widgets import (
 
 def url_to_object(obj):
     url_name = u'admin:{0}_{1}_change'.format(
-        obj._meta.app_label, obj._meta.module_name)
+        obj._meta.app_label, obj._meta.model_name)
     return format_html(u'<a href="{0}">{1}</a>',
                        reverse(url_name, args=[obj.pk]),
                        str(obj))

@@ -15,8 +15,6 @@ from operations import BTC_DEC_PLACES
 
 class PreparePaymentTestCase(TestCase):
 
-    fixtures = ['initial_data.json']
-
     @patch('operations.payment.blockchain.BlockChain')
     @patch('operations.payment.average.get_exchange_rate')
     @patch('operations.payment.run_periodic_task')
@@ -153,8 +151,6 @@ class PreparePaymentTestCase(TestCase):
 
 class WaitForPaymentTestCase(TestCase):
 
-    fixtures = ['initial_data.json']
-
     @patch('operations.payment.cancel_current_task')
     @patch('operations.payment.blockchain.BlockChain')
     def test_payment_order_does_not_exist(self, bc_mock, cancel_mock):
@@ -213,8 +209,6 @@ class WaitForPaymentTestCase(TestCase):
 
 class ValidatePaymentTestCase(TestCase):
 
-    fixtures = ['initial_data.json']
-
     @patch('operations.payment.blockchain.BlockChain')
     @patch('operations.payment.blockchain.get_txid')
     def test_bip0021(self, get_txid_mock, bc_mock):
@@ -247,8 +241,6 @@ class ValidatePaymentTestCase(TestCase):
 
 
 class WaitForValidationTestCase(TestCase):
-
-    fixtures = ['initial_data.json']
 
     @patch('operations.payment.cancel_current_task')
     @patch('operations.payment.forward_transaction')
@@ -309,8 +301,6 @@ class WaitForValidationTestCase(TestCase):
 
 
 class ForwardTransactionTestCase(TestCase):
-
-    fixtures = ['initial_data.json']
 
     @patch('operations.payment.blockchain.BlockChain')
     def test_forward_standard(self, bc_mock):

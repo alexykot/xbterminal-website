@@ -6,8 +6,6 @@ from api.serializers import WithdrawalOrderSerializer
 
 class WithdrawalFormTestCase(TestCase):
 
-    fixtures = ['initial_data.json']
-
     def test_serialization(self):
         order = WithdrawalOrderFactory.create()
         data = WithdrawalOrderSerializer(order).data
