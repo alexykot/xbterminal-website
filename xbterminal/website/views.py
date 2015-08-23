@@ -463,8 +463,8 @@ class UpdateProfileView(TemplateResponseMixin, CabinetView):
             try:
                 form.save()
             except gocoin.GoCoinNameAlreadyTaken:
-                form._errors['company_name'] = form.error_class(
-                    [_("This company is already registered.")])
+                form.add_error('company_name',
+                               _('This company is already registered.'))
                 context['form'] = form
                 return self.render_to_response(context)
             return redirect(reverse('website:profile'))
