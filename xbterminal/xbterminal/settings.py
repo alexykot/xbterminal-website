@@ -234,8 +234,6 @@ CONSTANCE_CONFIG = {
 
 REPORTS_PATH = os.path.join(BASE_DIR, '..', 'reports')
 
-FIRMWARE_PATH = os.path.join(BASE_DIR, '..', 'firmware')
-
 CERT_PATH = os.path.join(BASE_DIR, '..', 'certs')
 PKI_KEY_FILE = None
 PKI_CERTIFICATES = []
