@@ -44,6 +44,8 @@ class PaymentOrder(models.Model):
     request = models.BinaryField(editable=False)
 
     # Payment details
+    bitcoin_network = models.CharField(
+        max_length=10, choices=BITCOIN_NETWORKS)
     local_address = models.CharField(
         max_length=35, validators=[validate_bitcoin_address])
     merchant_address = models.CharField(

@@ -14,7 +14,8 @@ class PaymentOrderFactory(factory.DjangoModelFactory):
         model = PaymentOrder
 
     device = factory.SubFactory(DeviceFactory)
-
+    bitcoin_network = factory.LazyAttribute(
+        lambda po: po.device.bitcoin_network)
     local_address = '1PZoCJdbQdYsBur25F6cZLejM1bkSSUktL'
     merchant_address = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
     fee_address = '1NdS5JCXzbhNv4STQAaknq56iGstfgRCXg'

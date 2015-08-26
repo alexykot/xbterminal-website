@@ -40,6 +40,7 @@ def prepare_payment(device, fiat_amount):
         payment_order: PaymentOrder instance
     """
     details = {
+        'bitcoin_network': None,
         'local_address': None,
         'merchant_address': None,
         'fee_address': None,
@@ -50,12 +51,14 @@ def prepare_payment(device, fiat_amount):
         'instantfiat_btc_amount': BTC_DEC_PLACES,
         'merchant_btc_amount': BTC_DEC_PLACES,
         'fee_btc_amount': BTC_DEC_PLACES,
+        'tx_fee_btc_amount': BTC_DEC_PLACES,
         'btc_amount': BTC_DEC_PLACES,
         'effective_exchange_rate': None,
         'instantfiat_invoice_id': None,
     }
     # Connect to bitcoind
     bc = blockchain.BlockChain(device.bitcoin_network)
+    details['bitcoin_network'] = device.bitcoin_network
     # Addresses
     try:
         details['local_address'] = str(bc.get_new_address())

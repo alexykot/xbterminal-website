@@ -17,6 +17,8 @@ class PaymentOrderTestCase(TestCase):
         self.assertEqual(payment_order.order_type, 'payment')
         self.assertEqual(len(payment_order.uid), 6)
         self.assertEqual(payment_order.status, 'new')
+        self.assertEqual(payment_order.bitcoin_network,
+                         payment_order.device.bitcoin_network)
 
         expected_btc_amount = (payment_order.merchant_btc_amount +
                                payment_order.instantfiat_btc_amount +
