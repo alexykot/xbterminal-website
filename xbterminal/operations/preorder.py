@@ -7,7 +7,7 @@ from constance import config
 from operations.instantfiat import gocoin
 from operations.rq_helpers import run_periodic_task, cancel_current_task
 
-from website.models import Order
+from operations.models import Order
 from website.utils import send_invoice
 
 

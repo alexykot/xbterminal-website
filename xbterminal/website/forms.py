@@ -20,7 +20,6 @@ from website.models import (
     MerchantAccount,
     Device,
     ReconciliationTime,
-    Order,
     KYCDocument,
     get_language,
     get_currency)
@@ -32,6 +31,7 @@ from website.widgets import (
     ForeignKeyWidget)
 from website.validators import validate_bitcoin_address
 from website.utils import create_html_message
+from operations.models import Order
 
 
 class UserCreationForm(DjangoUserCreationForm):

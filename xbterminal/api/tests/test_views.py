@@ -7,12 +7,13 @@ from mock import patch, Mock
 from rest_framework.test import APITestCase, APIRequestFactory
 from rest_framework import status
 
-from website.models import PaymentOrder
-from website.tests.factories import (
-    UserFactory,
-    DeviceFactory,
+from operations.models import PaymentOrder
+from operations.tests.factories import (
     PaymentOrderFactory,
     WithdrawalOrderFactory)
+from website.tests.factories import (
+    UserFactory,
+    DeviceFactory)
 from api.views import WithdrawalViewSet
 from api.utils import create_test_signature
 

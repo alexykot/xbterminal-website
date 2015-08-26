@@ -23,8 +23,9 @@ from operations import (
     exceptions,
     protocol)
 from operations.rq_helpers import run_periodic_task, cancel_current_task
+from operations.models import PaymentOrder
 
-from website.models import PaymentOrder, BTCAccount
+from website.models import BTCAccount
 from website.utils import send_error_message
 
 logger = logging.getLogger(__name__)
