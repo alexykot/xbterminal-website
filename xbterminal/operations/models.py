@@ -64,7 +64,7 @@ class PaymentOrder(models.Model):
     outgoing_tx_id = models.CharField(max_length=64, validators=[validate_transaction], null=True)
     payment_type = models.CharField(max_length=10, choices=PAYMENT_TYPES)
 
-    time_created = models.DateTimeField()
+    time_created = models.DateTimeField(auto_now_add=True)
     time_recieved = models.DateTimeField(null=True)
     time_forwarded = models.DateTimeField(null=True)
     time_broadcasted = models.DateTimeField(null=True)

@@ -1,7 +1,6 @@
 from decimal import Decimal
 import factory
 from factory import fuzzy
-from django.utils import timezone
 
 from website.tests.factories import DeviceFactory
 from operations.models import PaymentOrder, WithdrawalOrder
@@ -29,7 +28,12 @@ class PaymentOrderFactory(factory.DjangoModelFactory):
     btc_amount = Decimal('0.00486722')
     effective_exchange_rate = Decimal('228.05626210')
 
-    time_created = factory.LazyAttribute(lambda po: timezone.now())
+    @factory.post_generation
+    def time_created(self, create, extracted, **kwargs):
+        if extracted:
+            self.time_created = extracted
+            if create:
+                self.save()
 
 
 class WithdrawalOrderFactory(factory.DjangoModelFactory):

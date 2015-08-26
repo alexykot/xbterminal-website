@@ -110,10 +110,8 @@ def prepare_payment(device, fiat_amount):
                              blockchain.get_tx_fee(1, 3))
     details['effective_exchange_rate'] = details['fiat_amount'] / details['btc_amount']
     # Prepare payment order
-    now = timezone.localtime(timezone.now())
     payment_order = PaymentOrder(
         device=device,
-        time_created=now,
         **details)
     payment_order.save()
     # Schedule tasks
