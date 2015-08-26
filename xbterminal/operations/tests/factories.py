@@ -18,7 +18,8 @@ class PaymentOrderFactory(factory.DjangoModelFactory):
     local_address = '1PZoCJdbQdYsBur25F6cZLejM1bkSSUktL'
     merchant_address = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
     fee_address = '1NdS5JCXzbhNv4STQAaknq56iGstfgRCXg'
-    fiat_currency = 'GBP'
+    fiat_currency = factory.LazyAttribute(
+        lambda wo: wo.device.merchant.currency)
 
     fiat_amount = Decimal('1.11')
     instantfiat_fiat_amount = Decimal(0)

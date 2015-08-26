@@ -49,7 +49,7 @@ class PaymentOrder(models.Model):
     fee_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
     instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], null=True)
     refund_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], null=True)
-    fiat_currency = models.CharField(max_length=3)
+    fiat_currency = models.ForeignKey('website.Currency')
     fiat_amount = models.DecimalField(max_digits=20, decimal_places=8)
     instantfiat_fiat_amount = models.DecimalField(max_digits=9, decimal_places=2)
     instantfiat_btc_amount = models.DecimalField(max_digits=18, decimal_places=8)

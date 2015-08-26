@@ -50,8 +50,8 @@ class PreparePaymentTestCase(TestCase):
         self.assertEqual(payment_order.fee_address,
                          config.OUR_FEE_MAINNET_ADDRESS)
         self.assertIsNone(payment_order.instantfiat_address)
-        self.assertEqual(payment_order.fiat_currency,
-                         device.merchant.currency.name)
+        self.assertEqual(payment_order.fiat_currency.pk,
+                         device.merchant.currency.pk)
         self.assertEqual(payment_order.fiat_amount, fiat_amount)
         self.assertEqual(payment_order.instantfiat_fiat_amount, 0)
         self.assertEqual(payment_order.instantfiat_btc_amount, 0)

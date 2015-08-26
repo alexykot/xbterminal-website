@@ -65,7 +65,7 @@ def prepare_payment(device, fiat_amount):
     details['merchant_address'] = device.bitcoin_address
     details['fee_address'] = device.our_fee_address
     # Exchange service
-    details['fiat_currency'] = device.merchant.currency.name
+    details['fiat_currency'] = device.merchant.currency
     details['fiat_amount'] = fiat_amount.quantize(FIAT_DEC_PLACES)
     assert details['fiat_amount'] >= FIAT_MIN_OUTPUT
     details['instantfiat_fiat_amount'] = (details['fiat_amount'] *
