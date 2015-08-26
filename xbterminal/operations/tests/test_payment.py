@@ -59,6 +59,8 @@ class PreparePaymentTestCase(TestCase):
                          expected_merchant_btc_amount)
         self.assertEqual(payment_order.fee_btc_amount,
                          expected_fee_btc_amount)
+        self.assertEqual(payment_order.tx_fee_btc_amount,
+                         Decimal('0.0001'))
         self.assertEqual(payment_order.btc_amount,
                          expected_btc_amount)
         self.assertIsNone(payment_order.instantfiat_invoice_id)

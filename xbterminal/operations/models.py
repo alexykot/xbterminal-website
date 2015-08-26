@@ -65,6 +65,8 @@ class PaymentOrder(models.Model):
         max_digits=18, decimal_places=8)
     fee_btc_amount = models.DecimalField(
         max_digits=18, decimal_places=8)
+    tx_fee_btc_amount = models.DecimalField(
+        max_digits=18, decimal_places=8)
     extra_btc_amount = models.DecimalField(
         max_digits=18, decimal_places=8, default=0)
     btc_amount = models.DecimalField(

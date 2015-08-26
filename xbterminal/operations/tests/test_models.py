@@ -18,6 +18,12 @@ class PaymentOrderTestCase(TestCase):
         self.assertEqual(len(payment_order.uid), 6)
         self.assertEqual(payment_order.status, 'new')
 
+        expected_btc_amount = (payment_order.merchant_btc_amount +
+                               payment_order.instantfiat_btc_amount +
+                               payment_order.fee_btc_amount +
+                               payment_order.tx_fee_btc_amount)
+        self.assertEqual(payment_order.btc_amount, expected_btc_amount)
+
     def test_status(self):
         # Without instantfiat
         payment_order = PaymentOrderFactory.create()

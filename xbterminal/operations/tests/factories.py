@@ -19,14 +19,19 @@ class PaymentOrderFactory(factory.DjangoModelFactory):
     merchant_address = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
     fee_address = '1NdS5JCXzbhNv4STQAaknq56iGstfgRCXg'
     fiat_currency = factory.LazyAttribute(
-        lambda wo: wo.device.merchant.currency)
+        lambda po: po.device.merchant.currency)
 
     fiat_amount = Decimal('1.11')
     instantfiat_fiat_amount = Decimal(0)
     instantfiat_btc_amount = Decimal(0)
     merchant_btc_amount = Decimal('0.00476722')
     fee_btc_amount = Decimal(0)
-    btc_amount = Decimal('0.00486722')
+    tx_fee_btc_amount = Decimal('0.0001')
+    btc_amount = factory.LazyAttribute(
+        lambda po: (po.merchant_btc_amount +
+                    po.instantfiat_btc_amount +
+                    po.fee_btc_amount +
+                    po.tx_fee_btc_amount))
     effective_exchange_rate = Decimal('228.05626210')
 
     @factory.post_generation
