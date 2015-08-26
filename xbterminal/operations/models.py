@@ -73,8 +73,6 @@ class PaymentOrder(models.Model):
         max_digits=18, decimal_places=8, default=0)
     btc_amount = models.DecimalField(
         max_digits=20, decimal_places=8)
-    effective_exchange_rate = models.DecimalField(
-        max_digits=20, decimal_places=8)
     instantfiat_invoice_id = models.CharField(
         max_length=255, null=True)
 
@@ -156,6 +154,10 @@ class PaymentOrder(models.Model):
     def payment_address_url(self):
         """For receipts"""
         return blockr.get_address_url(self.local_address, self.device.bitcoin_network)
+
+    @property
+    def effective_exchange_rate(self):
+        return (self.fiat_amount / self.btc_amount).quantize(BTC_DEC_PLACES)
 
     @property
     def scaled_btc_amount(self):

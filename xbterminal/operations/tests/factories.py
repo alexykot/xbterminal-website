@@ -33,7 +33,6 @@ class PaymentOrderFactory(factory.DjangoModelFactory):
                     po.instantfiat_btc_amount +
                     po.fee_btc_amount +
                     po.tx_fee_btc_amount))
-    effective_exchange_rate = Decimal('228.05626210')
 
     @factory.post_generation
     def time_created(self, create, extracted, **kwargs):

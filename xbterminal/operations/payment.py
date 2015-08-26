@@ -113,7 +113,6 @@ def prepare_payment(device, fiat_amount):
                              details['instantfiat_btc_amount'] +
                              details['fee_btc_amount'] +
                              details['tx_fee_btc_amount'])
-    details['effective_exchange_rate'] = details['fiat_amount'] / details['btc_amount']
     # Prepare payment order
     payment_order = PaymentOrder(
         device=device,

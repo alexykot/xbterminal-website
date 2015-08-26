@@ -73,11 +73,14 @@ class PaymentOrderTestCase(TestCase):
         order = PaymentOrderFactory.create(btc_amount=Decimal('0.1003'))
         self.assertEqual(order.scaled_btc_amount, Decimal('100.3'))
 
-    def test_scaled_effective_exchange_rate(self):
+    def test_effective_exchange_rate(self):
         order = PaymentOrderFactory.create(
-            effective_exchange_rate=Decimal('220'))
+            fiat_amount=Decimal('1.00'),
+            merchant_btc_amount=Decimal('0.05'),
+            tx_fee_btc_amount=Decimal('0.05'))
+        self.assertEqual(order.effective_exchange_rate, Decimal('10'))
         self.assertEqual(order.scaled_effective_exchange_rate,
-                         Decimal('0.22'))
+                         Decimal('0.01'))
 
     def test_urls_for_receipts(self):
         order = PaymentOrderFactory.create(incoming_tx_id='0' * 64)
