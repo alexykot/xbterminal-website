@@ -8,8 +8,8 @@ from mock import patch
 
 from website.tests.factories import (
     MerchantAccountFactory,
-    DeviceFactory,
-    PaymentOrderFactory)
+    DeviceFactory)
+from operations.tests.factories import PaymentOrderFactory
 
 
 class RegistrationViewTestCase(TestCase):

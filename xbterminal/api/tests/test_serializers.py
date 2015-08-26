@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from website.tests.factories import WithdrawalOrderFactory
+from operations.tests.factories import WithdrawalOrderFactory
 from api.serializers import WithdrawalOrderSerializer
 
 

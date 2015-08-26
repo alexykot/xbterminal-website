@@ -3,13 +3,14 @@ from django.test import TestCase
 from mock import patch, Mock
 
 from constance import config
+
 from website.models import BTCAccount
-from operations.models import PaymentOrder
 from website.tests.factories import (
     MerchantAccountFactory,
     BTCAccountFactory,
-    DeviceFactory,
-    PaymentOrderFactory)
+    DeviceFactory)
+from operations.models import PaymentOrder
+from operations.tests.factories import PaymentOrderFactory
 from operations import payment
 from operations import BTC_DEC_PLACES
 
