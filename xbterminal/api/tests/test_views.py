@@ -7,7 +7,7 @@ from mock import patch, Mock
 from rest_framework.test import APITestCase, APIRequestFactory
 from rest_framework import status
 
-from website.models import PaymentOrder
+from operations.models import PaymentOrder
 from website.tests.factories import (
     UserFactory,
     DeviceFactory,

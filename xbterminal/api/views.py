@@ -16,10 +16,7 @@ from rest_framework.response import Response
 from rest_framework import status, viewsets
 from oauth2_provider.views.generic import ProtectedResourceView
 
-from website.models import (
-    Device,
-    PaymentOrder,
-    WithdrawalOrder)
+from website.models import Device
 from website.forms import SimpleMerchantRegistrationForm
 from website.utils import generate_qr_code, send_registration_info
 from api.shortcuts import render_to_pdf
@@ -27,6 +24,7 @@ from api.forms import PaymentForm, WithdrawalForm
 from api.serializers import WithdrawalOrderSerializer
 from api.utils import verify_signature
 
+from operations.models import PaymentOrder, WithdrawalOrder
 import operations.payment
 import operations.blockchain
 import operations.protocol

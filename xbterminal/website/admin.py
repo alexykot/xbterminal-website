@@ -5,10 +5,6 @@ from django.utils.html import format_html
 
 from website import forms, models
 from website.utils import generate_qr_code
-from website.widgets import (
-    BitcoinAddressWidget,
-    BitcoinTransactionWidget,
-    ReadOnlyAdminWidget)
 
 
 def url_to_object(obj):
@@ -45,53 +41,6 @@ class DeviceAdmin(admin.ModelAdmin):
         return output
 
     device_key_qr_code.allow_tags = True
-
-
-class PaymentOrderAdmin(admin.ModelAdmin):
-
-    list_display = [
-        '__unicode__',
-        'uid',
-        'device_link',
-        'merchant_link',
-        'time_created',
-        'status',
-    ]
-
-    readonly_fields = ['status']
-
-    def has_add_permission(self, request, obj=None):
-        return False
-
-    def device_link(self, payment_order):
-        return url_to_object(payment_order.device)
-
-    device_link.allow_tags = True
-    device_link.short_description = 'device'
-
-    def merchant_link(self, payment_order):
-        return url_to_object(payment_order.device.merchant)
-
-    merchant_link.allow_tags = True
-    merchant_link.short_description = 'merchant'
-
-    def get_form(self, request, obj, **kwargs):
-        form = super(PaymentOrderAdmin, self).get_form(request, obj, **kwargs)
-        network = obj.device.bitcoin_network
-        for field_name in form.base_fields:
-            field = form.base_fields[field_name]
-            if field_name.endswith('address'):
-                field.widget = BitcoinAddressWidget(network=network)
-            elif field_name.endswith('tx_id'):
-                field.widget = BitcoinTransactionWidget(network=network)
-            else:
-                field.widget = ReadOnlyAdminWidget(instance=obj)
-            field.required = False
-        return form
-
-
-class OrderAdmin(admin.ModelAdmin):
-    readonly_fields = ['payment_reference']
 
 
 class UserAdmin(UserAdmin):
@@ -219,36 +168,6 @@ class MerchantAccountAdmin(admin.ModelAdmin):
             str(bool(merchant.api_key)))
 
 
-class WithdrawalOrderAdmin(admin.ModelAdmin):
-
-    list_display = [
-        '__str__',
-        'device_link',
-        'merchant_link',
-        'time_created',
-        'status',
-    ]
-
-    def has_add_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-    def get_readonly_fields(self, request, obj=None):
-        return [field.name for field in self.opts.local_fields]
-
-    def device_link(self, payment_order):
-        return url_to_object(payment_order.device)
-    device_link.allow_tags = True
-    device_link.short_description = 'device'
-
-    def merchant_link(self, payment_order):
-        return url_to_object(payment_order.device.merchant)
-    merchant_link.allow_tags = True
-    merchant_link.short_description = 'merchant'
-
-
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.MerchantAccount, MerchantAccountAdmin)
 admin.site.register(models.BTCAccount, BTCAccountAdmin)
@@ -256,6 +175,3 @@ admin.site.register(models.KYCDocument, KYCDocumentAdmin)
 admin.site.register(models.Device, DeviceAdmin)
 admin.site.register(models.Language)
 admin.site.register(models.Currency)
-admin.site.register(models.PaymentOrder, PaymentOrderAdmin)
-admin.site.register(models.Order, OrderAdmin)
-admin.site.register(models.WithdrawalOrder, WithdrawalOrderAdmin)

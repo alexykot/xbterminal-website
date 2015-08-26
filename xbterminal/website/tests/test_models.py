@@ -7,8 +7,8 @@ from oauth2_provider.models import Application
 from website.models import (
     User,
     MerchantAccount,
-    BTCAccount,
-    WithdrawalOrder)
+    BTCAccount)
+from operations.models import WithdrawalOrder
 from website.tests.factories import (
     UserFactory,
     MerchantAccountFactory,

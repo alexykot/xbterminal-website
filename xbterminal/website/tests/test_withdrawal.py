@@ -5,7 +5,7 @@ from mock import patch, Mock
 
 from bitcoin.core import COutPoint
 
-from website.models import WithdrawalOrder
+from operations.models import WithdrawalOrder
 from website.tests.factories import (
     BTCAccountFactory,
     DeviceFactory,

@@ -8,9 +8,8 @@ from website.models import (
     User,
     MerchantAccount,
     BTCAccount,
-    Device,
-    PaymentOrder,
-    WithdrawalOrder)
+    Device)
+from operations.models import PaymentOrder, WithdrawalOrder
 from operations import BTC_DEC_PLACES
 from operations.blockchain import serialize_outputs
 

@@ -11,7 +11,8 @@ from operations.blockchain import (
     serialize_outputs,
     deserialize_outputs)
 from operations.rq_helpers import cancel_current_task, run_periodic_task
-from website.models import BTCAccount, WithdrawalOrder
+from operations.models import WithdrawalOrder
+from website.models import BTCAccount
 
 
 class WithdrawalError(Exception):

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from website.models import WithdrawalOrder
+from operations.models import WithdrawalOrder
 
 
 class WithdrawalOrderSerializer(serializers.ModelSerializer):

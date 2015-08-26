@@ -3,7 +3,8 @@ from django.test import TestCase
 from mock import patch, Mock
 
 from constance import config
-from website.models import BTCAccount, PaymentOrder
+from website.models import BTCAccount
+from operations.models import PaymentOrder
 from website.tests.factories import (
     MerchantAccountFactory,
     BTCAccountFactory,
