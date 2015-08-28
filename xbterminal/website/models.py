@@ -260,7 +260,7 @@ class BTCAccount(models.Model):
                                null=True)
 
     def __unicode__(self):
-        return '{0} - {1} account'.format(
+        return u'{0} - {1} account'.format(
             str(self.merchant),
             'BTC' if self.network == 'mainnet' else 'TBTC')
 
@@ -301,7 +301,7 @@ class KYCDocument(models.Model):
         verbose_name = 'KYC document'
 
     def __unicode__(self):
-        return "{0} - {1}".format(
+        return u'{0} - {1}'.format(
             self.merchant.company_name,
             self.get_document_type_display())
 
