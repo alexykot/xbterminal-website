@@ -44,27 +44,46 @@ class PaymentOrder(models.Model):
     request = models.BinaryField(editable=False)
 
     # Payment details
-    local_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
-    merchant_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
-    fee_address = models.CharField(max_length=35, validators=[validate_bitcoin_address])
-    instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], null=True)
-    refund_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], null=True)
-    fiat_currency = models.CharField(max_length=3)
-    fiat_amount = models.DecimalField(max_digits=20, decimal_places=8)
-    instantfiat_fiat_amount = models.DecimalField(max_digits=9, decimal_places=2)
-    instantfiat_btc_amount = models.DecimalField(max_digits=18, decimal_places=8)
-    merchant_btc_amount = models.DecimalField(max_digits=18, decimal_places=8)
-    fee_btc_amount = models.DecimalField(max_digits=18, decimal_places=8)
-    extra_btc_amount = models.DecimalField(max_digits=18, decimal_places=8, default=0)
-    btc_amount = models.DecimalField(max_digits=20, decimal_places=8)
-    effective_exchange_rate = models.DecimalField(max_digits=20, decimal_places=8)
-    instantfiat_invoice_id = models.CharField(max_length=255, null=True)
+    bitcoin_network = models.CharField(
+        max_length=10, choices=BITCOIN_NETWORKS)
+    local_address = models.CharField(
+        max_length=35, validators=[validate_bitcoin_address])
+    merchant_address = models.CharField(
+        max_length=35, validators=[validate_bitcoin_address])
+    fee_address = models.CharField(
+        max_length=35, validators=[validate_bitcoin_address])
+    instantfiat_address = models.CharField(
+        max_length=35, validators=[validate_bitcoin_address], null=True)
+    refund_address = models.CharField(
+        max_length=35, validators=[validate_bitcoin_address], null=True)
+    fiat_currency = models.ForeignKey('website.Currency')
+    fiat_amount = models.DecimalField(
+        max_digits=20, decimal_places=8)
+    instantfiat_fiat_amount = models.DecimalField(
+        max_digits=9, decimal_places=2)
+    instantfiat_btc_amount = models.DecimalField(
+        max_digits=18, decimal_places=8)
+    merchant_btc_amount = models.DecimalField(
+        max_digits=18, decimal_places=8)
+    fee_btc_amount = models.DecimalField(
+        max_digits=18, decimal_places=8)
+    tx_fee_btc_amount = models.DecimalField(
+        max_digits=18, decimal_places=8)
+    extra_btc_amount = models.DecimalField(
+        max_digits=18, decimal_places=8, default=0)
+    btc_amount = models.DecimalField(
+        max_digits=20, decimal_places=8)
+    instantfiat_invoice_id = models.CharField(
+        max_length=255, null=True)
 
-    incoming_tx_id = models.CharField(max_length=64, validators=[validate_transaction], null=True)
-    outgoing_tx_id = models.CharField(max_length=64, validators=[validate_transaction], null=True)
-    payment_type = models.CharField(max_length=10, choices=PAYMENT_TYPES)
+    incoming_tx_id = models.CharField(
+        max_length=64, validators=[validate_transaction], null=True)
+    outgoing_tx_id = models.CharField(
+        max_length=64, validators=[validate_transaction], null=True)
+    payment_type = models.CharField(
+        max_length=10, choices=PAYMENT_TYPES)
 
-    time_created = models.DateTimeField()
+    time_created = models.DateTimeField(auto_now_add=True)
     time_recieved = models.DateTimeField(null=True)
     time_forwarded = models.DateTimeField(null=True)
     time_broadcasted = models.DateTimeField(null=True)
@@ -135,6 +154,10 @@ class PaymentOrder(models.Model):
     def payment_address_url(self):
         """For receipts"""
         return blockr.get_address_url(self.local_address, self.device.bitcoin_network)
+
+    @property
+    def effective_exchange_rate(self):
+        return (self.fiat_amount / self.btc_amount).quantize(BTC_DEC_PLACES)
 
     @property
     def scaled_btc_amount(self):

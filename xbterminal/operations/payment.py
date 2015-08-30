@@ -40,6 +40,7 @@ def prepare_payment(device, fiat_amount):
         payment_order: PaymentOrder instance
     """
     details = {
+        'bitcoin_network': None,
         'local_address': None,
         'merchant_address': None,
         'fee_address': None,
@@ -50,12 +51,14 @@ def prepare_payment(device, fiat_amount):
         'instantfiat_btc_amount': BTC_DEC_PLACES,
         'merchant_btc_amount': BTC_DEC_PLACES,
         'fee_btc_amount': BTC_DEC_PLACES,
+        'tx_fee_btc_amount': BTC_DEC_PLACES,
         'btc_amount': BTC_DEC_PLACES,
         'effective_exchange_rate': None,
         'instantfiat_invoice_id': None,
     }
     # Connect to bitcoind
     bc = blockchain.BlockChain(device.bitcoin_network)
+    details['bitcoin_network'] = device.bitcoin_network
     # Addresses
     try:
         details['local_address'] = str(bc.get_new_address())
@@ -65,7 +68,7 @@ def prepare_payment(device, fiat_amount):
     details['merchant_address'] = device.bitcoin_address
     details['fee_address'] = device.our_fee_address
     # Exchange service
-    details['fiat_currency'] = device.merchant.currency.name
+    details['fiat_currency'] = device.merchant.currency
     details['fiat_amount'] = fiat_amount.quantize(FIAT_DEC_PLACES)
     assert details['fiat_amount'] >= FIAT_MIN_OUTPUT
     details['instantfiat_fiat_amount'] = (details['fiat_amount'] *
@@ -103,17 +106,16 @@ def prepare_payment(device, fiat_amount):
     assert details['merchant_btc_amount'] >= 0
     if 0 < details['merchant_btc_amount'] < BTC_MIN_OUTPUT:
         details['merchant_btc_amount'] = BTC_MIN_OUTPUT
+    # TX fee
+    details['tx_fee_btc_amount'] = blockchain.get_tx_fee(1, 3)
     # Total
     details['btc_amount'] = (details['merchant_btc_amount'] +
                              details['instantfiat_btc_amount'] +
                              details['fee_btc_amount'] +
-                             blockchain.get_tx_fee(1, 3))
-    details['effective_exchange_rate'] = details['fiat_amount'] / details['btc_amount']
+                             details['tx_fee_btc_amount'])
     # Prepare payment order
-    now = timezone.localtime(timezone.now())
     payment_order = PaymentOrder(
         device=device,
-        time_created=now,
         **details)
     payment_order.save()
     # Schedule tasks

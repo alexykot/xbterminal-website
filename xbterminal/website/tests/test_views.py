@@ -86,7 +86,8 @@ class ReconciliationViewTestCase(TestCase):
 
     def test_view(self):
         device = DeviceFactory.create(merchant=self.merchant)
-        payment_order = PaymentOrderFactory.create(
+        orders = PaymentOrderFactory.create_batch(
+            5,
             device=device,
             time_finished=timezone.now())
         self.client.login(username=self.merchant.user.email,
@@ -97,9 +98,13 @@ class ReconciliationViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'cabinet/reconciliation.html')
         payments = response.context['daily_payments_info']
-        self.assertEqual(payments[0]['count'], 1)
+        self.assertEqual(payments[0]['count'], len(orders))
+        self.assertEqual(payments[0]['btc_amount'],
+                         sum(po.btc_amount for po in orders))
         self.assertEqual(payments[0]['fiat_amount'],
-                         payment_order.fiat_amount)
+                         sum(po.fiat_amount for po in orders))
+        self.assertEqual(payments[0]['instantfiat_fiat_amount'],
+                         sum(po.instantfiat_fiat_amount for po in orders))
 
 
 class ReportViewTestCase(TestCase):
@@ -138,6 +143,54 @@ class ReceiptsViewTestCase(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header('Content-Disposition'))
+
+
+class SendAllToEmailViewTestCase(TestCase):
+
+    def setUp(self):
+        self.merchant = MerchantAccountFactory.create()
+
+    def test_view(self):
+        device = DeviceFactory.create(merchant=self.merchant)
+        payment_order = PaymentOrderFactory.create(
+            device=device,
+            time_finished=timezone.now())
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:send_all_to_email',
+                      kwargs={'device_key': device.key})
+        form_data = {
+            'email': 'test@example.net',
+            'date': payment_order.time_finished.strftime('%Y-%m-%d'),
+        }
+        response = self.client.post(url, data=form_data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0], form_data['email'])
+
+    @patch('website.utils.create_html_message')
+    def test_data(self, create_mock):
+        device = DeviceFactory.create(merchant=self.merchant)
+        orders = PaymentOrderFactory.create_batch(
+            5,
+            device=device,
+            time_finished=timezone.now())
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:send_all_to_email',
+                      kwargs={'device_key': device.key})
+        form_data = {
+            'email': 'test@example.net',
+            'date': orders[0].time_finished.strftime('%Y-%m-%d'),
+        }
+        self.client.post(url, data=form_data)
+        self.assertTrue(create_mock.called)
+        context = create_mock.call_args[0][2]
+        self.assertEqual(context['device'].pk, device.pk)
+        self.assertEqual(context['btc_amount'],
+                         sum(po.btc_amount for po in orders))
+        self.assertEqual(context['fiat_amount'],
+                         sum(po.fiat_amount for po in orders))
 
 
 class PaymentViewTestCase(TestCase):

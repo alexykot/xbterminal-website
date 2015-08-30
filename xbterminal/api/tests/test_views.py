@@ -74,14 +74,14 @@ class PaymentInitViewTestCase(TestCase):
     @patch('api.views.operations.payment.prepare_payment')
     def test_payment_website(self, prepare_mock):
         device = DeviceFactory.create()
-        fiat_amount = 0.5
-        btc_amount = 0.00329
-        exchange_rate = 0.152
+        fiat_amount = 10
+        btc_amount = 0.05
+        exchange_rate = 200
         payment_order = PaymentOrderFactory.create(
             device=device,
             fiat_amount=Decimal(fiat_amount),
-            btc_amount=Decimal(btc_amount),
-            effective_exchange_rate=Decimal(exchange_rate))
+            merchant_btc_amount=Decimal('0.0499'),
+            tx_fee_btc_amount=Decimal('0.0001'))
         prepare_mock.return_value = payment_order
 
         form_data = {
@@ -105,15 +105,15 @@ class PaymentInitViewTestCase(TestCase):
     @patch('api.views.operations.payment.prepare_payment')
     def test_payment_terminal(self, prepare_mock):
         device = DeviceFactory.create()
-        fiat_amount = 0.5
-        btc_amount = 0.00329
-        exchange_rate = 0.152
+        fiat_amount = 10
+        btc_amount = 0.05
+        exchange_rate = 200
         bluetooth_mac = '12:34:56:78:9A:BC'
         payment_order = PaymentOrderFactory.create(
             device=device,
             fiat_amount=Decimal(fiat_amount),
-            btc_amount=Decimal(btc_amount),
-            effective_exchange_rate=Decimal(exchange_rate))
+            merchant_btc_amount=Decimal('0.0499'),
+            tx_fee_btc_amount=Decimal('0.0001'))
         prepare_mock.return_value = payment_order
 
         form_data = {
