@@ -16,12 +16,12 @@ from operations import (
     FIAT_MIN_OUTPUT,
     BTC_DEC_PLACES,
     BTC_MIN_OUTPUT,
-    average,
     blockchain,
     blockr,
     instantfiat,
     exceptions,
     protocol)
+from operations.services.price import get_exchange_rate
 from operations.rq_helpers import run_periodic_task, cancel_current_task
 from operations.models import PaymentOrder
 
@@ -85,7 +85,7 @@ def prepare_payment(device, fiat_amount):
         exchange_rate = details['instantfiat_fiat_amount'] / details['instantfiat_btc_amount']
     else:
         details['instantfiat_fiat_amount'] = FIAT_DEC_PLACES
-        exchange_rate = average.get_exchange_rate(details['fiat_currency'])
+        exchange_rate = get_exchange_rate(details['fiat_currency'].name)
     # Validate addresses
     for address_field in ['local_address', 'merchant_address',
                           'fee_address', 'instantfiat_address']:

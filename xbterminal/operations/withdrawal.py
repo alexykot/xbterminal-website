@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.utils import timezone
 
 from operations import blockr, BTC_DEC_PLACES, BTC_MIN_OUTPUT
-from operations.average import get_exchange_rate
+from operations.services.price import get_exchange_rate
 from operations.blockchain import (
     BlockChain,
     get_tx_fee,
