@@ -168,6 +168,16 @@ class MerchantAccountAdmin(admin.ModelAdmin):
             str(bool(merchant.api_key)))
 
 
+@admin.register(models.DeviceBatch)
+class DeviceBatchAdmin(admin.ModelAdmin):
+
+    list_display = [
+        '__unicode__',
+        'size',
+    ]
+    readonly_fields = ['batch_number']
+
+
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.MerchantAccount, MerchantAccountAdmin)
 admin.site.register(models.BTCAccount, BTCAccountAdmin)

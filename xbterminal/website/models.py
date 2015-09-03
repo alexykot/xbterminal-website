@@ -446,3 +446,27 @@ def gen_payment_uid():
 def gen_withdrawal_uid():
     bts = uuid.uuid4().bytes
     return base58.encode(bts)[:6]
+
+
+def gen_batch_number():
+    bts = uuid.uuid4().bytes
+    return base58.encode(bts)[:8].upper()
+
+
+class DeviceBatch(models.Model):
+
+    batch_number = models.CharField(
+        max_length=8,
+        editable=False,
+        unique=True,
+        default=gen_batch_number)
+    created_at = models.DateTimeField(auto_now_add=True)
+    size = models.IntegerField()
+    comment = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = 'batch'
+        verbose_name_plural = 'device batches'
+
+    def __unicode__(self):
+        return self.batch_number
