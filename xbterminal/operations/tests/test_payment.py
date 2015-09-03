@@ -18,7 +18,7 @@ from operations import BTC_DEC_PLACES
 class PreparePaymentTestCase(TestCase):
 
     @patch('operations.payment.blockchain.BlockChain')
-    @patch('operations.payment.average.get_exchange_rate')
+    @patch('operations.payment.get_exchange_rate')
     @patch('operations.payment.run_periodic_task')
     def test_keep_btc(self, run_task_mock, get_rate_mock, bc_mock):
         device = DeviceFactory.create(
@@ -75,7 +75,7 @@ class PreparePaymentTestCase(TestCase):
         self.assertEqual(calls[2][0][0].__name__, 'check_payment_status')
 
     @patch('operations.payment.blockchain.BlockChain')
-    @patch('operations.payment.average.get_exchange_rate')
+    @patch('operations.payment.get_exchange_rate')
     @patch('operations.payment.run_periodic_task')
     def test_keep_btc_without_fee(self, run_task_mock, get_rate_mock, bc_mock):
         device = DeviceFactory.create(
