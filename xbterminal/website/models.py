@@ -6,7 +6,6 @@ from bitcoin import base58
 
 from django.db import models
 from django.conf import settings
-from django.core.files.storage import FileSystemStorage
 from django_countries.fields import CountryField
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils import timezone
@@ -19,7 +18,10 @@ from website.validators import (
     validate_post_code,
     validate_percent,
     validate_bitcoin_address)
-from website.files import get_verification_file_name, verification_file_path_gen
+from website.files import (
+    get_verification_file_name,
+    verification_file_path_gen,
+    VerificationFileStorage)
 
 
 class UserManager(BaseUserManager):
@@ -265,11 +267,6 @@ class BTCAccount(models.Model):
             'BTC' if self.network == 'mainnet' else 'TBTC')
 
 
-verification_file_storage = FileSystemStorage(
-    location=os.path.join(settings.MEDIA_ROOT, 'verification'),
-    base_url='/verification/')
-
-
 class KYCDocument(models.Model):
 
     IDENTITY_DOCUMENT = 1
@@ -290,7 +287,7 @@ class KYCDocument(models.Model):
     merchant = models.ForeignKey(MerchantAccount)
     document_type = models.IntegerField(choices=DOCUMENT_TYPES)
     file = models.FileField(
-        storage=verification_file_storage,
+        storage=VerificationFileStorage(),
         upload_to=verification_file_path_gen)
     uploaded = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=50, choices=VERIFICATION_STATUSES, default='uploaded')
