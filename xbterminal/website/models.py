@@ -412,6 +412,8 @@ class Device(models.Model):
         delta = timezone.now() - self.last_activity
         return delta < datetime.timedelta(minutes=2)
 
+    is_online.boolean = True
+
     @property
     def our_fee_address(self):
         if self.our_fee_override:

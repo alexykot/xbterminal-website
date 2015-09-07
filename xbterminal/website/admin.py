@@ -16,7 +16,14 @@ def url_to_object(obj):
 
 
 class DeviceAdmin(admin.ModelAdmin):
-    list_display = ('__unicode__', 'is_online', 'merchant_link')
+    list_display = [
+        '__unicode__',
+        'merchant_link',
+        'device_type',
+        'status',
+        'last_activity',
+        'is_online',
+    ]
     readonly_fields = [
         'key',
         'device_key_qr_code',
