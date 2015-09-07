@@ -5,7 +5,8 @@ from oauth2_provider.models import Application
 from website.models import (
     User,
     MerchantAccount,
-    BTCAccount)
+    BTCAccount,
+    DeviceBatch)
 from website.tests.factories import (
     UserFactory,
     MerchantAccountFactory,
@@ -104,3 +105,13 @@ class DeviceTestCase(TestCase):
         self.assertEqual(device.status, 'active')
         self.assertEqual(len(device.key), 8)
         self.assertEqual(device.bitcoin_network, 'mainnet')
+
+
+class DeviceBatchTestCase(TestCase):
+
+    def test_create(self):
+        batch = DeviceBatch.objects.create(size=100)
+        self.assertEqual(len(batch.batch_number), 8)
+        self.assertIsNotNone(batch.created_at)
+        self.assertEqual(batch.size, 100)
+        self.assertEqual(str(batch), batch.batch_number)
