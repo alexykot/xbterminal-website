@@ -372,7 +372,7 @@ class Device(models.Model):
 
     batch = models.ForeignKey(DeviceBatch, default=get_default_batch)
     key = models.CharField(_('Device key'),
-                           max_length=32,
+                           max_length=64,
                            editable=False,
                            unique=True,
                            default=gen_device_key)
