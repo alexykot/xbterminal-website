@@ -451,14 +451,13 @@ def gen_withdrawal_uid():
 
 
 def gen_batch_number():
-    bts = uuid.uuid4().bytes
-    return base58.encode(bts)[:8].upper()
+    return uuid.uuid4().hex
 
 
 class DeviceBatch(models.Model):
 
     batch_number = models.CharField(
-        max_length=8,
+        max_length=32,
         editable=False,
         unique=True,
         default=gen_batch_number)

@@ -111,7 +111,7 @@ class DeviceBatchTestCase(TestCase):
 
     def test_create(self):
         batch = DeviceBatch.objects.create(size=100)
-        self.assertEqual(len(batch.batch_number), 8)
+        self.assertEqual(len(batch.batch_number), 32)
         self.assertIsNotNone(batch.created_at)
         self.assertEqual(batch.size, 100)
         self.assertEqual(str(batch), batch.batch_number)
