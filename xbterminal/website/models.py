@@ -369,7 +369,20 @@ class Device(models.Model):
     device_type = models.CharField(max_length=50, choices=DEVICE_TYPES)
     status = models.CharField(max_length=50, choices=DEVICE_STATUSES, default='active')
     name = models.CharField(_('Your reference'), max_length=100)
+
     batch = models.ForeignKey(DeviceBatch, default=get_default_batch)
+    key = models.CharField(_('Device key'),
+                           max_length=32,
+                           editable=False,
+                           unique=True,
+                           default=gen_device_key)
+    # TODO: remove serial number
+    serial_number = models.CharField(max_length=50, blank=True, null=True)
+
+    api_key = models.TextField(
+        blank=True,
+        null=True,
+        help_text='API public key')
 
     percent = models.DecimalField(
         _('Percent to convert'),
@@ -377,22 +390,21 @@ class Device(models.Model):
         decimal_places=1,
         validators=[validate_percent],
         default=100)
-    bitcoin_address = models.CharField(_('Bitcoin address to send to'), max_length=100, blank=True)
-
-    key = models.CharField(_('Device key'), max_length=32, editable=False, unique=True, default=gen_device_key)
-
-    serial_number = models.CharField(max_length=50, blank=True, null=True)
-    bitcoin_network = models.CharField(max_length=50, choices=BITCOIN_NETWORKS, default='mainnet')
+    bitcoin_address = models.CharField(
+        _('Bitcoin address to send to'),
+        max_length=100,
+        blank=True)
+    bitcoin_network = models.CharField(
+        max_length=50,
+        choices=BITCOIN_NETWORKS,
+        default='mainnet')
+    our_fee_override = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True)
 
     last_activity = models.DateTimeField(blank=True, null=True)
     last_reconciliation = models.DateTimeField(auto_now_add=True)
-
-    our_fee_override = models.CharField(max_length=50, blank=True, null=True)
-
-    api_key = models.TextField(
-        blank=True,
-        null=True,
-        help_text='API public key')
 
     class Meta:
         ordering = ['id']
