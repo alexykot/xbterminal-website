@@ -311,6 +311,29 @@ class KYCDocument(models.Model):
         return get_verification_file_name(self.file)
 
 
+def gen_batch_number():
+    return uuid.uuid4().hex
+
+
+class DeviceBatch(models.Model):
+
+    batch_number = models.CharField(
+        max_length=32,
+        editable=False,
+        unique=True,
+        default=gen_batch_number)
+    created_at = models.DateTimeField(auto_now_add=True)
+    size = models.IntegerField()
+    comment = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = 'batch'
+        verbose_name_plural = 'device batches'
+
+    def __unicode__(self):
+        return self.batch_number
+
+
 def gen_device_key():
     bts = uuid.uuid4().bytes
     return base58.encode(bts)[:8]
@@ -341,6 +364,7 @@ class Device(models.Model):
     device_type = models.CharField(max_length=50, choices=DEVICE_TYPES)
     status = models.CharField(max_length=50, choices=DEVICE_STATUSES, default='active')
     name = models.CharField(_('Your reference'), max_length=100)
+    batch = models.ForeignKey(DeviceBatch, null=True)
 
     percent = models.DecimalField(
         _('Percent to convert'),
@@ -448,26 +472,3 @@ def gen_payment_uid():
 def gen_withdrawal_uid():
     bts = uuid.uuid4().bytes
     return base58.encode(bts)[:6]
-
-
-def gen_batch_number():
-    return uuid.uuid4().hex
-
-
-class DeviceBatch(models.Model):
-
-    batch_number = models.CharField(
-        max_length=32,
-        editable=False,
-        unique=True,
-        default=gen_batch_number)
-    created_at = models.DateTimeField(auto_now_add=True)
-    size = models.IntegerField()
-    comment = models.TextField(blank=True)
-
-    class Meta:
-        verbose_name = 'batch'
-        verbose_name_plural = 'device batches'
-
-    def __unicode__(self):
-        return self.batch_number
