@@ -1,4 +1,5 @@
 from decimal import Decimal
+from django.conf import settings
 from django.test import TestCase
 
 from oauth2_provider.models import Application
@@ -105,6 +106,8 @@ class DeviceTestCase(TestCase):
         self.assertEqual(device.status, 'active')
         self.assertEqual(len(device.key), 8)
         self.assertEqual(device.bitcoin_network, 'mainnet')
+        self.assertEqual(device.batch.batch_number,
+                         settings.DEFAULT_BATCH_NUMBER)
 
 
 class DeviceBatchTestCase(TestCase):

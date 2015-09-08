@@ -339,6 +339,11 @@ def gen_device_key():
     return base58.encode(bts)[:8]
 
 
+def get_default_batch():
+    return DeviceBatch.objects.get(
+        batch_number=settings.DEFAULT_BATCH_NUMBER).pk
+
+
 class Device(models.Model):
 
     DEVICE_TYPES = [
@@ -364,7 +369,7 @@ class Device(models.Model):
     device_type = models.CharField(max_length=50, choices=DEVICE_TYPES)
     status = models.CharField(max_length=50, choices=DEVICE_STATUSES, default='active')
     name = models.CharField(_('Your reference'), max_length=100)
-    batch = models.ForeignKey(DeviceBatch, null=True)
+    batch = models.ForeignKey(DeviceBatch, default=get_default_batch)
 
     percent = models.DecimalField(
         _('Percent to convert'),

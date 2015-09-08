@@ -1,6 +1,8 @@
+from django.conf import settings
+
 BATCHES = [
     {
-        'batch_number': '00000000000000000000000000000000',
+        'batch_number': settings.DEFAULT_BATCH_NUMBER,
         'size': 0,
         'comment': 'Default batch',
     },
