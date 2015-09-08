@@ -180,9 +180,14 @@ class DeviceBatchAdmin(admin.ModelAdmin):
 
     list_display = [
         '__unicode__',
-        'size',
+        'devices',
     ]
     readonly_fields = ['batch_number']
+
+    def devices(self, batch):
+        return '{0}/{1}'.format(
+            batch.device_set.count(),
+            batch.size)
 
 
 admin.site.register(models.User, UserAdmin)
