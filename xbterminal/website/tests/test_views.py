@@ -17,30 +17,130 @@ class RegistrationViewTestCase(TestCase):
     def setUp(self):
         self.url = reverse('website:registration')
 
-    def test_get(self):
+    def test_get_default(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'website/registration.html')
+        form = response.context['form']
+        self.assertEqual(form.initial['regtype'], 'default')
+
+    @patch('website.forms.preorder')
+    def test_get_terminal(self, preorder_mock):
+        response = self.client.get(self.url, {'regtype': 'terminal'})
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'website/registration.html')
+        form = response.context['form']
+        self.assertEqual(form.initial['regtype'], 'terminal')
 
     @patch('website.forms.gocoin.create_merchant')
-    def test_post(self, gocoin_mock):
+    def test_post_default(self, gocoin_mock):
         gocoin_mock.return_value = 'x' * 32
         form_data = {
             'regtype': 'default',
-            'company_name': 'Test Company',
+            'company_name': 'Test Company 1',
             'business_address': 'Test Address',
             'town': 'Test Town',
             'country': 'GB',
             'post_code': '123456',
             'contact_first_name': 'Test',
             'contact_last_name': 'Test',
-            'contact_email': 'test@example.net',
+            'contact_email': 'test1@example.net',
             'contact_phone': '+123456789',
         }
         response = self.client.post(self.url, data=form_data)
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
         self.assertEqual(data['result'], 'ok')
+
+        self.assertTrue(gocoin_mock.called)
+        merchant = gocoin_mock.call_args[0][0]
+        self.assertEqual(merchant.company_name, form_data['company_name'])
+        self.assertEqual(merchant.user.email,
+                         form_data['contact_email'])
+        self.assertEqual(merchant.device_set.count(), 0)
+
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(mail.outbox[0].to[0],
+                         form_data['contact_email'])
+        self.assertEqual(mail.outbox[1].to[0],
+                         settings.CONTACT_EMAIL_RECIPIENTS[0])
+
+    @patch('website.forms.gocoin.create_merchant')
+    @patch('website.forms.preorder.create_invoice')
+    def test_post_terminal(self, create_invoice_mock, gocoin_mock):
+        gocoin_mock.return_value = 'x' * 32
+        form_data = {
+            'regtype': 'terminal',
+            'company_name': 'Test Company 2',
+            'business_address': 'Test Address',
+            'town': 'Test Town',
+            'country': 'GB',
+            'post_code': '123456',
+            'contact_first_name': 'Test',
+            'contact_last_name': 'Test',
+            'contact_email': 'test2@example.net',
+            'contact_phone': '+123456789',
+            # Preorder form
+            'quantity': 2,
+            'payment_method': 'bitcoin',
+        }
+        response = self.client.post(self.url, data=form_data)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(data['result'], 'ok')
+
+        self.assertTrue(gocoin_mock.called)
+        merchant = gocoin_mock.call_args[0][0]
+        self.assertEqual(merchant.company_name, form_data['company_name'])
+
+        self.assertTrue(create_invoice_mock.called)
+        order = create_invoice_mock.call_args[0][0]
+        self.assertEqual(order.merchant.pk, merchant.pk)
+        self.assertEqual(order.quantity,
+                         form_data['quantity'])
+        self.assertEqual(order.payment_method,
+                         form_data['payment_method'])
+
+        self.assertEqual(merchant.device_set.count(),
+                         form_data['quantity'])
+        device = merchant.device_set.first()
+        self.assertEqual(device.device_type, 'hardware')
+        self.assertEqual(device.status, 'preordered')
+
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(mail.outbox[0].to[0],
+                         form_data['contact_email'])
+        self.assertEqual(mail.outbox[1].to[0],
+                         settings.CONTACT_EMAIL_RECIPIENTS[0])
+
+    @patch('website.forms.gocoin.create_merchant')
+    def test_post_web(self, gocoin_mock):
+        gocoin_mock.return_value = 'x' * 32
+        form_data = {
+            'regtype': 'web',
+            'company_name': 'Test Company 3',
+            'business_address': 'Test Address',
+            'town': 'Test Town',
+            'country': 'GB',
+            'post_code': '123456',
+            'contact_first_name': 'Test',
+            'contact_last_name': 'Test',
+            'contact_email': 'test3@example.net',
+            'contact_phone': '+123456789',
+        }
+        response = self.client.post(self.url, data=form_data)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(data['result'], 'ok')
+
+        self.assertTrue(gocoin_mock.called)
+        merchant = gocoin_mock.call_args[0][0]
+        self.assertEqual(merchant.company_name, form_data['company_name'])
+
+        self.assertEqual(merchant.device_set.count(), 1)
+        device = merchant.device_set.first()
+        self.assertEqual(device.device_type, 'web')
+        self.assertEqual(device.status, 'active')
 
         self.assertEqual(len(mail.outbox), 2)
         self.assertEqual(mail.outbox[0].to[0],
@@ -53,12 +153,12 @@ class CreateDeviceViewTestCase(TestCase):
 
     def setUp(self):
         self.url = reverse('website:create_device')
-        self.merchant = MerchantAccountFactory.create()
 
     def test_get(self):
+        merchant = MerchantAccountFactory.create()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 302)
-        self.client.login(username=self.merchant.user.email,
+        self.client.login(username=merchant.user.email,
                           password='password')
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -67,8 +167,10 @@ class CreateDeviceViewTestCase(TestCase):
                          'hardware')
 
     def test_post(self):
-        self.client.login(username=self.merchant.user.email,
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
                           password='password')
+        self.assertEqual(merchant.device_set.count(), 0)
         form_data = {
             'device_type': 'hardware',
             'name': 'Terminal',
@@ -77,6 +179,11 @@ class CreateDeviceViewTestCase(TestCase):
         }
         response = self.client.post(self.url, form_data)
         self.assertEqual(response.status_code, 302)
+        self.assertEqual(merchant.device_set.count(), 1)
+        device = merchant.device_set.first()
+        self.assertEqual(device.device_type, 'hardware')
+        self.assertEqual(device.name, 'Terminal')
+        self.assertEqual(device.payment_processing, 'full')
 
 
 class ReconciliationViewTestCase(TestCase):

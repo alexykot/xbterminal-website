@@ -12,7 +12,7 @@ from operations.tests.factories import (
     PaymentOrderFactory,
     WithdrawalOrderFactory)
 from website.tests.factories import (
-    UserFactory,
+    MerchantAccountFactory,
     DeviceFactory)
 from api.views import WithdrawalViewSet
 from api.utils import create_test_signature
@@ -20,10 +20,7 @@ from api.utils import create_test_signature
 
 class DevicesViewTestCase(TestCase):
 
-    def test_list(self):
-        user = UserFactory.create()
-        device = DeviceFactory.create(merchant__user=user)
-        # Get token
+    def _get_access_token(self, user):
         token_url = reverse('token')
         response = self.client.post(token_url, data={
             'grant_type': 'password',
@@ -35,7 +32,12 @@ class DevicesViewTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = json.loads(response.content)
         self.assertEqual(data['token_type'], 'Bearer')
-        access_token = data['access_token']
+        return data['access_token']
+
+    def test_list(self):
+        merchant = MerchantAccountFactory.create()
+        device = DeviceFactory.create(merchant=merchant)
+        access_token = self._get_access_token(merchant.user)
         # Get devices
         devices_url = reverse('api:devices')
         response = self.client.get(
@@ -45,6 +47,22 @@ class DevicesViewTestCase(TestCase):
         data = json.loads(response.content)
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]['name'], device.name)
+
+    def test_create_device(self):
+        merchant = MerchantAccountFactory.create()
+        access_token = self._get_access_token(merchant.user)
+        devices_url = reverse('api:devices')
+        response = self.client.post(
+            devices_url,
+            data={'name': 'NewDevice'},
+            AUTHORIZATION='Bearer {}'.format(access_token))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = json.loads(response.content)
+        self.assertEqual(data['name'], 'NewDevice')
+        self.assertIn('key', data)
+        self.assertEqual(data['percent'], 100.0)
+        self.assertEqual(data['type'], 'mobile')
+        self.assertFalse(data['online'])
 
 
 class DeviceSettingsViewTestCase(TestCase):
