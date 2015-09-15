@@ -248,7 +248,7 @@ class RegistrationView(TemplateResponseMixin, View):
             for idx in range(order.quantity):
                 device = models.Device(
                     device_type='hardware',
-                    status='preordered',
+                    status='active',
                     name='Terminal #{0}'.format(idx + 1),
                     merchant=merchant)
                 device.save()

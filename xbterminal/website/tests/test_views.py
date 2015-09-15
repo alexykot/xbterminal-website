@@ -105,7 +105,7 @@ class RegistrationViewTestCase(TestCase):
                          form_data['quantity'])
         device = merchant.device_set.first()
         self.assertEqual(device.device_type, 'hardware')
-        self.assertEqual(device.status, 'preordered')
+        self.assertEqual(device.status, 'active')
 
         self.assertEqual(len(mail.outbox), 2)
         self.assertEqual(mail.outbox[0].to[0],
