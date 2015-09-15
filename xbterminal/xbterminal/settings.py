@@ -104,6 +104,7 @@ INSTALLED_APPS = (
     'oauth2_provider',
     'ckeditor',
     'captcha',
+    'fsm_admin',
 
     'website',
     'operations',
@@ -131,6 +132,7 @@ AUTH_USER_MODEL = 'website.User'
 TEMPLATE_CONTEXT_PROCESSORS = (
     'django.contrib.auth.context_processors.auth',
     'django.core.context_processors.i18n',
+    'django.core.context_processors.request',
     'django.contrib.messages.context_processors.messages',
     'website.context_processors.debug',
 )

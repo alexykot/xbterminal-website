@@ -12,6 +12,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from constance import config
+from django_fsm import FSMField, transition
 
 from website.validators import (
     validate_phone,
@@ -352,12 +353,9 @@ class Device(models.Model):
         ('web', _('Web app')),
     ]
     DEVICE_STATUSES = [
-        ('preordered', _('Preordered')),
-        ('dispatched', _('Dispatched')),
-        ('delivered', _('Delivered')),
+        ('activation', _('Activation pending')),
         ('active', _('Operational')),
         ('suspended', _('Suspended')),
-        ('disposed', _('Disposed')),
     ]
     PAYMENT_PROCESSING_CHOICES = [
         ('keep', _('keep bitcoins')),
@@ -367,7 +365,10 @@ class Device(models.Model):
 
     merchant = models.ForeignKey(MerchantAccount)
     device_type = models.CharField(max_length=50, choices=DEVICE_TYPES)
-    status = models.CharField(max_length=50, choices=DEVICE_STATUSES, default='active')
+    status = FSMField(max_length=50,
+                      choices=DEVICE_STATUSES,
+                      default='activation',
+                      protected=True)
     name = models.CharField(_('Your reference'), max_length=100)
 
     batch = models.ForeignKey(DeviceBatch, default=get_default_batch)
@@ -411,6 +412,14 @@ class Device(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    @transition(field=status, source='*', target='active')
+    def activate(self):
+        pass
+
+    @transition(field=status, source='active', target='suspended')
+    def suspend(self):
+        pass
 
     @property
     def payment_processing(self):

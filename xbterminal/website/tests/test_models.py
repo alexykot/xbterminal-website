@@ -3,6 +3,8 @@ from django.conf import settings
 from django.test import TestCase
 
 from oauth2_provider.models import Application
+from django_fsm import TransitionNotAllowed
+
 from website.models import (
     User,
     MerchantAccount,
@@ -102,12 +104,24 @@ class BTCAccountTestCase(TestCase):
 class DeviceTestCase(TestCase):
 
     def test_device_factory(self):
-        device = DeviceFactory.create()
-        self.assertEqual(device.status, 'active')
+        device = DeviceFactory.create(status='activation')
+        self.assertEqual(device.status, 'activation')
         self.assertEqual(len(device.key), 8)
         self.assertEqual(device.bitcoin_network, 'mainnet')
         self.assertEqual(device.batch.batch_number,
                          settings.DEFAULT_BATCH_NUMBER)
+
+    def test_transitions(self):
+        device = DeviceFactory.create(status='activation')
+        self.assertEqual(device.status, 'activation')
+        with self.assertRaises(TransitionNotAllowed):
+            device.suspend()
+        device.activate()
+        self.assertEqual(device.status, 'active')
+        device.suspend()
+        self.assertEqual(device.status, 'suspended')
+        device.activate()
+        self.assertEqual(device.status, 'active')
 
 
 class DeviceBatchTestCase(TestCase):

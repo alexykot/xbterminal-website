@@ -66,3 +66,15 @@ class DeviceFactory(factory.DjangoModelFactory):
     name = factory.Sequence(lambda n: 'Terminal #{0}'.format(n))
     percent = 0
     bitcoin_address = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
+
+    @factory.post_generation
+    def status(self, create, extracted, **kwargs):
+        if not extracted or extracted == 'active':
+            self.activate()
+        elif extracted == 'activation':
+            pass
+        elif extracted == 'suspended':
+            self.activate()
+            self.suspend()
+        if create:
+            self.save()

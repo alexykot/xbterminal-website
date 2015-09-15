@@ -3,6 +3,8 @@ from django.contrib.auth.admin import UserAdmin
 from django.core.urlresolvers import reverse
 from django.utils.html import format_html
 
+from fsm_admin.mixins import FSMTransitionMixin
+
 from website import forms, models
 from website.utils import generate_qr_code
 
@@ -15,7 +17,8 @@ def url_to_object(obj):
                        str(obj))
 
 
-class DeviceAdmin(admin.ModelAdmin):
+class DeviceAdmin(FSMTransitionMixin, admin.ModelAdmin):
+
     list_display = [
         '__unicode__',
         'merchant_link',
@@ -25,12 +28,14 @@ class DeviceAdmin(admin.ModelAdmin):
         'is_online',
     ]
     readonly_fields = [
+        'status',
         'key',
         'device_key_qr_code',
         'last_reconciliation',
         'payment_processor',
         'is_online',
     ]
+    fsm_field = ['status']
     form = forms.DeviceAdminForm
 
     def payment_processor(self, device):
