@@ -71,6 +71,7 @@ class DeviceSettingsViewTestCase(TestCase):
         device = DeviceFactory.create()
         url = reverse('api:device', kwargs={'key': device.key})
         response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = json.loads(response.content)
         self.assertEqual(data['MERCHANT_NAME'],
                          device.merchant.company_name)
@@ -82,6 +83,12 @@ class DeviceSettingsViewTestCase(TestCase):
         self.assertEqual(data['OUTPUT_DEC_FRACTIONAL_SPLIT'], '.')
         self.assertEqual(data['OUTPUT_DEC_THOUSANDS_SPLIT'], ',')
         self.assertEqual(data['BITCOIN_NETWORK'], 'mainnet')
+
+    def test_not_active(self):
+        device = DeviceFactory.create(status='activation')
+        url = reverse('api:device', kwargs={'key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
 class PaymentInitViewTestCase(TestCase):
@@ -168,6 +175,15 @@ class PaymentInitViewTestCase(TestCase):
         }
         response = self.client.post(self.url, form_data)
         self.assertEqual(response.status_code, 404)
+
+    def test_not_active(self):
+        device = DeviceFactory.create(status='activation')
+        form_data = {
+            'device_key': device.key,
+            'amount': '0.5',
+        }
+        response = self.client.post(self.url, form_data)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
 class PaymentRequestViewTestCase(TestCase):
@@ -328,6 +344,20 @@ class WithdrawalViewSetTestCase(APITestCase):
         url = reverse('api:withdrawal-list')
         response = self.client.post(url, form_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'],
+                         'Device - invalid device key')
+
+    def test_device_not_active(self):
+        device = DeviceFactory.create(status='activation')
+        form_data = {
+            'device': device.key,
+            'amount': '1.00',
+        }
+        url = reverse('api:withdrawal-list')
+        response = self.client.post(url, form_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'],
+                         'Device - invalid device key')
 
     def test_invalid_signature(self):
         device = DeviceFactory.create()

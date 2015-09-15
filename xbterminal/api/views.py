@@ -117,7 +117,7 @@ class DevicesView(ProtectedResourceView):
 
 @api_view(['GET'])
 def device(request, key):
-    device = get_object_or_404(Device, key=key)
+    device = get_object_or_404(Device, key=key, status='active')
     response = {
         "MERCHANT_NAME": device.merchant.company_name,
         "MERCHANT_DEVICE_NAME": device.name,
@@ -178,7 +178,8 @@ class PaymentInitView(View):
                 content_type='application/json')
         # Prepare payment order
         try:
-            device = Device.objects.get(key=form.cleaned_data['device_key'])
+            device = Device.objects.get(key=form.cleaned_data['device_key'],
+                                        status='active')
         except Device.DoesNotExist:
             raise Http404
         payment_order = operations.payment.prepare_payment(

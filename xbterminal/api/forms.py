@@ -29,7 +29,8 @@ class WithdrawalForm(forms.Form):
 
     def clean_device(self):
         try:
-            return Device.objects.get(key=self.cleaned_data['device'])
+            return Device.objects.get(key=self.cleaned_data['device'],
+                                      status='active')
         except Device.DoesNotExist:
             raise forms.ValidationError('Invalid device key')
 
