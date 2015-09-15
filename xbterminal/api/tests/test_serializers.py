@@ -2,7 +2,9 @@ import hashlib
 from django.test import TestCase
 
 from operations.tests.factories import WithdrawalOrderFactory
-from website.tests.factories import DeviceBatchFactory
+from website.tests.factories import (
+    DeviceBatchFactory,
+    DeviceFactory)
 from api.serializers import (
     WithdrawalOrderSerializer,
     DeviceRegistrationSerializer)
@@ -71,6 +73,14 @@ class DeviceRegistrationSerializerTestCase(TestCase):
         self.assertFalse(serializer.is_valid())
         self.assertEqual(serializer.errors['key'][0],
                          'Invalid device key.')
+
+        device = DeviceFactory.create(
+            key=hashlib.sha256('test').hexdigest())
+        data['key'] = device.key
+        serializer = DeviceRegistrationSerializer(data=data.copy())
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors['key'][0],
+                         'Device is already registered.')
 
     def test_invalid_api_key(self):
         batch = DeviceBatchFactory.create()

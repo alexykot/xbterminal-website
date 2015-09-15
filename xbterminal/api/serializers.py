@@ -55,6 +55,8 @@ class DeviceRegistrationSerializer(serializers.ModelSerializer):
     def validate_key(self, value):
         if not re.match('[0-9a-f]{64}', value):
             raise serializers.ValidationError('Invalid device key.')
+        if Device.objects.filter(key=value).exists():
+            raise serializers.ValidationError('Device is already registered.')
         return value
 
     def create(self, validated_data):
