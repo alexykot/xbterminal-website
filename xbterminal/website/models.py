@@ -311,9 +311,37 @@ class KYCDocument(models.Model):
         return get_verification_file_name(self.file)
 
 
+def gen_batch_number():
+    return uuid.uuid4().hex
+
+
+class DeviceBatch(models.Model):
+
+    batch_number = models.CharField(
+        max_length=32,
+        editable=False,
+        unique=True,
+        default=gen_batch_number)
+    created_at = models.DateTimeField(auto_now_add=True)
+    size = models.IntegerField()
+    comment = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = 'batch'
+        verbose_name_plural = 'device batches'
+
+    def __unicode__(self):
+        return self.batch_number
+
+
 def gen_device_key():
     bts = uuid.uuid4().bytes
     return base58.encode(bts)[:8]
+
+
+def get_default_batch():
+    return DeviceBatch.objects.get(
+        batch_number=settings.DEFAULT_BATCH_NUMBER).pk
 
 
 class Device(models.Model):
@@ -342,28 +370,41 @@ class Device(models.Model):
     status = models.CharField(max_length=50, choices=DEVICE_STATUSES, default='active')
     name = models.CharField(_('Your reference'), max_length=100)
 
+    batch = models.ForeignKey(DeviceBatch, default=get_default_batch)
+    key = models.CharField(_('Device key'),
+                           max_length=64,
+                           editable=False,
+                           unique=True,
+                           default=gen_device_key)
+    # TODO: remove serial number
+    serial_number = models.CharField(max_length=50, blank=True, null=True)
+
+    api_key = models.TextField(
+        blank=True,
+        null=True,
+        help_text='API public key')
+
     percent = models.DecimalField(
         _('Percent to convert'),
         max_digits=4,
         decimal_places=1,
         validators=[validate_percent],
         default=100)
-    bitcoin_address = models.CharField(_('Bitcoin address to send to'), max_length=100, blank=True)
-
-    key = models.CharField(_('Device key'), max_length=32, editable=False, unique=True, default=gen_device_key)
-
-    serial_number = models.CharField(max_length=50, blank=True, null=True)
-    bitcoin_network = models.CharField(max_length=50, choices=BITCOIN_NETWORKS, default='mainnet')
+    bitcoin_address = models.CharField(
+        _('Bitcoin address to send to'),
+        max_length=100,
+        blank=True)
+    bitcoin_network = models.CharField(
+        max_length=50,
+        choices=BITCOIN_NETWORKS,
+        default='mainnet')
+    our_fee_override = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True)
 
     last_activity = models.DateTimeField(blank=True, null=True)
     last_reconciliation = models.DateTimeField(auto_now_add=True)
-
-    our_fee_override = models.CharField(max_length=50, blank=True, null=True)
-
-    api_key = models.TextField(
-        blank=True,
-        null=True,
-        help_text='API public key')
 
     class Meta:
         ordering = ['id']
@@ -448,27 +489,3 @@ def gen_payment_uid():
 def gen_withdrawal_uid():
     bts = uuid.uuid4().bytes
     return base58.encode(bts)[:6]
-
-
-def gen_batch_number():
-    bts = uuid.uuid4().bytes
-    return base58.encode(bts)[:8].upper()
-
-
-class DeviceBatch(models.Model):
-
-    batch_number = models.CharField(
-        max_length=8,
-        editable=False,
-        unique=True,
-        default=gen_batch_number)
-    created_at = models.DateTimeField(auto_now_add=True)
-    size = models.IntegerField()
-    comment = models.TextField(blank=True)
-
-    class Meta:
-        verbose_name = 'batch'
-        verbose_name_plural = 'device batches'
-
-    def __unicode__(self):
-        return self.batch_number
