@@ -72,7 +72,7 @@ class DeviceFactory(factory.DjangoModelFactory):
         if not extracted or extracted == 'active':
             self.activate()
         elif extracted == 'activation':
-            pass
+            self.merchant = None
         elif extracted == 'suspended':
             self.activate()
             self.suspend()

@@ -9,6 +9,7 @@ from website.models import (
     User,
     MerchantAccount,
     BTCAccount,
+    Device,
     DeviceBatch)
 from website.tests.factories import (
     UserFactory,
@@ -103,19 +104,43 @@ class BTCAccountTestCase(TestCase):
 
 class DeviceTestCase(TestCase):
 
-    def test_device_factory(self):
-        device = DeviceFactory.create(status='activation')
+    def test_creation(self):
+        device = Device.objects.create(
+            device_type='hardware',
+            name='TEST')
+        self.assertIsNone(device.merchant)
         self.assertEqual(device.status, 'activation')
         self.assertEqual(len(device.key), 8)
         self.assertEqual(device.bitcoin_network, 'mainnet')
         self.assertEqual(device.batch.batch_number,
                          settings.DEFAULT_BATCH_NUMBER)
 
+    def test_device_factory(self):
+        # Activation
+        device = DeviceFactory.create(status='activation')
+        self.assertIsNone(device.merchant)
+        self.assertEqual(device.status, 'activation')
+        self.assertEqual(len(device.key), 8)
+        # Active
+        device = DeviceFactory.create(status='active')
+        self.assertIsNotNone(device.merchant)
+        self.assertEqual(device.status, 'active')
+        # Without kwargs
+        device = DeviceFactory.create()
+        self.assertEqual(device.status, 'active')
+        # Suspended
+        device = DeviceFactory.create(status='suspended')
+        self.assertIsNotNone(device.merchant)
+        self.assertEqual(device.status, 'suspended')
+
     def test_transitions(self):
         device = DeviceFactory.create(status='activation')
         self.assertEqual(device.status, 'activation')
         with self.assertRaises(TransitionNotAllowed):
+            device.activate()
+        with self.assertRaises(TransitionNotAllowed):
             device.suspend()
+        device.merchant = MerchantAccountFactory.create()
         device.activate()
         self.assertEqual(device.status, 'active')
         device.suspend()

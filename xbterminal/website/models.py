@@ -363,7 +363,9 @@ class Device(models.Model):
         ('full', _('convert full amount')),
     ]
 
-    merchant = models.ForeignKey(MerchantAccount)
+    merchant = models.ForeignKey(MerchantAccount,
+                                 blank=True,
+                                 null=True)
     device_type = models.CharField(max_length=50, choices=DEVICE_TYPES)
     status = FSMField(max_length=50,
                       choices=DEVICE_STATUSES,
@@ -413,7 +415,11 @@ class Device(models.Model):
     def __unicode__(self):
         return self.name
 
-    @transition(field=status, source='*', target='active')
+    def can_activate(self):
+        return self.merchant is not None
+
+    @transition(field=status, source='*', target='active',
+                conditions=[can_activate])
     def activate(self):
         pass
 
