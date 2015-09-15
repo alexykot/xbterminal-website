@@ -5,6 +5,7 @@ from website.models import (
     User,
     MerchantAccount,
     BTCAccount,
+    DeviceBatch,
     Device)
 
 
@@ -54,6 +55,14 @@ class BTCAccountFactory(factory.DjangoModelFactory):
         model = BTCAccount
 
     merchant = factory.SubFactory(MerchantAccountFactory)
+
+
+class DeviceBatchFactory(factory.DjangoModelFactory):
+
+    class Meta:
+        model = DeviceBatch
+
+    size = 10
 
 
 class DeviceFactory(factory.DjangoModelFactory):

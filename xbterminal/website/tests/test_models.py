@@ -15,6 +15,7 @@ from website.tests.factories import (
     UserFactory,
     MerchantAccountFactory,
     BTCAccountFactory,
+    DeviceBatchFactory,
     DeviceFactory)
 
 
@@ -157,3 +158,7 @@ class DeviceBatchTestCase(TestCase):
         self.assertIsNotNone(batch.created_at)
         self.assertEqual(batch.size, 100)
         self.assertEqual(str(batch), batch.batch_number)
+
+    def test_factory(self):
+        batch = DeviceBatchFactory.create()
+        self.assertEqual(len(batch.batch_number), 32)

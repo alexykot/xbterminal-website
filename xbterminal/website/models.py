@@ -18,7 +18,8 @@ from website.validators import (
     validate_phone,
     validate_post_code,
     validate_percent,
-    validate_bitcoin_address)
+    validate_bitcoin_address,
+    validate_public_key)
 from website.files import (
     get_verification_file_name,
     verification_file_path_gen,
@@ -376,7 +377,6 @@ class Device(models.Model):
     batch = models.ForeignKey(DeviceBatch, default=get_default_batch)
     key = models.CharField(_('Device key'),
                            max_length=64,
-                           editable=False,
                            unique=True,
                            default=gen_device_key)
     # TODO: remove serial number
@@ -385,6 +385,7 @@ class Device(models.Model):
     api_key = models.TextField(
         blank=True,
         null=True,
+        validators=[validate_public_key],
         help_text='API public key')
 
     percent = models.DecimalField(
