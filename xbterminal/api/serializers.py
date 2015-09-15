@@ -30,6 +30,7 @@ class WithdrawalOrderSerializer(serializers.ModelSerializer):
 class DeviceRegistrationSerializer(serializers.ModelSerializer):
 
     batch = serializers.CharField()
+    key = serializers.CharField()
     api_key = serializers.CharField(validators=[validate_public_key])
     salt_pubkey_fingerprint = serializers.CharField(required=False)
 
@@ -57,6 +58,7 @@ class DeviceRegistrationSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
+        validated_data.pop('salt_pubkey_fingerprint', None)
         return Device.objects.create(
             merchant=None,
             device_type='hardware',

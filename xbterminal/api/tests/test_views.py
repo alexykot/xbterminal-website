@@ -1,5 +1,6 @@
 from decimal import Decimal
 import json
+import hashlib
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils import timezone
@@ -11,11 +12,13 @@ from operations.models import PaymentOrder
 from operations.tests.factories import (
     PaymentOrderFactory,
     WithdrawalOrderFactory)
+from website.models import Device
 from website.tests.factories import (
     MerchantAccountFactory,
+    DeviceBatchFactory,
     DeviceFactory)
 from api.views import WithdrawalViewSet
-from api.utils import create_test_signature
+from api.utils import create_test_signature, create_test_public_key
 
 
 class DevicesViewTestCase(TestCase):
@@ -406,3 +409,35 @@ class WithdrawalViewSetTestCase(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['status'], 'completed')
+
+
+class DeviceViewSetTestCase(APITestCase):
+
+    def test_create(self):
+        batch = DeviceBatchFactory.create()
+        device_key = hashlib.sha256('createDevice').hexdigest()
+        form_data = {
+            'batch': batch.batch_number,
+            'key': device_key,
+            'api_key': create_test_public_key(),
+            'salt_pubkey_fingerprint': 'test',
+        }
+        url = reverse('api:v2:device-list')
+
+        response = self.client.post(url, form_data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('activation_code', response.data)
+
+        device = Device.objects.get(
+            activation_code=response.data['activation_code'])
+        self.assertEqual(device.key, device_key)
+        self.assertEqual(device.status, 'activation')
+        self.assertEqual(device.batch.pk, batch.pk)
+
+    def test_create_errors(self):
+        url = reverse('api:v2:device-list')
+        response = self.client.post(url, {})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('batch', response.data['errors'])
+        self.assertIn('key', response.data['errors'])
+        self.assertIn('api_key', response.data['errors'])

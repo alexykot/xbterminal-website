@@ -21,7 +21,9 @@ from website.forms import SimpleMerchantRegistrationForm
 from website.utils import generate_qr_code, send_registration_info
 from api.shortcuts import render_to_pdf
 from api.forms import PaymentForm, WithdrawalForm
-from api.serializers import WithdrawalOrderSerializer
+from api.serializers import (
+    WithdrawalOrderSerializer,
+    DeviceRegistrationSerializer)
 from api.utils import verify_signature
 
 from operations.models import PaymentOrder, WithdrawalOrder
@@ -385,3 +387,21 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
             order.save()
         serializer = self.get_serializer(order)
         return Response(serializer.data)
+
+
+class DeviceViewSet(viewsets.GenericViewSet):
+
+    def get_queryset(self):
+        return Device.objects.all()
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return DeviceRegistrationSerializer
+
+    def create(self, request):
+        serializer = self.get_serializer(data=self.request.data)
+        if not serializer.is_valid():
+            return Response({'errors': serializer.errors},
+                            status=status.HTTP_400_BAD_REQUEST)
+        device = serializer.save()
+        return Response({'activation_code': device.activation_code})

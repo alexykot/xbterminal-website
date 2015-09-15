@@ -59,12 +59,18 @@ class DeviceRegistrationSerializerTestCase(TestCase):
         batch = DeviceBatchFactory.create()
         data = {
             'batch': batch.batch_number,
-            'key': '0000',
             'api_key': create_test_public_key(),
         }
-        serializer = DeviceRegistrationSerializer(data=data)
+        serializer = DeviceRegistrationSerializer(data=data.copy())
         self.assertFalse(serializer.is_valid())
-        self.assertIn('key', serializer.errors)
+        self.assertEqual(serializer.errors['key'][0],
+                         'This field is required.')
+
+        data['key'] = 'X813EV'
+        serializer = DeviceRegistrationSerializer(data=data.copy())
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors['key'][0],
+                         'Invalid device key.')
 
     def test_invalid_api_key(self):
         batch = DeviceBatchFactory.create()
