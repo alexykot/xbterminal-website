@@ -1,17 +1,23 @@
 import datetime
+import random
 import os
 import uuid
 
 from bitcoin import base58
 
-from django.db import models
 from django.conf import settings
-from django_countries.fields import CountryField
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    BaseUserManager,
+    PermissionsMixin)
+from django.db import models
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from constance import config
+from django_countries.fields import CountryField
 from django_fsm import FSMField, transition
 
 from website.validators import (
@@ -373,12 +379,14 @@ class Device(models.Model):
                       default='activation',
                       protected=True)
     name = models.CharField(_('Your reference'), max_length=100)
-
     batch = models.ForeignKey(DeviceBatch, default=get_default_batch)
     key = models.CharField(_('Device key'),
                            max_length=64,
                            unique=True,
                            default=gen_device_key)
+    activation_code = models.CharField(max_length=6,
+                                       editable=False,
+                                       unique=True)
     # TODO: remove serial number
     serial_number = models.CharField(max_length=50, blank=True, null=True)
 
@@ -407,6 +415,7 @@ class Device(models.Model):
         blank=True,
         null=True)
 
+    created_at = models.DateTimeField(auto_now_add=True)
     last_activity = models.DateTimeField(blank=True, null=True)
     last_reconciliation = models.DateTimeField(auto_now_add=True)
 
@@ -479,6 +488,18 @@ class Device(models.Model):
             return config.OUR_FEE_MAINNET_ADDRESS
         elif self.bitcoin_network == 'testnet':
             return config.OUR_FEE_TESTNET_ADDRESS
+
+
+@receiver(pre_save, sender=Device)
+def device_generate_activation_code(sender, instance, **kwargs):
+    if not instance.pk:
+        # Generate unique activation code
+        chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZ'
+        while True:
+            code = ''.join(random.sample(chars, 6))
+            if not sender.objects.filter(activation_code=code).exists():
+                instance.activation_code = code
+                break
 
 
 class ReconciliationTime(models.Model):

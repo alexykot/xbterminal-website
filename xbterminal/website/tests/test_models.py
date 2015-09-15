@@ -112,6 +112,7 @@ class DeviceTestCase(TestCase):
         self.assertIsNone(device.merchant)
         self.assertEqual(device.status, 'activation')
         self.assertEqual(len(device.key), 8)
+        self.assertEqual(len(device.activation_code), 6)
         self.assertEqual(device.bitcoin_network, 'mainnet')
         self.assertEqual(device.batch.batch_number,
                          settings.DEFAULT_BATCH_NUMBER)
@@ -122,6 +123,7 @@ class DeviceTestCase(TestCase):
         self.assertIsNone(device.merchant)
         self.assertEqual(device.status, 'activation')
         self.assertEqual(len(device.key), 8)
+        self.assertEqual(len(device.activation_code), 6)
         # Active
         device = DeviceFactory.create(status='active')
         self.assertIsNotNone(device.merchant)
