@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import hashlib
 from django.test import TestCase
 
@@ -44,7 +46,10 @@ class DeviceSerializerTestCase(TestCase):
         self.assertEqual(data['status'], 'active')
         self.assertEqual(data['bitcoin_network'], 'mainnet')
         self.assertEqual(data['language']['code'], 'de')
+        self.assertEqual(data['language']['fractional_split'], '.')
+        self.assertEqual(data['language']['thousands_split'], ',')
         self.assertEqual(data['currency']['name'], 'EUR')
+        self.assertEqual(data['currency']['prefix'], u'€')
 
 
 class DeviceRegistrationSerializerTestCase(TestCase):

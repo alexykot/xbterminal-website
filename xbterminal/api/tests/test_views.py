@@ -441,3 +441,28 @@ class DeviceViewSetTestCase(APITestCase):
         self.assertIn('batch', response.data['errors'])
         self.assertIn('key', response.data['errors'])
         self.assertIn('api_key', response.data['errors'])
+
+    def test_retrieve_activation(self):
+        device = DeviceFactory.create(status='activation')
+        url = reverse('api:v2:device-detail',
+                      kwargs={'key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['status'], 'activation')
+        self.assertEqual(response.data['language']['code'], 'en')
+        self.assertEqual(response.data['currency']['name'], 'GBP')
+
+    def test_retrieve_active(self):
+        device = DeviceFactory.create(status='active')
+        url = reverse('api:v2:device-detail',
+                      kwargs={'key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['status'], 'active')
+
+    def test_retrieve_suspended(self):
+        device = DeviceFactory.create(status='suspended')
+        url = reverse('api:v2:device-detail',
+                      kwargs={'key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

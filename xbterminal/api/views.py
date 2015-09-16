@@ -13,7 +13,7 @@ from django.utils.translation import ugettext as _
 
 from rest_framework.decorators import api_view, detail_route
 from rest_framework.response import Response
-from rest_framework import status, viewsets
+from rest_framework import status, viewsets, mixins
 from oauth2_provider.views.generic import ProtectedResourceView
 
 from website.models import Device
@@ -23,6 +23,7 @@ from api.shortcuts import render_to_pdf
 from api.forms import PaymentForm, WithdrawalForm
 from api.serializers import (
     WithdrawalOrderSerializer,
+    DeviceSerializer,
     DeviceRegistrationSerializer)
 from api.utils import verify_signature
 
@@ -389,14 +390,18 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
         return Response(serializer.data)
 
 
-class DeviceViewSet(viewsets.GenericViewSet):
+class DeviceViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+
+    lookup_field = 'key'
 
     def get_queryset(self):
-        return Device.objects.all()
+        return Device.objects.exclude(status='suspended')
 
     def get_serializer_class(self):
         if self.action == 'create':
             return DeviceRegistrationSerializer
+        elif self.action == 'retrieve':
+            return DeviceSerializer
 
     def create(self, request):
         serializer = self.get_serializer(data=self.request.data)
