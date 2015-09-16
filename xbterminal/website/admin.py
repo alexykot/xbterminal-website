@@ -39,10 +39,16 @@ class DeviceAdmin(FSMTransitionMixin, admin.ModelAdmin):
     form = forms.DeviceAdminForm
 
     def payment_processor(self, device):
-        return device.merchant.get_payment_processor_display()
+        if device.status == 'activation':
+            return '-'
+        else:
+            return device.merchant.get_payment_processor_display()
 
     def merchant_link(self, device):
-        return url_to_object(device.merchant)
+        if device.status == 'activation':
+            return '-'
+        else:
+            return url_to_object(device.merchant)
 
     merchant_link.allow_tags = True
     merchant_link.short_description = 'merchant'
