@@ -1,3 +1,5 @@
+import hashlib
+import uuid
 import factory
 
 from oauth2_provider.models import Application
@@ -87,3 +89,10 @@ class DeviceFactory(factory.DjangoModelFactory):
             self.suspend()
         if create:
             self.save()
+
+    @factory.post_generation
+    def long_key(self, created, extracted, **kwargs):
+        if extracted:
+            self.key = hashlib.sha256(uuid.uuid4().bytes).hexdigest()
+            if created:
+                self.save()

@@ -132,7 +132,7 @@ class PaymentInitViewTestCase(TestCase):
 
     @patch('api.views.operations.payment.prepare_payment')
     def test_payment_terminal(self, prepare_mock):
-        device = DeviceFactory.create()
+        device = DeviceFactory.create(long_key=True)
         fiat_amount = 10
         btc_amount = 0.05
         exchange_rate = 200
