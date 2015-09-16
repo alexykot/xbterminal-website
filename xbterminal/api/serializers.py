@@ -2,7 +2,11 @@ import re
 from rest_framework import serializers
 
 from operations.models import WithdrawalOrder
-from website.models import Device, DeviceBatch
+from website.models import (
+    Language,
+    Currency,
+    Device,
+    DeviceBatch)
 from website.validators import validate_public_key
 
 
@@ -25,6 +29,43 @@ class WithdrawalOrderSerializer(serializers.ModelSerializer):
             'exchange_rate',
             'status',
         ]
+
+
+class DeviceSerializer(serializers.ModelSerializer):
+
+    language = serializers.SerializerMethodField()
+    currency = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Device
+        fields = [
+            'status',
+            'bitcoin_network',
+            'language',
+            'currency',
+        ]
+
+    def get_language(self, device):
+        if device.status == 'activation':
+            language = Language.objects.get(code='en')
+        else:
+            language = device.merchant.language
+        return {
+            'code': language.code,
+            'fractional_split': language.fractional_split,
+            'thousands_split': language.thousands_split,
+        }
+
+    def get_currency(self, device):
+        if device.status == 'activation':
+            currency = Currency.objects.get(name='GBP')
+        else:
+            currency = device.merchant.currency
+        return {
+            'name': currency.name,
+            'prefix': currency.prefix,
+            'postfix': currency.postfix,
+        }
 
 
 class DeviceRegistrationSerializer(serializers.ModelSerializer):

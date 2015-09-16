@@ -2,11 +2,13 @@ import hashlib
 from django.test import TestCase
 
 from operations.tests.factories import WithdrawalOrderFactory
+from website.models import Language, Currency
 from website.tests.factories import (
     DeviceBatchFactory,
     DeviceFactory)
 from api.serializers import (
     WithdrawalOrderSerializer,
+    DeviceSerializer,
     DeviceRegistrationSerializer)
 from api.utils import create_test_public_key
 
@@ -22,6 +24,27 @@ class WithdrawalOrderSerializerTestCase(TestCase):
         self.assertEqual(data['exchange_rate'],
                          str(order.effective_exchange_rate))
         self.assertEqual(data['status'], order.status)
+
+
+class DeviceSerializerTestCase(TestCase):
+
+    def test_activation(self):
+        device = DeviceFactory.create(status='activation')
+        data = DeviceSerializer(device).data
+        self.assertEqual(data['status'], 'activation')
+        self.assertEqual(data['bitcoin_network'], 'mainnet')
+        self.assertEqual(data['language']['code'], 'en')
+        self.assertEqual(data['currency']['name'], 'GBP')
+
+    def test_operational(self):
+        device = DeviceFactory.create(
+            merchant__language=Language.objects.get(code='de'),
+            merchant__currency=Currency.objects.get(name='EUR'))
+        data = DeviceSerializer(device).data
+        self.assertEqual(data['status'], 'active')
+        self.assertEqual(data['bitcoin_network'], 'mainnet')
+        self.assertEqual(data['language']['code'], 'de')
+        self.assertEqual(data['currency']['name'], 'EUR')
 
 
 class DeviceRegistrationSerializerTestCase(TestCase):
