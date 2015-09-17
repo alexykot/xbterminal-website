@@ -3,7 +3,11 @@ from django.test import TestCase
 from django.core import mail
 
 from oauth2_provider.models import Application
-from website.forms import MerchantRegistrationForm, DeviceForm
+from website.forms import (
+    MerchantRegistrationForm,
+    DeviceForm,
+    DeviceActivationForm)
+from website.tests.factories import DeviceFactory
 
 
 class MerchantRegistrationFormTestCase(TestCase):
@@ -83,3 +87,30 @@ class DeviceFormTestCase(TestCase):
         self.assertIn('name', form.errors)
         self.assertIn('payment_processing', form.errors)
         self.assertIn('percent', form.errors)
+
+
+class DeviceActivationFormTestCase(TestCase):
+
+    def test_valid_code(self):
+        device = DeviceFactory.create(status='activation')
+        form_data = {
+            'activation_code': device.activation_code,
+        }
+        form = DeviceActivationForm(data=form_data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.device.pk, device.pk)
+
+    def test_required(self):
+        form = DeviceActivationForm(data={})
+        self.assertFalse(form.is_valid())
+        self.assertIn('activation_code', form.errors)
+
+    def test_already_activated(self):
+        device = DeviceFactory.create(status='active')
+        form_data = {
+            'activation_code': device.activation_code,
+        }
+        form = DeviceActivationForm(data=form_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('Invalid activation code.',
+                      form.errors['activation_code'])
