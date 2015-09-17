@@ -404,6 +404,30 @@ class CreateDeviceView(TemplateResponseMixin, CabinetView):
             return self.render_to_response(context)
 
 
+class ActivateDeviceView(TemplateResponseMixin, CabinetView):
+
+    template_name = 'cabinet/activation.html'
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['form'] = forms.DeviceActivationForm()
+        return self.render_to_response(context)
+
+    def post(self, *args, **kwargs):
+        form = forms.DeviceActivationForm(self.request.POST)
+        if form.is_valid():
+            device = form.device
+            device.merchant = self.request.user.merchant
+            device.activate()
+            device.save()
+            return redirect(reverse('website:device',
+                                    kwargs={'device_key': device.key}))
+        else:
+            context = self.get_context_data(**kwargs)
+            context['form'] = form
+            return self.render_to_response(context)
+
+
 class DeviceMixin(ContextMixin):
     """
     Adds device to the context
