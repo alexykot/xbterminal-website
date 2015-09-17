@@ -1,3 +1,5 @@
+import hashlib
+import uuid
 import factory
 
 from oauth2_provider.models import Application
@@ -5,6 +7,7 @@ from website.models import (
     User,
     MerchantAccount,
     BTCAccount,
+    DeviceBatch,
     Device)
 
 
@@ -56,6 +59,14 @@ class BTCAccountFactory(factory.DjangoModelFactory):
     merchant = factory.SubFactory(MerchantAccountFactory)
 
 
+class DeviceBatchFactory(factory.DjangoModelFactory):
+
+    class Meta:
+        model = DeviceBatch
+
+    size = 10
+
+
 class DeviceFactory(factory.DjangoModelFactory):
 
     class Meta:
@@ -66,3 +77,22 @@ class DeviceFactory(factory.DjangoModelFactory):
     name = factory.Sequence(lambda n: 'Terminal #{0}'.format(n))
     percent = 0
     bitcoin_address = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
+
+    @factory.post_generation
+    def status(self, create, extracted, **kwargs):
+        if not extracted or extracted == 'active':
+            self.activate()
+        elif extracted == 'activation':
+            self.merchant = None
+        elif extracted == 'suspended':
+            self.activate()
+            self.suspend()
+        if create:
+            self.save()
+
+    @factory.post_generation
+    def long_key(self, created, extracted, **kwargs):
+        if extracted:
+            self.key = hashlib.sha256(uuid.uuid4().bytes).hexdigest()
+            if created:
+                self.save()

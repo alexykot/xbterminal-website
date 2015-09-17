@@ -1,5 +1,6 @@
 from decimal import Decimal
 import json
+import hashlib
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils import timezone
@@ -11,11 +12,13 @@ from operations.models import PaymentOrder
 from operations.tests.factories import (
     PaymentOrderFactory,
     WithdrawalOrderFactory)
+from website.models import Device
 from website.tests.factories import (
     MerchantAccountFactory,
+    DeviceBatchFactory,
     DeviceFactory)
 from api.views import WithdrawalViewSet
-from api.utils import create_test_signature
+from api.utils import create_test_signature, create_test_public_key
 
 
 class DevicesViewTestCase(TestCase):
@@ -71,6 +74,7 @@ class DeviceSettingsViewTestCase(TestCase):
         device = DeviceFactory.create()
         url = reverse('api:device', kwargs={'key': device.key})
         response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = json.loads(response.content)
         self.assertEqual(data['MERCHANT_NAME'],
                          device.merchant.company_name)
@@ -82,6 +86,12 @@ class DeviceSettingsViewTestCase(TestCase):
         self.assertEqual(data['OUTPUT_DEC_FRACTIONAL_SPLIT'], '.')
         self.assertEqual(data['OUTPUT_DEC_THOUSANDS_SPLIT'], ',')
         self.assertEqual(data['BITCOIN_NETWORK'], 'mainnet')
+
+    def test_not_active(self):
+        device = DeviceFactory.create(status='activation')
+        url = reverse('api:device', kwargs={'key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
 class PaymentInitViewTestCase(TestCase):
@@ -122,7 +132,7 @@ class PaymentInitViewTestCase(TestCase):
 
     @patch('api.views.operations.payment.prepare_payment')
     def test_payment_terminal(self, prepare_mock):
-        device = DeviceFactory.create()
+        device = DeviceFactory.create(long_key=True)
         fiat_amount = 10
         btc_amount = 0.05
         exchange_rate = 200
@@ -168,6 +178,15 @@ class PaymentInitViewTestCase(TestCase):
         }
         response = self.client.post(self.url, form_data)
         self.assertEqual(response.status_code, 404)
+
+    def test_not_active(self):
+        device = DeviceFactory.create(status='activation')
+        form_data = {
+            'device_key': device.key,
+            'amount': '0.5',
+        }
+        response = self.client.post(self.url, form_data)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
 class PaymentRequestViewTestCase(TestCase):
@@ -328,6 +347,20 @@ class WithdrawalViewSetTestCase(APITestCase):
         url = reverse('api:withdrawal-list')
         response = self.client.post(url, form_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'],
+                         'Device - invalid device key')
+
+    def test_device_not_active(self):
+        device = DeviceFactory.create(status='activation')
+        form_data = {
+            'device': device.key,
+            'amount': '1.00',
+        }
+        url = reverse('api:withdrawal-list')
+        response = self.client.post(url, form_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'],
+                         'Device - invalid device key')
 
     def test_invalid_signature(self):
         device = DeviceFactory.create()
@@ -376,3 +409,60 @@ class WithdrawalViewSetTestCase(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['status'], 'completed')
+
+
+class DeviceViewSetTestCase(APITestCase):
+
+    def test_create(self):
+        batch = DeviceBatchFactory.create()
+        device_key = hashlib.sha256('createDevice').hexdigest()
+        form_data = {
+            'batch': batch.batch_number,
+            'key': device_key,
+            'api_key': create_test_public_key(),
+            'salt_pubkey_fingerprint': 'test',
+        }
+        url = reverse('api:v2:device-list')
+
+        response = self.client.post(url, form_data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('activation_code', response.data)
+
+        device = Device.objects.get(
+            activation_code=response.data['activation_code'])
+        self.assertEqual(device.key, device_key)
+        self.assertEqual(device.status, 'activation')
+        self.assertEqual(device.batch.pk, batch.pk)
+
+    def test_create_errors(self):
+        url = reverse('api:v2:device-list')
+        response = self.client.post(url, {})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('batch', response.data['errors'])
+        self.assertIn('key', response.data['errors'])
+        self.assertIn('api_key', response.data['errors'])
+
+    def test_retrieve_activation(self):
+        device = DeviceFactory.create(status='activation')
+        url = reverse('api:v2:device-detail',
+                      kwargs={'key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['status'], 'activation')
+        self.assertEqual(response.data['language']['code'], 'en')
+        self.assertEqual(response.data['currency']['name'], 'GBP')
+
+    def test_retrieve_active(self):
+        device = DeviceFactory.create(status='active')
+        url = reverse('api:v2:device-detail',
+                      kwargs={'key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['status'], 'active')
+
+    def test_retrieve_suspended(self):
+        device = DeviceFactory.create(status='suspended')
+        url = reverse('api:v2:device-detail',
+                      kwargs={'key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

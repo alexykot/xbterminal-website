@@ -440,6 +440,21 @@ class DeviceForm(forms.ModelForm):
         return cleaned_data
 
 
+class DeviceActivationForm(forms.Form):
+
+    activation_code = forms.CharField()
+
+    def clean_activation_code(self):
+        activation_code = self.cleaned_data['activation_code'].upper().strip()
+        try:
+            self.device = Device.objects.get(
+                activation_code=activation_code,
+                status='activation')
+        except Device.DoesNotExist:
+            raise forms.ValidationError('Invalid activation code.')
+        return activation_code
+
+
 class DeviceAdminForm(forms.ModelForm):
 
     class Meta:

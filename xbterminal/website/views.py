@@ -248,7 +248,7 @@ class RegistrationView(TemplateResponseMixin, View):
             for idx in range(order.quantity):
                 device = models.Device(
                     device_type='hardware',
-                    status='preordered',
+                    status='active',
                     name='Terminal #{0}'.format(idx + 1),
                     merchant=merchant)
                 device.save()
@@ -365,7 +365,8 @@ class DeviceList(TemplateResponseMixin, CabinetView):
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        context['devices'] = self.request.user.merchant.device_set.all()
+        context['devices'] = self.request.user.merchant.\
+            device_set.filter(status='active')
         return self.render_to_response(context)
 
 
@@ -393,6 +394,31 @@ class CreateDeviceView(TemplateResponseMixin, CabinetView):
         if form.is_valid():
             device = form.save(commit=False)
             device.merchant = self.request.user.merchant
+            device.activate()
+            device.save()
+            return redirect(reverse('website:device',
+                                    kwargs={'device_key': device.key}))
+        else:
+            context = self.get_context_data(**kwargs)
+            context['form'] = form
+            return self.render_to_response(context)
+
+
+class ActivateDeviceView(TemplateResponseMixin, CabinetView):
+
+    template_name = 'cabinet/activation.html'
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['form'] = forms.DeviceActivationForm()
+        return self.render_to_response(context)
+
+    def post(self, *args, **kwargs):
+        form = forms.DeviceActivationForm(self.request.POST)
+        if form.is_valid():
+            device = form.device
+            device.merchant = self.request.user.merchant
+            device.activate()
             device.save()
             return redirect(reverse('website:device',
                                     kwargs={'device_key': device.key}))
@@ -409,9 +435,11 @@ class DeviceMixin(ContextMixin):
 
     def get_context_data(self, **kwargs):
         context = super(DeviceMixin, self).get_context_data(**kwargs)
+        merchant = self.request.user.merchant
         try:
-            context['device'] = self.request.user.merchant.device_set.get(
-                key=self.kwargs.get('device_key'))
+            context['device'] = merchant.device_set.get(
+                key=self.kwargs.get('device_key'),
+                status='active')
         except models.Device.DoesNotExist:
             raise Http404
         return context

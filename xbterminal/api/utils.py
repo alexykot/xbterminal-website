@@ -7,6 +7,12 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.exceptions import InvalidSignature
 
 
+def load_public_key(public_key_pem):
+    return serialization.load_pem_public_key(
+        str(public_key_pem),
+        backend=default_backend())
+
+
 def verify_signature(public_key_pem, message, signature):
     """
     Accepts:
@@ -20,9 +26,7 @@ def verify_signature(public_key_pem, message, signature):
         signature = base64.b64decode(signature)
     except TypeError:
         return False
-    public_key = serialization.load_pem_public_key(
-        str(public_key_pem),
-        backend=default_backend())
+    public_key = load_public_key(public_key_pem)
     verifier = public_key.verifier(
         signature,
         padding.PSS(
@@ -36,6 +40,22 @@ def verify_signature(public_key_pem, message, signature):
         return False
     else:
         return True
+
+
+def create_test_public_key():
+    """
+    Create secret key and public key, return public key
+    (for testing purposes)
+    """
+    secret_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=512,
+        backend=default_backend())
+    public_key = secret_key.public_key()
+    public_key_pem = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo)
+    return public_key_pem.strip()
 
 
 def create_test_signature(message):

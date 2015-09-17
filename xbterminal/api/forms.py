@@ -8,7 +8,7 @@ from website.models import Device
 class PaymentForm(forms.Form):
 
     device_key = forms.CharField(
-        validators=[RegexValidator('^[0-9a-zA-Z]{8,32}$')])
+        validators=[RegexValidator('^[0-9a-zA-Z]{8,64}$')])
     amount = forms.DecimalField(
         max_digits=9,
         decimal_places=2,
@@ -29,7 +29,8 @@ class WithdrawalForm(forms.Form):
 
     def clean_device(self):
         try:
-            return Device.objects.get(key=self.cleaned_data['device'])
+            return Device.objects.get(key=self.cleaned_data['device'],
+                                      status='active')
         except Device.DoesNotExist:
             raise forms.ValidationError('Invalid device key')
 

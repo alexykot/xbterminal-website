@@ -2,6 +2,8 @@ Django==1.7.9
 django-ckeditor==4.4.6
 django-constance==1.0.1
 django-countries==3.3
+django-fsm==2.2.1
+django-fsm-admin==1.2.2
 django-bootstrap3==6.2.0
 django-ipware==1.0.0
 django-oauth-toolkit==0.9.0

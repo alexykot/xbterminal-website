@@ -13,7 +13,7 @@ from django.utils.translation import ugettext as _
 
 from rest_framework.decorators import api_view, detail_route
 from rest_framework.response import Response
-from rest_framework import status, viewsets
+from rest_framework import status, viewsets, mixins
 from oauth2_provider.views.generic import ProtectedResourceView
 
 from website.models import Device
@@ -21,7 +21,10 @@ from website.forms import SimpleMerchantRegistrationForm
 from website.utils import generate_qr_code, send_registration_info
 from api.shortcuts import render_to_pdf
 from api.forms import PaymentForm, WithdrawalForm
-from api.serializers import WithdrawalOrderSerializer
+from api.serializers import (
+    WithdrawalOrderSerializer,
+    DeviceSerializer,
+    DeviceRegistrationSerializer)
 from api.utils import verify_signature
 
 from operations.models import PaymentOrder, WithdrawalOrder
@@ -117,7 +120,7 @@ class DevicesView(ProtectedResourceView):
 
 @api_view(['GET'])
 def device(request, key):
-    device = get_object_or_404(Device, key=key)
+    device = get_object_or_404(Device, key=key, status='active')
     response = {
         "MERCHANT_NAME": device.merchant.company_name,
         "MERCHANT_DEVICE_NAME": device.name,
@@ -178,7 +181,8 @@ class PaymentInitView(View):
                 content_type='application/json')
         # Prepare payment order
         try:
-            device = Device.objects.get(key=form.cleaned_data['device_key'])
+            device = Device.objects.get(key=form.cleaned_data['device_key'],
+                                        status='active')
         except Device.DoesNotExist:
             raise Http404
         payment_order = operations.payment.prepare_payment(
@@ -384,3 +388,25 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
             order.save()
         serializer = self.get_serializer(order)
         return Response(serializer.data)
+
+
+class DeviceViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+
+    lookup_field = 'key'
+
+    def get_queryset(self):
+        return Device.objects.exclude(status='suspended')
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return DeviceRegistrationSerializer
+        elif self.action == 'retrieve':
+            return DeviceSerializer
+
+    def create(self, request):
+        serializer = self.get_serializer(data=self.request.data)
+        if not serializer.is_valid():
+            return Response({'errors': serializer.errors},
+                            status=status.HTTP_400_BAD_REQUEST)
+        device = serializer.save()
+        return Response({'activation_code': device.activation_code})

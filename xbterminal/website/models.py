@@ -1,23 +1,31 @@
 import datetime
+import random
 import os
 import uuid
 
 from bitcoin import base58
 
-from django.db import models
 from django.conf import settings
-from django_countries.fields import CountryField
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    BaseUserManager,
+    PermissionsMixin)
+from django.db import models
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from constance import config
+from django_countries.fields import CountryField
+from django_fsm import FSMField, transition
 
 from website.validators import (
     validate_phone,
     validate_post_code,
     validate_percent,
-    validate_bitcoin_address)
+    validate_bitcoin_address,
+    validate_public_key)
 from website.files import (
     get_verification_file_name,
     verification_file_path_gen,
@@ -352,12 +360,9 @@ class Device(models.Model):
         ('web', _('Web app')),
     ]
     DEVICE_STATUSES = [
-        ('preordered', _('Preordered')),
-        ('dispatched', _('Dispatched')),
-        ('delivered', _('Delivered')),
+        ('activation', _('Activation pending')),
         ('active', _('Operational')),
         ('suspended', _('Suspended')),
-        ('disposed', _('Disposed')),
     ]
     PAYMENT_PROCESSING_CHOICES = [
         ('keep', _('keep bitcoins')),
@@ -365,23 +370,30 @@ class Device(models.Model):
         ('full', _('convert full amount')),
     ]
 
-    merchant = models.ForeignKey(MerchantAccount)
+    merchant = models.ForeignKey(MerchantAccount,
+                                 blank=True,
+                                 null=True)
     device_type = models.CharField(max_length=50, choices=DEVICE_TYPES)
-    status = models.CharField(max_length=50, choices=DEVICE_STATUSES, default='active')
+    status = FSMField(max_length=50,
+                      choices=DEVICE_STATUSES,
+                      default='activation',
+                      protected=True)
     name = models.CharField(_('Your reference'), max_length=100)
-
     batch = models.ForeignKey(DeviceBatch, default=get_default_batch)
     key = models.CharField(_('Device key'),
                            max_length=64,
-                           editable=False,
                            unique=True,
                            default=gen_device_key)
+    activation_code = models.CharField(max_length=6,
+                                       editable=False,
+                                       unique=True)
     # TODO: remove serial number
     serial_number = models.CharField(max_length=50, blank=True, null=True)
 
     api_key = models.TextField(
         blank=True,
         null=True,
+        validators=[validate_public_key],
         help_text='API public key')
 
     percent = models.DecimalField(
@@ -403,6 +415,7 @@ class Device(models.Model):
         blank=True,
         null=True)
 
+    created_at = models.DateTimeField(auto_now_add=True)
     last_activity = models.DateTimeField(blank=True, null=True)
     last_reconciliation = models.DateTimeField(auto_now_add=True)
 
@@ -411,6 +424,18 @@ class Device(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    def can_activate(self):
+        return self.merchant is not None
+
+    @transition(field=status, source='*', target='active',
+                conditions=[can_activate])
+    def activate(self):
+        pass
+
+    @transition(field=status, source='active', target='suspended')
+    def suspend(self):
+        pass
 
     @property
     def payment_processing(self):
@@ -463,6 +488,18 @@ class Device(models.Model):
             return config.OUR_FEE_MAINNET_ADDRESS
         elif self.bitcoin_network == 'testnet':
             return config.OUR_FEE_TESTNET_ADDRESS
+
+
+@receiver(pre_save, sender=Device)
+def device_generate_activation_code(sender, instance, **kwargs):
+    if not instance.pk:
+        # Generate unique activation code
+        chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZ'
+        while True:
+            code = ''.join(random.sample(chars, 6))
+            if not sender.objects.filter(activation_code=code).exists():
+                instance.activation_code = code
+                break
 
 
 class ReconciliationTime(models.Model):

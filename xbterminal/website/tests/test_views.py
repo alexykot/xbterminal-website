@@ -105,7 +105,7 @@ class RegistrationViewTestCase(TestCase):
                          form_data['quantity'])
         device = merchant.device_set.first()
         self.assertEqual(device.device_type, 'hardware')
-        self.assertEqual(device.status, 'preordered')
+        self.assertEqual(device.status, 'active')
 
         self.assertEqual(len(mail.outbox), 2)
         self.assertEqual(mail.outbox[0].to[0],
@@ -181,9 +181,82 @@ class CreateDeviceViewTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(merchant.device_set.count(), 1)
         device = merchant.device_set.first()
+        self.assertEqual(device.status, 'active')
         self.assertEqual(device.device_type, 'hardware')
         self.assertEqual(device.name, 'Terminal')
         self.assertEqual(device.payment_processing, 'full')
+
+
+class UpdateDeviceView(TestCase):
+
+    def setUp(self):
+        self.merchant = MerchantAccountFactory.create()
+
+    def test_get(self):
+        device = DeviceFactory.create(merchant=self.merchant)
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:device',
+                      kwargs={'device_key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_not_activated(self):
+        device = DeviceFactory.create(status='activation')
+        device.merchant = self.merchant
+        device.save()
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:device',
+                      kwargs={'device_key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+
+class ActivateDeviceViewTestCase(TestCase):
+
+    def setUp(self):
+        self.url = reverse('website:activate_device')
+
+    def test_get(self):
+        merchant = MerchantAccountFactory.create()
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/activation.html')
+
+    def test_post_valid_code(self):
+        merchant = MerchantAccountFactory.create()
+        self.assertEqual(merchant.device_set.count(), 0)
+        self.client.login(username=merchant.user.email,
+                          password='password')
+
+        device = DeviceFactory.create(status='activation')
+        form_data = {
+            'activation_code': device.activation_code,
+        }
+        response = self.client.post(self.url, form_data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(merchant.device_set.count(), 1)
+        active_device = merchant.device_set.first()
+        self.assertEqual(active_device.status, 'active')
+        self.assertEqual(active_device.merchant.pk, merchant.pk)
+
+    def test_post_error(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+
+        response = self.client.post(self.url, {})
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/activation.html')
+        self.assertIn('activation_code',
+                      response.context['form'].errors)
 
 
 class ReconciliationViewTestCase(TestCase):

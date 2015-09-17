@@ -2,6 +2,7 @@ import re
 
 from django.core.exceptions import ValidationError
 
+from api.utils import load_public_key
 from operations import blockchain
 
 
@@ -29,3 +30,10 @@ def validate_bitcoin_address(address, network=None):
     error_message = blockchain.validate_bitcoin_address(address, network)
     if error_message is not None:
         raise ValidationError(error_message)
+
+
+def validate_public_key(value):
+    try:
+        load_public_key(value)
+    except:
+        raise ValidationError('Invalid API public key.')

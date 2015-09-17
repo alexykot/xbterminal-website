@@ -47,8 +47,19 @@ short_urls = patterns(
         name='receipt'),
 )
 
+api_v2_router = routers.DefaultRouter()
+api_v2_router.register('devices',
+                       views.DeviceViewSet,
+                       base_name='device')
+
+api_v2_urls = patterns(
+    '',
+    url(r'^', include(api_v2_router.urls)),
+)
+
 urlpatterns = patterns(
     '',
     url(r'^api/', include(api_urls)),
     url(r'', include(short_urls, namespace='short')),
+    url(r'^api/v2/', include(api_v2_urls, namespace='v2')),
 )
