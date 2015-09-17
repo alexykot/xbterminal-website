@@ -31,6 +31,7 @@ class DeviceAdmin(FSMTransitionMixin, admin.ModelAdmin):
         'status',
         'key',
         'device_key_qr_code',
+        'activation_code',
         'last_reconciliation',
         'payment_processor',
         'is_online',
