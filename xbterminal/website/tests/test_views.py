@@ -181,9 +181,36 @@ class CreateDeviceViewTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(merchant.device_set.count(), 1)
         device = merchant.device_set.first()
+        self.assertEqual(device.status, 'active')
         self.assertEqual(device.device_type, 'hardware')
         self.assertEqual(device.name, 'Terminal')
         self.assertEqual(device.payment_processing, 'full')
+
+
+class UpdateDeviceView(TestCase):
+
+    def setUp(self):
+        self.merchant = MerchantAccountFactory.create()
+
+    def test_get(self):
+        device = DeviceFactory.create(merchant=self.merchant)
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:device',
+                      kwargs={'device_key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_not_activated(self):
+        device = DeviceFactory.create(status='activation')
+        device.merchant = self.merchant
+        device.save()
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:device',
+                      kwargs={'device_key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
 
 
 class ReconciliationViewTestCase(TestCase):

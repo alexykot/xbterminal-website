@@ -365,7 +365,8 @@ class DeviceList(TemplateResponseMixin, CabinetView):
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        context['devices'] = self.request.user.merchant.device_set.all()
+        context['devices'] = self.request.user.merchant.\
+            device_set.filter(status='active')
         return self.render_to_response(context)
 
 
@@ -393,6 +394,7 @@ class CreateDeviceView(TemplateResponseMixin, CabinetView):
         if form.is_valid():
             device = form.save(commit=False)
             device.merchant = self.request.user.merchant
+            device.activate()
             device.save()
             return redirect(reverse('website:device',
                                     kwargs={'device_key': device.key}))
@@ -409,9 +411,11 @@ class DeviceMixin(ContextMixin):
 
     def get_context_data(self, **kwargs):
         context = super(DeviceMixin, self).get_context_data(**kwargs)
+        merchant = self.request.user.merchant
         try:
-            context['device'] = self.request.user.merchant.device_set.get(
-                key=self.kwargs.get('device_key'))
+            context['device'] = merchant.device_set.get(
+                key=self.kwargs.get('device_key'),
+                status='active')
         except models.Device.DoesNotExist:
             raise Http404
         return context
