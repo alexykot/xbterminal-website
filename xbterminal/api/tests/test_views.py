@@ -18,7 +18,7 @@ from website.tests.factories import (
     DeviceBatchFactory,
     DeviceFactory)
 from api.views import WithdrawalViewSet
-from api.utils import create_test_signature, create_test_public_key
+from api.utils.crypto import create_test_signature, create_test_public_key
 
 
 class DevicesViewTestCase(TestCase):

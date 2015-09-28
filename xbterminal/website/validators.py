@@ -2,7 +2,7 @@ import re
 
 from django.core.exceptions import ValidationError
 
-from api.utils import load_public_key
+from api.utils.crypto import load_public_key
 from operations import blockchain
 
 

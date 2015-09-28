@@ -12,7 +12,7 @@ from api.serializers import (
     WithdrawalOrderSerializer,
     DeviceSerializer,
     DeviceRegistrationSerializer)
-from api.utils import create_test_public_key
+from api.utils.crypto import create_test_public_key
 
 
 class WithdrawalOrderSerializerTestCase(TestCase):
