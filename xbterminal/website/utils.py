@@ -17,7 +17,7 @@ from django.utils.translation import ugettext as _
 
 from constance import config
 
-from api.shortcuts import generate_pdf
+from api.utils.pdf import generate_pdf
 
 REPORT_FIELDS = [
     ('ID', 'id'),

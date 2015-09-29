@@ -262,7 +262,7 @@ class PaymentCheckViewTestCase(TestCase):
 
 class ReceiptViewTestCase(TestCase):
 
-    @patch('api.shortcuts.get_template')
+    @patch('api.utils.pdf.get_template')
     def test_payment_order(self, get_template_mock):
         template_mock = Mock(**{
             'render.return_value': 'test',
@@ -284,7 +284,7 @@ class ReceiptViewTestCase(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
-    @patch('api.shortcuts.get_template')
+    @patch('api.utils.pdf.get_template')
     def test_withdrawal_order(self, get_template_mock):
         template_mock = Mock(**{
             'render.return_value': 'test',

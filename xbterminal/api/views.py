@@ -19,7 +19,7 @@ from oauth2_provider.views.generic import ProtectedResourceView
 from website.models import Device
 from website.forms import SimpleMerchantRegistrationForm
 from website.utils import generate_qr_code, send_registration_info
-from api.shortcuts import render_to_pdf
+from api.utils.pdf import render_to_pdf
 from api.forms import PaymentForm, WithdrawalForm
 from api.serializers import (
     WithdrawalOrderSerializer,
