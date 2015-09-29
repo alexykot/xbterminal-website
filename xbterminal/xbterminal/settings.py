@@ -256,6 +256,16 @@ CKEDITOR_JQUERY_URL = "/static/lib/jquery.min.js"
 
 DEFAULT_BATCH_NUMBER = '00000000000000000000000000000000'
 
+SALT_SERVERS = {
+    'default': {
+        'HOST': 'https://sam.xbthq.co.uk/',
+        'USER': 'user',
+        'PASSWORD': 'password',
+        'CLIENT_CERT': 'server.pem',
+        'CLIENT_KEY': 'server.key',
+    },
+}
+
 # Override default settings
 try:
     from local_settings import *  # flake8: noqa

@@ -413,20 +413,25 @@ class WithdrawalViewSetTestCase(APITestCase):
 
 class DeviceViewSetTestCase(APITestCase):
 
-    def test_create(self):
+    @patch('api.serializers.Salt')
+    def test_create(self, salt_cls_mock):
+        salt_cls_mock.return_value = salt_mock = Mock(**{
+            'check_fingerprint.return_value': True,
+        })
         batch = DeviceBatchFactory.create()
         device_key = hashlib.sha256('createDevice').hexdigest()
         form_data = {
             'batch': batch.batch_number,
             'key': device_key,
             'api_key': create_test_public_key(),
-            'salt_pubkey_fingerprint': 'test',
+            'salt_fingerprint': 'test',
         }
         url = reverse('api:v2:device-list')
 
         response = self.client.post(url, form_data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('activation_code', response.data)
+        self.assertTrue(salt_mock.accept.called)
 
         device = Device.objects.get(
             activation_code=response.data['activation_code'])
