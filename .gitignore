@@ -3,6 +3,7 @@ settings_server.py
 local_settings.py
 venv
 .vagrant
+.coverage
 /static
 /media
 fabfile/deploy.py

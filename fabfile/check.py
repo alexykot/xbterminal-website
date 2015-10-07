@@ -15,7 +15,9 @@ def python():
 @task
 def django():
     with prefix('. venv/bin/activate'):
-        local('python xbterminal/manage.py test website operations api')
+        local('coverage run '
+              'xbterminal/manage.py test website operations api')
+        local('coverage report')
 
 
 @task(default=True)
