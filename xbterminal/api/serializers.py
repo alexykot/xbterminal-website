@@ -1,6 +1,7 @@
 import re
 from rest_framework import serializers
 
+from api.utils.salt import Salt
 from operations.models import WithdrawalOrder
 from website.models import (
     Language,
@@ -73,7 +74,7 @@ class DeviceRegistrationSerializer(serializers.ModelSerializer):
     batch = serializers.CharField()
     key = serializers.CharField()
     api_key = serializers.CharField(validators=[validate_public_key])
-    salt_pubkey_fingerprint = serializers.CharField(required=False)
+    salt_fingerprint = serializers.CharField(required=False)
 
     class Meta:
         model = Device
@@ -81,8 +82,13 @@ class DeviceRegistrationSerializer(serializers.ModelSerializer):
             'batch',
             'key',
             'api_key',
-            'salt_pubkey_fingerprint',
+            'salt_fingerprint',
         ]
+
+    def __init__(self, *args, **kwargs):
+        self._salt = Salt()
+        self._salt.login()
+        super(DeviceRegistrationSerializer, self).__init__(*args, **kwargs)
 
     def validate_batch(self, value):
         try:
@@ -100,11 +106,24 @@ class DeviceRegistrationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Device is already registered.')
         return value
 
+    def validate(self, data):
+        if data.get('salt_fingerprint'):
+            # TODO: make salt_fingerprint required field
+            if not self._salt.check_fingerprint(data['key'],
+                                                data['salt_fingerprint']):
+                raise serializers.ValidationError(
+                    'Invalid salt key fingerprint.')
+        return data
+
     def create(self, validated_data):
-        validated_data.pop('salt_pubkey_fingerprint', None)
+        if validated_data.get('salt_fingerprint'):
+            # TODO: make salt_fingerprint required field
+            self._salt.accept(validated_data['key'])
         return Device.objects.create(
             merchant=None,
             device_type='hardware',
             status='activation',
             name='Device {0}'.format(validated_data['key'][:6]),
-            **validated_data)
+            key=validated_data['key'],
+            batch=validated_data['batch'],
+            api_key=validated_data['api_key'])

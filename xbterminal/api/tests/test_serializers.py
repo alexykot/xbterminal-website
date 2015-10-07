@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import hashlib
+from mock import Mock, patch
 from django.test import TestCase
 
 from operations.tests.factories import WithdrawalOrderFactory
@@ -12,7 +13,7 @@ from api.serializers import (
     WithdrawalOrderSerializer,
     DeviceSerializer,
     DeviceRegistrationSerializer)
-from api.utils import create_test_public_key
+from api.utils.crypto import create_test_public_key
 
 
 class WithdrawalOrderSerializerTestCase(TestCase):
@@ -126,3 +127,42 @@ class DeviceRegistrationSerializerTestCase(TestCase):
         self.assertFalse(serializer.is_valid())
         self.assertEqual(serializer.errors['api_key'][0],
                          'Invalid API public key.')
+
+    @patch('api.serializers.Salt')
+    def test_salt_fingerprint(self, salt_cls_mock):
+        salt_cls_mock.return_value = salt_mock = Mock(**{
+            'check_fingerprint.return_value': True,
+        })
+        batch = DeviceBatchFactory.create()
+        device_key = hashlib.sha256('test').hexdigest()
+        api_key = create_test_public_key()
+        data = {
+            'batch': batch.batch_number,
+            'key': device_key,
+            'api_key': api_key,
+            'salt_fingerprint': 'fingerprint',
+        }
+        serializer = DeviceRegistrationSerializer(data=data)
+        self.assertTrue(serializer.is_valid())
+        device = serializer.save()
+        self.assertTrue(salt_mock.check_fingerprint.called)
+        self.assertTrue(salt_mock.accept.called)
+
+    @patch('api.serializers.Salt')
+    def test_invalid_salt_fingerprint(self, salt_cls_mock):
+        salt_cls_mock.return_value = salt_mock = Mock(**{
+            'check_fingerprint.return_value': False,
+        })
+        batch = DeviceBatchFactory.create()
+        device_key = hashlib.sha256('test').hexdigest()
+        api_key = create_test_public_key()
+        data = {
+            'batch': batch.batch_number,
+            'key': device_key,
+            'api_key': api_key,
+            'salt_fingerprint': 'fingerprint',
+        }
+        serializer = DeviceRegistrationSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertTrue(salt_mock.check_fingerprint.called)
+        self.assertFalse(salt_mock.accept.called)

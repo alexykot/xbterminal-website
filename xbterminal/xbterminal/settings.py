@@ -1,28 +1,10 @@
-"""
-Django settings for xbterminal project.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/1.6/topics/settings/
-
-For the full list of settings and their values, see
-https://docs.djangoproject.com/en/1.6/ref/settings/
-"""
-
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 import sys
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '2d$h2q_vukyb190m^6#q)k_rc!+dn8!m5=pc!&e!vckabjqqll'
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 TEMPLATE_DEBUG = False
-
 TESTING = 'test' in sys.argv
 
 LOGGING = {
@@ -80,11 +62,7 @@ LOGGING = {
     },
 }
 
-
-ALLOWED_HOSTS = []
-
-
-# Application definition
+# Applications
 
 INSTALLED_APPS = (
     'django.contrib.admin',
@@ -123,11 +101,22 @@ MIDDLEWARE_CLASSES = (
     'website.views.ServerErrorMiddleware',
 )
 
+SITE_ID = 1
+
+ALLOWED_HOSTS = []
+
 ROOT_URLCONF = 'xbterminal.urls'
+
+APPEND_SLASH = False
+
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/terminals/'
 
 WSGI_APPLICATION = 'xbterminal.wsgi.application'
 
 AUTH_USER_MODEL = 'website.User'
+
+SECRET_KEY = '2d$h2q_vukyb190m^6#q)k_rc!+dn8!m5=pc!&e!vckabjqqll'
 
 TEMPLATE_CONTEXT_PROCESSORS = (
     'django.contrib.auth.context_processors.auth',
@@ -137,8 +126,11 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'website.context_processors.debug',
 )
 
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': []
+}
+
 # Database
-# https://docs.djangoproject.com/en/1.6/ref/settings/#databases
 
 DATABASES = {
     'default': {
@@ -170,7 +162,6 @@ RQ_QUEUES = {
 }
 
 # Internationalization
-# https://docs.djangoproject.com/en/1.6/topics/i18n/
 
 LANGUAGE_CODE = 'en'
 TIME_ZONE = 'Europe/London'
@@ -184,36 +175,16 @@ LOCALE_PATHS = (
 
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.6/howto/static-files/
 
 STATIC_ROOT = os.path.join(BASE_DIR, '..', 'static')
 STATIC_URL = '/static/'
 
 # Media
-# https://docs.djangoproject.com/en/1.6/topics/files/
 
 MEDIA_ROOT = os.path.join(BASE_DIR, '..', 'media')
 MEDIA_URL = '/media/'
 
-
-DEFAULT_FROM_EMAIL = "no-reply@xbterminal.io"
-CONTACT_EMAIL_RECIPIENTS = ["info@xbterminal.io"]
-
-APPEND_SLASH = False
-
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/terminals/'
-
-SITE_ID = 1
-
-REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': []
-}
-
-BITCOIN_SCALE_DIVIZER = 1000
-
 # Email
-# https://docs.djangoproject.com/en/1.6/topics/email/
 
 EMAIL_BACKEND = 'django_smtp_ssl.SSLEmailBackend'
 
@@ -222,6 +193,41 @@ EMAIL_PORT = ""
 EMAIL_HOST_USER = ""
 EMAIL_HOST_PASSWORD = ""
 EMAIL_USE_TLS = True
+
+DEFAULT_FROM_EMAIL = "no-reply@xbterminal.io"
+CONTACT_EMAIL_RECIPIENTS = ["info@xbterminal.io"]
+
+# Bitcoind
+
+BITCOIND_HOST = "node.xbterminal.io"
+BITCOIND_AUTH = {
+    "testnet": ("root", "password"),
+}
+
+# Salt
+
+SALT_SERVERS = {
+    'default': {
+        'HOST': 'https://sam.xbthq.co.uk/',
+        'USER': 'user',
+        'PASSWORD': 'password',
+        'CLIENT_CERT': 'server.pem',
+        'CLIENT_KEY': 'server.key',
+    },
+}
+
+# OAuth
+
+OAUTH2_PROVIDER = {
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 100000000,
+}
+
+# CKEditor
+
+CKEDITOR_UPLOAD_PATH = "blog/"
+CKEDITOR_JQUERY_URL = "/static/lib/jquery.min.js"
+
+# Constance
 
 CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
 CONSTANCE_CONFIG = {
@@ -234,27 +240,18 @@ CONSTANCE_CONFIG = {
     'TERMINAL_PRICE': (200.00, 'Terminal price'),
 }
 
-REPORTS_PATH = os.path.join(BASE_DIR, '..', 'reports')
+# Misc
 
 CERT_PATH = os.path.join(BASE_DIR, '..', 'certs')
 PKI_KEY_FILE = None
 PKI_CERTIFICATES = []
 
-BITCOIND_HOST = "node.xbterminal.io"
-BITCOIND_AUTH = {
-    "testnet": ("root", "password"),
-}
+REPORTS_PATH = os.path.join(BASE_DIR, '..', 'reports')
 
-# OAuth
-OAUTH2_PROVIDER = {
-    'ACCESS_TOKEN_EXPIRE_SECONDS': 100000000,
-}
-
-# CKEditor
-CKEDITOR_UPLOAD_PATH = "blog/"
-CKEDITOR_JQUERY_URL = "/static/lib/jquery.min.js"
+BITCOIN_SCALE_DIVIZER = 1000
 
 DEFAULT_BATCH_NUMBER = '00000000000000000000000000000000'
+
 
 # Override default settings
 try:
