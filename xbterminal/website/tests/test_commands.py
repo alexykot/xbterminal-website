@@ -1,12 +1,58 @@
+import datetime
 from decimal import Decimal
+
 from django.test import TestCase
 from django.core import mail
+from django.core.management import call_command
 from django.conf import settings
+from django.utils import timezone
 from mock import patch, Mock
 
-from website.tests.factories import BTCAccountFactory
+from website.models import Device
+from website.tests.factories import (
+    BTCAccountFactory,
+    DeviceFactory,
+    ReconciliationTimeFactory)
 from website.management.commands.check_wallet import \
     check_wallet, check_wallet_strict
+
+
+class SendReconciliationTestCase(TestCase):
+
+    def test_rectime_not_added(self):
+        device = DeviceFactory.create()
+        device.last_reconciliation = \
+            timezone.now() - datetime.timedelta(days=1)
+        device.save()
+        call_command('send_reconciliation')
+        self.assertEqual(len(mail.outbox), 0)
+        device_updated = Device.objects.get(pk=device.pk)
+        self.assertEqual(device_updated.last_reconciliation,
+                         device.last_reconciliation)
+
+    def test_not_ready(self):
+        device = DeviceFactory.create()
+        rectime = ReconciliationTimeFactory.create(
+            device=device, time=datetime.time(0, 0))
+        call_command('send_reconciliation')
+        self.assertEqual(len(mail.outbox), 0)
+        device_updated = Device.objects.get(pk=device.pk)
+        self.assertEqual(device_updated.last_reconciliation,
+                         device.last_reconciliation)
+
+    def test_send(self):
+        device = DeviceFactory.create()
+        device.last_reconciliation = \
+            timezone.now() - datetime.timedelta(days=1)
+        device.save()
+        rectime = ReconciliationTimeFactory.create(
+            device=device, time=datetime.time(0, 0))
+        call_command('send_reconciliation')
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0], rectime.email)
+        device_updated = Device.objects.get(pk=device.pk)
+        self.assertGreater(device_updated.last_reconciliation,
+                           device.last_reconciliation)
 
 
 class CheckWalletTestCase(TestCase):

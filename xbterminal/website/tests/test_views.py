@@ -10,7 +10,8 @@ from mock import patch
 from website.models import MerchantAccount
 from website.tests.factories import (
     MerchantAccountFactory,
-    DeviceFactory)
+    DeviceFactory,
+    ReconciliationTimeFactory)
 from operations.tests.factories import PaymentOrderFactory
 
 
@@ -403,6 +404,44 @@ class ReconciliationViewTestCase(TestCase):
                          sum(po.fiat_amount for po in orders))
         self.assertEqual(payments[0]['instantfiat_fiat_amount'],
                          sum(po.instantfiat_fiat_amount for po in orders))
+
+
+class ReconciliationTimeViewTestCase(TestCase):
+
+    def setUp(self):
+        self.merchant = MerchantAccountFactory.create()
+
+    def test_post(self):
+        device = DeviceFactory.create(merchant=self.merchant)
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:reconciliation_time',
+                      kwargs={'device_key': device.key, 'pk': 0})
+        form_data = {
+            'email': 'test@example.net',
+            'time': '4:30 AM',
+        }
+        response = self.client.post(url, form_data)
+        self.assertEqual(response.status_code, 302)
+        rectime = device.rectime_set.first()
+        self.assertEqual(rectime.email, form_data['email'])
+        self.assertEqual(rectime.time.hour, 4)
+
+    def test_delete(self):
+        device = DeviceFactory.create(merchant=self.merchant)
+        rectime = ReconciliationTimeFactory(device=device)
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:reconciliation_time',
+                      kwargs={'device_key': device.key, 'pk': rectime.pk})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(device.rectime_set.count(), 0)
+
+        url = reverse('website:reconciliation_time',
+                      kwargs={'device_key': device.key, 'pk': rectime.pk})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, 404)
 
 
 class ReportViewTestCase(TestCase):
