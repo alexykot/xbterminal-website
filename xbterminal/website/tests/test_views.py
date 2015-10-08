@@ -6,6 +6,7 @@ from django.core import mail
 from django.utils import timezone
 from mock import patch
 
+from website.models import MerchantAccount
 from website.tests.factories import (
     MerchantAccountFactory,
     DeviceFactory)
@@ -257,6 +258,57 @@ class ActivateDeviceViewTestCase(TestCase):
         self.assertTemplateUsed(response, 'cabinet/activation.html')
         self.assertIn('activation_code',
                       response.context['form'].errors)
+
+
+class ResetPasswordViewTestCase(TestCase):
+
+    def setUp(self):
+        self.url = reverse('website:reset_password')
+
+    def test_get(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'website/reset_password.html')
+
+    def test_post(self):
+        merchant = MerchantAccountFactory.create()
+        self.assertTrue(merchant.user.check_password('password'))
+        form_data = {'email': merchant.user.email}
+        response = self.client.post(self.url, form_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0], merchant.user.email)
+        merchant_updated = MerchantAccount.objects.get(pk=merchant.pk)
+        self.assertFalse(merchant_updated.user.check_password('password'))
+
+
+class ChangePasswordViewTestCase(TestCase):
+
+    def setUp(self):
+        self.url = reverse('website:change_password')
+
+    def test_get(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/change_password.html')
+
+    def test_post(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        form_data = {
+            'old_password': 'password',
+            'new_password1': 'xxx',
+            'new_password2': 'xxx',
+        }
+        response = self.client.post(self.url, form_data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 0)
+        merchant_updated = MerchantAccount.objects.get(pk=merchant.pk)
+        self.assertTrue(merchant_updated.user.check_password('xxx'))
 
 
 class ReconciliationViewTestCase(TestCase):
