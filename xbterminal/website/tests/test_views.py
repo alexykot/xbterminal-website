@@ -3,6 +3,7 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.test import TestCase
 from django.core import mail
+from django.core.cache import cache
 from django.utils import timezone
 from mock import patch
 
@@ -11,6 +12,44 @@ from website.tests.factories import (
     MerchantAccountFactory,
     DeviceFactory)
 from operations.tests.factories import PaymentOrderFactory
+
+
+class ContactViewTestCase(TestCase):
+
+    def setUp(self):
+        self.url = reverse('website:contact')
+
+    @patch('website.views.get_real_ip')
+    def test_get_first(self, get_ip_mock):
+        get_ip_mock.return_value = real_ip = '10.123.45.1'
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'website/contact.html')
+        form = response.context['form']
+        self.assertNotIn('captcha', form.fields)
+
+    @patch('website.views.get_real_ip')
+    def test_get_captcha(self, get_ip_mock):
+        get_ip_mock.return_value = real_ip = '10.123.45.2'
+        cache.set('form-contact-10.123.45.2', 3, timeout=None)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        form = response.context['form']
+        self.assertIn('captcha', form.fields)
+
+    @patch('website.views.get_real_ip')
+    def test_post(self, get_ip_mock):
+        get_ip_mock.return_value = real_ip = '10.123.45.3'
+        form_data = {
+            'email': 'test@example.net',
+            'name': 'Test',
+            'message': 'Test message',
+        }
+        response = self.client.post(self.url, form_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0],
+                         settings.CONTACT_EMAIL_RECIPIENTS[0])
 
 
 class RegistrationViewTestCase(TestCase):
