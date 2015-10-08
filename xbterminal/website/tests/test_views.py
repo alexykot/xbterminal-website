@@ -52,6 +52,33 @@ class ContactViewTestCase(TestCase):
                          settings.CONTACT_EMAIL_RECIPIENTS[0])
 
 
+class LoginViewTestCase(TestCase):
+
+    def setUp(self):
+        self.url = reverse('website:login')
+
+    def test_get(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'website/login.html')
+
+    def test_get_merchant(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_post(self):
+        merchant = MerchantAccountFactory.create()
+        form_data = {
+            'username': merchant.user.email,
+            'password': 'password',
+        }
+        response = self.client.post(self.url, form_data)
+        self.assertEqual(response.status_code, 302)
+
+
 class RegistrationViewTestCase(TestCase):
 
     def setUp(self):
