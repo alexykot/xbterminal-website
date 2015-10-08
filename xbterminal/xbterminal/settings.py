@@ -270,6 +270,10 @@ if TESTING:
     LOGGING['loggers']['']['handlers'] = ['null']
     LOGGING['loggers']['django.request']['handlers'] = ['null']
     LOGGING['loggers']['rq.worker']['handlers'] = ['null']
+    # Disable redis cache
+    CACHES['default'] = {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
     # Don't connect to bitcoind
     BITCOIND_AUTH = {
         'mainnet': (None, None),
