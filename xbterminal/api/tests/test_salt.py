@@ -1,9 +1,19 @@
 from mock import Mock, patch
 from django.test import TestCase
+from django.test.utils import override_settings
 
 from api.utils.salt import Salt
 
 
+@override_settings(SALT_SERVERS={
+    'default': {
+        'HOST': 'test',
+        'USER': 'test',
+        'PASSWORD': 'test',
+        'CLIENT_CERT': 'test',
+        'CLIENT_KEY': 'test',
+    },
+})
 class SaltTestCase(TestCase):
 
     @patch('api.utils.salt.requests.request')

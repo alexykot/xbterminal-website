@@ -55,7 +55,9 @@ class DeviceSerializerTestCase(TestCase):
 
 class DeviceRegistrationSerializerTestCase(TestCase):
 
-    def test_validation(self):
+    @patch('api.serializers.Salt')
+    def test_validation(self, salt_cls_mock):
+        salt_cls_mock.return_value = salt_mock = Mock()
         batch = DeviceBatchFactory.create()
         device_key = hashlib.sha256('test').hexdigest()
         api_key = create_test_public_key()
@@ -66,6 +68,7 @@ class DeviceRegistrationSerializerTestCase(TestCase):
         }
         serializer = DeviceRegistrationSerializer(data=data)
         self.assertTrue(serializer.is_valid())
+        self.assertTrue(salt_mock.login.called)
         device = serializer.save()
         self.assertEqual(device.device_type, 'hardware')
         self.assertIsNone(device.merchant)
@@ -74,7 +77,8 @@ class DeviceRegistrationSerializerTestCase(TestCase):
         self.assertEqual(device.api_key, api_key)
         self.assertEqual(device.batch.pk, batch.pk)
 
-    def test_batch_size(self):
+    @patch('api.serializers.Salt')
+    def test_batch_size(self, salt_cls_mock):
         batch = DeviceBatchFactory.create(size=0)
         data = {
             'batch': batch.batch_number,
@@ -86,7 +90,8 @@ class DeviceRegistrationSerializerTestCase(TestCase):
         self.assertEqual(serializer.errors['batch'][0],
                          'Registration limit exceeded.')
 
-    def test_invalid_device_key(self):
+    @patch('api.serializers.Salt')
+    def test_invalid_device_key(self, salt_cls_mock):
         batch = DeviceBatchFactory.create()
         data = {
             'batch': batch.batch_number,
@@ -111,7 +116,8 @@ class DeviceRegistrationSerializerTestCase(TestCase):
         self.assertEqual(serializer.errors['key'][0],
                          'Device is already registered.')
 
-    def test_invalid_api_key(self):
+    @patch('api.serializers.Salt')
+    def test_invalid_api_key(self, salt_cls_mock):
         batch = DeviceBatchFactory.create()
         data = {
             'batch': batch.batch_number,

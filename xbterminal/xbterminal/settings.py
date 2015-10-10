@@ -275,3 +275,5 @@ if TESTING:
         'mainnet': (None, None),
         'testnet': (None, None),
     }
+    # Don't connect to Salt server
+    SALT_SERVERS = None

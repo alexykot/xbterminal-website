@@ -439,7 +439,8 @@ class DeviceViewSetTestCase(APITestCase):
         self.assertEqual(device.status, 'activation')
         self.assertEqual(device.batch.pk, batch.pk)
 
-    def test_create_errors(self):
+    @patch('api.serializers.Salt')
+    def test_create_errors(self, salt_cls_mock):
         url = reverse('api:v2:device-list')
         response = self.client.post(url, {})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
