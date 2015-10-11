@@ -1,0 +1,7 @@
+[run]
+source = xbterminal/
+
+[report]
+omit =
+    */migrations/*
+    */tests/*

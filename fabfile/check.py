@@ -4,7 +4,7 @@ from fabric.api import task, prefix, local
 @task
 def python():
     with prefix('. venv/bin/activate'):
-        local('flake8 --max-line-length=140 fabfile')
+        local('flake8 fabfile')
         local('flake8 '
               '--exclude=migrations,paymentrequest_pb2.py '
               '--max-line-length=140 '
@@ -15,7 +15,9 @@ def python():
 @task
 def django():
     with prefix('. venv/bin/activate'):
-        local('python xbterminal/manage.py test website operations api')
+        local('coverage run '
+              'xbterminal/manage.py test website operations api')
+        local('coverage report')
 
 
 @task(default=True)
