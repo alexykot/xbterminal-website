@@ -136,8 +136,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'xbterminal',
-        'USER': 'xbterm_usr',
-        'PASSWORD': 'zx#213_Op',
+        'USER': 'user',
+        'PASSWORD': 'password',
         'HOST': '127.0.0.1',
         'PORT': '5432',
     }
@@ -201,7 +201,8 @@ CONTACT_EMAIL_RECIPIENTS = ["info@xbterminal.io"]
 
 BITCOIND_HOST = "node.xbterminal.io"
 BITCOIND_AUTH = {
-    "testnet": ("root", "password"),
+    'mainnet': ('user', 'password'),
+    'testnet': ('user', 'password'),
 }
 
 # Salt
