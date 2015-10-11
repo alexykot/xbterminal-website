@@ -19,6 +19,7 @@ class BlockChain(object):
 
     def __init__(self, network):
         self.network = network
+        # TODO: don't set global params
         bitcoin.SelectParams(self.network)
         user, password = settings.BITCOIND_AUTH[network]
         service_url = "https://{user}:{password}@{host}:{port}".format(
@@ -223,6 +224,7 @@ def validate_bitcoin_address(address, network):
         error message or None
     """
     if network:
+        # TODO: don't set global params
         bitcoin.SelectParams(network)
         try:
             address = CBitcoinAddress(address)

@@ -2,6 +2,7 @@ from decimal import Decimal
 from django.test import TestCase
 from mock import patch, Mock
 
+import bitcoin
 from bitcoin.core import COutPoint
 from operations.blockchain import (
     BlockChain,
@@ -50,12 +51,16 @@ class UtilsTestCase(TestCase):
         self.assertEqual(len(deserialized), 2)
 
     def test_address_validation(self):
+        self.assertEqual(bitcoin.params.__class__.__name__, 'MainParams')
         main_addr = '1JpY93MNoeHJ914CHLCQkdhS7TvBM68Xp6'
         self.assertIsNone(
             validate_bitcoin_address(main_addr, 'mainnet'))
         test_addr = 'mxqpfcxzKnPfgZw8JKs7DU6m7DTysxBBWn'
         self.assertIsNone(
             validate_bitcoin_address(test_addr, 'testnet'))
+        self.assertIsNotNone(
+            validate_bitcoin_address(test_addr, 'mainnet'))
         invalid_addr = '1wFSdAv9rGpA4CvX3UtxZpUwaumsWM68pC'
         self.assertIsNotNone(
             validate_bitcoin_address(invalid_addr, None))
+        self.assertEqual(bitcoin.params.__class__.__name__, 'MainParams')
