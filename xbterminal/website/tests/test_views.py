@@ -3,13 +3,81 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.test import TestCase
 from django.core import mail
+from django.core.cache import cache
 from django.utils import timezone
 from mock import patch
 
+from website.models import MerchantAccount
 from website.tests.factories import (
     MerchantAccountFactory,
-    DeviceFactory)
+    DeviceFactory,
+    ReconciliationTimeFactory)
 from operations.tests.factories import PaymentOrderFactory
+
+
+class ContactViewTestCase(TestCase):
+
+    def setUp(self):
+        self.url = reverse('website:contact')
+
+    @patch('website.views.get_real_ip')
+    def test_get_first(self, get_ip_mock):
+        get_ip_mock.return_value = real_ip = '10.123.45.1'
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'website/contact.html')
+        form = response.context['form']
+        self.assertNotIn('captcha', form.fields)
+
+    @patch('website.views.get_real_ip')
+    def test_get_captcha(self, get_ip_mock):
+        get_ip_mock.return_value = real_ip = '10.123.45.2'
+        cache.set('form-contact-10.123.45.2', 3, timeout=None)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        form = response.context['form']
+        self.assertIn('captcha', form.fields)
+
+    @patch('website.views.get_real_ip')
+    def test_post(self, get_ip_mock):
+        get_ip_mock.return_value = real_ip = '10.123.45.3'
+        form_data = {
+            'email': 'test@example.net',
+            'name': 'Test',
+            'message': 'Test message',
+        }
+        response = self.client.post(self.url, form_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0],
+                         settings.CONTACT_EMAIL_RECIPIENTS[0])
+
+
+class LoginViewTestCase(TestCase):
+
+    def setUp(self):
+        self.url = reverse('website:login')
+
+    def test_get(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'website/login.html')
+
+    def test_get_merchant(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_post(self):
+        merchant = MerchantAccountFactory.create()
+        form_data = {
+            'username': merchant.user.email,
+            'password': 'password',
+        }
+        response = self.client.post(self.url, form_data)
+        self.assertEqual(response.status_code, 302)
 
 
 class RegistrationViewTestCase(TestCase):
@@ -259,6 +327,57 @@ class ActivateDeviceViewTestCase(TestCase):
                       response.context['form'].errors)
 
 
+class ResetPasswordViewTestCase(TestCase):
+
+    def setUp(self):
+        self.url = reverse('website:reset_password')
+
+    def test_get(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'website/reset_password.html')
+
+    def test_post(self):
+        merchant = MerchantAccountFactory.create()
+        self.assertTrue(merchant.user.check_password('password'))
+        form_data = {'email': merchant.user.email}
+        response = self.client.post(self.url, form_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0], merchant.user.email)
+        merchant_updated = MerchantAccount.objects.get(pk=merchant.pk)
+        self.assertFalse(merchant_updated.user.check_password('password'))
+
+
+class ChangePasswordViewTestCase(TestCase):
+
+    def setUp(self):
+        self.url = reverse('website:change_password')
+
+    def test_get(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/change_password.html')
+
+    def test_post(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        form_data = {
+            'old_password': 'password',
+            'new_password1': 'xxx',
+            'new_password2': 'xxx',
+        }
+        response = self.client.post(self.url, form_data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 0)
+        merchant_updated = MerchantAccount.objects.get(pk=merchant.pk)
+        self.assertTrue(merchant_updated.user.check_password('xxx'))
+
+
 class ReconciliationViewTestCase(TestCase):
 
     def setUp(self):
@@ -285,6 +404,44 @@ class ReconciliationViewTestCase(TestCase):
                          sum(po.fiat_amount for po in orders))
         self.assertEqual(payments[0]['instantfiat_fiat_amount'],
                          sum(po.instantfiat_fiat_amount for po in orders))
+
+
+class ReconciliationTimeViewTestCase(TestCase):
+
+    def setUp(self):
+        self.merchant = MerchantAccountFactory.create()
+
+    def test_post(self):
+        device = DeviceFactory.create(merchant=self.merchant)
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:reconciliation_time',
+                      kwargs={'device_key': device.key, 'pk': 0})
+        form_data = {
+            'email': 'test@example.net',
+            'time': '4:30 AM',
+        }
+        response = self.client.post(url, form_data)
+        self.assertEqual(response.status_code, 302)
+        rectime = device.rectime_set.first()
+        self.assertEqual(rectime.email, form_data['email'])
+        self.assertEqual(rectime.time.hour, 4)
+
+    def test_delete(self):
+        device = DeviceFactory.create(merchant=self.merchant)
+        rectime = ReconciliationTimeFactory(device=device)
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:reconciliation_time',
+                      kwargs={'device_key': device.key, 'pk': rectime.pk})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(device.rectime_set.count(), 0)
+
+        url = reverse('website:reconciliation_time',
+                      kwargs={'device_key': device.key, 'pk': rectime.pk})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, 404)
 
 
 class ReportViewTestCase(TestCase):

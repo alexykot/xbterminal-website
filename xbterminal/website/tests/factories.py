@@ -1,6 +1,8 @@
+import datetime
 import hashlib
 import uuid
 import factory
+
 
 from oauth2_provider.models import Application
 from website.models import (
@@ -8,7 +10,8 @@ from website.models import (
     MerchantAccount,
     BTCAccount,
     DeviceBatch,
-    Device)
+    Device,
+    ReconciliationTime)
 
 
 class UserFactory(factory.DjangoModelFactory):
@@ -96,3 +99,13 @@ class DeviceFactory(factory.DjangoModelFactory):
             self.key = hashlib.sha256(uuid.uuid4().bytes).hexdigest()
             if created:
                 self.save()
+
+
+class ReconciliationTimeFactory(factory.DjangoModelFactory):
+
+    class Meta:
+        model = ReconciliationTime
+
+    device = factory.SubFactory(DeviceFactory)
+    email = factory.LazyAttribute(lambda rt: rt.device.merchant.user.email)
+    time = datetime.time(10, 0)

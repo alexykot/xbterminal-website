@@ -5,9 +5,12 @@ from django.core import mail
 from oauth2_provider.models import Application
 from website.forms import (
     MerchantRegistrationForm,
+    ResetPasswordForm,
     DeviceForm,
     DeviceActivationForm)
-from website.tests.factories import DeviceFactory
+from website.tests.factories import (
+    MerchantAccountFactory,
+    DeviceFactory)
 
 
 class MerchantRegistrationFormTestCase(TestCase):
@@ -60,6 +63,23 @@ class MerchantRegistrationFormTestCase(TestCase):
         self.assertIn('contact_last_name', form.errors)
         self.assertIn('contact_email', form.errors)
         self.assertIn('contact_phone', form.errors)
+
+
+class ResetPasswordFormTestCase(TestCase):
+
+    def test_valid_data(self):
+        merchant = MerchantAccountFactory.create()
+        form_data = {'email': merchant.user.email}
+        form = ResetPasswordForm(data=form_data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form._user.pk, merchant.user.pk)
+
+    def test_invalid_email(self):
+        form_data = {'email': 'invalid@example.com'}
+        form = ResetPasswordForm(data=form_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('email', form.errors)
+        self.assertIsNone(form._user)
 
 
 class DeviceFormTestCase(TestCase):
