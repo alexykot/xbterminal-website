@@ -7,7 +7,7 @@
 * Redis
 * nginx + uwsgi
 * supervisord
-* Debian packages: `apt-get install libffi-dev libpq-dev`
+* Debian packages: `apt-get install libffi-dev libpq-dev libjpeg-dev`
 * Python packages listed in `requirements.txt`
 
 ### Local settings
