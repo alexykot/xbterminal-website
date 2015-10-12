@@ -1,6 +1,7 @@
 import base64
 from cStringIO import StringIO
 import os
+import tarfile
 import unicodecsv
 from zipfile import ZipFile
 from decimal import Decimal
@@ -258,3 +259,22 @@ def send_balance_admin_notification(info):
         settings.DEFAULT_FROM_EMAIL,
         settings.CONTACT_EMAIL_RECIPIENTS)
     email.send(fail_silently=False)
+
+
+def get_batch_info_archive(batch):
+    """
+    Create archive with batch info (for manufacturers)
+    Accepts:
+        bacth: DeviceBatch instance
+    Returns:
+        StringIO object
+    """
+    buffer = StringIO()
+    archive = tarfile.open(fileobj=buffer, mode='w:gz')
+    batch_number_tarinfo = tarfile.TarInfo(
+        '/srv/xbterminal/xbterminal/runtime/batch_number')
+    batch_number_tarinfo.size = 32
+    archive.addfile(batch_number_tarinfo,
+                    StringIO(batch.batch_number))
+    archive.close()
+    return buffer

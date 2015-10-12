@@ -239,6 +239,7 @@ CONSTANCE_CONFIG = {
     'GOCOIN_MERCHANT_ID': ('', 'GoCoin Merchant ID'),
     'GOCOIN_AUTH_TOKEN': ('', 'GoCoin access token'),
     'TERMINAL_PRICE': (200.00, 'Terminal price'),
+    'CURRENT_BATCH_NUMBER': ('', 'Batch number'),
 }
 
 # Misc

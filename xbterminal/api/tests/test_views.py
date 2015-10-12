@@ -1,6 +1,7 @@
 from decimal import Decimal
 import json
 import hashlib
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils import timezone
@@ -470,5 +471,27 @@ class DeviceViewSetTestCase(APITestCase):
         device = DeviceFactory.create(status='suspended')
         url = reverse('api:v2:device-detail',
                       kwargs={'key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class DeviceBatchViewSetTestCase(APITestCase):
+
+    @patch('api.views.config')
+    def test_current(self, config_mock):
+        batch = DeviceBatchFactory.create()
+        config_mock.CURRENT_BATCH_NUMBER = batch.batch_number
+        url = reverse('api:v2:batch-current')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'],
+                         'application/gzip')
+        self.assertEqual(response['Content-Disposition'],
+                         'filename="batch.tar.gz"')
+
+    @patch('api.views.config')
+    def test_current_not_found(self, config_mock):
+        config_mock.CURRENT_BATCH_NUMBER = settings.DEFAULT_BATCH_NUMBER
+        url = reverse('api:v2:batch-current')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

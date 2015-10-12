@@ -48,6 +48,9 @@ short_urls = patterns(
 )
 
 api_v2_router = routers.DefaultRouter()
+api_v2_router.register('batches',
+                       views.DeviceBatchViewSet,
+                       base_name='batch')
 api_v2_router.register('devices',
                        views.DeviceViewSet,
                        base_name='device')
