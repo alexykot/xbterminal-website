@@ -19,6 +19,7 @@ from rest_framework.decorators import (
 from rest_framework.response import Response
 from rest_framework import status, viewsets, mixins
 from oauth2_provider.views.generic import ProtectedResourceView
+from constance import config
 
 from website.models import Device, DeviceBatch
 from website.forms import SimpleMerchantRegistrationForm
@@ -431,8 +432,10 @@ class DeviceBatchViewSet(viewsets.GenericViewSet):
 
     @list_route(methods=['GET'], renderer_classes=[TarArchiveRenderer])
     def current(self, request):
-        batch = self.get_queryset().order_by('-created_at').first()
-        if not batch:
+        try:
+            batch = self.get_queryset().get(
+                batch_number=config.CURRENT_BATCH_NUMBER)
+        except DeviceBatch.DoesNotExist:
             raise Http404
         result = get_batch_info_archive(batch).getvalue()
         response = Response(result)
