@@ -472,3 +472,21 @@ class DeviceViewSetTestCase(APITestCase):
                       kwargs={'key': device.key})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class DeviceBatchViewSetTestCase(APITestCase):
+
+    def test_current(self):
+        batch = DeviceBatchFactory.create()
+        url = reverse('api:v2:batch-current')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'],
+                         'application/gzip')
+        self.assertEqual(response['Content-Disposition'],
+                         'filename="batch.tar.gz"')
+
+    def test_current_not_found(self):
+        url = reverse('api:v2:batch-current')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

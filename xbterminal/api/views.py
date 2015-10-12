@@ -3,6 +3,7 @@ import json
 import logging
 
 from django.shortcuts import get_object_or_404
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
@@ -11,21 +12,29 @@ from django.views.generic import View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import ugettext as _
 
-from rest_framework.decorators import api_view, detail_route
+from rest_framework.decorators import (
+    api_view,
+    list_route,
+    detail_route)
 from rest_framework.response import Response
 from rest_framework import status, viewsets, mixins
 from oauth2_provider.views.generic import ProtectedResourceView
 
-from website.models import Device
+from website.models import Device, DeviceBatch
 from website.forms import SimpleMerchantRegistrationForm
-from website.utils import generate_qr_code, send_registration_info
-from api.utils.pdf import render_to_pdf
+from website.utils import (
+    generate_qr_code,
+    send_registration_info,
+    get_batch_info_archive)
+
 from api.forms import PaymentForm, WithdrawalForm
 from api.serializers import (
     WithdrawalOrderSerializer,
     DeviceSerializer,
     DeviceRegistrationSerializer)
+from api.renderers import TarArchiveRenderer
 from api.utils.crypto import verify_signature
+from api.utils.pdf import render_to_pdf
 
 from operations.models import PaymentOrder, WithdrawalOrder
 import operations.payment
@@ -410,3 +419,23 @@ class DeviceViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
         device = serializer.save()
         return Response({'activation_code': device.activation_code})
+
+
+class DeviceBatchViewSet(viewsets.GenericViewSet):
+
+    lookup_field = 'batch_number'
+
+    def get_queryset(self):
+        return DeviceBatch.objects.\
+            exclude(batch_number=settings.DEFAULT_BATCH_NUMBER)
+
+    @list_route(methods=['GET'], renderer_classes=[TarArchiveRenderer])
+    def current(self, request):
+        batch = self.get_queryset().order_by('-created_at').first()
+        if not batch:
+            raise Http404
+        result = get_batch_info_archive(batch).getvalue()
+        response = Response(result)
+        response['Content-Length'] = len(result)
+        response['Content-Disposition'] = 'filename="batch.tar.gz"'
+        return response
