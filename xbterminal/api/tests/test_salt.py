@@ -50,3 +50,11 @@ class SaltTestCase(TestCase):
         self.assertIsNone(salt.accept('m1'))
         with self.assertRaises(AssertionError):
             salt.accept('m2')
+
+    @patch('api.utils.salt.Salt._send_request')
+    def test_upgrade(self, send_mock):
+        send_mock.return_value = {
+            'jid': '20151115135324593558',
+        }
+        salt = Salt()
+        self.assertIsNone(salt.upgrade('m1', '0.0'))

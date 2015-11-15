@@ -51,7 +51,8 @@ class Salt(object):
 
     def check_fingerprint(self, minion_id, fingerprint):
         """
-        https://docs.saltstack.com/en/latest/ref/wheel/all/salt.wheel.key.html
+        https://docs.saltstack.com/en/2015.5/ref/wheel/all
+            /salt.wheel.key.html#salt.wheel.key.finger
         """
         payload = {
             'client': 'wheel',
@@ -83,3 +84,23 @@ class Salt(object):
         }
         result = self._send_request('post', '/', data=payload)
         logger.info('minion deleted')
+
+    def upgrade(self, minion_id, version):
+        """
+        https://docs.saltstack.com/en/2015.5/ref/modules/all
+            /salt.modules.state.html#salt.modules.state.highstate
+        """
+        payload = {
+            'client': 'local_async',
+            'fun': 'state.highstate',
+            'tgt': minion_id,
+            'kwarg': {
+                'pillar': {
+                    'xbt': {
+                        'version': version,
+                    },
+                },
+            },
+        }
+        result = self._send_request('post', '/', data=payload)
+        logger.info('job id {0}'.format(result['jid']))
