@@ -561,3 +561,12 @@ class PaymentViewTestCase(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'payment/payment.html')
+
+    def test_suspended(self):
+        device = DeviceFactory.create(merchant=self.merchant)
+        device.suspend()
+        device.save()
+        url = reverse('website:payment',
+                      kwargs={'device_key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)

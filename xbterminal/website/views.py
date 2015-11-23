@@ -817,7 +817,9 @@ class PaymentView(TemplateResponseMixin, View):
 
     def get(self, *args, **kwargs):
         device = get_object_or_404(
-            models.Device, key=self.kwargs.get('device_key'))
+            models.Device,
+            key=self.kwargs.get('device_key'),
+            status='active')
         try:
             amount = Decimal(self.request.GET.get('amount', '0.00'))
         except ArithmeticError:
