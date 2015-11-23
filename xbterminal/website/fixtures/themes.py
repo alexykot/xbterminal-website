@@ -1,4 +1,4 @@
-from django.db import connection
+from website.fixtures import fix_sequence
 
 THEMES = [
     {
@@ -16,11 +16,4 @@ def update_themes(apps, schema_editor):
             defaults={
                 'name': theme['name'],
             })
-    # Fix sequence
-    with connection.cursor() as cur:
-        cur.execute("""
-            SELECT setval(
-                'website_uitheme_id_seq',
-                (SELECT max(id) + 1 FROM website_uitheme),
-                FALSE);
-            """)
+    fix_sequence(UITheme)
