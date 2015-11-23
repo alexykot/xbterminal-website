@@ -7,6 +7,7 @@ from django_fsm import TransitionNotAllowed
 
 from website.models import (
     User,
+    UITheme,
     MerchantAccount,
     BTCAccount,
     Device,
@@ -40,6 +41,13 @@ class UserTestCase(TestCase):
     def test_get_full_name(self):
         user = UserFactory.create()
         self.assertEqual(user.get_full_name(), user.email)
+
+
+class UIThemeTestCase(TestCase):
+
+    def test_create_theme(self):
+        theme = UITheme.objects.create(name='test')
+        self.assertEqual(str(theme), 'test')
 
 
 class MerchantAccountTestCase(TestCase):
