@@ -217,6 +217,25 @@ class RegistrationViewTestCase(TestCase):
                          settings.CONTACT_EMAIL_RECIPIENTS[0])
 
 
+class DeviceListViewTestCase(TestCase):
+
+    def test_get(self):
+        merchant = MerchantAccountFactory.create()
+        device_1, device_2 = DeviceFactory.create_batch(
+            2, merchant=merchant)
+        device_2.suspend()
+        device_2.save()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:devices')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/device_list.html')
+        devices = response.context['devices']
+        self.assertIn(device_1, devices)
+        self.assertIn(device_2, devices)
+
+
 class CreateDeviceViewTestCase(TestCase):
 
     def setUp(self):

@@ -366,7 +366,7 @@ class DeviceList(TemplateResponseMixin, CabinetView):
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         context['devices'] = self.request.user.merchant.\
-            device_set.filter(status='active')
+            device_set.order_by('status')
         return self.render_to_response(context)
 
 
