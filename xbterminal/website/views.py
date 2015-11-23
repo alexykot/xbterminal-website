@@ -438,8 +438,7 @@ class DeviceMixin(ContextMixin):
         merchant = self.request.user.merchant
         try:
             context['device'] = merchant.device_set.get(
-                key=self.kwargs.get('device_key'),
-                status='active')
+                key=self.kwargs.get('device_key'))
         except models.Device.DoesNotExist:
             raise Http404
         return context

@@ -7,6 +7,13 @@
 {% endblock %}
 
 {% block cabinet_content %}
+
+{% if device.status == 'suspended' %}
+<div class="alert alert-danger">
+    This device currently is not operational
+</div>
+{% endif %}
+
 <h3>{{ device.name }}</h3>
 <div class="form-title">{% trans 'send daily reconciliation to email every day at' %}</div>
 <form action="{% url 'website:reconciliation_time' device.key 0 %}" method="POST" class="rectime-add">
