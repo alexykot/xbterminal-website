@@ -64,6 +64,7 @@ class MerchantAccountTestCase(TestCase):
         self.assertEqual(merchant.country, 'GB')
         self.assertEqual(merchant.language.code, 'en')
         self.assertEqual(merchant.currency.name, 'GBP')
+        self.assertEqual(merchant.ui_theme.name, 'default')
         self.assertEqual(merchant.account_balance, 0)
         self.assertEqual(merchant.account_balance_max, 0)
         self.assertEqual(merchant.payment_processor, 'gocoin')

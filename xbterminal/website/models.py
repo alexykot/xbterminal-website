@@ -170,7 +170,7 @@ class MerchantAccount(models.Model):
 
     language = models.ForeignKey(Language, default=1)  # by default, English, see fixtures
     currency = models.ForeignKey(Currency, default=1)  # by default, GBP, see fixtures
-    ui_theme = models.ForeignKey(UITheme, null=True)
+    ui_theme = models.ForeignKey(UITheme, default=1)  # 'default' theme, see fixtures
 
     payment_processor = models.CharField(_('Payment processor'), max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, default='gocoin')
     api_key = models.CharField(_('API key'), max_length=255, blank=True)
