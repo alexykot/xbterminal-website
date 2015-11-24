@@ -366,7 +366,7 @@ class DeviceList(TemplateResponseMixin, CabinetView):
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         context['devices'] = self.request.user.merchant.\
-            device_set.filter(status='active')
+            device_set.order_by('status')
         return self.render_to_response(context)
 
 
@@ -438,8 +438,7 @@ class DeviceMixin(ContextMixin):
         merchant = self.request.user.merchant
         try:
             context['device'] = merchant.device_set.get(
-                key=self.kwargs.get('device_key'),
-                status='active')
+                key=self.kwargs.get('device_key'))
         except models.Device.DoesNotExist:
             raise Http404
         return context
@@ -817,7 +816,9 @@ class PaymentView(TemplateResponseMixin, View):
 
     def get(self, *args, **kwargs):
         device = get_object_or_404(
-            models.Device, key=self.kwargs.get('device_key'))
+            models.Device,
+            key=self.kwargs.get('device_key'),
+            status='active')
         try:
             amount = Decimal(self.request.GET.get('amount', '0.00'))
         except ArithmeticError:

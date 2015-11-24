@@ -437,7 +437,9 @@ class Device(models.Model):
     def can_activate(self):
         return self.merchant is not None
 
-    @transition(field=status, source='*', target='active',
+    @transition(field=status,
+                source=['activation', 'suspended'],
+                target='active',
                 conditions=[can_activate])
     def activate(self):
         pass

@@ -11,6 +11,7 @@
 <table id="devices" class="table table-striped table-bordered table-responsive">
     <tr>
         <th>{% trans 'Name' %}</th>
+        <th>{% trans 'Status' %}</th>
         <th>{% trans 'Receiving address' %}</th>
         <th>{% trans 'Payment processor' %}</th>
         <th>{% trans 'Actions' %}</th>
@@ -19,6 +20,9 @@
     <tr>
         <td>
             <a href="{% url 'website:device' device.key %}">{{ device.name }}</a>
+        </td>
+        <td>
+            {{ device.get_status_display }}
             {% if device.is_online %}<div class="device-online" title="device online">•</div>{% endif %}
         </td>
         <td>
@@ -31,7 +35,9 @@
         <td>{{ device.payment_processor_info|default:"--" }}</td>
         <td>
             <div><a href="{% url 'website:reconciliation' device.key %}">{% trans 'reconciliation' %}</a></div>
+            {% if device.status == 'active' %}
             <div><a href="{% url 'website:payment' device.key %}" target="_blank">{% trans 'online POS' %}</a></div>
+            {% endif %}
         </td>
     </tr>
     {% endfor %}

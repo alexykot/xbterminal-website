@@ -217,6 +217,25 @@ class RegistrationViewTestCase(TestCase):
                          settings.CONTACT_EMAIL_RECIPIENTS[0])
 
 
+class DeviceListViewTestCase(TestCase):
+
+    def test_get(self):
+        merchant = MerchantAccountFactory.create()
+        device_1, device_2 = DeviceFactory.create_batch(
+            2, merchant=merchant)
+        device_2.suspend()
+        device_2.save()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:devices')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/device_list.html')
+        devices = response.context['devices']
+        self.assertIn(device_1, devices)
+        self.assertIn(device_2, devices)
+
+
 class CreateDeviceViewTestCase(TestCase):
 
     def setUp(self):
@@ -268,17 +287,18 @@ class UpdateDeviceView(TestCase):
                       kwargs={'device_key': device.key})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/device_form.html')
 
-    def test_get_not_activated(self):
-        device = DeviceFactory.create(status='activation')
-        device.merchant = self.merchant
-        device.save()
+    def test_get_suspended(self):
+        device = DeviceFactory.create(merchant=self.merchant,
+                                      status='suspended')
         self.client.login(username=self.merchant.user.email,
                           password='password')
         url = reverse('website:device',
                       kwargs={'device_key': device.key})
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/device_form.html')
 
 
 class ActivateDeviceViewTestCase(TestCase):
@@ -542,3 +562,11 @@ class PaymentViewTestCase(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'payment/payment.html')
+
+    def test_suspended(self):
+        device = DeviceFactory.create(merchant=self.merchant,
+                                      status='suspended')
+        url = reverse('website:payment',
+                      kwargs={'device_key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
