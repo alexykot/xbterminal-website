@@ -394,6 +394,7 @@ class CreateDeviceView(TemplateResponseMixin, CabinetView):
         if form.is_valid():
             device = form.save(commit=False)
             device.merchant = self.request.user.merchant
+            device.start_activation()
             device.activate()
             device.save()
             return redirect(reverse('website:device',
@@ -418,6 +419,7 @@ class ActivateDeviceView(TemplateResponseMixin, CabinetView):
         if form.is_valid():
             device = form.device
             device.merchant = self.request.user.merchant
+            device.start_activation()
             device.activate()
             device.save()
             return redirect(reverse('website:device',

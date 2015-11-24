@@ -31,10 +31,10 @@ class WithdrawalOrderSerializerTestCase(TestCase):
 
 class DeviceSerializerTestCase(TestCase):
 
-    def test_activation(self):
-        device = DeviceFactory.create(status='activation')
+    def test_registered(self):
+        device = DeviceFactory.create(status='registered')
         data = DeviceSerializer(device).data
-        self.assertEqual(data['status'], 'activation')
+        self.assertEqual(data['status'], 'registered')
         self.assertEqual(data['bitcoin_network'], 'mainnet')
         self.assertEqual(data['language']['code'], 'en')
         self.assertEqual(data['currency']['name'], 'GBP')
@@ -72,7 +72,7 @@ class DeviceRegistrationSerializerTestCase(TestCase):
         device = serializer.save()
         self.assertEqual(device.device_type, 'hardware')
         self.assertIsNone(device.merchant)
-        self.assertEqual(device.status, 'activation')
+        self.assertEqual(device.status, 'registered')
         self.assertEqual(device.key, device_key)
         self.assertEqual(device.api_key, api_key)
         self.assertEqual(device.batch.pk, batch.pk)

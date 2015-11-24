@@ -47,7 +47,7 @@ class DeviceSerializer(serializers.ModelSerializer):
         ]
 
     def get_language(self, device):
-        if device.status == 'activation':
+        if device.status == 'registered':
             language = Language.objects.get(code='en')
         else:
             language = device.merchant.language
@@ -58,7 +58,7 @@ class DeviceSerializer(serializers.ModelSerializer):
         }
 
     def get_currency(self, device):
-        if device.status == 'activation':
+        if device.status == 'registered':
             currency = Currency.objects.get(name='GBP')
         else:
             currency = device.merchant.currency
@@ -122,7 +122,7 @@ class DeviceRegistrationSerializer(serializers.ModelSerializer):
         return Device.objects.create(
             merchant=None,
             device_type='hardware',
-            status='activation',
+            status='registered',
             name='Device {0}'.format(validated_data['key'][:6]),
             key=validated_data['key'],
             batch=validated_data['batch'],

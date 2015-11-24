@@ -89,7 +89,7 @@ class DeviceSettingsViewTestCase(TestCase):
         self.assertEqual(data['BITCOIN_NETWORK'], 'mainnet')
 
     def test_not_active(self):
-        device = DeviceFactory.create(status='activation')
+        device = DeviceFactory.create(status='registered')
         url = reverse('api:device', kwargs={'key': device.key})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -437,7 +437,7 @@ class DeviceViewSetTestCase(APITestCase):
         device = Device.objects.get(
             activation_code=response.data['activation_code'])
         self.assertEqual(device.key, device_key)
-        self.assertEqual(device.status, 'activation')
+        self.assertEqual(device.status, 'registered')
         self.assertEqual(device.batch.pk, batch.pk)
 
     @patch('api.serializers.Salt')
@@ -449,6 +449,16 @@ class DeviceViewSetTestCase(APITestCase):
         self.assertIn('key', response.data['errors'])
         self.assertIn('api_key', response.data['errors'])
 
+    def test_retrieve_registered(self):
+        device = DeviceFactory.create(status='registered')
+        url = reverse('api:v2:device-detail',
+                      kwargs={'key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['status'], 'registered')
+        self.assertEqual(response.data['language']['code'], 'en')
+        self.assertEqual(response.data['currency']['name'], 'GBP')
+
     def test_retrieve_activation(self):
         device = DeviceFactory.create(status='activation')
         url = reverse('api:v2:device-detail',
@@ -456,8 +466,6 @@ class DeviceViewSetTestCase(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['status'], 'activation')
-        self.assertEqual(response.data['language']['code'], 'en')
-        self.assertEqual(response.data['currency']['name'], 'GBP')
 
     def test_retrieve_active(self):
         device = DeviceFactory.create(status='active')

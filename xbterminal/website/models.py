@@ -369,7 +369,8 @@ class Device(models.Model):
         ('web', _('Web app')),
     ]
     DEVICE_STATUSES = [
-        ('activation', _('Activation pending')),
+        ('registered', _('Registered')),
+        ('activation', _('Activation in progress')),
         ('active', _('Operational')),
         ('suspended', _('Suspended')),
     ]
@@ -385,7 +386,7 @@ class Device(models.Model):
     device_type = models.CharField(max_length=50, choices=DEVICE_TYPES)
     status = FSMField(max_length=50,
                       choices=DEVICE_STATUSES,
-                      default='activation',
+                      default='registered',
                       protected=True)
     name = models.CharField(_('Your reference'), max_length=100)
     batch = models.ForeignKey(DeviceBatch, default=get_default_batch)
@@ -438,13 +439,21 @@ class Device(models.Model):
         return self.merchant is not None
 
     @transition(field=status,
-                source=['activation', 'suspended'],
-                target='active',
+                source='registered',
+                target='activation',
                 conditions=[can_activate])
+    def start_activation(self):
+        pass
+
+    @transition(field=status,
+                source=['activation', 'suspended'],
+                target='active')
     def activate(self):
         pass
 
-    @transition(field=status, source='active', target='suspended')
+    @transition(field=status,
+                source='active',
+                target='suspended')
     def suspend(self):
         pass
 

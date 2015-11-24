@@ -324,7 +324,7 @@ class ActivateDeviceViewTestCase(TestCase):
         self.client.login(username=merchant.user.email,
                           password='password')
 
-        device = DeviceFactory.create(status='activation')
+        device = DeviceFactory.create(status='registered')
         form_data = {
             'activation_code': device.activation_code,
         }
