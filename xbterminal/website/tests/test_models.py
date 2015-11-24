@@ -7,6 +7,7 @@ from django_fsm import TransitionNotAllowed
 
 from website.models import (
     User,
+    UITheme,
     MerchantAccount,
     BTCAccount,
     Device,
@@ -42,6 +43,13 @@ class UserTestCase(TestCase):
         self.assertEqual(user.get_full_name(), user.email)
 
 
+class UIThemeTestCase(TestCase):
+
+    def test_create_theme(self):
+        theme = UITheme.objects.create(name='test')
+        self.assertEqual(str(theme), 'test')
+
+
 class MerchantAccountTestCase(TestCase):
 
     def create_merchant_account(self):
@@ -56,6 +64,7 @@ class MerchantAccountTestCase(TestCase):
         self.assertEqual(merchant.country, 'GB')
         self.assertEqual(merchant.language.code, 'en')
         self.assertEqual(merchant.currency.name, 'GBP')
+        self.assertEqual(merchant.ui_theme.name, 'default')
         self.assertEqual(merchant.account_balance, 0)
         self.assertEqual(merchant.account_balance_max, 0)
         self.assertEqual(merchant.payment_processor, 'gocoin')
