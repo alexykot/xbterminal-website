@@ -40,13 +40,13 @@ class DeviceAdmin(FSMTransitionMixin, admin.ModelAdmin):
     form = forms.DeviceAdminForm
 
     def payment_processor(self, device):
-        if device.status == 'activation':
+        if device.status == 'registered':
             return '-'
         else:
             return device.merchant.get_payment_processor_display()
 
     def merchant_link(self, device):
-        if device.status == 'activation':
+        if device.status == 'registered':
             return '-'
         else:
             return url_to_object(device.merchant)
