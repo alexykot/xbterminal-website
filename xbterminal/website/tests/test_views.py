@@ -318,7 +318,9 @@ class ActivateDeviceViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'cabinet/activation.html')
 
-    def test_post_valid_code(self):
+    @patch('api.utils.activation.django_rq.enqueue')
+    def test_post_valid_code(self, enqueue_mock):
+        enqueue_mock.side_effect = lambda fun, key: fun(key)
         merchant = MerchantAccountFactory.create()
         self.assertEqual(merchant.device_set.count(), 0)
         self.client.login(username=merchant.user.email,
@@ -329,6 +331,7 @@ class ActivateDeviceViewTestCase(TestCase):
             'activation_code': device.activation_code,
         }
         response = self.client.post(self.url, form_data)
+        self.assertTrue(enqueue_mock.called)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(merchant.device_set.count(), 1)
         active_device = merchant.device_set.first()

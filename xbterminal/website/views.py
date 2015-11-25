@@ -24,6 +24,7 @@ from ipware.ip import get_real_ip
 
 from operations.blockchain import construct_bitcoin_uri
 from operations.instantfiat import gocoin
+from api.utils import activation
 
 from website import forms, models, utils
 
@@ -417,13 +418,10 @@ class ActivateDeviceView(TemplateResponseMixin, CabinetView):
     def post(self, *args, **kwargs):
         form = forms.DeviceActivationForm(self.request.POST)
         if form.is_valid():
-            device = form.device
-            device.merchant = self.request.user.merchant
-            device.start_activation()
-            device.activate()
-            device.save()
+            activation.start(form.device,
+                             self.request.user.merchant)
             return redirect(reverse('website:device',
-                                    kwargs={'device_key': device.key}))
+                                    kwargs={'device_key': form.device.key}))
         else:
             context = self.get_context_data(**kwargs)
             context['form'] = form
