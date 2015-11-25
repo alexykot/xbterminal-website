@@ -436,9 +436,11 @@ class DeviceMixin(ContextMixin):
     def get_context_data(self, **kwargs):
         context = super(DeviceMixin, self).get_context_data(**kwargs)
         merchant = self.request.user.merchant
+        device_key = self.kwargs.get('device_key')
         try:
-            context['device'] = merchant.device_set.get(
-                key=self.kwargs.get('device_key'))
+            context['device'] = merchant.device_set.\
+                filter(status__in=['active', 'suspended']).\
+                get(key=device_key)
         except models.Device.DoesNotExist:
             raise Http404
         return context

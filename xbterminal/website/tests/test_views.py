@@ -279,7 +279,7 @@ class UpdateDeviceView(TestCase):
     def setUp(self):
         self.merchant = MerchantAccountFactory.create()
 
-    def test_get(self):
+    def test_get_active(self):
         device = DeviceFactory.create(merchant=self.merchant)
         self.client.login(username=self.merchant.user.email,
                           password='password')
@@ -288,6 +288,16 @@ class UpdateDeviceView(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'cabinet/device_form.html')
+
+    def test_get_activation(self):
+        device = DeviceFactory.create(merchant=self.merchant,
+                                      status='activation')
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:device',
+                      kwargs={'device_key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
 
     def test_get_suspended(self):
         device = DeviceFactory.create(merchant=self.merchant,
@@ -565,6 +575,14 @@ class PaymentViewTestCase(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'payment/payment.html')
+
+    def test_activation(self):
+        device = DeviceFactory.create(merchant=self.merchant,
+                                      status='activation')
+        url = reverse('website:payment',
+                      kwargs={'device_key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
 
     def test_suspended(self):
         device = DeviceFactory.create(merchant=self.merchant,
