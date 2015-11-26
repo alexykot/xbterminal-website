@@ -86,6 +86,15 @@ class Salt(object):
         result = self._send_request('post', '/', data=payload)
         logger.info('minion deleted')
 
+    def ping(self, minion_id):
+        payload = {
+            'client': 'local',
+            'fun': 'test.ping',
+            'tgt': minion_id,
+        }
+        result = self._send_request('post', '/', data=payload)
+        return result.get(minion_id, False)
+
     def upgrade(self, minion_id, version):
         """
         https://docs.saltstack.com/en/2015.5/ref/modules/all

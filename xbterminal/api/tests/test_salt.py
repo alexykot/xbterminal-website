@@ -52,6 +52,13 @@ class SaltTestCase(TestCase):
             salt.accept('m2')
 
     @patch('api.utils.salt.Salt._send_request')
+    def test_ping(self, send_mock):
+        send_mock.return_value = {'m1': True}
+        salt = Salt()
+        self.assertTrue(salt.ping('m1'))
+        self.assertFalse(salt.ping('m2'))
+
+    @patch('api.utils.salt.Salt._send_request')
     def test_upgrade(self, send_mock):
         send_mock.return_value = {
             'jid': '20151115135324593558',
