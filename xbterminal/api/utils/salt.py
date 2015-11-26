@@ -1,3 +1,4 @@
+import json
 import os.path
 import logging
 from django.conf import settings
@@ -13,12 +14,17 @@ class Salt(object):
         self.config = settings.SALT_SERVERS[server]
         self._auth_token = None
 
-    def _send_request(self, method, url, params=None, data=None):
+    def _send_request(self, method, url,
+                      params=None, data=None,
+                      jsonify=True):
         headers = {
             'Accept': 'application/json',
         }
         if self._auth_token:
             headers['X-Auth-Token'] = self._auth_token
+        if jsonify:
+            headers['Content-Type'] = 'application/json'
+            data = json.dumps(data)
         certs = (
             os.path.join(settings.CERT_PATH, self.config['CLIENT_CERT']),
             os.path.join(settings.CERT_PATH, self.config['CLIENT_KEY']),
@@ -39,13 +45,14 @@ class Salt(object):
             'password': self.config['PASSWORD'],
             'eauth': 'pam',
         }
-        result = self._send_request('post', '/login', data=payload)
+        result = self._send_request('post', '/login', data=payload, jsonify=False)
         self._auth_token = result['token']
         logger.info('login successful')
 
     def check_fingerprint(self, minion_id, fingerprint):
         """
-        https://docs.saltstack.com/en/latest/ref/wheel/all/salt.wheel.key.html
+        https://docs.saltstack.com/en/2015.5/ref/wheel/all
+            /salt.wheel.key.html#salt.wheel.key.finger
         """
         payload = {
             'client': 'wheel',
@@ -69,11 +76,31 @@ class Salt(object):
         assert minion_id in result['data']['return']['minions']
         logger.info('minion accepted')
 
-    def reject(self, minion_id):
+    def delete(self, minion_id):
         payload = {
             'client': 'wheel',
-            'fun': 'key.reject',
+            'fun': 'key.delete',
             'match': minion_id,
         }
         result = self._send_request('post', '/', data=payload)
-        logger.info('minion rejected')
+        logger.info('minion deleted')
+
+    def upgrade(self, minion_id, version):
+        """
+        https://docs.saltstack.com/en/2015.5/ref/modules/all
+            /salt.modules.state.html#salt.modules.state.highstate
+        """
+        payload = {
+            'client': 'local_async',
+            'fun': 'state.highstate',
+            'tgt': minion_id,
+            'kwarg': {
+                'pillar': {
+                    'xbt': {
+                        'version': version,
+                    },
+                },
+            },
+        }
+        result = self._send_request('post', '/', data=payload)
+        logger.info('job id {0}'.format(result['jid']))
