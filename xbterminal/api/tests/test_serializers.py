@@ -73,7 +73,7 @@ class DeviceRegistrationSerializerTestCase(TestCase):
         self.assertTrue(salt_mock.login.called)
         self.assertTrue(salt_mock.check_fingerprint.called)
         device = serializer.save()
-        self.assertTrue(salt_mock.accept.called)
+        self.assertFalse(salt_mock.accept.called)
         self.assertEqual(device.device_type, 'hardware')
         self.assertIsNone(device.merchant)
         self.assertEqual(device.status, 'registered')
@@ -169,6 +169,5 @@ class DeviceRegistrationSerializerTestCase(TestCase):
         serializer = DeviceRegistrationSerializer(data=data.copy())
         self.assertFalse(serializer.is_valid())
         self.assertTrue(salt_mock.check_fingerprint.called)
-        self.assertFalse(salt_mock.accept.called)
         self.assertEqual(serializer.errors['salt_fingerprint'][0],
                          'Invalid salt key fingerprint.')

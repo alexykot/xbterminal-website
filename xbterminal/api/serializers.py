@@ -114,7 +114,6 @@ class DeviceRegistrationSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        self._salt.accept(validated_data['key'])
         return Device.objects.create(
             merchant=None,
             device_type='hardware',

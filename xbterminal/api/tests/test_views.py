@@ -432,7 +432,6 @@ class DeviceViewSetTestCase(APITestCase):
         response = self.client.post(url, form_data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('activation_code', response.data)
-        self.assertTrue(salt_mock.accept.called)
 
         device = Device.objects.get(
             activation_code=response.data['activation_code'])

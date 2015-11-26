@@ -7,7 +7,7 @@ from django.core.cache import cache
 from django.utils import timezone
 from mock import patch
 
-from website.models import MerchantAccount
+from website.models import MerchantAccount, Device
 from website.tests.factories import (
     MerchantAccountFactory,
     DeviceFactory,
@@ -350,7 +350,13 @@ class ActivateDeviceViewTestCase(TestCase):
 
     @patch('api.utils.activation.django_rq.enqueue')
     def test_post_with_activation(self, enqueue_mock):
-        enqueue_mock.side_effect = lambda fun, key: fun(key)
+
+        def activate(fun, key):
+            device = Device.objects.get(key=key)
+            device.activate()
+            device.save()
+        enqueue_mock.side_effect = activate
+
         merchant = MerchantAccountFactory.create()
         self.assertEqual(merchant.device_set.count(), 0)
         self.client.login(username=merchant.user.email,

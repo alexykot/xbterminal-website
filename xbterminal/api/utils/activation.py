@@ -1,6 +1,7 @@
-import time
-from website.models import Device
 import django_rq
+
+from website.models import Device
+from api.utils.salt import Salt
 
 
 def prepare_device(device_key):
@@ -9,10 +10,15 @@ def prepare_device(device_key):
     Accepts:
         device_key
     """
-    time.sleep(10)
     device = Device.objects.get(key=device_key)
-    device.activate()
-    device.save()
+    # Accept minion's key
+    salt = Salt()
+    salt.login()
+    salt.accept(device.key)
+    if salt.ping(device.key):
+        # Activate
+        device.activate()
+        device.save()
 
 
 def start(device, merchant):
