@@ -1,5 +1,15 @@
 {% extends 'cabinet/base.html' %}
-{% load bootstrap3 i18n %}
+{% load bootstrap3 i18n staticfiles %}
+
+{% block js %}
+{% if device %}
+<script src="{% static 'js/activation.js' %}"></script>
+<script>
+    var checkUrl = '{% url 'api:v2:device-detail' device.key %}';
+    var redirectUrl = '{% url 'website:device' device.key %}';
+</script>
+{% endif %}
+{% endblock %}
 
 {% block cabinet_content %}
 <div class="row">

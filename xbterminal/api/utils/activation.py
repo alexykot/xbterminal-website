@@ -1,3 +1,4 @@
+import time
 from website.models import Device
 import django_rq
 
@@ -8,6 +9,7 @@ def prepare_device(device_key):
     Accepts:
         device_key
     """
+    time.sleep(10)
     device = Device.objects.get(key=device_key)
     device.activate()
     device.save()
