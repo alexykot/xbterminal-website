@@ -57,7 +57,8 @@ class DeviceRegistrationSerializerTestCase(TestCase):
 
     @patch('api.serializers.Salt')
     def test_validation(self, salt_cls_mock):
-        salt_cls_mock.return_value = salt_mock = Mock()
+        salt_cls_mock.return_value = salt_mock = Mock(**{
+            'check_fingerprint.return_value': True})
         batch = DeviceBatchFactory.create()
         device_key = hashlib.sha256('test').hexdigest()
         api_key = create_test_public_key()
@@ -65,11 +66,14 @@ class DeviceRegistrationSerializerTestCase(TestCase):
             'batch': batch.batch_number,
             'key': device_key,
             'api_key': api_key,
+            'salt_fingerprint': 'fingerprint',
         }
         serializer = DeviceRegistrationSerializer(data=data)
         self.assertTrue(serializer.is_valid())
         self.assertTrue(salt_mock.login.called)
+        self.assertTrue(salt_mock.check_fingerprint.called)
         device = serializer.save()
+        self.assertTrue(salt_mock.accept.called)
         self.assertEqual(device.device_type, 'hardware')
         self.assertIsNone(device.merchant)
         self.assertEqual(device.status, 'registered')
@@ -79,11 +83,14 @@ class DeviceRegistrationSerializerTestCase(TestCase):
 
     @patch('api.serializers.Salt')
     def test_batch_size(self, salt_cls_mock):
+        salt_cls_mock.return_value = salt_mock = Mock(**{
+            'check_fingerprint.return_value': True})
         batch = DeviceBatchFactory.create(size=0)
         data = {
             'batch': batch.batch_number,
             'key': '0' * 64,
             'api_key': create_test_public_key(),
+            'salt_fingerprint': 'fingerprint',
         }
         serializer = DeviceRegistrationSerializer(data=data)
         self.assertFalse(serializer.is_valid())
@@ -92,10 +99,13 @@ class DeviceRegistrationSerializerTestCase(TestCase):
 
     @patch('api.serializers.Salt')
     def test_invalid_device_key(self, salt_cls_mock):
+        salt_cls_mock.return_value = salt_mock = Mock(**{
+            'check_fingerprint.return_value': True})
         batch = DeviceBatchFactory.create()
         data = {
             'batch': batch.batch_number,
             'api_key': create_test_public_key(),
+            'salt_fingerprint': 'fingerprint',
         }
         serializer = DeviceRegistrationSerializer(data=data.copy())
         self.assertFalse(serializer.is_valid())
@@ -118,10 +128,13 @@ class DeviceRegistrationSerializerTestCase(TestCase):
 
     @patch('api.serializers.Salt')
     def test_invalid_api_key(self, salt_cls_mock):
+        salt_cls_mock.return_value = salt_mock = Mock(**{
+            'check_fingerprint.return_value': True})
         batch = DeviceBatchFactory.create()
         data = {
             'batch': batch.batch_number,
             'key': '0' * 64,
+            'salt_fingerprint': 'fingerprint',
         }
         serializer = DeviceRegistrationSerializer(data=data.copy())
         self.assertFalse(serializer.is_valid())
@@ -135,26 +148,6 @@ class DeviceRegistrationSerializerTestCase(TestCase):
                          'Invalid API public key.')
 
     @patch('api.serializers.Salt')
-    def test_salt_fingerprint(self, salt_cls_mock):
-        salt_cls_mock.return_value = salt_mock = Mock(**{
-            'check_fingerprint.return_value': True,
-        })
-        batch = DeviceBatchFactory.create()
-        device_key = hashlib.sha256('test').hexdigest()
-        api_key = create_test_public_key()
-        data = {
-            'batch': batch.batch_number,
-            'key': device_key,
-            'api_key': api_key,
-            'salt_fingerprint': 'fingerprint',
-        }
-        serializer = DeviceRegistrationSerializer(data=data)
-        self.assertTrue(serializer.is_valid())
-        device = serializer.save()
-        self.assertTrue(salt_mock.check_fingerprint.called)
-        self.assertTrue(salt_mock.accept.called)
-
-    @patch('api.serializers.Salt')
     def test_invalid_salt_fingerprint(self, salt_cls_mock):
         salt_cls_mock.return_value = salt_mock = Mock(**{
             'check_fingerprint.return_value': False,
@@ -166,9 +159,16 @@ class DeviceRegistrationSerializerTestCase(TestCase):
             'batch': batch.batch_number,
             'key': device_key,
             'api_key': api_key,
-            'salt_fingerprint': 'fingerprint',
         }
-        serializer = DeviceRegistrationSerializer(data=data)
+        serializer = DeviceRegistrationSerializer(data=data.copy())
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors['salt_fingerprint'][0],
+                         'This field is required.')
+
+        data['salt_fingerprint'] = 'fingerprint'
+        serializer = DeviceRegistrationSerializer(data=data.copy())
         self.assertFalse(serializer.is_valid())
         self.assertTrue(salt_mock.check_fingerprint.called)
         self.assertFalse(salt_mock.accept.called)
+        self.assertEqual(serializer.errors['salt_fingerprint'][0],
+                         'Invalid salt key fingerprint.')
