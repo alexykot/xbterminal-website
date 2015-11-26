@@ -330,6 +330,26 @@ class ActivateDeviceViewTestCase(TestCase):
 
     @patch('api.utils.activation.django_rq.enqueue')
     def test_post_valid_code(self, enqueue_mock):
+        merchant = MerchantAccountFactory.create()
+        self.assertEqual(merchant.device_set.count(), 0)
+        self.client.login(username=merchant.user.email,
+                          password='password')
+
+        device = DeviceFactory.create(status='registered')
+        form_data = {
+            'activation_code': device.activation_code,
+        }
+        response = self.client.post(self.url, form_data, follow=True)
+        self.assertTrue(enqueue_mock.called)
+        expected_url = reverse('website:activation',
+                               kwargs={'device_key': device.key})
+        self.assertRedirects(response, expected_url)
+        self.assertEqual(merchant.device_set.count(), 1)
+        active_device = merchant.device_set.first()
+        self.assertEqual(active_device.status, 'activation')
+
+    @patch('api.utils.activation.django_rq.enqueue')
+    def test_post_with_activation(self, enqueue_mock):
         enqueue_mock.side_effect = lambda fun, key: fun(key)
         merchant = MerchantAccountFactory.create()
         self.assertEqual(merchant.device_set.count(), 0)
@@ -340,13 +360,13 @@ class ActivateDeviceViewTestCase(TestCase):
         form_data = {
             'activation_code': device.activation_code,
         }
-        response = self.client.post(self.url, form_data)
+        response = self.client.post(self.url, form_data, follow=True)
         self.assertTrue(enqueue_mock.called)
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(merchant.device_set.count(), 1)
+        expected_url = reverse('website:device',
+                               kwargs={'device_key': device.key})
+        self.assertRedirects(response, expected_url)
         active_device = merchant.device_set.first()
         self.assertEqual(active_device.status, 'active')
-        self.assertEqual(active_device.merchant.pk, merchant.pk)
 
     def test_post_error(self):
         merchant = MerchantAccountFactory.create()
@@ -358,6 +378,37 @@ class ActivateDeviceViewTestCase(TestCase):
         self.assertTemplateUsed(response, 'cabinet/activation.html')
         self.assertIn('activation_code',
                       response.context['form'].errors)
+
+
+class ActivationViewTestCase(TestCase):
+
+    def setUp(self):
+        self.merchant = MerchantAccountFactory.create()
+
+    def test_get(self):
+        device = DeviceFactory.create(merchant=self.merchant,
+                                      status='activation')
+        url = reverse('website:activation',
+                      kwargs={'device_key': device.key})
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/activation.html')
+        self.assertEqual(response.context['device'].pk,
+                         device.pk)
+
+    def test_already_active(self):
+        device = DeviceFactory.create(merchant=self.merchant,
+                                      status='active')
+        url = reverse('website:activation',
+                      kwargs={'device_key': device.key})
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        response = self.client.get(url)
+        expected_url = reverse('website:device',
+                               kwargs={'device_key': device.key})
+        self.assertRedirects(response, expected_url)
 
 
 class ResetPasswordViewTestCase(TestCase):

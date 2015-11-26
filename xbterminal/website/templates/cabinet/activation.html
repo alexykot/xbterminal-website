@@ -5,6 +5,7 @@
 <div class="row">
     <div class="col-md-8 col-md-offset-2">
         <h3>{% trans 'Device activation' %}</h3>
+        {% if form %}
         <form id="activation-form" action="" method="post">
             {% csrf_token %}
             {% bootstrap_form form %}
@@ -15,6 +16,9 @@
                 {% trans 'Cancel' %}
             </a>
         </form>
+        {% else %}
+        <p class="large">{% trans 'Activation in progress. Do not turn off the device.' %}</p>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

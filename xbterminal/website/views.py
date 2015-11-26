@@ -420,12 +420,32 @@ class ActivateDeviceView(TemplateResponseMixin, CabinetView):
         if form.is_valid():
             activation.start(form.device,
                              self.request.user.merchant)
-            return redirect(reverse('website:device',
+            return redirect(reverse('website:activation',
                                     kwargs={'device_key': form.device.key}))
         else:
             context = self.get_context_data(**kwargs)
             context['form'] = form
             return self.render_to_response(context)
+
+
+class ActivationView(TemplateResponseMixin, CabinetView):
+
+    template_name = 'cabinet/activation.html'
+
+    def get(self, *args, **kwargs):
+        merchant = self.request.user.merchant
+        try:
+            device = merchant.device_set.get(
+                key=self.kwargs.get('device_key'))
+        except models.Device.DoesNotExist:
+            raise Http404
+        if device.status in ['active', 'suspended']:
+            # Activation already finished
+            return redirect(reverse('website:device',
+                                    kwargs={'device_key': device.key}))
+        context = self.get_context_data(**kwargs)
+        context['device'] = device
+        return self.render_to_response(context)
 
 
 class DeviceMixin(ContextMixin):
