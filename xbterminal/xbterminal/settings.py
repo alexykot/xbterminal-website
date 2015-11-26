@@ -217,6 +217,16 @@ SALT_SERVERS = {
     },
 }
 
+# Aptly
+
+APTLY_SERVERS = {
+    'default': {
+        'HOST': 'https://repo.xbthq.co.uk/',
+        'CLIENT_CERT': 'server.crt',
+        'CLIENT_KEY': 'server.key',
+    },
+}
+
 # OAuth
 
 OAUTH2_PROVIDER = {

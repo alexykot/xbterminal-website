@@ -1,6 +1,7 @@
 import json
 import os.path
 import logging
+from urlparse import urljoin
 from django.conf import settings
 
 import requests
@@ -30,7 +31,7 @@ class Salt(object):
             os.path.join(settings.CERT_PATH, self.config['CLIENT_KEY']),
         )
         response = requests.request(method.upper(),
-                                    self.config['HOST'] + url,
+                                    urljoin(self.config['HOST'], url),
                                     params=params,
                                     data=data,
                                     headers=headers,
