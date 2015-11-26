@@ -101,7 +101,7 @@ class Salt(object):
             /salt.modules.state.html#salt.modules.state.highstate
         """
         payload = {
-            'client': 'local_async',
+            'client': 'local',
             'fun': 'state.highstate',
             'tgt': minion_id,
             'kwarg': {
@@ -113,4 +113,15 @@ class Salt(object):
             },
         }
         result = self._send_request('post', '/', data=payload)
-        logger.info('job id {0}'.format(result['jid']))
+
+    def reboot(self, minion_id):
+        """
+        https://docs.saltstack.com/en/2015.5/ref/modules/all
+            /salt.modules.system.html#salt.modules.system.reboot
+        """
+        payload = {
+            'client': 'local',
+            'fun': 'system.reboot',
+            'tgt': minion_id,
+        }
+        result = self._send_request('post', '/', data=payload)

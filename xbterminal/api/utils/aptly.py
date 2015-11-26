@@ -5,6 +5,9 @@ import requests
 
 
 def get_latest_xbtfw_version():
+    """
+    https://www.aptly.info/doc/api/repos/
+    """
     config = settings.APTLY_SERVERS['default']
     api_url = '/api/repos/xbtfw-wandboard-dev/packages'
     params = {

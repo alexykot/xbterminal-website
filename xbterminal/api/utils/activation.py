@@ -2,6 +2,7 @@ import django_rq
 
 from website.models import Device
 from api.utils.salt import Salt
+from api.utils.aptly import get_latest_xbtfw_version
 
 
 def prepare_device(device_key):
@@ -16,6 +17,11 @@ def prepare_device(device_key):
     salt.login()
     salt.accept(device.key)
     if salt.ping(device.key):
+        # Upgrade xbterminal-firmware package
+        xbtfw_version = get_latest_xbtfw_version()
+        salt.upgrade(device.key, xbtfw_version)
+        # Reboot device
+        salt.reboot(device.key)
         # Activate
         device.activate()
         device.save()
