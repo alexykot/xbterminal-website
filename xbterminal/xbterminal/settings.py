@@ -273,9 +273,9 @@ except ImportError:
 
 if DEBUG:
     # Log to console in development mode
-    LOGGING['loggers']['']['handlers'] = ['console']
-    LOGGING['loggers']['django.request']['handlers'] = ['console']
-    LOGGING['loggers']['rq.worker']['handlers'] = ['console']
+    LOGGING['loggers']['']['handlers'] = ['file', 'console']
+    LOGGING['loggers']['django.request']['handlers'] = ['file', 'console']
+    LOGGING['loggers']['rq.worker']['handlers'] = ['rq', 'console']
 
 if TESTING:
     # Disable logging
