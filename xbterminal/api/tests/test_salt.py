@@ -59,15 +59,31 @@ class SaltTestCase(TestCase):
         self.assertFalse(salt.ping('m2'))
 
     @patch('api.utils.salt.Salt._send_request')
-    def test_upgrade(self, send_mock):
-        send_mock.return_value = {'m1': True}
+    @patch('api.utils.salt.Salt._lookup_jid')
+    def test_upgrade(self, lookup_jid_mock, send_mock):
+        send_mock.return_value = {'jid': 'test'}
+        lookup_jid_mock.return_value = {
+            'data': {
+                'm1': {
+                    'pkg_|-xbterminal-firmware_|-xbterminal-firmware_|-installed': {
+                        'result': True,
+                    },
+                },
+            },
+        }
         salt = Salt()
         salt.upgrade('m1', '0.00')
         self.assertTrue(send_mock.called)
+        self.assertTrue(lookup_jid_mock.called)
+        self.assertEqual(lookup_jid_mock.call_args[0][0], 'test')
 
     @patch('api.utils.salt.Salt._send_request')
-    def test_reboot(self, send_mock):
-        send_mock.return_value = {'m1': True}
+    @patch('api.utils.salt.Salt.ping')
+    def test_reboot(self, ping_mock, send_mock):
+        send_mock.return_value = {'jid': 'test'}
+        ping_mock.side_effect = [False, True]
         salt = Salt()
         salt.reboot('m1')
         self.assertTrue(send_mock.called)
+        self.assertEqual(ping_mock.call_count, 2)
+        self.assertEqual(ping_mock.call_args[0][0], 'm1')

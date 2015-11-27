@@ -6,6 +6,13 @@ from api.utils.salt import Salt
 from api.utils.aptly import get_latest_xbtfw_version
 
 
+def start(device, merchant):
+    device.merchant = merchant
+    device.start_activation()
+    device.save()
+    django_rq.enqueue(prepare_device, device.key)
+
+
 def prepare_device(device_key):
     """
     Asynchronous task
@@ -28,10 +35,3 @@ def prepare_device(device_key):
     # Activate
     device.activate()
     device.save()
-
-
-def start(device, merchant):
-    device.merchant = merchant
-    device.start_activation()
-    device.save()
-    django_rq.enqueue(prepare_device, device.key)
