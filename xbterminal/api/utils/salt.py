@@ -113,6 +113,7 @@ class Salt(object):
             },
         }
         result = self._send_request('post', '/', data=payload)
+        assert result[minion_id]
         logger.info('device upgraded')
 
     def reboot(self, minion_id):
@@ -126,4 +127,5 @@ class Salt(object):
             'tgt': minion_id,
         }
         result = self._send_request('post', '/', data=payload)
+        assert result[minion_id]
         logger.info('device rebooted')

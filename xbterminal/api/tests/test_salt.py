@@ -60,12 +60,14 @@ class SaltTestCase(TestCase):
 
     @patch('api.utils.salt.Salt._send_request')
     def test_upgrade(self, send_mock):
+        send_mock.return_value = {'m1': True}
         salt = Salt()
         salt.upgrade('m1', '0.00')
         self.assertTrue(send_mock.called)
 
     @patch('api.utils.salt.Salt._send_request')
     def test_reboot(self, send_mock):
+        send_mock.return_value = {'m1': True}
         salt = Salt()
         salt.reboot('m1')
         self.assertTrue(send_mock.called)
