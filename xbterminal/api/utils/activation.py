@@ -1,9 +1,14 @@
 import time
+
+from django.core.cache import cache
 import django_rq
 
 from website.models import Device
 from api.utils.salt import Salt
 from api.utils.aptly import get_latest_xbtfw_version
+
+
+CACHE_KEY_TEMPLATE = 'activation-{device_key}'
 
 
 def start(device, merchant):
@@ -37,6 +42,20 @@ def prepare_device(device_key):
     device.save()
 
 
-def get_status(device):
+def set_status(device, activation_status):
+    """
+    Save activation status to cache
+    """
     assert device.status == 'activation'
-    return 'in progress'
+    assert activation_status in ['in progress', 'error']
+    cache_key = CACHE_KEY_TEMPLATE.format(device_key=device.key)
+    cache.set(cache_key, activation_status, timeout=None)
+
+
+def get_status(device):
+    """
+    Get activation status from cache
+    """
+    assert device.status == 'activation'
+    cache_key = CACHE_KEY_TEMPLATE.format(device_key=device.key)
+    return cache.get(cache_key, 'in progress')

@@ -1,7 +1,7 @@
 from mock import Mock, patch
 from django.test import TestCase
 
-from api.utils.activation import prepare_device, get_status
+from api.utils.activation import prepare_device, get_status, set_status
 from website.models import Device
 from website.tests.factories import DeviceFactory
 
@@ -27,7 +27,15 @@ class ActivationTestCase(TestCase):
         device_updated = Device.objects.get(key=device.key)
         self.assertEqual(device_updated.status, 'active')
 
-    def test_get_status(self):
+    def test_get_status_default(self):
         device = DeviceFactory.create(status='activation')
         status = get_status(device)
         self.assertEqual(status, 'in progress')
+
+    def test_get_status_error(self):
+        device = DeviceFactory.create(status='activation')
+        with self.assertRaises(AssertionError):
+            set_status(device, 'test')
+        set_status(device, 'error')
+        status = get_status(device)
+        self.assertEqual(status, 'error')
