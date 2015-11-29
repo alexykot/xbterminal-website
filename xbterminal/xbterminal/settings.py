@@ -82,6 +82,7 @@ INSTALLED_APPS = (
     'oauth2_provider',
     'ckeditor',
     'captcha',
+    'django_fsm',
     'fsm_admin',
 
     'website',

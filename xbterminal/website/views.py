@@ -367,7 +367,7 @@ class DeviceList(TemplateResponseMixin, CabinetView):
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         context['devices'] = self.request.user.merchant.\
-            device_set.order_by('status')
+            device_set.order_by('-id')
         return self.render_to_response(context)
 
 
@@ -439,12 +439,13 @@ class ActivationView(TemplateResponseMixin, CabinetView):
                 key=self.kwargs.get('device_key'))
         except models.Device.DoesNotExist:
             raise Http404
-        if device.status in ['active', 'suspended']:
+        if device.status != 'activation':
             # Activation already finished
             return redirect(reverse('website:device',
                                     kwargs={'device_key': device.key}))
         context = self.get_context_data(**kwargs)
         context['device'] = device
+        context['activation_status'] = activation.get_status(device)
         return self.render_to_response(context)
 
 

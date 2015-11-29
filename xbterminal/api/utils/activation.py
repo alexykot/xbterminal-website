@@ -35,3 +35,8 @@ def prepare_device(device_key):
     # Activate
     device.activate()
     device.save()
+
+
+def get_status(device):
+    assert device.status == 'activation'
+    return 'in progress'

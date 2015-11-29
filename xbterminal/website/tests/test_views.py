@@ -403,6 +403,8 @@ class ActivationViewTestCase(TestCase):
         self.assertTemplateUsed(response, 'cabinet/activation.html')
         self.assertEqual(response.context['device'].pk,
                          device.pk)
+        self.assertEqual(response.context['activation_status'],
+                         'in progress')
 
     def test_already_active(self):
         device = DeviceFactory.create(merchant=self.merchant,
