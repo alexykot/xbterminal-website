@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.core import mail
 from django.core.cache import cache
 from django.utils import timezone
-from mock import patch
+from mock import Mock, patch
 
 from website.models import MerchantAccount, Device
 from website.tests.factories import (
@@ -329,7 +329,8 @@ class ActivateDeviceViewTestCase(TestCase):
         self.assertTemplateUsed(response, 'cabinet/activation.html')
 
     @patch('api.utils.activation.django_rq.enqueue')
-    def test_post_valid_code(self, enqueue_mock):
+    @patch('api.utils.activation.run_periodic_task')
+    def test_post_valid_code(self, schedule_mock, enqueue_mock):
         merchant = MerchantAccountFactory.create()
         self.assertEqual(merchant.device_set.count(), 0)
         self.client.login(username=merchant.user.email,
@@ -349,12 +350,14 @@ class ActivateDeviceViewTestCase(TestCase):
         self.assertEqual(active_device.status, 'activation')
 
     @patch('api.utils.activation.django_rq.enqueue')
-    def test_post_with_activation(self, enqueue_mock):
+    @patch('api.utils.activation.run_periodic_task')
+    def test_post_with_activation(self, schedule_mock, enqueue_mock):
 
         def activate(fun, key):
             device = Device.objects.get(key=key)
             device.activate()
             device.save()
+            return Mock()
         enqueue_mock.side_effect = activate
 
         merchant = MerchantAccountFactory.create()
