@@ -407,7 +407,7 @@ class ActivationViewTestCase(TestCase):
         self.assertEqual(response.context['device'].pk,
                          device.pk)
         self.assertEqual(response.context['activation_status'],
-                         'in progress')
+                         'in_progress')
 
     def test_already_active(self):
         device = DeviceFactory.create(merchant=self.merchant,

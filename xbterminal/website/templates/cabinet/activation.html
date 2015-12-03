@@ -27,7 +27,7 @@
             </a>
         </form>
         {% else %}
-            {% if activation_status == 'in progress' %}
+            {% if activation_status == 'in_progress' %}
             <p class="large">{% trans 'Activation in progress. Do not turn off the device.' %}</p>
             <img src="{% static 'img/loading.gif' %}">
             {% elif activation_status == 'error' %}

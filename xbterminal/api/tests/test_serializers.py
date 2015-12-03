@@ -13,6 +13,7 @@ from api.serializers import (
     WithdrawalOrderSerializer,
     DeviceSerializer,
     DeviceRegistrationSerializer)
+from api.utils import activation
 from api.utils.crypto import create_test_public_key
 
 
@@ -38,6 +39,14 @@ class DeviceSerializerTestCase(TestCase):
         self.assertEqual(data['bitcoin_network'], 'mainnet')
         self.assertEqual(data['language']['code'], 'en')
         self.assertEqual(data['currency']['name'], 'GBP')
+
+    def test_activation(self):
+        device = DeviceFactory.create(status='activation')
+        data = DeviceSerializer(device).data
+        self.assertEqual(data['status'], 'activation_in_progress')
+        activation.set_status(device, 'error')
+        data = DeviceSerializer(device).data
+        self.assertEqual(data['status'], 'activation_error')
 
     def test_operational(self):
         device = DeviceFactory.create(

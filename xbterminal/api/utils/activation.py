@@ -50,7 +50,7 @@ def set_status(device, activation_status):
     Save activation status to cache
     """
     assert device.status == 'activation'
-    assert activation_status in ['in progress', 'error']
+    assert activation_status in ['in_progress', 'error']
     cache_key = CACHE_KEY_TEMPLATE.format(device_key=device.key)
     cache.set(cache_key, activation_status, timeout=None)
 
@@ -61,7 +61,7 @@ def get_status(device):
     """
     assert device.status == 'activation'
     cache_key = CACHE_KEY_TEMPLATE.format(device_key=device.key)
-    return cache.get(cache_key, 'in progress')
+    return cache.get(cache_key, 'in_progress')
 
 
 def wait_for_activation(device_key, activation_job_id):

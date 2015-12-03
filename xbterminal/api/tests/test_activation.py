@@ -34,7 +34,7 @@ class ActivationTestCase(TestCase):
     def test_get_status_default(self):
         device = DeviceFactory.create(status='activation')
         status = get_status(device)
-        self.assertEqual(status, 'in progress')
+        self.assertEqual(status, 'in_progress')
 
     def test_get_status_error(self):
         device = DeviceFactory.create(status='activation')
