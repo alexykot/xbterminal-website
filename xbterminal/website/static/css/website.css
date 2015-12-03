@@ -234,3 +234,10 @@ label[for="id_county"]:after {
     top: 3px;
     text-decoration: none;
 }
+
+/* Acvtivation page */
+
+.activation-in-progress,
+.activation-error {
+    display: none;
+}

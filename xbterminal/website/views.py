@@ -445,7 +445,6 @@ class ActivationView(TemplateResponseMixin, CabinetView):
                                     kwargs={'device_key': device.key}))
         context = self.get_context_data(**kwargs)
         context['device'] = device
-        context['activation_status'] = activation.get_status(device)
         return self.render_to_response(context)
 
 
