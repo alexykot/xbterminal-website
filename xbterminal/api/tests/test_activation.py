@@ -45,7 +45,7 @@ class ActivationTestCase(TestCase):
         self.assertEqual(status, 'error')
 
     @patch('api.utils.activation.Job.fetch')
-    @patch('api.utils.activation.cancel_current_task')
+    @patch('api.utils.activation.rq_helpers.cancel_current_task')
     def test_wait_for_activation(self, cancel_mock, job_fetch_mock):
         job_fetch_mock.return_value = Mock(is_failed=False)
         device = DeviceFactory.create(status='activation')
@@ -53,7 +53,7 @@ class ActivationTestCase(TestCase):
         wait_for_activation(device.key, job_id)
         self.assertFalse(cancel_mock.called)
 
-    @patch('api.utils.activation.cancel_current_task')
+    @patch('api.utils.activation.rq_helpers.cancel_current_task')
     def test_wait_for_activation_finished(self, cancel_mock):
         device = DeviceFactory.create(status='active')
         job_id = 'test'
@@ -61,7 +61,7 @@ class ActivationTestCase(TestCase):
         self.assertTrue(cancel_mock.called)
 
     @patch('api.utils.activation.Job.fetch')
-    @patch('api.utils.activation.cancel_current_task')
+    @patch('api.utils.activation.rq_helpers.cancel_current_task')
     def test_wait_for_activation_error(self, cancel_mock, job_fetch_mock):
         job_fetch_mock.return_value = Mock(is_failed=True)
         device = DeviceFactory.create(status='activation')

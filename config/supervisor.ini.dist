@@ -1,14 +1,20 @@
-[program:rqworker]
+[program:rqworker-high]
 directory=/repo_root/
-command=/repo_root/venv/bin/python /repo_root/xbterminal/manage.py rqworker
+command=/repo_root/venv/bin/python /repo_root/xbterminal/manage.py rqworker high
+user=xbterminal
+group=xbterminal
+
+[program:rqworker-low]
+directory=/repo_root/
+command=/repo_root/venv/bin/python /repo_root/xbterminal/manage.py rqworker low
 user=xbterminal
 group=xbterminal
 
 [program:rqscheduler]
 directory=/repo_root/
-command=/repo_root/venv/bin/python /repo_root/xbterminal/manage.py rqscheduler --interval=1
+command=/repo_root/venv/bin/python /repo_root/xbterminal/manage.py rqscheduler high --interval=1
 user=xbterminal
 group=xbterminal
 
 [group:xbterminal]
-programs=rqscheduler,rqworker
+programs=rqscheduler,rqworker-high,rqworker-low

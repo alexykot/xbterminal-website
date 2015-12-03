@@ -3,8 +3,13 @@ import rq
 import django_rq
 
 
-def run_periodic_task(func, args, interval=2):
-    scheduler = django_rq.get_scheduler()
+def run_task(func, args, queue='high'):
+    queue_ = django_rq.get_queue(queue)
+    return queue_.enqueue_call(func, args)
+
+
+def run_periodic_task(func, args, queue='high', interval=2):
+    scheduler = django_rq.get_scheduler(queue)
     scheduler.schedule(
         scheduled_time=timezone.now(),
         func=func,

@@ -328,9 +328,9 @@ class ActivateDeviceViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'cabinet/activation.html')
 
-    @patch('api.utils.activation.django_rq.enqueue')
-    @patch('api.utils.activation.run_periodic_task')
-    def test_post_valid_code(self, schedule_mock, enqueue_mock):
+    @patch('api.utils.activation.rq_helpers.run_task')
+    @patch('api.utils.activation.rq_helpers.run_periodic_task')
+    def test_post_valid_code(self, run_periodic_mock, run_mock):
         merchant = MerchantAccountFactory.create()
         self.assertEqual(merchant.device_set.count(), 0)
         self.client.login(username=merchant.user.email,
@@ -341,7 +341,9 @@ class ActivateDeviceViewTestCase(TestCase):
             'activation_code': device.activation_code,
         }
         response = self.client.post(self.url, form_data, follow=True)
-        self.assertTrue(enqueue_mock.called)
+        self.assertTrue(run_mock.called)
+        self.assertEqual(run_mock.call_args[1]['queue'], 'low')
+        self.assertTrue(run_periodic_mock.called)
         expected_url = reverse('website:activation',
                                kwargs={'device_key': device.key})
         self.assertRedirects(response, expected_url)
@@ -349,16 +351,16 @@ class ActivateDeviceViewTestCase(TestCase):
         active_device = merchant.device_set.first()
         self.assertEqual(active_device.status, 'activation')
 
-    @patch('api.utils.activation.django_rq.enqueue')
-    @patch('api.utils.activation.run_periodic_task')
-    def test_post_with_activation(self, schedule_mock, enqueue_mock):
+    @patch('api.utils.activation.rq_helpers.run_task')
+    @patch('api.utils.activation.rq_helpers.run_periodic_task')
+    def test_post_with_activation(self, run_periodic_mock, run_mock):
 
-        def activate(fun, key):
-            device = Device.objects.get(key=key)
+        def activate(fun, args, queue=None):
+            device = Device.objects.get(key=args[0])
             device.activate()
             device.save()
             return Mock()
-        enqueue_mock.side_effect = activate
+        run_mock.side_effect = activate
 
         merchant = MerchantAccountFactory.create()
         self.assertEqual(merchant.device_set.count(), 0)
@@ -370,7 +372,8 @@ class ActivateDeviceViewTestCase(TestCase):
             'activation_code': device.activation_code,
         }
         response = self.client.post(self.url, form_data, follow=True)
-        self.assertTrue(enqueue_mock.called)
+        self.assertTrue(run_mock.called)
+        self.assertTrue(run_periodic_mock.called)
         expected_url = reverse('website:device',
                                kwargs={'device_key': device.key})
         self.assertRedirects(response, expected_url)
