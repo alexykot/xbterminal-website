@@ -19,5 +19,6 @@ def run_periodic_task(func, args, queue='high', interval=2):
         result_ttl=3600)
 
 
-def cancel_current_task():
-    django_rq.get_scheduler().cancel(rq.get_current_job())
+def cancel_current_task(queue='high'):
+    job = rq.get_current_job()
+    django_rq.get_scheduler(queue).cancel(job)
