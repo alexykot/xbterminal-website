@@ -1,3 +1,4 @@
+import logging
 import time
 
 from django.core.cache import cache
@@ -9,8 +10,9 @@ from api.utils.salt import Salt
 from api.utils.aptly import get_latest_xbtfw_version
 from operations.rq_helpers import run_periodic_task, cancel_current_task
 
-
 CACHE_KEY_TEMPLATE = 'activation-{device_key}'
+
+logger = logging.getLogger(__name__)
 
 
 def start(device, merchant):
@@ -70,11 +72,11 @@ def wait_for_activation(device_key, activation_job_id):
     """
     device = Device.objects.get(key=device_key)
     if device.status != 'activation':
-        # Activation finished
+        logger.info('activation finished')
         cancel_current_task()
         return
     job = Job.fetch(activation_job_id)
     if job.is_failed:
-        # Activation failed
         set_status(device, 'error')
+        logger.info('activation failed')
         cancel_current_task()
