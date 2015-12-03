@@ -449,7 +449,7 @@ class DeviceActivationForm(forms.Form):
         try:
             self.device = Device.objects.get(
                 activation_code=activation_code,
-                status='activation')
+                status='registered')
         except Device.DoesNotExist:
             raise forms.ValidationError('Invalid activation code.')
         return activation_code

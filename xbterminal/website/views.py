@@ -24,6 +24,7 @@ from ipware.ip import get_real_ip
 
 from operations.blockchain import construct_bitcoin_uri
 from operations.instantfiat import gocoin
+from api.utils import activation
 
 from website import forms, models, utils
 
@@ -394,6 +395,7 @@ class CreateDeviceView(TemplateResponseMixin, CabinetView):
         if form.is_valid():
             device = form.save(commit=False)
             device.merchant = self.request.user.merchant
+            device.start_activation()
             device.activate()
             device.save()
             return redirect(reverse('website:device',
@@ -416,16 +418,34 @@ class ActivateDeviceView(TemplateResponseMixin, CabinetView):
     def post(self, *args, **kwargs):
         form = forms.DeviceActivationForm(self.request.POST)
         if form.is_valid():
-            device = form.device
-            device.merchant = self.request.user.merchant
-            device.activate()
-            device.save()
-            return redirect(reverse('website:device',
-                                    kwargs={'device_key': device.key}))
+            activation.start(form.device,
+                             self.request.user.merchant)
+            return redirect(reverse('website:activation',
+                                    kwargs={'device_key': form.device.key}))
         else:
             context = self.get_context_data(**kwargs)
             context['form'] = form
             return self.render_to_response(context)
+
+
+class ActivationView(TemplateResponseMixin, CabinetView):
+
+    template_name = 'cabinet/activation.html'
+
+    def get(self, *args, **kwargs):
+        merchant = self.request.user.merchant
+        try:
+            device = merchant.device_set.get(
+                key=self.kwargs.get('device_key'))
+        except models.Device.DoesNotExist:
+            raise Http404
+        if device.status in ['active', 'suspended']:
+            # Activation already finished
+            return redirect(reverse('website:device',
+                                    kwargs={'device_key': device.key}))
+        context = self.get_context_data(**kwargs)
+        context['device'] = device
+        return self.render_to_response(context)
 
 
 class DeviceMixin(ContextMixin):
@@ -436,9 +456,11 @@ class DeviceMixin(ContextMixin):
     def get_context_data(self, **kwargs):
         context = super(DeviceMixin, self).get_context_data(**kwargs)
         merchant = self.request.user.merchant
+        device_key = self.kwargs.get('device_key')
         try:
-            context['device'] = merchant.device_set.get(
-                key=self.kwargs.get('device_key'))
+            context['device'] = merchant.device_set.\
+                filter(status__in=['active', 'suspended']).\
+                get(key=device_key)
         except models.Device.DoesNotExist:
             raise Http404
         return context

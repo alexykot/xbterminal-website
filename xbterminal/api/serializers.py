@@ -47,7 +47,7 @@ class DeviceSerializer(serializers.ModelSerializer):
         ]
 
     def get_language(self, device):
-        if device.status == 'activation':
+        if device.status == 'registered':
             language = Language.objects.get(code='en')
         else:
             language = device.merchant.language
@@ -58,7 +58,7 @@ class DeviceSerializer(serializers.ModelSerializer):
         }
 
     def get_currency(self, device):
-        if device.status == 'activation':
+        if device.status == 'registered':
             currency = Currency.objects.get(name='GBP')
         else:
             currency = device.merchant.currency
@@ -74,7 +74,7 @@ class DeviceRegistrationSerializer(serializers.ModelSerializer):
     batch = serializers.CharField()
     key = serializers.CharField()
     api_key = serializers.CharField(validators=[validate_public_key])
-    salt_fingerprint = serializers.CharField(required=False)
+    salt_fingerprint = serializers.CharField()
 
     class Meta:
         model = Device
@@ -107,22 +107,17 @@ class DeviceRegistrationSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        if data.get('salt_fingerprint'):
-            # TODO: make salt_fingerprint required field
-            if not self._salt.check_fingerprint(data['key'],
-                                                data['salt_fingerprint']):
-                raise serializers.ValidationError(
-                    'Invalid salt key fingerprint.')
+        if not self._salt.check_fingerprint(data['key'],
+                                            data['salt_fingerprint']):
+            raise serializers.ValidationError({
+                'salt_fingerprint': 'Invalid salt key fingerprint.'})
         return data
 
     def create(self, validated_data):
-        if validated_data.get('salt_fingerprint'):
-            # TODO: make salt_fingerprint required field
-            self._salt.accept(validated_data['key'])
         return Device.objects.create(
             merchant=None,
             device_type='hardware',
-            status='activation',
+            status='registered',
             name='Device {0}'.format(validated_data['key'][:6]),
             key=validated_data['key'],
             batch=validated_data['batch'],

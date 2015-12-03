@@ -217,6 +217,16 @@ SALT_SERVERS = {
     },
 }
 
+# Aptly
+
+APTLY_SERVERS = {
+    'default': {
+        'HOST': 'https://repo.xbthq.co.uk/',
+        'CLIENT_CERT': 'server.crt',
+        'CLIENT_KEY': 'server.key',
+    },
+}
+
 # OAuth
 
 OAUTH2_PROVIDER = {
@@ -263,9 +273,9 @@ except ImportError:
 
 if DEBUG:
     # Log to console in development mode
-    LOGGING['loggers']['']['handlers'] = ['console']
-    LOGGING['loggers']['django.request']['handlers'] = ['console']
-    LOGGING['loggers']['rq.worker']['handlers'] = ['console']
+    LOGGING['loggers']['']['handlers'] = ['file', 'console']
+    LOGGING['loggers']['django.request']['handlers'] = ['file', 'console']
+    LOGGING['loggers']['rq.worker']['handlers'] = ['rq', 'console']
 
 if TESTING:
     # Disable logging

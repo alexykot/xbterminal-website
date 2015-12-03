@@ -20,3 +20,4 @@ These variables should be redefined in `xbterminal/xbterminal/local_settings.py`
 * BITCOIND_AUTH - bitcoind settings
 * RECAPTCHA_* - reCaptcha settings
 * SALT_SERVERS - Salt server settings
+* APTLY_SERVERS - Aptly server settings

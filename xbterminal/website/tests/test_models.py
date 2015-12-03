@@ -120,7 +120,7 @@ class DeviceTestCase(TestCase):
             device_type='hardware',
             name='TEST')
         self.assertIsNone(device.merchant)
-        self.assertEqual(device.status, 'activation')
+        self.assertEqual(device.status, 'registered')
         self.assertEqual(len(device.key), 8)
         self.assertEqual(len(device.activation_code), 6)
         self.assertEqual(device.bitcoin_network, 'mainnet')
@@ -129,9 +129,9 @@ class DeviceTestCase(TestCase):
 
     def test_device_factory(self):
         # Activation
-        device = DeviceFactory.create(status='activation')
+        device = DeviceFactory.create(status='registered')
         self.assertIsNone(device.merchant)
-        self.assertEqual(device.status, 'activation')
+        self.assertEqual(device.status, 'registered')
         self.assertEqual(len(device.key), 8)
         self.assertEqual(len(device.activation_code), 6)
         # Active
@@ -147,13 +147,19 @@ class DeviceTestCase(TestCase):
         self.assertEqual(device.status, 'suspended')
 
     def test_transitions(self):
-        device = DeviceFactory.create(status='activation')
-        self.assertEqual(device.status, 'activation')
+        device = DeviceFactory.create(status='registered')
+        self.assertEqual(device.status, 'registered')
+        with self.assertRaises(TransitionNotAllowed):
+            device.start_activation()
         with self.assertRaises(TransitionNotAllowed):
             device.activate()
         with self.assertRaises(TransitionNotAllowed):
             device.suspend()
         device.merchant = MerchantAccountFactory.create()
+        with self.assertRaises(TransitionNotAllowed):
+            device.activate()
+        device.start_activation()
+        self.assertEqual(device.status, 'activation')
         device.activate()
         self.assertEqual(device.status, 'active')
         device.suspend()

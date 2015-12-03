@@ -84,10 +84,14 @@ class DeviceFactory(factory.DjangoModelFactory):
     @factory.post_generation
     def status(self, create, extracted, **kwargs):
         if not extracted or extracted == 'active':
+            self.start_activation()
             self.activate()
-        elif extracted == 'activation':
+        elif extracted == 'registered':
             self.merchant = None
+        elif extracted == 'activation':
+            self.start_activation()
         elif extracted == 'suspended':
+            self.start_activation()
             self.activate()
             self.suspend()
         if create:
