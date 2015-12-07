@@ -27,8 +27,13 @@
             </a>
         </form>
         {% else %}
-        <p class="large">{% trans 'Activation in progress. Do not turn off the device.' %}</p>
-        <img src="{% static 'img/loading.gif' %}">
+            <p class="large activation-in-progress">
+                {% trans 'Activation in progress. Do not turn off the device.' %}<br>
+                <img src="{% static 'img/loading.gif' %}">
+            </p>
+            <p class="large activation-error">
+                {% trans 'Activation failed. Please contact support.' %}
+            </p>
         {% endif %}
     </div>
 </div>

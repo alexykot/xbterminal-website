@@ -1,6 +1,7 @@
 import re
 from rest_framework import serializers
 
+from api.utils import activation
 from api.utils.salt import Salt
 from operations.models import WithdrawalOrder
 from website.models import (
@@ -34,6 +35,7 @@ class WithdrawalOrderSerializer(serializers.ModelSerializer):
 
 class DeviceSerializer(serializers.ModelSerializer):
 
+    status = serializers.SerializerMethodField()
     language = serializers.SerializerMethodField()
     currency = serializers.SerializerMethodField()
 
@@ -45,6 +47,12 @@ class DeviceSerializer(serializers.ModelSerializer):
             'language',
             'currency',
         ]
+
+    def get_status(self, device):
+        if device.status == 'activation':
+            return device.status + '_' + activation.get_status(device)
+        else:
+            return device.status
 
     def get_language(self, device):
         if device.status == 'registered':

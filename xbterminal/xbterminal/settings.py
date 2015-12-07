@@ -82,6 +82,7 @@ INSTALLED_APPS = (
     'oauth2_provider',
     'ckeditor',
     'captcha',
+    'django_fsm',
     'fsm_admin',
 
     'website',
@@ -156,9 +157,14 @@ CACHES = {
 }
 
 RQ_QUEUES = {
-    'default': {
+    'high': {
+        # For payments and withdrawals
         'USE_REDIS_CACHE': 'default',
-    }
+    },
+    'low': {
+        # For activation
+        'USE_REDIS_CACHE': 'default',
+    },
 }
 
 # Internationalization

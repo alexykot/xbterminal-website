@@ -464,7 +464,7 @@ class DeviceViewSetTestCase(APITestCase):
                       kwargs={'key': device.key})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['status'], 'activation')
+        self.assertEqual(response.data['status'], 'activation_in_progress')
 
     def test_retrieve_active(self):
         device = DeviceFactory.create(status='active')
