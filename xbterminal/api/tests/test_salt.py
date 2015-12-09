@@ -60,7 +60,7 @@ class SaltTestCase(TestCase):
 
     @patch('api.utils.salt.Salt._send_request')
     @patch('api.utils.salt.Salt._lookup_jid')
-    def test_upgrade(self, lookup_jid_mock, send_mock):
+    def test_highstate(self, lookup_jid_mock, send_mock):
         send_mock.return_value = {'jid': 'test'}
         lookup_jid_mock.return_value = {
             'data': {
@@ -72,8 +72,10 @@ class SaltTestCase(TestCase):
             },
         }
         salt = Salt()
-        salt.upgrade('m1', '0.00')
+        salt.highstate('m1', {'test': 'test'})
         self.assertTrue(send_mock.called)
+        payload = send_mock.call_args[1]['data']
+        self.assertEqual(payload['kwarg']['pillar']['test'], 'test')
         self.assertTrue(lookup_jid_mock.called)
         self.assertEqual(lookup_jid_mock.call_args[0][0], 'test')
 
