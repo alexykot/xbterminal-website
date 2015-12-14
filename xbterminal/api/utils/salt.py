@@ -10,6 +10,10 @@ import requests
 logger = logging.getLogger(__name__)
 
 
+class SaltError(Exception):
+    pass
+
+
 class SaltTimeout(Exception):
     pass
 
@@ -113,7 +117,7 @@ class Salt(object):
         result = self._send_request('post', '/', data=payload)
         return result.get(minion_id, False)
 
-    def upgrade(self, minion_id, version, timeout=60):
+    def highstate(self, minion_id, pillar_data, timeout=60):
         """
         https://docs.saltstack.com/en/2015.5/ref/modules/all
             /salt.modules.state.html#salt.modules.state.highstate
@@ -123,25 +127,35 @@ class Salt(object):
             'fun': 'state.highstate',
             'tgt': minion_id,
             'kwarg': {
-                'pillar': {
-                    'xbt': {
-                        'version': version,
-                    },
-                },
+                'pillar': pillar_data,
             },
         }
         result = self._send_request('post', '/', data=payload)
         jid = result['jid']
         # Wait for result
-        state = 'pkg_|-xbterminal-firmware_|-xbterminal-firmware_|-installed'
         start_time = time.time()
         interval = 3
         while time.time() < start_time + timeout:
             job_info = self._lookup_jid(jid)
-            if 'data' in job_info:
-                assert job_info['data'][minion_id][state]['result']
-                logger.info('device upgraded')
-                return
+            try:
+                results = job_info['data'][minion_id]
+            except KeyError:
+                # Minion is not ready yet
+                pass
+            else:
+                # Parse results
+                errors = []
+                if isinstance(results, list):
+                    errors = results
+                else:
+                    for state, result in results.items():
+                        if not result['result']:
+                            errors.append(result['comment'])
+                if errors:
+                    raise SaltError(errors)
+                else:
+                    logger.info('highstate executed')
+                    return
             time.sleep(interval)
         raise SaltTimeout
 

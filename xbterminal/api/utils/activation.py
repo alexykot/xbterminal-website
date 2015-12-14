@@ -40,7 +40,11 @@ def prepare_device(device_key):
         time.sleep(5)
     # Upgrade xbterminal-firmware package
     xbtfw_version = get_latest_xbtfw_version()
-    salt.upgrade(device.key, xbtfw_version)
+    salt.highstate(device.key, {
+        'xbt': {
+            'version': xbtfw_version,
+        },
+    })
     # Reboot device
     salt.reboot(device.key)
     # Activate

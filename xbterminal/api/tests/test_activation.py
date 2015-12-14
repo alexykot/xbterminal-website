@@ -24,8 +24,9 @@ class ActivationTestCase(TestCase):
         prepare_device(device.key)
         self.assertTrue(salt_mock.accept.called)
         self.assertTrue(salt_mock.ping.called)
-        self.assertTrue(salt_mock.upgrade.called)
-        self.assertEqual(salt_mock.upgrade.call_args[0][1], '1.0')
+        self.assertTrue(salt_mock.highstate.called)
+        self.assertEqual(salt_mock.highstate.call_args[0][1],
+                         {'xbt': {'version': '1.0'}})
         self.assertTrue(salt_mock.reboot.called)
 
         device_updated = Device.objects.get(key=device.key)
