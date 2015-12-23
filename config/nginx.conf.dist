@@ -6,20 +6,25 @@
 
 server {
     listen 80;
-    # listen 443 ssl;
+    ## nginx 1.9.5+ required for HTTP/2
+    # listen 443 ssl http2;
     server_name xbterminal.io;
     
     # ssl_certificate /repo_root/certs/xbterminal.pem;
     # ssl_certificate_key /repo_root/certs/xbterminal.key;
 
-    # https://mozilla.github.io/server-side-tls/ssl-config-generator/
-    # Generate new DH group: openssl dhparam -out dhparams.pem 2048
+    ## https://mozilla.github.io/server-side-tls/ssl-config-generator/
+    ## Generate new DH group: openssl dhparam -out dhparams.pem 2048
     # ssl_session_timeout 1d;
     # ssl_session_cache shared:SSL:50m;
+    # ssl_session_tickets off;
     # ssl_dhparam /var/www/xbterminal.com/certs/dhparams.pem;
     # ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
-    # ssl_ciphers 'ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA';
+    # ssl_ciphers 'ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:ECDHE-RSA-DES-CBC3-SHA:ECDHE-ECDSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA';
     # ssl_prefer_server_ciphers on;
+
+    ## Enable HSTS
+    # add_header Strict-Transport-Security max-age=15768000;
 
     access_log /var/log/nginx/xbterminal.io_access.log;
     error_log /var/log/nginx/xbterminal.io_error.log;
@@ -28,8 +33,8 @@ server {
         uwsgi_pass unix:///tmp/xbterminal.io.sock;
         include uwsgi_params;
 
-        # http://stackoverflow.com/questions/11943491/accessing-django-admin-over-https-behind-nginx
-        # https://docs.djangoproject.com/en/1.6/ref/settings/#secure-proxy-ssl-header
+        ## http://stackoverflow.com/questions/11943491/accessing-django-admin-over-https-behind-nginx
+        ## https://docs.djangoproject.com/en/1.6/ref/settings/#secure-proxy-ssl-header
         # uwsgi_param HTTP_X_FORWARDED_PROTO https;
         # uwsgi_param UWSGI_SCHEME $scheme;
     }
