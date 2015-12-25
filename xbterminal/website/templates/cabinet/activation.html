@@ -16,7 +16,7 @@
     <div class="col-md-8 col-md-offset-2">
         <h3>{% trans 'Device activation' %}</h3>
         {% if form %}
-        <form id="activation-form" action="" method="post">
+        <form id="activation-form" action="" method="post" autocomplete="off">
             {% csrf_token %}
             {% bootstrap_form form %}
             <button type="submit" class="btn btn-default">
