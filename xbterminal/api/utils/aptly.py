@@ -31,7 +31,7 @@ def get_latest_xbtfw_version():
     config = settings.APTLY_SERVERS['default']
     url = urljoin(
         config['HOST'],
-        '/repos/deb/fido/xbtfw-wandboard-dev/dists/poky/main/binary-armel/Packages')
+        '/repos/deb/jethro/xbtfw-wandboard-dev/dists/poky/main/binary-armel/Packages')
     certs = (
         os.path.join(settings.CERT_PATH, config['CLIENT_CERT']),
         os.path.join(settings.CERT_PATH, config['CLIENT_KEY']),
