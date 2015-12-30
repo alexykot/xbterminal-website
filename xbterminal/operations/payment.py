@@ -21,6 +21,7 @@ from operations import (
     instantfiat,
     exceptions,
     protocol)
+from operations.services import blockcypher
 from operations.services.price import get_exchange_rate
 from operations.rq_helpers import run_periodic_task, cancel_current_task
 from operations.models import PaymentOrder
@@ -248,11 +249,16 @@ def wait_for_validation(payment_order_uid):
     if payment_order.time_created + datetime.timedelta(minutes=20) < timezone.now():
         # Timeout, cancel job
         cancel_current_task()
-    if payment_order.incoming_tx_id is not None:
+    if payment_order.outgoing_tx_id is not None:
+        # Payment already forwarded, cancel job
         cancel_current_task()
-        if payment_order.outgoing_tx_id is not None:
-            # Payment already forwarded, skip
+        return
+    if payment_order.incoming_tx_id is not None:
+        if not blockcypher.is_tx_reliable(payment_order.incoming_tx_id,
+                                          payment_order.bitcoin_network):
+            # Wait
             return
+        cancel_current_task()
         forward_transaction(payment_order)
         run_periodic_task(wait_for_broadcast, [payment_order.uid], interval=15)
         if payment_order.instantfiat_invoice_id is None:

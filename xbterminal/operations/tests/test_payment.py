@@ -272,9 +272,23 @@ class WaitForValidationTestCase(TestCase):
         self.assertFalse(forward_mock.called)
 
     @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.blockcypher.is_tx_reliable')
+    @patch('operations.payment.forward_transaction')
+    def test_tx_not_reliable(self, forward_mock, conf_chk_mock, cancel_mock):
+        conf_chk_mock.return_value = False
+        payment_order = PaymentOrderFactory.create(
+            incoming_tx_id='0' * 64)
+        payment.wait_for_validation(payment_order.uid)
+        self.assertFalse(cancel_mock.called)
+        self.assertFalse(forward_mock.called)
+
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.blockcypher.is_tx_reliable')
     @patch('operations.payment.forward_transaction')
     @patch('operations.payment.run_periodic_task')
-    def test_forward_btc(self, run_task_mock, forward_mock, cancel_mock):
+    def test_forward_btc(self, run_task_mock, forward_mock, conf_chk_mock,
+                         cancel_mock):
+        conf_chk_mock.return_value = True
         payment_order = PaymentOrderFactory.create(
             incoming_tx_id='0' * 64)
         payment.wait_for_validation(payment_order.uid)
@@ -288,9 +302,12 @@ class WaitForValidationTestCase(TestCase):
                          'wait_for_broadcast')
 
     @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.blockcypher.is_tx_reliable')
     @patch('operations.payment.forward_transaction')
     @patch('operations.payment.run_periodic_task')
-    def test_forward_instantfiat(self, run_task_mock, forward_mock, cancel_mock):
+    def test_forward_instantfiat(self, run_task_mock, forward_mock,
+                                 conf_chk_mock, cancel_mock):
+        conf_chk_mock.return_value = True
         payment_order = PaymentOrderFactory.create(
             incoming_tx_id='0' * 64,
             instantfiat_invoice_id='test_invoice')
