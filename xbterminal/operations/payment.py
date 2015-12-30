@@ -17,11 +17,10 @@ from operations import (
     BTC_DEC_PLACES,
     BTC_MIN_OUTPUT,
     blockchain,
-    blockr,
     instantfiat,
     exceptions,
     protocol)
-from operations.services import blockcypher
+from operations.services import blockcypher, blockr
 from operations.services.price import get_exchange_rate
 from operations.rq_helpers import run_periodic_task, cancel_current_task
 from operations.models import PaymentOrder

@@ -2,7 +2,8 @@ import datetime
 from decimal import Decimal
 from django.utils import timezone
 
-from operations import blockr, BTC_DEC_PLACES, BTC_MIN_OUTPUT
+from operations import BTC_DEC_PLACES, BTC_MIN_OUTPUT
+from operations.services import blockr
 from operations.services.price import get_exchange_rate
 from operations.blockchain import (
     BlockChain,

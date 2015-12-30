@@ -18,7 +18,8 @@ from website.validators import (
     validate_bitcoin_address,
     validate_transaction)
 
-from operations import BTC_DEC_PLACES, blockr
+from operations import BTC_DEC_PLACES
+from operations.services import blockr
 
 
 def gen_payment_uid():
