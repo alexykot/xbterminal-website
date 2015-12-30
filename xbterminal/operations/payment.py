@@ -30,6 +30,10 @@ from website.utils import send_error_message
 
 logger = logging.getLogger(__name__)
 
+PAYMENT_TIMEOUT = datetime.timedelta(minutes=15)
+VALIDATION_TIMEOUT = datetime.timedelta(minutes=20)
+BROADCAST_TIMEOUT = datetime.timedelta(minutes=45)
+
 
 def prepare_payment(device, fiat_amount):
     """
@@ -138,7 +142,7 @@ def wait_for_payment(payment_order_uid):
         # PaymentOrder deleted, cancel job
         cancel_current_task()
         return
-    if payment_order.time_created + datetime.timedelta(minutes=15) < timezone.now():
+    if payment_order.time_created + PAYMENT_TIMEOUT < timezone.now():
         # Timeout, cancel job
         cancel_current_task()
     if payment_order.incoming_tx_id is not None:
@@ -245,7 +249,7 @@ def wait_for_validation(payment_order_uid):
         # PaymentOrder deleted, cancel job
         cancel_current_task()
         return
-    if payment_order.time_created + datetime.timedelta(minutes=20) < timezone.now():
+    if payment_order.time_created + VALIDATION_TIMEOUT < timezone.now():
         # Timeout, cancel job
         cancel_current_task()
     if payment_order.outgoing_tx_id is not None:
@@ -335,7 +339,7 @@ def wait_for_broadcast(payment_order_uid):
         # PaymentOrder deleted, cancel job
         cancel_current_task()
         return
-    if payment_order.time_created + datetime.timedelta(minutes=45) < timezone.now():
+    if payment_order.time_created + BROADCAST_TIMEOUT < timezone.now():
         # Timeout, cancel job
         cancel_current_task()
     if blockr.is_tx_broadcasted(payment_order.outgoing_tx_id,
