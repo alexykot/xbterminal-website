@@ -59,6 +59,14 @@ class SaltTestCase(TestCase):
         self.assertFalse(salt.ping('m2'))
 
     @patch('api.utils.salt.Salt._send_request')
+    def test_get_grain(self, send_mock):
+        send_mock.return_value = {'m1': {'machine': 'qemuarm'}}
+        salt = Salt()
+        self.assertEqual(salt.get_grain('m1', 'machine'), 'qemuarm')
+        with self.assertRaises(KeyError):
+            salt.get_grain('m2', 'machine')
+
+    @patch('api.utils.salt.Salt._send_request')
     @patch('api.utils.salt.Salt._lookup_jid')
     def test_highstate(self, lookup_jid_mock, send_mock):
         send_mock.return_value = {'jid': 'test'}
