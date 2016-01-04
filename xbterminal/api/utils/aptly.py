@@ -3,35 +3,17 @@ from urlparse import urljoin
 from django.conf import settings
 import requests
 
+YOCTO_RELEASE = 'jethro'
 
-def get_latest_xbtfw_version_():
-    """
-    https://www.aptly.info/doc/api/repos/
-    """
+
+def get_latest_xbtfw_version(machine):
     config = settings.APTLY_SERVERS['default']
-    api_url = '/api/repos/xbtfw-wandboard-dev/packages'
-    params = {
-        'q': 'xbterminal-firmware',
-        'format': 'details',
-    }
-    certs = (
-        os.path.join(settings.CERT_PATH, config['CLIENT_CERT']),
-        os.path.join(settings.CERT_PATH, config['CLIENT_KEY']),
-    )
-    response = requests.get(urljoin(config['HOST'], api_url),
-                            params=params,
-                            cert=certs,
-                            verify=False)
-    result = response.json()
-    latest = max(pkg['Version'] for pkg in result)
-    return latest
-
-
-def get_latest_xbtfw_version():
-    config = settings.APTLY_SERVERS['default']
+    repo_name = 'xbtfw-{machine}-dev'.format(machine=machine)
     url = urljoin(
         config['HOST'],
-        '/repos/deb/jethro/xbtfw-wandboard-dev/dists/poky/main/binary-armel/Packages')
+        '/repos/deb/{branch}/{repo}/dists/poky/main/binary-armel/Packages'.format(
+            branch=YOCTO_RELEASE,
+            repo=repo_name))
     certs = (
         os.path.join(settings.CERT_PATH, config['CLIENT_CERT']),
         os.path.join(settings.CERT_PATH, config['CLIENT_KEY']),

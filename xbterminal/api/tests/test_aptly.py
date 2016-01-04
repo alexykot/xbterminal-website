@@ -15,20 +15,6 @@ from api.utils import aptly
 class AptlyTestCase(TestCase):
 
     @patch('api.utils.aptly.requests.get')
-    def test_get_xbtfw_latest_version_(self, get_mock):
-        get_mock.return_value = Mock(**{
-            'json.return_value': [
-                {'Version': '0.9.1'},
-                {'Version': '0.9.2'},
-            ],
-        })
-        latest = aptly.get_latest_xbtfw_version_()
-        self.assertEqual(latest, '0.9.2')
-        self.assertEqual(
-            get_mock.call_args[0][0],
-            'http://test/api/repos/xbtfw-wandboard-dev/packages')
-
-    @patch('api.utils.aptly.requests.get')
     def test_get_xbtfw_latest_version(self, get_mock):
         get_mock.return_value = Mock(
             content='Package: xbterminal-firmware\n'
@@ -39,5 +25,8 @@ class AptlyTestCase(TestCase):
                     '\n'
                     'Package: test\n'
                     'Version: 1.0.0\n')
-        latest = aptly.get_latest_xbtfw_version()
+        latest = aptly.get_latest_xbtfw_version('qemuarm')
         self.assertEqual(latest, '0.9.2')
+        self.assertEqual(
+            get_mock.call_args[0][0],
+            'http://test/repos/deb/jethro/xbtfw-qemuarm-dev/dists/poky/main/binary-armel/Packages')

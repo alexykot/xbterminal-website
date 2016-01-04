@@ -117,6 +117,16 @@ class Salt(object):
         result = self._send_request('post', '/', data=payload)
         return result.get(minion_id, False)
 
+    def get_grain(self, minion_id, key):
+        payload = {
+            'client': 'local',
+            'fun': 'grains.item',
+            'tgt': minion_id,
+            'arg': [key],
+        }
+        result = self._send_request('post', '/', data=payload)
+        return result[minion_id].get(key)
+
     def highstate(self, minion_id, pillar_data, timeout=60):
         """
         https://docs.saltstack.com/en/2015.5/ref/modules/all
