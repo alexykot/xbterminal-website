@@ -39,7 +39,8 @@ def prepare_device(device_key):
     while not salt.ping(device.key):
         time.sleep(5)
     # Upgrade xbterminal-firmware package
-    xbtfw_version = get_latest_xbtfw_version()
+    machine = salt.get_grain(device.key, 'machine')
+    xbtfw_version = get_latest_xbtfw_version(machine)
     salt.highstate(device.key, {
         'xbt': {
             'version': xbtfw_version,
