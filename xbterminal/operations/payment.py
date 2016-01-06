@@ -257,8 +257,16 @@ def wait_for_validation(payment_order_uid):
         cancel_current_task()
         return
     if payment_order.incoming_tx_id is not None:
-        if not blockcypher.is_tx_reliable(payment_order.incoming_tx_id,
-                                          payment_order.bitcoin_network):
+        try:
+            incoming_tx_reliable = blockcypher.is_tx_reliable(
+                payment_order.incoming_tx_id,
+                payment_order.bitcoin_network)
+        except Exception as error:
+            # Error when accessing blockcypher API
+            logger.exception(error)
+            cancel_current_task()
+            return
+        if not incoming_tx_reliable:
             # Wait
             return
         cancel_current_task()
