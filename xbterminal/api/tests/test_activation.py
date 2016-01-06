@@ -1,5 +1,7 @@
+import datetime
 from mock import Mock, patch
 from django.test import TestCase
+from django.utils import timezone
 
 from api.utils.activation import (
     prepare_device,
@@ -54,15 +56,25 @@ class ActivationTestCase(TestCase):
         job_fetch_mock.return_value = Mock(is_failed=False)
         device = DeviceFactory.create(status='activation')
         job_id = 'test'
-        wait_for_activation(device.key, job_id)
+        wait_for_activation(device.key, job_id, timezone.now())
         self.assertFalse(cancel_mock.called)
 
     @patch('api.utils.activation.rq_helpers.cancel_current_task')
     def test_wait_for_activation_finished(self, cancel_mock):
         device = DeviceFactory.create(status='active')
         job_id = 'test'
-        wait_for_activation(device.key, job_id)
+        wait_for_activation(device.key, job_id, timezone.now())
         self.assertTrue(cancel_mock.called)
+
+    @patch('api.utils.activation.rq_helpers.cancel_current_task')
+    def test_wait_for_activation_timeout(self, cancel_mock):
+        device = DeviceFactory.create(status='activation')
+        job_id = 'test'
+        started_at = timezone.now() - datetime.timedelta(minutes=20)
+        wait_for_activation(device.key, job_id, started_at)
+        self.assertTrue(cancel_mock.called)
+        status = get_status(device)
+        self.assertEqual(status, 'error')
 
     @patch('api.utils.activation.Job.fetch')
     @patch('api.utils.activation.rq_helpers.cancel_current_task')
@@ -70,7 +82,7 @@ class ActivationTestCase(TestCase):
         job_fetch_mock.return_value = Mock(is_failed=True)
         device = DeviceFactory.create(status='activation')
         job_id = 'test'
-        wait_for_activation(device.key, job_id)
+        wait_for_activation(device.key, job_id, timezone.now())
         self.assertTrue(cancel_mock.called)
         status = get_status(device)
         self.assertEqual(status, 'error')
