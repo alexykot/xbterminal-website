@@ -52,9 +52,6 @@ def prepare_device(device_key):
     })
     # Reboot device
     salt.reboot(device.key)
-    # Activate
-    device.activate()
-    device.save()
 
 
 def set_status(device, activation_status):
@@ -95,3 +92,4 @@ def wait_for_activation(device_key, activation_job_id, started_at):
         set_status(device, 'error')
         logger.warning('activation failed ({})'.format(device.key))
         rq_helpers.cancel_current_task()
+        return

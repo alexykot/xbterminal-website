@@ -35,7 +35,7 @@ class ActivationTestCase(TestCase):
         self.assertEqual(get_version_mock.call_args[0][0], 'qemuarm')
 
         device_updated = Device.objects.get(key=device.key)
-        self.assertEqual(device_updated.status, 'active')
+        self.assertEqual(device_updated.status, 'activation')  # Not changed
 
     def test_get_status_default(self):
         device = DeviceFactory.create(status='activation')

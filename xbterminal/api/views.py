@@ -405,7 +405,10 @@ class DeviceViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     lookup_field = 'key'
 
     def get_queryset(self):
-        return Device.objects.exclude(status='suspended')
+        queryset = Device.objects.exclude(status='suspended')
+        if self.action == 'confirm_activation':
+            queryset = queryset.filter(status='activation')
+        return queryset
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -420,6 +423,13 @@ class DeviceViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
         device = serializer.save()
         return Response({'activation_code': device.activation_code})
+
+    @detail_route(methods=['POST'])
+    def confirm_activation(self, *args, **kwargs):
+        device = self.get_object()
+        device.activate()
+        device.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class DeviceBatchViewSet(viewsets.GenericViewSet):
