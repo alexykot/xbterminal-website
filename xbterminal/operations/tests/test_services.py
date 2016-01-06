@@ -21,7 +21,7 @@ class BlockcypherTestCase(TestCase):
         get_mock.return_value = Mock(**{
             'json.return_value': {
                 'confirmations': 0,
-                'confidence': 0.95,
+                'confidence': 0.93,
             },
         })
         tx_id = '0' * 64

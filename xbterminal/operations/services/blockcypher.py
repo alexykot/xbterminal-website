@@ -4,7 +4,7 @@ BLOCKCYPHER_CHAINS = {
     'mainnet': 'main',
     'testnet': 'test3',
 }
-BLOCKCYPHER_CONFIDENCE_THRESHOLD = 0.99
+BLOCKCYPHER_CONFIDENCE_THRESHOLD = 0.95
 
 
 def is_tx_reliable(tx_id, network):
