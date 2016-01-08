@@ -1,10 +1,10 @@
 import requests
+from constance import config
 
 BLOCKCYPHER_CHAINS = {
     'mainnet': 'main',
     'testnet': 'test3',
 }
-BLOCKCYPHER_CONFIDENCE_THRESHOLD = 0.95
 
 
 def is_tx_reliable(tx_id, network):
@@ -19,7 +19,7 @@ def is_tx_reliable(tx_id, network):
     data = response.json()
     if data['confirmations'] >= 1:
         return True
-    elif data['confidence'] >= BLOCKCYPHER_CONFIDENCE_THRESHOLD:
+    elif data['confidence'] >= config.TX_CONFIDENCE_THRESHOLD:
         return True
     else:
         return False
