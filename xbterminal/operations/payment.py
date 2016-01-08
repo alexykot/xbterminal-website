@@ -31,7 +31,7 @@ from website.utils import send_error_message
 logger = logging.getLogger(__name__)
 
 PAYMENT_TIMEOUT = datetime.timedelta(minutes=15)
-VALIDATION_TIMEOUT = datetime.timedelta(minutes=20)
+VALIDATION_TIMEOUT = datetime.timedelta(minutes=30)
 BROADCAST_TIMEOUT = datetime.timedelta(minutes=45)
 
 
