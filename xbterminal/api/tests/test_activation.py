@@ -15,24 +15,30 @@ from website.tests.factories import DeviceFactory
 class ActivationTestCase(TestCase):
 
     @patch('api.utils.activation.Salt')
-    @patch('api.utils.activation.get_latest_xbtfw_version')
+    @patch('api.utils.activation.get_latest_version')
     def test_prepare_device(self, get_version_mock, salt_cls_mock):
         salt_cls_mock.return_value = salt_mock = Mock(**{
             'ping.return_value': True,
             'get_grain.return_value': 'qemuarm',
         })
-        get_version_mock.return_value = '1.0'
+        get_version_mock.side_effect = ['1.0', '1.0-theme']
         device = DeviceFactory.create(status='activation')
 
         prepare_device(device.key)
         self.assertTrue(salt_mock.accept.called)
         self.assertTrue(salt_mock.ping.called)
         self.assertTrue(salt_mock.get_grain.called)
-        self.assertTrue(salt_mock.highstate.called)
-        self.assertEqual(salt_mock.highstate.call_args[0][1],
-                         {'xbt': {'version': '1.0'}})
-        self.assertTrue(salt_mock.reboot.called)
+        self.assertEqual(get_version_mock.call_count, 2)
         self.assertEqual(get_version_mock.call_args[0][0], 'qemuarm')
+
+        self.assertTrue(salt_mock.highstate.called)
+        self.assertEqual(salt_mock.highstate.call_args[0][0], device.key)
+        pillar_data = salt_mock.highstate.call_args[0][1]
+        self.assertEqual(pillar_data['xbt']['version'], '1.0')
+        self.assertEqual(pillar_data['xbt']['themes']['default'], '1.0-theme')
+        self.assertEqual(pillar_data['xbt']['config']['theme'], 'default')
+
+        self.assertTrue(salt_mock.reboot.called)
 
         device_updated = Device.objects.get(key=device.key)
         self.assertEqual(device_updated.status, 'activation')  # Not changed

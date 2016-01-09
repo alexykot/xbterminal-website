@@ -6,7 +6,7 @@ import requests
 YOCTO_RELEASE = 'jethro'
 
 
-def get_latest_xbtfw_version(machine):
+def get_latest_version(machine, package_name):
     config = settings.APTLY_SERVERS['default']
     repo_name = 'xbtfw-{machine}-dev'.format(machine=machine)
     url = urljoin(
@@ -31,5 +31,5 @@ def get_latest_xbtfw_version(machine):
             packages[-1][key] = value
     # Find latest version
     latest = max(pkg['Version'] for pkg in packages
-                 if pkg['Package'] == 'xbterminal-firmware')
+                 if pkg['Package'] == package_name)
     return latest

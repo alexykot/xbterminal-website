@@ -8,7 +8,7 @@ from rq.job import Job
 
 from website.models import Device
 from api.utils.salt import Salt
-from api.utils.aptly import get_latest_xbtfw_version
+from api.utils.aptly import get_latest_version
 from operations import rq_helpers
 
 CACHE_KEY_TEMPLATE = 'activation-{device_key}'
@@ -42,14 +42,28 @@ def prepare_device(device_key):
     # Wait for device
     while not salt.ping(device.key):
         time.sleep(5)
-    # Upgrade xbterminal-firmware package
+    # Collect information
     machine = salt.get_grain(device.key, 'machine')
-    xbtfw_version = get_latest_xbtfw_version(machine)
-    salt.highstate(device.key, {
+    ui_theme = device.merchant.ui_theme.name
+    firmware_package_version = get_latest_version(
+        machine,
+        'xbterminal-firmware')
+    ui_theme_package_version = get_latest_version(
+        machine,
+        'xbterminal-firmware-theme-{}'.format(ui_theme))
+    pillar_data = {
         'xbt': {
-            'version': xbtfw_version,
+            'version': firmware_package_version,
+            'themes': {
+                ui_theme: ui_theme_package_version,
+            },
+            'config': {
+                'theme': ui_theme,
+            },
         },
-    })
+    }
+    # Apply state
+    salt.highstate(device.key, pillar_data)
     # Reboot device
     salt.reboot(device.key)
 
