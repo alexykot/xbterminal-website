@@ -63,7 +63,7 @@ def prepare_device(device_key):
         },
     }
     # Apply state
-    salt.highstate(device.key, pillar_data)
+    salt.highstate(device.key, pillar_data, timeout=300)
 
 
 def set_status(device, activation_status):
