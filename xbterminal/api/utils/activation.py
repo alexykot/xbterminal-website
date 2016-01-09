@@ -64,8 +64,6 @@ def prepare_device(device_key):
     }
     # Apply state
     salt.highstate(device.key, pillar_data)
-    # Reboot device
-    salt.reboot(device.key)
 
 
 def set_status(device, activation_status):

@@ -38,7 +38,7 @@ class ActivationTestCase(TestCase):
         self.assertEqual(pillar_data['xbt']['themes']['default'], '1.0-theme')
         self.assertEqual(pillar_data['xbt']['config']['theme'], 'default')
 
-        self.assertTrue(salt_mock.reboot.called)
+        self.assertFalse(salt_mock.reboot.called)
 
         device_updated = Device.objects.get(key=device.key)
         self.assertEqual(device_updated.status, 'activation')  # Not changed
