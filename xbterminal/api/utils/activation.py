@@ -25,7 +25,7 @@ def start(device, merchant):
         prepare_device,
         [device.key],
         queue='low',
-        timeout=ACTIVATION_TIMEOUT.total_seconds())
+        timeout=int(ACTIVATION_TIMEOUT.total_seconds()))
     rq_helpers.run_periodic_task(
         wait_for_activation,
         [device.key, job.get_id(), timezone.now()])
@@ -69,7 +69,7 @@ def prepare_device(device_key):
     # Apply state
     salt.highstate(device.key,
                    pillar_data,
-                   timeout=ACTIVATION_TIMEOUT.total_seconds())
+                   timeout=int(ACTIVATION_TIMEOUT.total_seconds()))
 
 
 def set_status(device, activation_status):
