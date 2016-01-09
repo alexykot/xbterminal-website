@@ -355,7 +355,7 @@ class ActivateDeviceViewTestCase(TestCase):
     @patch('api.utils.activation.rq_helpers.run_periodic_task')
     def test_post_with_activation(self, run_periodic_mock, run_mock):
 
-        def activate(fun, args, queue=None):
+        def activate(fun, args, queue=None, timeout=None):
             device = Device.objects.get(key=args[0])
             device.activate()
             device.save()

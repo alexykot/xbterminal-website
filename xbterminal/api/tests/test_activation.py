@@ -33,6 +33,7 @@ class ActivationTestCase(TestCase):
 
         self.assertTrue(salt_mock.highstate.called)
         self.assertEqual(salt_mock.highstate.call_args[0][0], device.key)
+        self.assertEqual(salt_mock.highstate.call_args[1]['timeout'], 600)
         pillar_data = salt_mock.highstate.call_args[0][1]
         self.assertEqual(pillar_data['xbt']['version'], '1.0')
         self.assertEqual(pillar_data['xbt']['themes']['default'], '1.0-theme')
