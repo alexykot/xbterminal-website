@@ -325,7 +325,7 @@ class WithdrawalViewSetTestCase(APITestCase):
             'device': device.key,
             'amount': '1.00',
         }
-        url = reverse('api:withdrawal-list')
+        url = reverse('api:v2:withdrawal-list')
         request = self.factory.post(url, form_data, format='json')
         device.api_key, request.META['HTTP_X_SIGNATURE'] = \
             create_test_signature(request.body)
@@ -345,7 +345,7 @@ class WithdrawalViewSetTestCase(APITestCase):
             'device': 'invalid_key',
             'amount': '1.00',
         }
-        url = reverse('api:withdrawal-list')
+        url = reverse('api:v2:withdrawal-list')
         response = self.client.post(url, form_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['error'],
@@ -357,7 +357,7 @@ class WithdrawalViewSetTestCase(APITestCase):
             'device': device.key,
             'amount': '1.00',
         }
-        url = reverse('api:withdrawal-list')
+        url = reverse('api:v2:withdrawal-list')
         response = self.client.post(url, form_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['error'],
@@ -371,7 +371,7 @@ class WithdrawalViewSetTestCase(APITestCase):
             'device': device.key,
             'amount': '1.00',
         }
-        url = reverse('api:withdrawal-list')
+        url = reverse('api:v2:withdrawal-list')
         request = self.factory.post(url, form_data, format='json')
         device.api_key, signature = create_test_signature(request.body)
         device.save()
@@ -387,7 +387,7 @@ class WithdrawalViewSetTestCase(APITestCase):
         view = WithdrawalViewSet.as_view(
             actions={'post': 'confirm'})
         form_data = {'address': '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'}
-        url = reverse('api:withdrawal-confirm', kwargs={'uid': order.uid})
+        url = reverse('api:v2:withdrawal-confirm', kwargs={'uid': order.uid})
         request = self.factory.post(url, form_data, format='json')
         order.device.api_key, request.META['HTTP_X_SIGNATURE'] = \
             create_test_signature(request.body)
@@ -400,7 +400,7 @@ class WithdrawalViewSetTestCase(APITestCase):
 
     def test_check(self):
         order = WithdrawalOrderFactory.create(time_sent=timezone.now())
-        url = reverse('api:withdrawal-detail', kwargs={'uid': order.uid})
+        url = reverse('api:v2:withdrawal-detail', kwargs={'uid': order.uid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['status'], 'sent')

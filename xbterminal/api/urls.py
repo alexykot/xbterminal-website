@@ -51,6 +51,9 @@ api_v2_router = routers.DefaultRouter()
 api_v2_router.register('payments',
                        views.PaymentViewSet,
                        base_name='payment')
+api_v2_router.register('withdrawals',
+                       views.WithdrawalViewSet,
+                       base_name='withdrawal')
 api_v2_router.register('batches',
                        views.DeviceBatchViewSet,
                        base_name='batch')
