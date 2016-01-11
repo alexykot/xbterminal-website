@@ -366,14 +366,14 @@ class PaymentViewSet(viewsets.GenericViewSet):
             device, form.cleaned_data['amount'])
         # Urls
         payment_request_url = self.request.build_absolute_uri(reverse(
-            'api:short:payment_request',
-            kwargs={'payment_uid': payment_order.uid}))
+            'api:v2:payment-request',
+            kwargs={'uid': payment_order.uid}))
         payment_response_url = self.request.build_absolute_uri(reverse(
-            'api:payment_response',
-            kwargs={'payment_uid': payment_order.uid}))
+            'api:v2:payment-response',
+            kwargs={'uid': payment_order.uid}))
         payment_check_url = self.request.build_absolute_uri(reverse(
-            'api:payment_check',
-            kwargs={'payment_uid': payment_order.uid}))
+            'api:v2:payment-detail',
+            kwargs={'uid': payment_order.uid}))
         # Create payment request
         payment_order.request = operations.protocol.create_payment_request(
             payment_order.device.bitcoin_network,
