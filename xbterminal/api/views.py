@@ -33,7 +33,10 @@ from api.serializers import (
     WithdrawalOrderSerializer,
     DeviceSerializer,
     DeviceRegistrationSerializer)
-from api.renderers import TarArchiveRenderer
+from api.renderers import (
+    TarArchiveRenderer,
+    PaymentRequestRenderer,
+    PaymentACKRenderer)
 from api.utils.crypto import verify_signature
 from api.utils.pdf import render_to_pdf
 
@@ -340,6 +343,134 @@ class PaymentCheckView(View):
             data = {'paid': 0}
         response = HttpResponse(json.dumps(data),
                                 content_type='application/json')
+        return response
+
+
+class PaymentViewSet(viewsets.GenericViewSet):
+
+    queryset = PaymentOrder.objects.all()
+    lookup_field = 'uid'
+
+    def create(self, *args, **kwargs):
+        form = PaymentForm(data=self.request.data)
+        if not form.is_valid():
+            return Response({'errors': form.errors},
+                            status=status.HTTP_400_BAD_REQUEST)
+        # Prepare payment order
+        try:
+            device = Device.objects.get(key=form.cleaned_data['device_key'],
+                                        status='active')
+        except Device.DoesNotExist:
+            raise Http404
+        payment_order = operations.payment.prepare_payment(
+            device, form.cleaned_data['amount'])
+        # Urls
+        payment_request_url = self.request.build_absolute_uri(reverse(
+            'api:v2:payment-request',
+            kwargs={'uid': payment_order.uid}))
+        payment_response_url = self.request.build_absolute_uri(reverse(
+            'api:v2:payment-response',
+            kwargs={'uid': payment_order.uid}))
+        payment_check_url = self.request.build_absolute_uri(reverse(
+            'api:v2:payment-detail',
+            kwargs={'uid': payment_order.uid}))
+        # Create payment request
+        payment_order.request = operations.protocol.create_payment_request(
+            payment_order.device.bitcoin_network,
+            [(payment_order.local_address, payment_order.btc_amount)],
+            payment_order.time_created,
+            payment_order.expires,
+            payment_response_url,
+            device.merchant.company_name)
+        payment_order.save()
+        # Prepare json response
+        fiat_amount = payment_order.fiat_amount.quantize(Decimal('0.00'))
+        btc_amount = payment_order.btc_amount
+        exchange_rate = payment_order.effective_exchange_rate.\
+            quantize(Decimal('0.000000'))
+        data = {
+            'payment_uid': payment_order.uid,
+            'fiat_amount': float(fiat_amount),
+            'btc_amount': float(btc_amount),
+            'exchange_rate': float(exchange_rate),
+            'check_url': payment_check_url,
+        }
+        if form.cleaned_data['bt_mac']:
+            # Enable payment via bluetooth
+            payment_bluetooth_url = 'bt:{mac}'.\
+                format(mac=form.cleaned_data['bt_mac'].replace(':', ''))
+            payment_bluetooth_request = operations.protocol.create_payment_request(
+                payment_order.device.bitcoin_network,
+                [(payment_order.local_address, payment_order.btc_amount)],
+                payment_order.time_created,
+                payment_order.expires,
+                payment_bluetooth_url,
+                device.merchant.company_name)
+            # Send payment request in response
+            data['payment_uri'] = operations.blockchain.construct_bitcoin_uri(
+                payment_order.local_address,
+                payment_order.btc_amount,
+                device.merchant.company_name,
+                payment_bluetooth_url,
+                payment_request_url)
+            data['payment_request'] = payment_bluetooth_request.encode('base64')
+        else:
+            data['payment_uri'] = operations.blockchain.construct_bitcoin_uri(
+                payment_order.local_address,
+                payment_order.btc_amount,
+                device.merchant.company_name,
+                payment_request_url)
+        # TODO: append QR code as data URI only when needed
+        data['qr_code_src'] = generate_qr_code(data['payment_uri'], size=4)
+        return Response(data)
+
+    def retrieve(self, *args, **kwargs):
+        payment_order = self.get_object()
+        if payment_order.is_receipt_ready():
+            receipt_url = self.request.build_absolute_uri(reverse(
+                'api:short:receipt',
+                kwargs={'order_uid': payment_order.uid}))
+            qr_code_src = generate_qr_code(receipt_url, size=3)
+            data = {
+                'paid': 1,
+                'receipt_url': receipt_url,
+                'qr_code_src': qr_code_src,
+            }
+            if payment_order.time_finished is None:
+                payment_order.time_finished = timezone.now()
+                payment_order.save()
+        else:
+            data = {'paid': 0}
+        return Response(data)
+
+    @detail_route(methods=['GET'], renderer_classes=[PaymentRequestRenderer])
+    def request(self, *args, **kwargs):
+        payment_order = self.get_object()
+        if payment_order.expires < timezone.now():
+            raise Http404
+        response = Response(payment_order.request)
+        response['Content-Transfer-Encoding'] = 'binary'
+        return response
+
+    @detail_route(methods=['POST'], renderer_classes=[PaymentACKRenderer])
+    def response(self, *args, **kwargs):
+        payment_order = self.get_object()
+        # Check and parse message
+        content_type = self.request.META.get('CONTENT_TYPE')
+        if content_type != 'application/bitcoin-payment':
+            logger.warning("PaymentResponseView: wrong content type")
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        if len(self.request.body) > 50000:
+            # Payment messages larger than 50,000 bytes should be rejected by server
+            logger.warning("PaymentResponseView: message is too large")
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        try:
+            payment_ack = operations.payment.parse_payment(payment_order, self.request.body)
+        except Exception as error:
+            logger.exception(error)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        response = Response(payment_ack)
+        response['Content-Transfer-Encoding'] = 'binary'
         return response
 
 
