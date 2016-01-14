@@ -17,7 +17,7 @@ from rest_framework.decorators import (
     list_route,
     detail_route)
 from rest_framework.response import Response
-from rest_framework import status, viewsets, mixins
+from rest_framework import status, viewsets
 from oauth2_provider.views.generic import ProtectedResourceView
 from constance import config
 
@@ -531,7 +531,7 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
         return Response(serializer.data)
 
 
-class DeviceViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class DeviceViewSet(viewsets.GenericViewSet):
 
     lookup_field = 'key'
 
@@ -543,6 +543,13 @@ class DeviceViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
             return DeviceRegistrationSerializer
         elif self.action == 'retrieve':
             return DeviceSerializer
+
+    def retrieve(self, *args, **kwargs):
+        device = self.get_object()
+        device.last_activity = timezone.now()
+        device.save()
+        serializer = self.get_serializer(device)
+        return Response(serializer.data)
 
     def create(self, request):
         serializer = self.get_serializer(data=self.request.data)

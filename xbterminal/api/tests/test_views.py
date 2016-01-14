@@ -470,9 +470,13 @@ class DeviceViewSetTestCase(APITestCase):
         device = DeviceFactory.create(status='active')
         url = reverse('api:v2:device-detail',
                       kwargs={'key': device.key})
+        self.assertFalse(device.is_online())
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['status'], 'active')
+
+        updated_device = Device.objects.get(pk=device.pk)
+        self.assertTrue(updated_device.is_online())
 
     def test_retrieve_suspended(self):
         device = DeviceFactory.create(status='suspended')
