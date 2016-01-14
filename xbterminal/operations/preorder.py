@@ -10,6 +10,8 @@ from operations.rq_helpers import run_periodic_task, cancel_current_task
 from operations.models import Order
 from website.utils import send_invoice
 
+PAYMENT_TIMEOUT = datetime.timedelta(minutes=20)
+
 
 def get_terminal_price():
     return config.TERMINAL_PRICE
@@ -58,7 +60,7 @@ def wait_for_payment(order_id):
         # Order or merchant deleted, cancel job
         cancel_current_task()
         return
-    if order.created + datetime.timedelta(minutes=20) < timezone.now():
+    if order.created + PAYMENT_TIMEOUT < timezone.now():
         # Timeout, cancel job
         cancel_current_task()
     invoice_paid = gocoin.is_invoice_paid(

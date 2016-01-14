@@ -2,7 +2,8 @@ import datetime
 from decimal import Decimal
 from django.utils import timezone
 
-from operations import blockr, BTC_DEC_PLACES, BTC_MIN_OUTPUT
+from operations import BTC_DEC_PLACES, BTC_MIN_OUTPUT
+from operations.services import blockr
 from operations.services.price import get_exchange_rate
 from operations.blockchain import (
     BlockChain,
@@ -13,6 +14,8 @@ from operations.blockchain import (
 from operations.rq_helpers import cancel_current_task, run_periodic_task
 from operations.models import WithdrawalOrder
 from website.models import BTCAccount
+
+BROADCAST_TIMEOUT = datetime.timedelta(minutes=45)
 
 
 class WithdrawalError(Exception):
@@ -125,7 +128,7 @@ def wait_for_broadcast(order_uid):
         # WithdrawalOrder deleted, cancel job
         cancel_current_task()
         return
-    if order.time_created + datetime.timedelta(minutes=45) < timezone.now():
+    if order.time_created + BROADCAST_TIMEOUT < timezone.now():
         # Timeout, cancel job
         cancel_current_task()
     if blockr.is_tx_broadcasted(order.outgoing_tx_id,

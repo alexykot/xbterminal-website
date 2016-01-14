@@ -256,6 +256,7 @@ CONSTANCE_CONFIG = {
     'GOCOIN_AUTH_TOKEN': ('', 'GoCoin access token'),
     'TERMINAL_PRICE': (200.00, 'Terminal price'),
     'CURRENT_BATCH_NUMBER': ('', 'Batch number'),
+    'TX_CONFIDENCE_THRESHOLD': (0.95, 'Transaction confidence threshold'),
 }
 
 # Misc

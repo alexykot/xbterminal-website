@@ -430,7 +430,7 @@ class Device(models.Model):
     last_reconciliation = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['id']
+        ordering = ['-id']
 
     def __unicode__(self):
         return self.name
