@@ -169,7 +169,7 @@ class Salt(object):
             time.sleep(interval)
         raise SaltTimeout
 
-    def reboot(self, minion_id, timeout=120):
+    def reboot(self, minion_id):
         """
         https://docs.saltstack.com/en/2015.5/ref/modules/all
             /salt.modules.system.html#salt.modules.system.reboot
@@ -180,17 +180,4 @@ class Salt(object):
             'tgt': minion_id,
         }
         self._send_request('post', '/', data=payload)
-        # Wait for device to shut down
-        start_time = time.time()
-        interval = 3
-        while time.time() < start_time + timeout:
-            if not self.ping(minion_id):
-                # Wait for device to boot
-                while time.time() < start_time + timeout:
-                    if self.ping(minion_id):
-                        logger.info('device rebooted')
-                        return
-                    time.sleep(interval)
-                raise SaltTimeout
-            time.sleep(interval)
-        raise SaltTimeout
+        logger.info('device {} is going to reboot'.format(minion_id))

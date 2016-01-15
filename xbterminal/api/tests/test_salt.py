@@ -88,12 +88,8 @@ class SaltTestCase(TestCase):
         self.assertEqual(lookup_jid_mock.call_args[0][0], 'test')
 
     @patch('api.utils.salt.Salt._send_request')
-    @patch('api.utils.salt.Salt.ping')
-    def test_reboot(self, ping_mock, send_mock):
+    def test_reboot(self, send_mock):
         send_mock.return_value = {'jid': 'test'}
-        ping_mock.side_effect = [False, True]
         salt = Salt()
         salt.reboot('m1')
         self.assertTrue(send_mock.called)
-        self.assertEqual(ping_mock.call_count, 2)
-        self.assertEqual(ping_mock.call_args[0][0], 'm1')

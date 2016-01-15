@@ -485,6 +485,22 @@ class DeviceViewSetTestCase(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_confirm_activation(self):
+        device = DeviceFactory.create(status='activation')
+        url = reverse('api:v2:device-confirm-activation',
+                      kwargs={'key': device.key})
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        device_updated = Device.objects.get(pk=device.pk)
+        self.assertEqual(device_updated.status, 'active')
+
+    def test_confirm_activation_already_active(self):
+        device = DeviceFactory.create(status='active')
+        url = reverse('api:v2:device-confirm-activation',
+                      kwargs={'key': device.key})
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
 
 class DeviceBatchViewSetTestCase(APITestCase):
 
