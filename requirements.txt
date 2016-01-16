@@ -19,7 +19,7 @@ PyPDF2==1.24
 unicodecsv==0.9.4
 oauthlib==1.0.1
 Pillow==3.0.0
-psycopg2==2.5.1
+psycopg2==2.6.1
 pycrypto==2.6.1
 pytz>=2015.4
 requests==2.3.0
