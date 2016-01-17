@@ -1,4 +1,4 @@
-Django==1.7.9
+Django==1.7.11
 django-bootstrap3==6.2.2
 django-ckeditor==4.4.6
 django-constance==1.1.1
