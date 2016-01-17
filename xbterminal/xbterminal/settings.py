@@ -58,7 +58,10 @@ LOGGING = {
         },
         'requests.packages.urllib3.connectionpool': {
             'level': 'WARNING',
-        }
+        },
+        'rq_scheduler.scheduler': {
+            'level': 'WARNING',
+        },
     },
 }
 
