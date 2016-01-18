@@ -23,6 +23,7 @@ def venv(development='yes'):
             if development == 'yes':
                 env.run('pip install -r requirements_dev.txt --upgrade')
             else:
+                env.run('pip install pip==7.1.2')
                 env.run('pip install -r requirements.txt --upgrade')
         env.run('touch venv/bin/activate')
 
