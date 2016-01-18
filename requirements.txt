@@ -17,10 +17,12 @@ xhtml2pdf==0.0.6
 reportlab==2.7
 PyPDF2==1.24
 unicodecsv==0.9.4
+ndg-httpsclient==0.4.0  # requests[security]
 oauthlib==1.0.3
 Pillow==3.0.0
 psycopg2==2.6.1
 pycrypto==2.6.1
+pyOpenSSL==0.15.1  # requests[security]
 pytz>=2015.4
 python-bitcoinlib==0.4.0
 protobuf==2.5.0
