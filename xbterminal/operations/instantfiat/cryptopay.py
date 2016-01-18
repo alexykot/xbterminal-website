@@ -8,6 +8,7 @@ import logging
 import requests
 
 from operations import BTC_DEC_PLACES
+from operations.exceptions import InstantFiatError
 
 logger = logging.getLogger(__name__)
 
@@ -21,19 +22,21 @@ def create_invoice(fiat_amount, currency_code, api_key, description):
         'confirmations_count': 0,
         'description': description,
     }
+    response = requests.post(
+        url=invoice_url,
+        headers={'Content-Type': 'application/json'},
+        data=json.dumps(payload))
     try:
-        response = requests.post(
-            url=invoice_url,
-            headers={'Content-Type': 'application/json'},
-            data=json.dumps(payload))
+        response.raise_for_status()
         data = response.json()
-    except (requests.exceptions.RequestException, ValueError):
-        raise
-    invoice_id = data['uuid']
-    btc_amount = Decimal(data['btc_price']).quantize(BTC_DEC_PLACES)
-    address = data['btc_address']
-    logger.debug("cryptopay invoice created")
-    return invoice_id, btc_amount, address
+        invoice_id = data['uuid']
+        btc_amount = Decimal(data['btc_price']).quantize(BTC_DEC_PLACES)
+        address = data['btc_address']
+    except:
+        raise InstantFiatError(response.text)
+    else:
+        logger.debug('cryptopay invoice created')
+        return invoice_id, btc_amount, address
 
 
 def is_invoice_paid(invoice_id, api_key):
@@ -43,9 +46,16 @@ def is_invoice_paid(invoice_id, api_key):
         response = requests.get(
             url=invoice_status_url,
             headers={'Content-Type': 'application/json'})
-        data = response.json()
-    except (requests.exceptions.RequestException, ValueError):
-        raise
+        try:
+            response.raise_for_status()
+            data = response.json()
+            assert 'status' in data
+        except:
+            raise InstantFiatError(response.text)
+    except Exception as error:
+        # Log exception, do not raise
+        logger.exception(error)
+        return False
     if data['status'] in ['paid', 'confirmed']:
         return True
     else:

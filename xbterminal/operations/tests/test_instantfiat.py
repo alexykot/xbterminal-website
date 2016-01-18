@@ -4,6 +4,7 @@ from mock import patch, Mock
 
 from website.tests.factories import MerchantAccountFactory
 from operations import instantfiat
+from operations.exceptions import InstantFiatError
 
 
 class InstantFiatTestCase(TestCase):
@@ -54,6 +55,17 @@ class CryptoPayTestCase(TestCase):
         self.assertEqual(result[1], Decimal('0.25000000'))
         self.assertEqual(result[2], 'address')
 
+    @patch('operations.instantfiat.cryptopay.requests.post')
+    def test_create_invoice_error(self, post_mock):
+        post_mock.return_value = Mock(**{
+            'raise_for_status.side_effect': ValueError,
+            'text': 'test',
+        })
+        with self.assertRaises(InstantFiatError) as error:
+            result = instantfiat.cryptopay.create_invoice(
+                Decimal('1.0'), 'GBP', 'test', 'description')
+            self.assertEqual(str(error), 'test')
+
     @patch('operations.instantfiat.cryptopay.requests.get')
     def test_is_invoice_paid(self, get_mock):
         # Paid
@@ -68,6 +80,16 @@ class CryptoPayTestCase(TestCase):
         # Unpaid
         get_mock.return_value = Mock(**{
             'json.return_value': {'status': 'pending'},
+        })
+        result = instantfiat.cryptopay.is_invoice_paid(
+            'invoice_id', 'test')
+        self.assertFalse(result)
+
+    @patch('operations.instantfiat.cryptopay.requests.get')
+    def test_is_invoice_paid_error(self, get_mock):
+        get_mock.return_value = Mock(**{
+            'raise_for_status.side_effect': ValueError,
+            'text': 'test',
         })
         result = instantfiat.cryptopay.is_invoice_paid(
             'invoice_id', 'test')
