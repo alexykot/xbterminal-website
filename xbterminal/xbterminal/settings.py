@@ -83,7 +83,6 @@ INSTALLED_APPS = (
     'constance.backends.database',
     'django_rq',
     'oauth2_provider',
-    'ckeditor',
     'captcha',
     'django_fsm',
     'fsm_admin',
@@ -91,7 +90,6 @@ INSTALLED_APPS = (
     'website',
     'operations',
     'api',
-    'blog',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -241,11 +239,6 @@ APTLY_SERVERS = {
 OAUTH2_PROVIDER = {
     'ACCESS_TOKEN_EXPIRE_SECONDS': 100000000,
 }
-
-# CKEditor
-
-CKEDITOR_UPLOAD_PATH = "blog/"
-CKEDITOR_JQUERY_URL = "/static/lib/jquery.min.js"
 
 # Constance
 
