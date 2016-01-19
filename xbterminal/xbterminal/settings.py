@@ -221,6 +221,7 @@ SALT_SERVERS = {
         'PASSWORD': 'password',
         'CLIENT_CERT': 'server.pem',
         'CLIENT_KEY': 'server.key',
+        'CA_CERT': 'xbthq.crt',
     },
 }
 
@@ -231,6 +232,7 @@ APTLY_SERVERS = {
         'HOST': 'https://repo.xbthq.co.uk/',
         'CLIENT_CERT': 'server.crt',
         'CLIENT_KEY': 'server.key',
+        'CA_CERT': 'xbthq.crt',
     },
 }
 

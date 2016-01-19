@@ -39,13 +39,14 @@ class Salt(object):
             os.path.join(settings.CERT_PATH, self.config['CLIENT_CERT']),
             os.path.join(settings.CERT_PATH, self.config['CLIENT_KEY']),
         )
+        ca_cert = os.path.join(settings.CERT_PATH, self.config['CA_CERT'])
         response = requests.request(method.upper(),
                                     urljoin(self.config['HOST'], url),
                                     params=params,
                                     data=data,
                                     headers=headers,
                                     cert=certs,
-                                    verify=False)
+                                    verify=ca_cert)
         response.raise_for_status()
         return response.json()['return'][0]
 
