@@ -14,6 +14,7 @@
 
 These variables should be redefined in `xbterminal/xbterminal/local_settings.py`:
 
+* SITE_ID
 * DATABASES - database connection settings
 * EMAIL_* - SMTP server settings
 * PKI_KEY_FILE, PKI_CERTIFICATES - certificates for BIP70
