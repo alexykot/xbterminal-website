@@ -77,7 +77,6 @@ INSTALLED_APPS = (
 
     'bootstrap3',
     'rest_framework',
-    'qrcode',
     'constance',
     'constance.backends.database',
     'django_rq',
