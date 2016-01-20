@@ -17,7 +17,9 @@ api_urls = patterns(
     url(r'^devices/?$',
         views.DevicesView.as_view(),
         name='devices'),
-    url(r'^devices/(?P<key>[0-9a-zA-Z]{8,32})/?$', 'device', name='device'),
+    url(r'^devices/(?P<key>[0-9a-zA-Z]{8,32})/?$',
+        views.device,
+        name='device'),
 
     url(r'^payments/init/?$',
         views.PaymentInitView.as_view(),

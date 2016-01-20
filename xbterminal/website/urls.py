@@ -6,8 +6,8 @@ from views import SubscribeNewsView
 urlpatterns = patterns(
     'website.views',
     url(r'^$', views.LandingView.as_view(), name='landing'),
-    url(r'^android-app$', 'android_app', name='android_app'),
-    url(r'^ios-app$', 'ios_app', name='ios_app'),
+    url(r'^android-app$', views.android_app, name='android_app'),
+    url(r'^ios-app$', views.ios_app, name='ios_app'),
     url(r'^privacy/$', views.PrivacyPolicyView.as_view(), name='privacy'),
     url(r'^terms/$', views.TermsConditionsView.as_view(), name='terms'),
     url(r'^team/$', views.TeamView.as_view(), name='team'),
