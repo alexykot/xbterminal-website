@@ -16,6 +16,11 @@ CURRENCIES = [
         'name': 'EUR',
         'prefix': '€',
     },
+    {
+        'id': 4,
+        'name': 'CAD',
+        'prefix': '$',
+    },
 ]
 
 
