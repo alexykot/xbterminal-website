@@ -21,7 +21,10 @@ class PaymentOrderAdmin(admin.ModelAdmin):
 
     readonly_fields = ['status']
 
-    def has_add_permission(self, request, obj=None):
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
         return False
 
     def device_link(self, payment_order):
@@ -65,7 +68,7 @@ class WithdrawalOrderAdmin(admin.ModelAdmin):
         'status',
     ]
 
-    def has_add_permission(self, request, obj=None):
+    def has_add_permission(self, request):
         return False
 
     def has_delete_permission(self, request, obj=None):
