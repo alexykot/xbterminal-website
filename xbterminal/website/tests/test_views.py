@@ -15,6 +15,17 @@ from website.tests.factories import (
 from operations.tests.factories import PaymentOrderFactory
 
 
+class LandingViewTestCase(TestCase):
+
+    def test_get(self):
+        url = reverse('website:landing')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'website/landing.html')
+        # Test website.context_processors.debug
+        self.assertFalse(response.context['DEBUG'])
+
+
 class ContactViewTestCase(TestCase):
 
     def setUp(self):
