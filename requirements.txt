@@ -10,7 +10,6 @@ django-picklefield==0.3.1
 django-recaptcha==1.0.5
 django-redis==4.3.0
 django-rq==0.9.0
-django-smtp-ssl==1.0
 djangorestframework==3.2.5
 cryptography==1.2.1
 xhtml2pdf==0.0.6

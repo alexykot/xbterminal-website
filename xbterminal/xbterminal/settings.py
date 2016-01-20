@@ -199,13 +199,11 @@ MEDIA_URL = '/media/'
 
 # Email
 
-EMAIL_BACKEND = 'django_smtp_ssl.SSLEmailBackend'
-
 EMAIL_HOST = ""
 EMAIL_PORT = ""
 EMAIL_HOST_USER = ""
 EMAIL_HOST_PASSWORD = ""
-EMAIL_USE_TLS = True
+EMAIL_USE_SSL = True
 
 DEFAULT_FROM_EMAIL = "no-reply@xbterminal.io"
 CONTACT_EMAIL_RECIPIENTS = ["info@xbterminal.io"]
