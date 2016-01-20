@@ -153,3 +153,6 @@ class ReadOnlyAdminWidget(Widget):
             except AttributeError:
                 value = getattr(self.instance, name)
         return str(value)
+
+    def value_from_datadict(self, data, files, name):
+        return data.get(name, '')
