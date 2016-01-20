@@ -1,7 +1,7 @@
 from decimal import Decimal
 from django.core.urlresolvers import reverse
 from django.utils import timezone
-from mock import patch
+from mock import patch, Mock
 from rest_framework.test import APITestCase
 from rest_framework import status
 
@@ -169,3 +169,24 @@ class PaymentViewSetTestCase(APITestCase):
             url, data,
             content_type='application/octet-stream')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @patch('api.utils.pdf.get_template')
+    def test_receipt(self, get_template_mock):
+        get_template_mock.return_value = template_mock = Mock(**{
+            'render.return_value': 'test',
+        })
+        order = PaymentOrderFactory.create(
+            time_finished=timezone.now())
+        url = reverse('api:v2:payment-receipt',
+                      kwargs={'uid': order.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertTrue(template_mock.render.called)
+
+    def test_receipt_not_completed(self):
+        order = PaymentOrderFactory.create()
+        url = reverse('api:v2:payment-receipt',
+                      kwargs={'uid': order.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

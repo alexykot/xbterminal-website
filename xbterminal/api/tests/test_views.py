@@ -411,6 +411,27 @@ class WithdrawalViewSetTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['status'], 'completed')
 
+    @patch('api.utils.pdf.get_template')
+    def test_receipt(self, get_template_mock):
+        get_template_mock.return_value = template_mock = Mock(**{
+            'render.return_value': 'test',
+        })
+        order = WithdrawalOrderFactory.create(
+            time_completed=timezone.now())
+        url = reverse('api:v2:withdrawal-receipt',
+                      kwargs={'uid': order.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertTrue(template_mock.render.called)
+
+    def test_receipt_not_completed(self):
+        order = WithdrawalOrderFactory.create()
+        url = reverse('api:v2:withdrawal-receipt',
+                      kwargs={'uid': order.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
 
 class DeviceViewSetTestCase(APITestCase):
 
