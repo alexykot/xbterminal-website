@@ -1,10 +1,9 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
 from website import views
 from views import SubscribeNewsView
 
-urlpatterns = patterns(
-    'website.views',
+urlpatterns = [
     url(r'^$', views.LandingView.as_view(), name='landing'),
     url(r'^android-app$', views.android_app, name='android_app'),
     url(r'^ios-app$', views.ios_app, name='ios_app'),
@@ -60,4 +59,4 @@ urlpatterns = patterns(
         name='send_all_to_email'),
 
     url(r'^terminals/(?P<device_key>[0-9a-zA-Z]{8,64})/pos$', views.PaymentView.as_view(), name='payment'),
-)
+]

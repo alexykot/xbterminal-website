@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, include, url
+from django.conf.urls import include, url
 from rest_framework import routers
 from api import views
 
@@ -8,8 +8,7 @@ router.register('withdrawals',
                 base_name='withdrawal')
 
 
-api_urls = patterns(
-    'api.views',
+api_urls = [
     url(r'^', include(router.urls)),
     url(r'^merchant/?$',
         views.MerchantView.as_view(),
@@ -37,17 +36,16 @@ api_urls = patterns(
     url(r'^receipts/(?P<order_uid>[0-9a-zA-Z]{6,32})/?$',
         views.ReceiptView.as_view(),
         name='receipt'),
-)
+]
 
-short_urls = patterns(
-    'api.views',
+short_urls = [
     url(r'^pr/(?P<payment_uid>[0-9a-zA-Z]{6,32})/?$',
         views.PaymentRequestView.as_view(),
         name='payment_request'),
     url(r'^rc/(?P<order_uid>[0-9a-zA-Z]{6,32})/?$',
         views.ReceiptView.as_view(),
         name='receipt'),
-)
+]
 
 api_v2_router = routers.DefaultRouter()
 api_v2_router.register('payments',
@@ -63,14 +61,12 @@ api_v2_router.register('devices',
                        views.DeviceViewSet,
                        base_name='device')
 
-api_v2_urls = patterns(
-    '',
+api_v2_urls = [
     url(r'^', include(api_v2_router.urls)),
-)
+]
 
-urlpatterns = patterns(
-    '',
+urlpatterns = [
     url(r'^api/', include(api_urls)),
     url(r'', include(short_urls, namespace='short')),
     url(r'^api/v2/', include(api_v2_urls, namespace='v2')),
-)
+]
