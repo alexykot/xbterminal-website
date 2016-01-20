@@ -10,6 +10,7 @@ from api.utils import aptly
         'HOST': 'http://test',
         'CLIENT_CERT': 'test',
         'CLIENT_KEY': 'test',
+        'CA_CERT': 'test',
     },
 })
 class AptlyTestCase(TestCase):

@@ -18,7 +18,8 @@ def get_latest_version(machine, package_name):
         os.path.join(settings.CERT_PATH, config['CLIENT_CERT']),
         os.path.join(settings.CERT_PATH, config['CLIENT_KEY']),
     )
-    response = requests.get(url, cert=certs, verify=False)
+    ca_cert = os.path.join(settings.CERT_PATH, config['CA_CERT'])
+    response = requests.get(url, cert=certs, verify=ca_cert)
     # Parse response
     packages = []
     for line in response.content.splitlines():

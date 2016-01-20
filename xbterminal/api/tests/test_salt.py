@@ -12,6 +12,7 @@ from api.utils.salt import Salt
         'PASSWORD': 'test',
         'CLIENT_CERT': 'test',
         'CLIENT_KEY': 'test',
+        'CA_CERT': 'test',
     },
 })
 class SaltTestCase(TestCase):
