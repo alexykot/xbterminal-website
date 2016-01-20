@@ -91,8 +91,6 @@ class PaymentOrder(models.Model):
     time_exchanged = models.DateTimeField(null=True)
     time_finished = models.DateTimeField(null=True)
 
-    receipt_key = models.CharField(max_length=32, unique=True, null=True)
-
     def __unicode__(self):
         return str(self.pk)
 

@@ -5,7 +5,6 @@ import logging
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.db.models import Q
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.utils import timezone
 from django.views.generic import View
@@ -158,8 +157,7 @@ class ReceiptView(View):
         order_uid = self.kwargs.get('order_uid')
         try:
             order = PaymentOrder.objects.get(
-                Q(uid=order_uid) | Q(receipt_key=order_uid),
-                time_finished__isnull=False)
+                uid=order_uid, time_finished__isnull=False)
         except PaymentOrder.DoesNotExist:
             try:
                 order = WithdrawalOrder.objects.get(
