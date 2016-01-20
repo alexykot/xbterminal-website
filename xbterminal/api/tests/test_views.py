@@ -511,10 +511,7 @@ class DeviceBatchViewSetTestCase(APITestCase):
         url = reverse('api:v2:batch-current')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response['Content-Type'],
-                         'application/gzip')
-        self.assertEqual(response['Content-Disposition'],
-                         'filename="batch.tar.gz"')
+        self.assertEqual(response.content, batch.batch_number)
 
     @patch('api.views.config')
     def test_current_not_found(self, config_mock):
