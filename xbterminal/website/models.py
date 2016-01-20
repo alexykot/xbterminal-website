@@ -5,6 +5,7 @@ import uuid
 
 from bitcoin import base58
 
+from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -243,7 +244,7 @@ class MerchantAccount(models.Model):
         total = self.device_set.count()
         today = timezone.localtime(timezone.now()).\
             replace(hour=0, minute=0, second=0, microsecond=0)
-        transactions = models.get_model('operations', 'PaymentOrder').\
+        transactions = apps.get_model('operations', 'PaymentOrder').\
             objects.filter(device__merchant=self, time_finished__gte=today)
         tx_count = transactions.count()
         tx_sum = transactions.aggregate(s=models.Sum('fiat_amount'))['s']
