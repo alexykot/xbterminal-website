@@ -1,4 +1,4 @@
-Django==1.7.11
+Django==1.8.8
 django-bootstrap3==6.2.2
 django-constance==1.1.1
 django-countries==3.4.1
