@@ -23,7 +23,7 @@ from operations import (
     instantfiat,
     exceptions,
     protocol)
-from operations.services import blockcypher, blockr
+from operations.services import blockcypher
 from operations.services.price import get_exchange_rate
 from operations.rq_helpers import run_periodic_task, cancel_current_task
 from operations.models import PaymentOrder
@@ -349,8 +349,15 @@ def wait_for_broadcast(payment_order_uid):
     if payment_order.time_created + PAYMENT_BROADCAST_TIMEOUT < timezone.now():
         # Timeout, cancel job
         cancel_current_task()
-    if blockr.is_tx_broadcasted(payment_order.outgoing_tx_id,
-                                payment_order.device.bitcoin_network):
+    try:
+        outgoing_tx_reliable = blockcypher.is_tx_reliable(
+            payment_order.outgoing_tx_id,
+            payment_order.bitcoin_network)
+    except Exception as error:
+        # Error when accessing blockcypher API, try again
+        logger.exception(error)
+        return
+    if outgoing_tx_reliable:
         cancel_current_task()
         if payment_order.time_broadcasted is None:
             payment_order.time_broadcasted = timezone.now()

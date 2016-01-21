@@ -439,7 +439,7 @@ class WaitForBroadCastTestCase(TestCase):
         self.assertTrue(cancel_mock.called)
 
     @patch('operations.payment.cancel_current_task')
-    @patch('operations.payment.blockr.is_tx_broadcasted')
+    @patch('operations.payment.blockcypher.is_tx_reliable')
     def test_tx_broadcasted(self, tx_check_mock, cancel_mock):
         order = PaymentOrderFactory.create(
             outgoing_tx_id='0' * 64)
@@ -450,7 +450,7 @@ class WaitForBroadCastTestCase(TestCase):
         self.assertTrue(cancel_mock.called)
 
     @patch('operations.payment.cancel_current_task')
-    @patch('operations.payment.blockr.is_tx_broadcasted')
+    @patch('operations.payment.blockcypher.is_tx_reliable')
     def test_tx_not_broadcasted(self, tx_check_mock, cancel_mock):
         order = PaymentOrderFactory.create(
             outgoing_tx_id='0' * 64)
