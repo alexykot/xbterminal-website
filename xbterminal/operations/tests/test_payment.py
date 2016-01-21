@@ -429,3 +429,33 @@ class ForwardTransactionTestCase(TestCase):
         self.assertEqual(btc_account.address, account_address)
         self.assertEqual(btc_account.balance,
                          payment_order.merchant_btc_amount)
+
+
+class WaitForBroadCastTestCase(TestCase):
+
+    @patch('operations.payment.cancel_current_task')
+    def test_payment_order_does_not_exist(self, cancel_mock):
+        payment.wait_for_broadcast(123456)
+        self.assertTrue(cancel_mock.called)
+
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.blockr.is_tx_broadcasted')
+    def test_tx_broadcasted(self, tx_check_mock, cancel_mock):
+        order = PaymentOrderFactory.create(
+            outgoing_tx_id='0' * 64)
+        tx_check_mock.return_value = True
+        payment.wait_for_broadcast(order.uid)
+        order.refresh_from_db()
+        self.assertIsNotNone(order.time_broadcasted)
+        self.assertTrue(cancel_mock.called)
+
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.blockr.is_tx_broadcasted')
+    def test_tx_not_broadcasted(self, tx_check_mock, cancel_mock):
+        order = PaymentOrderFactory.create(
+            outgoing_tx_id='0' * 64)
+        tx_check_mock.return_value = False
+        payment.wait_for_broadcast(order.uid)
+        order.refresh_from_db()
+        self.assertIsNone(order.time_broadcasted)
+        self.assertFalse(cancel_mock.called)

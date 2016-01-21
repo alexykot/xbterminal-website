@@ -211,14 +211,25 @@ class WaitForBroadcastTestCase(TestCase):
 
     @patch('operations.withdrawal.cancel_current_task')
     @patch('operations.withdrawal.blockr.is_tx_broadcasted')
-    def test_task(self, bcast_mock, cancel_mock):
+    def test_tx_broadcasted(self, bcast_mock, cancel_mock):
         order = WithdrawalOrderFactory.create(
             time_sent=timezone.now())
         bcast_mock.return_value = True
         withdrawal.wait_for_broadcast(order.uid)
-        order = WithdrawalOrder.objects.get(pk=order.pk)
+        order.refresh_from_db()
         self.assertEqual(order.status, 'broadcasted')
         self.assertTrue(cancel_mock.called)
+
+    @patch('operations.withdrawal.cancel_current_task')
+    @patch('operations.withdrawal.blockr.is_tx_broadcasted')
+    def test_tx_not_broadcasted(self, bcast_mock, cancel_mock):
+        order = WithdrawalOrderFactory.create(
+            time_sent=timezone.now())
+        bcast_mock.return_value = False
+        withdrawal.wait_for_broadcast(order.uid)
+        order.refresh_from_db()
+        self.assertEqual(order.status, 'sent')
+        self.assertFalse(cancel_mock.called)
 
     @patch('operations.withdrawal.cancel_current_task')
     @patch('operations.withdrawal.blockr.is_tx_broadcasted')
