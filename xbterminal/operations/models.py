@@ -141,7 +141,7 @@ class PaymentOrder(models.Model):
     @property
     def receipt_url(self):
         domain = Site.objects.get_current().domain
-        path = reverse('api:short:receipt', kwargs={'order_uid': self.uid})
+        path = reverse('api:short:payment-receipt', kwargs={'uid': self.uid})
         return 'https://{0}{1}'.format(domain, path)
 
     @property
@@ -247,7 +247,7 @@ class WithdrawalOrder(models.Model):
     @property
     def receipt_url(self):
         domain = Site.objects.get_current().domain
-        path = reverse('api:short:receipt', kwargs={'order_uid': self.uid})
+        path = reverse('api:short:withdrawal-receipt', kwargs={'uid': self.uid})
         return 'https://{0}{1}'.format(domain, path)
 
     @property

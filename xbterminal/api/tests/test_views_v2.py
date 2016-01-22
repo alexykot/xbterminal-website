@@ -190,3 +190,24 @@ class PaymentViewSetTestCase(APITestCase):
                       kwargs={'uid': order.uid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @patch('api.utils.pdf.get_template')
+    def test_receipt_short(self, get_template_mock):
+        get_template_mock.return_value = Mock(**{
+            'render.return_value': 'test',
+        })
+        order = PaymentOrderFactory.create(
+            time_finished=timezone.now())
+        url = reverse('api:short:payment-receipt',
+                      kwargs={'uid': order.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_receipt_short_post(self):
+        order = PaymentOrderFactory.create(
+            time_finished=timezone.now())
+        url = reverse('api:short:payment-receipt',
+                      kwargs={'uid': order.uid})
+        response = self.client.post(url, {})
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)

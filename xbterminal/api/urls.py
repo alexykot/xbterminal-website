@@ -45,6 +45,12 @@ short_urls = [
     url(r'^rc/(?P<order_uid>[0-9a-zA-Z]{6,32})/?$',
         views.ReceiptView.as_view(),
         name='receipt'),
+    url(r'^prc/(?P<uid>[0-9a-zA-Z]{6})/?$',
+        views.PaymentViewSet.as_view({'get': 'receipt'}),
+        name='payment-receipt'),
+    url(r'^wrc/(?P<uid>[0-9a-zA-Z]{6})/?$',
+        views.WithdrawalViewSet.as_view({'get': 'receipt'}),
+        name='withdrawal-receipt'),
 ]
 
 api_v2_router = routers.DefaultRouter()
