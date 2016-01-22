@@ -21,7 +21,10 @@ class PaymentOrderAdmin(admin.ModelAdmin):
 
     readonly_fields = ['status']
 
-    def has_add_permission(self, request, obj=None):
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
         return False
 
     def device_link(self, payment_order):
@@ -65,7 +68,7 @@ class WithdrawalOrderAdmin(admin.ModelAdmin):
         'status',
     ]
 
-    def has_add_permission(self, request, obj=None):
+    def has_add_permission(self, request):
         return False
 
     def has_delete_permission(self, request, obj=None):
@@ -74,13 +77,15 @@ class WithdrawalOrderAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         return [field.name for field in self.opts.local_fields]
 
-    def device_link(self, payment_order):
-        return url_to_object(payment_order.device)
+    def device_link(self, withdrawal_order):
+        return url_to_object(withdrawal_order.device)
+
     device_link.allow_tags = True
     device_link.short_description = 'device'
 
-    def merchant_link(self, payment_order):
-        return url_to_object(payment_order.device.merchant)
+    def merchant_link(self, withdrawal_order):
+        return url_to_object(withdrawal_order.device.merchant)
+
     merchant_link.allow_tags = True
     merchant_link.short_description = 'merchant'
 

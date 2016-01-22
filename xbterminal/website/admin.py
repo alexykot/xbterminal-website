@@ -17,6 +17,26 @@ def url_to_object(obj):
                        str(obj))
 
 
+@admin.register(models.Language)
+class LanguageAdmin(admin.ModelAdmin):
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(models.Currency)
+class CurrencyAdmin(admin.ModelAdmin):
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
 class DeviceAdmin(FSMTransitionMixin, admin.ModelAdmin):
 
     list_display = [
@@ -207,6 +227,4 @@ admin.site.register(models.MerchantAccount, MerchantAccountAdmin)
 admin.site.register(models.BTCAccount, BTCAccountAdmin)
 admin.site.register(models.KYCDocument, KYCDocumentAdmin)
 admin.site.register(models.Device, DeviceAdmin)
-admin.site.register(models.Language)
-admin.site.register(models.Currency)
 admin.site.register(models.UITheme)
