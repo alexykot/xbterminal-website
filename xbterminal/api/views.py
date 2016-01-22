@@ -25,8 +25,7 @@ from website.models import Device, DeviceBatch
 from website.forms import SimpleMerchantRegistrationForm
 from website.utils import (
     generate_qr_code,
-    send_registration_info,
-    get_batch_info_archive)
+    send_registration_info)
 
 from api.forms import PaymentForm, WithdrawalForm
 from api.serializers import (
@@ -34,7 +33,7 @@ from api.serializers import (
     DeviceSerializer,
     DeviceRegistrationSerializer)
 from api.renderers import (
-    TarArchiveRenderer,
+    PlainTextRenderer,
     PaymentRequestRenderer,
     PaymentACKRenderer)
 from api.utils.crypto import verify_signature
@@ -578,15 +577,11 @@ class DeviceBatchViewSet(viewsets.GenericViewSet):
         return DeviceBatch.objects.\
             exclude(batch_number=settings.DEFAULT_BATCH_NUMBER)
 
-    @list_route(methods=['GET'], renderer_classes=[TarArchiveRenderer])
-    def current(self, request):
+    @list_route(methods=['GET'], renderer_classes=[PlainTextRenderer])
+    def current(self, *args, **kwargs):
         try:
             batch = self.get_queryset().get(
                 batch_number=config.CURRENT_BATCH_NUMBER)
         except DeviceBatch.DoesNotExist:
             raise Http404
-        result = get_batch_info_archive(batch).getvalue()
-        response = Response(result)
-        response['Content-Length'] = len(result)
-        response['Content-Disposition'] = 'filename="batch.tar.gz"'
-        return response
+        return Response(batch.batch_number)
