@@ -1,6 +1,7 @@
 from decimal import Decimal
 from django.conf import settings
 from django.test import TestCase
+from django.utils import timezone
 
 from oauth2_provider.models import Application
 from django_fsm import TransitionNotAllowed
@@ -19,6 +20,7 @@ from website.tests.factories import (
     DeviceBatchFactory,
     DeviceFactory,
     ReconciliationTimeFactory)
+from operations.tests.factories import PaymentOrderFactory
 
 
 class UserTestCase(TestCase):
@@ -94,6 +96,32 @@ class MerchantAccountTestCase(TestCase):
         self.assertEqual(merchant.get_account_balance('mainnet'),
                          Decimal('0.5'))
 
+    def test_info_new_merchant(self):
+        merchant = MerchantAccountFactory.create()
+        info = merchant.info
+        self.assertEqual(info['name'], merchant.company_name)
+        self.assertEqual(info['status'], 'unverified')
+        self.assertEqual(info['active'], 0)
+        self.assertEqual(info['total'], 0)
+        self.assertEqual(info['tx_count'], 0)
+        self.assertEqual(info['tx_sum'], 0)
+
+    def test_info_with_payments(self):
+        merchant = MerchantAccountFactory.create()
+        DeviceFactory.create(merchant=merchant, status='activation')
+        active_device = DeviceFactory.create(merchant=merchant,
+                                             status='active',
+                                             last_activity=timezone.now())
+        payments = PaymentOrderFactory.create_batch(
+            3, device=active_device, time_finished=timezone.now())
+
+        info = merchant.info
+        self.assertEqual(info['active'], 1)
+        self.assertEqual(info['total'], 2)
+        self.assertEqual(info['tx_count'], len(payments))
+        self.assertEqual(info['tx_sum'],
+                         sum(p.fiat_amount for p in payments))
+
 
 class BTCAccountTestCase(TestCase):
 
@@ -128,12 +156,16 @@ class DeviceTestCase(TestCase):
                          settings.DEFAULT_BATCH_NUMBER)
 
     def test_device_factory(self):
-        # Activation
+        # Registration
         device = DeviceFactory.create(status='registered')
         self.assertIsNone(device.merchant)
         self.assertEqual(device.status, 'registered')
         self.assertEqual(len(device.key), 8)
         self.assertEqual(len(device.activation_code), 6)
+        # Activation
+        device = DeviceFactory.create(status='activation')
+        self.assertIsNotNone(device.merchant)
+        self.assertEqual(device.status, 'activation')
         # Active
         device = DeviceFactory.create(status='active')
         self.assertIsNotNone(device.merchant)

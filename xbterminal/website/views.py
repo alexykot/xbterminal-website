@@ -145,7 +145,8 @@ class LoginView(ContextMixin, TemplateResponseMixin, View):
 
     def get_context_data(self, **kwargs):
         context = super(LoginView, self).get_context_data(**kwargs)
-        context['next'] = self.request.REQUEST.get('next', '')
+        context['next'] = self.request.POST.get(
+            'next', self.request.GET.get('next', ''))
         return context
 
     def get(self, *args, **kwargs):

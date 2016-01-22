@@ -4,7 +4,6 @@ import sys
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 DEBUG = False
-TEMPLATE_DEBUG = False
 TESTING = 'test' in sys.argv
 
 LOGGING = {
@@ -78,7 +77,6 @@ INSTALLED_APPS = (
 
     'bootstrap3',
     'rest_framework',
-    'qrcode',
     'constance',
     'constance.backends.database',
     'django_rq',
@@ -120,13 +118,21 @@ AUTH_USER_MODEL = 'website.User'
 
 SECRET_KEY = '2d$h2q_vukyb190m^6#q)k_rc!+dn8!m5=pc!&e!vckabjqqll'
 
-TEMPLATE_CONTEXT_PROCESSORS = (
-    'django.contrib.auth.context_processors.auth',
-    'django.core.context_processors.i18n',
-    'django.core.context_processors.request',
-    'django.contrib.messages.context_processors.messages',
-    'website.context_processors.debug',
-)
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.request',
+                'django.contrib.messages.context_processors.messages',
+                'website.context_processors.debug',
+            ],
+        },
+    },
+]
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': []
@@ -193,13 +199,11 @@ MEDIA_URL = '/media/'
 
 # Email
 
-EMAIL_BACKEND = 'django_smtp_ssl.SSLEmailBackend'
-
 EMAIL_HOST = ""
 EMAIL_PORT = ""
 EMAIL_HOST_USER = ""
 EMAIL_HOST_PASSWORD = ""
-EMAIL_USE_TLS = True
+EMAIL_USE_SSL = True
 
 DEFAULT_FROM_EMAIL = "no-reply@xbterminal.io"
 CONTACT_EMAIL_RECIPIENTS = ["info@xbterminal.io"]

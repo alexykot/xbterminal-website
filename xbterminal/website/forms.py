@@ -36,20 +36,12 @@ from operations.models import Order
 
 class UserCreationForm(DjangoUserCreationForm):
 
-    def __init__(self, *args, **kargs):
-        super(UserCreationForm, self).__init__(*args, **kargs)
-        del self.fields['username']
-
     class Meta:
         model = User
-        fields = ['username']
+        fields = ['email']
 
 
 class UserChangeForm(DjangoUserChangeForm):
-
-    def __init__(self, *args, **kargs):
-        super(UserChangeForm, self).__init__(*args, **kargs)
-        del self.fields['username']
 
     class Meta:
         model = User
