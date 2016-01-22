@@ -1,6 +1,6 @@
 from django.conf.urls import include, url
 from rest_framework import routers
-from api import views
+from api import views, renderers
 
 router = routers.DefaultRouter()
 router.register('withdrawals',
@@ -46,10 +46,14 @@ short_urls = [
         views.ReceiptView.as_view(),
         name='receipt'),
     url(r'^prc/(?P<uid>[0-9a-zA-Z]{6})/?$',
-        views.PaymentViewSet.as_view({'get': 'receipt'}),
+        views.PaymentViewSet.as_view(
+            actions={'get': 'receipt'},
+            renderer_classes=[renderers.PDFRenderer]),
         name='payment-receipt'),
     url(r'^wrc/(?P<uid>[0-9a-zA-Z]{6})/?$',
-        views.WithdrawalViewSet.as_view({'get': 'receipt'}),
+        views.WithdrawalViewSet.as_view(
+            actions={'get': 'receipt'},
+            renderer_classes=[renderers.PDFRenderer]),
         name='withdrawal-receipt'),
 ]
 

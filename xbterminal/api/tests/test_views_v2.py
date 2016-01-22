@@ -202,6 +202,7 @@ class PaymentViewSetTestCase(APITestCase):
                       kwargs={'uid': order.uid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
 
     def test_receipt_short_post(self):
         order = PaymentOrderFactory.create(
