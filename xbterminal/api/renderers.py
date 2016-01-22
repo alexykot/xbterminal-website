@@ -22,6 +22,17 @@ class TarArchiveRenderer(BaseRenderer):
         return data
 
 
+class PDFRenderer(BaseRenderer):
+
+    media_type = 'application/pdf'
+    format = 'pdf'
+    charset = None
+    render_style = 'binary'
+
+    def render(self, data, media_type=None, renderer_context=None):
+        return data
+
+
 class PaymentRequestRenderer(BaseRenderer):
 
     media_type = 'application/bitcoin-paymentrequest'

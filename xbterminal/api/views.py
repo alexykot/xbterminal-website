@@ -5,7 +5,6 @@ import logging
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.db.models import Q
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.utils import timezone
 from django.views.generic import View
@@ -34,10 +33,11 @@ from api.serializers import (
     DeviceRegistrationSerializer)
 from api.renderers import (
     PlainTextRenderer,
+    PDFRenderer,
     PaymentRequestRenderer,
     PaymentACKRenderer)
 from api.utils.crypto import verify_signature
-from api.utils.pdf import render_to_pdf
+from api.utils.pdf import generate_pdf
 
 from operations.models import PaymentOrder, WithdrawalOrder
 import operations.payment
@@ -158,17 +158,18 @@ class ReceiptView(View):
         order_uid = self.kwargs.get('order_uid')
         try:
             order = PaymentOrder.objects.get(
-                Q(uid=order_uid) | Q(receipt_key=order_uid),
-                time_finished__isnull=False)
+                uid=order_uid, time_finished__isnull=False)
         except PaymentOrder.DoesNotExist:
             try:
                 order = WithdrawalOrder.objects.get(
                     uid=order_uid, time_completed__isnull=False)
             except WithdrawalOrder.DoesNotExist:
                 raise Http404
-        response = render_to_pdf(
+        result = generate_pdf(
             'pdf/receipt.html',
             {'order': order})
+        response = HttpResponse(result.getvalue(),
+                                content_type='application/pdf')
         disposition = 'inline; filename="receipt #{0} {1}.pdf"'.format(
             order.id,
             order.device.merchant.company_name)
@@ -472,6 +473,18 @@ class PaymentViewSet(viewsets.GenericViewSet):
         response['Content-Transfer-Encoding'] = 'binary'
         return response
 
+    @detail_route(methods=['GET'], renderer_classes=[PDFRenderer])
+    def receipt(self, *args, **kwargs):
+        order = self.get_object()
+        if not order.time_finished:
+            raise Http404
+        result = generate_pdf('pdf/receipt.html', {'order': order})
+        response = Response(result.getvalue())
+        response['Content-Disposition'] = 'inline; filename="receipt #{0} {1}.pdf"'.format(
+            order.id,
+            order.device.merchant.company_name)
+        return response
+
 
 class WithdrawalViewSet(viewsets.GenericViewSet):
 
@@ -528,6 +541,18 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
             order.save()
         serializer = self.get_serializer(order)
         return Response(serializer.data)
+
+    @detail_route(methods=['GET'], renderer_classes=[PDFRenderer])
+    def receipt(self, *args, **kwargs):
+        order = self.get_object()
+        if not order.time_completed:
+            raise Http404
+        result = generate_pdf('pdf/receipt.html', {'order': order})
+        response = Response(result.getvalue())
+        response['Content-Disposition'] = 'inline; filename="receipt #{0} {1}.pdf"'.format(
+            order.id,
+            order.device.merchant.company_name)
+        return response
 
 
 class DeviceViewSet(viewsets.GenericViewSet):
