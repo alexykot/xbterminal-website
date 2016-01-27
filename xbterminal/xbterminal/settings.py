@@ -210,10 +210,17 @@ CONTACT_EMAIL_RECIPIENTS = ["info@xbterminal.io"]
 
 # Bitcoind
 
-BITCOIND_HOST = "node.xbterminal.io"
-BITCOIND_AUTH = {
-    'mainnet': ('user', 'password'),
-    'testnet': ('user', 'password'),
+BITCOIND_SERVERS = {
+    'mainnet': {
+        'HOST': 'node.xbterminal.io',
+        'USER': 'user',
+        'PASSWORD': 'password',
+    },
+    'testnet': {
+        'HOST': 'node.xbterminal.io',
+        'USER': 'user',
+        'PASSWORD': 'password',
+    },
 }
 
 # Salt
