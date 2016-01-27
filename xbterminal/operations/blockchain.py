@@ -21,11 +21,11 @@ class BlockChain(object):
         self.network = network
         # TODO: don't set global params
         bitcoin.SelectParams(self.network)
-        user, password = settings.BITCOIND_AUTH[network]
+        config = settings.BITCOIND_SERVERS[self.network]
         service_url = "https://{user}:{password}@{host}:{port}".format(
-            user=user,
-            password=password,
-            host=settings.BITCOIND_HOST,
+            user=config['USER'],
+            password=config['PASSWORD'],
+            host=config['HOST'],
             port=bitcoin.params.RPC_PORT)
         self._proxy = bitcoin.rpc.Proxy(service_url)
 
