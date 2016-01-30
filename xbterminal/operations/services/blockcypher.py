@@ -6,6 +6,11 @@ BLOCKCYPHER_CHAINS = {
     'testnet': 'test3',
 }
 
+BLOCKCYPHER_CHAINS_LIVE = {
+    'mainnet': 'btc',
+    'testnet': 'btc-testnet',
+}
+
 
 def is_tx_reliable(tx_id, network):
     """
@@ -23,3 +28,15 @@ def is_tx_reliable(tx_id, network):
         return True
     else:
         return False
+
+
+def get_tx_url(tx_id, network):
+    url = 'https://live.blockcypher.com/{0}/tx/{1}/'.format(
+        BLOCKCYPHER_CHAINS_LIVE[network], tx_id)
+    return url
+
+
+def get_address_url(address, network):
+    url = 'https://live.blockcypher.com/{0}/address/{1}/'.format(
+        BLOCKCYPHER_CHAINS_LIVE[network], address)
+    return url
