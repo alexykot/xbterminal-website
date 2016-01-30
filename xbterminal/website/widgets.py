@@ -164,3 +164,6 @@ class ReadOnlyAdminWidget(Widget):
 
     def value_from_datadict(self, data, files, name):
         return data.get(name, '')
+
+    def decompress(self, value):
+        return []
