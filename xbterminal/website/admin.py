@@ -7,6 +7,7 @@ from fsm_admin.mixins import FSMTransitionMixin
 
 from website import forms, models
 from website.utils import generate_qr_code
+from website.widgets import BitcoinAddressWidget
 
 
 def url_to_object(obj):
@@ -37,6 +38,7 @@ class CurrencyAdmin(admin.ModelAdmin):
         return False
 
 
+@admin.register(models.Device)
 class DeviceAdmin(FSMTransitionMixin, admin.ModelAdmin):
 
     list_display = [
@@ -82,6 +84,7 @@ class DeviceAdmin(FSMTransitionMixin, admin.ModelAdmin):
     device_key_qr_code.allow_tags = True
 
 
+@admin.register(models.User)
 class UserAdmin(UserAdmin):
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
@@ -110,6 +113,7 @@ class UserAdmin(UserAdmin):
     merchant_link.short_description = 'merchant account'
 
 
+@admin.register(models.KYCDocument)
 class KYCDocumentAdmin(admin.ModelAdmin):
 
     list_display = ['__unicode__', 'merchant', 'status']
@@ -122,9 +126,17 @@ class KYCDocumentInline(admin.TabularInline):
     extra = 0
 
 
+@admin.register(models.BTCAccount)
 class BTCAccountAdmin(admin.ModelAdmin):
 
-    readonly_fields = ['address']
+    def get_form(self, request, obj, **kwargs):
+        form = super(BTCAccountAdmin, self).get_form(request, obj, **kwargs)
+        for field_name in form.base_fields:
+            field = form.base_fields[field_name]
+            if field_name == 'address':
+                field.widget = BitcoinAddressWidget(network=obj.network)
+                field.required = False
+        return form
 
 
 class BTCAccountInline(admin.TabularInline):
@@ -134,6 +146,7 @@ class BTCAccountInline(admin.TabularInline):
     extra = 1
 
 
+@admin.register(models.MerchantAccount)
 class MerchantAccountAdmin(admin.ModelAdmin):
 
     list_display = [
@@ -222,9 +235,4 @@ class DeviceBatchAdmin(admin.ModelAdmin):
             batch.size)
 
 
-admin.site.register(models.User, UserAdmin)
-admin.site.register(models.MerchantAccount, MerchantAccountAdmin)
-admin.site.register(models.BTCAccount, BTCAccountAdmin)
-admin.site.register(models.KYCDocument, KYCDocumentAdmin)
-admin.site.register(models.Device, DeviceAdmin)
 admin.site.register(models.UITheme)
