@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.html import format_html
 
 from operations import models
 from website.widgets import (
@@ -6,6 +7,9 @@ from website.widgets import (
     BitcoinTransactionWidget,
     ReadOnlyAdminWidget)
 from website.admin import url_to_object
+from website.utils import generate_qr_code
+from api.utils.urls import construct_absolute_url
+from operations.blockchain import construct_bitcoin_uri
 
 
 class OrderAdminFormMixin(object):
@@ -40,7 +44,7 @@ class PaymentOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
         'status',
     ]
 
-    readonly_fields = ['status']
+    readonly_fields = ['status', 'payment_request_qr_code']
 
     def has_add_permission(self, request):
         return False
@@ -59,6 +63,21 @@ class PaymentOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
 
     merchant_link.allow_tags = True
     merchant_link.short_description = 'merchant'
+
+    def payment_request_qr_code(self, payment_order):
+        payment_request_url = construct_absolute_url(
+            'api:v2:payment-request',
+            kwargs={'uid': payment_order.uid})
+        payment_uri = construct_bitcoin_uri(
+            payment_order.local_address,
+            payment_order.btc_amount,
+            payment_order.device.merchant.company_name,
+            payment_request_url)
+        src = generate_qr_code(payment_uri, 4)
+        output = format_html('<img src="{0}" alt="{1}">', src, payment_uri)
+        return output
+
+    payment_request_qr_code.allow_tags = True
 
 
 @admin.register(models.Order)
