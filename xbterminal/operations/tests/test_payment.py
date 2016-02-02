@@ -234,11 +234,11 @@ class ValidatePaymentTestCase(TestCase):
         payment_order = PaymentOrderFactory.create()
         incoming_tx = Mock()
         incoming_tx_id = '0' * 64
-        refund_address = '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje'
+        customer_address = '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje'
 
         bc_instance_mock = Mock(**{
             'sign_raw_transaction.return_value': Mock(),
-            'get_tx_inputs.return_value': [{'address': refund_address}],
+            'get_tx_inputs.return_value': [{'address': customer_address}],
             'get_tx_outputs.return_value': [{
                 'address': payment_order.local_address,
                 'amount': payment_order.btc_amount,
@@ -253,10 +253,57 @@ class ValidatePaymentTestCase(TestCase):
         self.assertFalse(bc_instance_mock.send_raw_transaction.called)
 
         payment_order = PaymentOrder.objects.get(uid=payment_order.uid)
-        self.assertEqual(payment_order.refund_address, refund_address)
+        self.assertEqual(payment_order.refund_address, customer_address)
         self.assertEqual(payment_order.incoming_tx_id, incoming_tx_id)
         self.assertEqual(payment_order.payment_type, 'bip0021')
         self.assertEqual(payment_order.status, 'recieved')
+
+    @patch('operations.payment.blockchain.BlockChain')
+    @patch('operations.payment.blockchain.get_txid')
+    def test_bip0070(self, get_txid_mock, bc_cls_mock):
+        order = PaymentOrderFactory.create()
+        incoming_tx = Mock()
+        incoming_tx_id = '0' * 64
+
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'get_tx_outputs.return_value': [{
+                'address': order.local_address,
+                'amount': order.btc_amount,
+            }],
+        })
+        get_txid_mock.return_value = incoming_tx_id
+
+        payment.validate_payment(order, [incoming_tx], 'bip0070')
+        self.assertTrue(bc_mock.sign_raw_transaction.called)
+        self.assertTrue(bc_mock.send_raw_transaction.called)
+        order.refresh_from_db()
+        self.assertIsNone(order.refund_address)
+        self.assertEqual(order.incoming_tx_id, incoming_tx_id)
+        self.assertEqual(order.payment_type, 'bip0070')
+        self.assertEqual(order.status, 'recieved')
+
+    @patch('operations.payment.blockchain.BlockChain')
+    def test_insufficient_funds(self, bc_cls_mock):
+        order = PaymentOrderFactory.create(
+            merchant_btc_amount=Decimal('0.1'),
+            btc_amount=Decimal('0.1001'))
+        incoming_tx = Mock()
+        customer_address = '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje'
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'get_tx_inputs.return_value': [{'address': customer_address}],
+            'get_tx_outputs.return_value': [{
+                'address': order.local_address,
+                'amount': Decimal('0.05'),
+            }],
+        })
+
+        with self.assertRaises(exceptions.InsufficientFunds):
+            payment.validate_payment(order, [incoming_tx], 'bip0021')
+
+        self.assertTrue(bc_mock.sign_raw_transaction.called)
+        self.assertFalse(bc_mock.send_raw_transaction.called)
+        self.assertEqual(order.refund_address, customer_address)
+        self.assertIsNone(order.incoming_tx_id)
 
 
 class ReversePaymentTestCase(TestCase):

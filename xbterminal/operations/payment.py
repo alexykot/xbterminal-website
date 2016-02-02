@@ -191,7 +191,7 @@ def validate_payment(payment_order, transactions, payment_type):
     Accepts:
         payment_order: PaymentOrder instance
         transactions: list of CTransaction
-        broadcast: boolean
+        payment_type: bip0021 or bip0070
     """
     assert payment_type in ['bip0021', 'bip0070']
     bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
