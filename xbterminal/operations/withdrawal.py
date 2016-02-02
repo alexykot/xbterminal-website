@@ -1,4 +1,5 @@
 from decimal import Decimal
+import logging
 from django.utils import timezone
 
 from operations import (
@@ -17,6 +18,8 @@ from operations.rq_helpers import cancel_current_task, run_periodic_task
 from operations.models import WithdrawalOrder
 from website.models import BTCAccount
 
+logger = logging.getLogger(__name__)
+
 
 class WithdrawalError(Exception):
 
@@ -25,16 +28,19 @@ class WithdrawalError(Exception):
         self.message = message
 
 
-def _get_all_reserved_outputs(account):
+def _get_all_reserved_outputs(current_order):
     """
+    Get all outputs reserved by active orders, excluding current order
     Accepts:
-        btc_account: BTCAccount instance
+        current_order: WithdrawalOrder instance
     Returns:
         set of COutPoint instances
     """
-    active_orders = WithdrawalOrder.objects.filter(
-        merchant_address=account.address,
-        time_created__gt=timezone.now() - WITHDRAWAL_BROADCAST_TIMEOUT)
+    active_orders = WithdrawalOrder.objects.\
+        exclude(pk=current_order.pk).\
+        filter(
+            merchant_address=current_order.merchant_address,
+            time_created__gt=timezone.now() - WITHDRAWAL_BROADCAST_TIMEOUT)
     all_reserved_outputs = set()  # COutPoint is hashable
     for order in active_orders:
         all_reserved_outputs.update(
@@ -75,7 +81,7 @@ def prepare_withdrawal(device, fiat_amount):
 
     # Get unspent outputs and check balance
     bc = BlockChain(order.bitcoin_network)
-    all_reserved_outputs = _get_all_reserved_outputs(account)
+    all_reserved_outputs = _get_all_reserved_outputs(order)
     reserved_outputs = []
     unspent_sum = Decimal(0)
     for output in bc.get_unspent_outputs(order.merchant_address):
@@ -115,8 +121,15 @@ def send_transaction(order, customer_address):
     else:
         order.customer_address = customer_address
 
-    # Send transaction
+    # Get reserved outputs and check them again
     tx_inputs = deserialize_outputs(order.reserved_outputs)
+    all_reserved_outputs = _get_all_reserved_outputs(order)
+    if set(tx_inputs) & all_reserved_outputs:
+        # Some of the reserved outputs are reserved by other orders
+        logger.warning('send_transaction - some outputs are reserved by other orders')
+        raise WithdrawalError('Insufficient funds')
+
+    # Create and send transaction
     tx_outputs = {
         order.customer_address: order.customer_btc_amount,
         order.merchant_address: order.change_btc_amount,
