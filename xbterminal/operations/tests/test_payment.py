@@ -11,7 +11,7 @@ from website.tests.factories import (
     DeviceFactory)
 from operations.models import PaymentOrder
 from operations.tests.factories import PaymentOrderFactory
-from operations import payment
+from operations import payment, exceptions
 from operations import BTC_DEC_PLACES
 
 
@@ -209,6 +209,22 @@ class WaitForPaymentTestCase(TestCase):
 
         self.assertTrue(cancel_mock.called)
 
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.blockchain.BlockChain')
+    @patch('operations.payment.validate_payment')
+    @patch('operations.payment.reverse_payment')
+    def test_reverse_payment(self, reverse_mock, validate_mock,
+                             bc_mock, cancel_mock):
+        bc_mock.return_value = bc_instance_mock = Mock(**{
+            'get_unspent_transactions.return_value': ['test_tx'],
+        })
+        validate_mock.side_effect = exceptions.InsufficientFunds
+        payment_order = PaymentOrderFactory.create()
+        payment.wait_for_payment(payment_order.uid)
+        self.assertTrue(validate_mock.called)
+        self.assertTrue(reverse_mock.called)
+        self.assertTrue(cancel_mock.called)
+
 
 class ValidatePaymentTestCase(TestCase):
 
@@ -241,6 +257,33 @@ class ValidatePaymentTestCase(TestCase):
         self.assertEqual(payment_order.incoming_tx_id, incoming_tx_id)
         self.assertEqual(payment_order.payment_type, 'bip0021')
         self.assertEqual(payment_order.status, 'recieved')
+
+
+class ReversePaymentTestCase(TestCase):
+
+    @patch('operations.payment.blockchain.BlockChain')
+    def test_reverse(self, bc_cls_mock):
+        order = PaymentOrderFactory.create(
+            merchant_btc_amount=Decimal('0.1'),
+            fee_btc_amount=Decimal('0.001'),
+            btc_amount=Decimal('0.1011'),
+            refund_address='1KYwqZshnYNUNweXrDkCAdLaixxPhePRje')
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'get_unspent_outputs.return_value': [{
+                'outpoint': 'test_outpoint',
+                'amount': order.btc_amount,
+            }],
+            'create_raw_transaction.return_value': 'test_tx',
+            'sign_raw_transaction.return_value': 'test_tx_signed',
+            'send_raw_transaction.return_value': 'test_tx_id',
+        })
+        payment.reverse_payment(order)
+
+        tx_outputs = bc_mock.create_raw_transaction.call_args[0][1]
+        self.assertEqual(tx_outputs[order.refund_address],
+                         Decimal('0.101'))
+        self.assertTrue(bc_mock.sign_raw_transaction.called)
+        self.assertTrue(bc_mock.send_raw_transaction.called)
 
 
 class WaitForValidationTestCase(TestCase):

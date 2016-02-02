@@ -156,20 +156,8 @@ def wait_for_payment(payment_order_uid):
         try:
             validate_payment(payment_order, transactions, 'bip0021')
         except exceptions.InsufficientFunds:
-            # Reverse transaction
-            inputs = []
-            amount = BTC_DEC_PLACES
-            for out in bc.get_unspent_outputs(payment_order.local_address):
-                inputs.append(out['outpoint'])
-                amount += out['amount']
-            amount -= blockchain.get_tx_fee(1, 1)
-            reverse_tx = bc.create_raw_transaction(
-                inputs, {payment_order.refund_address: amount})
-            reverse_tx_signed = bc.sign_raw_transaction(reverse_tx)
-            bc.send_raw_transaction(reverse_tx_signed)
-            logger.warning('payment returned ({0})'.format(payment_order.uid))
-        else:
-            cancel_current_task()
+            reverse_payment(payment_order)
+        cancel_current_task()
 
 
 def parse_payment(payment_order, payment_message):
@@ -234,6 +222,26 @@ def validate_payment(payment_order, transactions, payment_type):
     payment_order.time_recieved = timezone.now()
     payment_order.save()
     logger.info('payment recieved ({0})'.format(payment_order.uid))
+
+
+def reverse_payment(order):
+    """
+    Send all money back to customer
+    Accepts:
+        order: PaymentOrder instance
+    """
+    bc = blockchain.BlockChain(order.bitcoin_network)
+    tx_inputs = []
+    amount = BTC_DEC_PLACES
+    for output in bc.get_unspent_outputs(order.local_address):
+        tx_inputs.append(output['outpoint'])
+        amount += output['amount']
+    amount -= blockchain.get_tx_fee(1, 1)
+    tx_outputs = {order.refund_address: amount}
+    reverse_tx = bc.create_raw_transaction(tx_inputs, tx_outputs)
+    reverse_tx_signed = bc.sign_raw_transaction(reverse_tx)
+    bc.send_raw_transaction(reverse_tx_signed)
+    logger.warning('payment returned ({0})'.format(order.uid))
 
 
 def wait_for_validation(payment_order_uid):
