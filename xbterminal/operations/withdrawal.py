@@ -25,6 +25,23 @@ class WithdrawalError(Exception):
         self.message = message
 
 
+def _get_all_reserved_outputs(account):
+    """
+    Accepts:
+        btc_account: BTCAccount instance
+    Returns:
+        set of COutPoint instances
+    """
+    active_orders = WithdrawalOrder.objects.filter(
+        merchant_address=account.address,
+        time_created__gt=timezone.now() - WITHDRAWAL_BROADCAST_TIMEOUT)
+    all_reserved_outputs = set()  # COutPoint is hashable
+    for order in active_orders:
+        all_reserved_outputs.update(
+            deserialize_outputs(order.reserved_outputs))
+    return all_reserved_outputs
+
+
 def prepare_withdrawal(device, fiat_amount):
     """
     Check merchant's account balance, create withdrawal order
@@ -58,9 +75,13 @@ def prepare_withdrawal(device, fiat_amount):
 
     # Get unspent outputs and check balance
     bc = BlockChain(order.bitcoin_network)
+    all_reserved_outputs = _get_all_reserved_outputs(account)
     reserved_outputs = []
     unspent_sum = Decimal(0)
     for output in bc.get_unspent_outputs(order.merchant_address):
+        if output['outpoint'] in all_reserved_outputs:
+            # Output already reserved by another order, skip
+            continue
         unspent_sum += output['amount']
         reserved_outputs.append(output['outpoint'])
         order.tx_fee_btc_amount = get_tx_fee(len(reserved_outputs), 2)
@@ -69,6 +90,7 @@ def prepare_withdrawal(device, fiat_amount):
     else:
         raise WithdrawalError('Insufficient funds')
     order.reserved_outputs = serialize_outputs(reserved_outputs)
+
     # Calculate change amount
     order.change_btc_amount = unspent_sum - order.btc_amount
     if order.change_btc_amount < BTC_MIN_OUTPUT:
