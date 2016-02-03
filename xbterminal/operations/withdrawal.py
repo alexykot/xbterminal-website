@@ -40,7 +40,8 @@ def _get_all_reserved_outputs(current_order):
         exclude(pk=current_order.pk).\
         filter(
             merchant_address=current_order.merchant_address,
-            time_created__gt=timezone.now() - WITHDRAWAL_BROADCAST_TIMEOUT)
+            time_created__gt=timezone.now() - WITHDRAWAL_BROADCAST_TIMEOUT,
+            time_cancelled__isnull=True)
     all_reserved_outputs = set()  # COutPoint is hashable
     for order in active_orders:
         all_reserved_outputs.update(
