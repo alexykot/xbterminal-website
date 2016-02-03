@@ -29,6 +29,8 @@ class OrderAdminFormMixin(object):
             else:
                 field.widget = ReadOnlyAdminWidget(instance=obj)
             field.required = False
+            # Field should not allow blank values
+            assert not obj._meta.get_field(field_name).blank
         return form
 
 
