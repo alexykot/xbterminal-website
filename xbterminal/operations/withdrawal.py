@@ -1,8 +1,11 @@
-import datetime
 from decimal import Decimal
+import logging
 from django.utils import timezone
 
-from operations import BTC_DEC_PLACES, BTC_MIN_OUTPUT
+from operations import (
+    BTC_DEC_PLACES,
+    BTC_MIN_OUTPUT,
+    WITHDRAWAL_BROADCAST_TIMEOUT)
 from operations.services import blockr
 from operations.services.price import get_exchange_rate
 from operations.blockchain import (
@@ -15,7 +18,7 @@ from operations.rq_helpers import cancel_current_task, run_periodic_task
 from operations.models import WithdrawalOrder
 from website.models import BTCAccount
 
-BROADCAST_TIMEOUT = datetime.timedelta(minutes=45)
+logger = logging.getLogger(__name__)
 
 
 class WithdrawalError(Exception):
@@ -23,6 +26,26 @@ class WithdrawalError(Exception):
     def __init__(self, message):
         super(WithdrawalError, self).__init__()
         self.message = message
+
+
+def _get_all_reserved_outputs(current_order):
+    """
+    Get all outputs reserved by active orders, excluding current order
+    Accepts:
+        current_order: WithdrawalOrder instance
+    Returns:
+        set of COutPoint instances
+    """
+    active_orders = WithdrawalOrder.objects.\
+        exclude(pk=current_order.pk).\
+        filter(
+            merchant_address=current_order.merchant_address,
+            time_created__gt=timezone.now() - WITHDRAWAL_BROADCAST_TIMEOUT)
+    all_reserved_outputs = set()  # COutPoint is hashable
+    for order in active_orders:
+        all_reserved_outputs.update(
+            deserialize_outputs(order.reserved_outputs))
+    return all_reserved_outputs
 
 
 def prepare_withdrawal(device, fiat_amount):
@@ -58,9 +81,13 @@ def prepare_withdrawal(device, fiat_amount):
 
     # Get unspent outputs and check balance
     bc = BlockChain(order.bitcoin_network)
+    all_reserved_outputs = _get_all_reserved_outputs(order)
     reserved_outputs = []
     unspent_sum = Decimal(0)
     for output in bc.get_unspent_outputs(order.merchant_address):
+        if output['outpoint'] in all_reserved_outputs:
+            # Output already reserved by another order, skip
+            continue
         unspent_sum += output['amount']
         reserved_outputs.append(output['outpoint'])
         order.tx_fee_btc_amount = get_tx_fee(len(reserved_outputs), 2)
@@ -69,6 +96,7 @@ def prepare_withdrawal(device, fiat_amount):
     else:
         raise WithdrawalError('Insufficient funds')
     order.reserved_outputs = serialize_outputs(reserved_outputs)
+
     # Calculate change amount
     order.change_btc_amount = unspent_sum - order.btc_amount
     if order.change_btc_amount < BTC_MIN_OUTPUT:
@@ -93,8 +121,15 @@ def send_transaction(order, customer_address):
     else:
         order.customer_address = customer_address
 
-    # Send transaction
+    # Get reserved outputs and check them again
     tx_inputs = deserialize_outputs(order.reserved_outputs)
+    all_reserved_outputs = _get_all_reserved_outputs(order)
+    if set(tx_inputs) & all_reserved_outputs:
+        # Some of the reserved outputs are reserved by other orders
+        logger.warning('send_transaction - some outputs are reserved by other orders')
+        raise WithdrawalError('Insufficient funds')
+
+    # Create and send transaction
     tx_outputs = {
         order.customer_address: order.customer_btc_amount,
         order.merchant_address: order.change_btc_amount,
@@ -128,7 +163,7 @@ def wait_for_broadcast(order_uid):
         # WithdrawalOrder deleted, cancel job
         cancel_current_task()
         return
-    if order.time_created + BROADCAST_TIMEOUT < timezone.now():
+    if order.time_created + WITHDRAWAL_BROADCAST_TIMEOUT < timezone.now():
         # Timeout, cancel job
         cancel_current_task()
     if blockr.is_tx_broadcasted(order.outgoing_tx_id,

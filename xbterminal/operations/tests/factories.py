@@ -1,6 +1,8 @@
 from decimal import Decimal
+import uuid
 import factory
 from factory import fuzzy
+from bitcoin.core import COutPoint
 
 from website.tests.factories import DeviceFactory
 from operations.models import PaymentOrder, WithdrawalOrder
@@ -70,3 +72,8 @@ class WithdrawalOrderFactory(factory.DjangoModelFactory):
     @factory.post_generation
     def reserved_outputs(self, create, extracted, **kwargs):
         self.reserved_outputs = serialize_outputs(extracted or [])
+
+
+def outpoint_factory():
+    hsh = uuid.uuid4().bytes * 2
+    return COutPoint(hash=hsh, n=1)

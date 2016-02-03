@@ -18,7 +18,12 @@ from website.validators import (
     validate_bitcoin_address,
     validate_transaction)
 
-from operations import BTC_DEC_PLACES
+from operations import (
+    BTC_DEC_PLACES,
+    PAYMENT_TIMEOUT,
+    PAYMENT_VALIDATION_TIMEOUT,
+    WITHDRAWAL_TIMEOUT,
+    WITHDRAWAL_BROADCAST_TIMEOUT)
 from operations.services import blockr
 
 
@@ -95,6 +100,10 @@ class PaymentOrder(models.Model):
         return str(self.pk)
 
     @property
+    def expires_at(self):
+        return self.time_created + PAYMENT_TIMEOUT
+
+    @property
     def status(self):
         """
         Returns status of the payment:
@@ -110,12 +119,12 @@ class PaymentOrder(models.Model):
         if self.time_finished:
             return 'completed'
         if not self.time_recieved:
-            if self.expires < timezone.now():
+            if self.time_created + PAYMENT_TIMEOUT < timezone.now():
                 return 'timeout'
             else:
                 return 'new'
         else:
-            if self.expires < timezone.now():
+            if self.time_created + PAYMENT_VALIDATION_TIMEOUT < timezone.now():
                 return 'failed'
             elif (
                 not self.instantfiat_invoice_id and self.time_forwarded
@@ -126,10 +135,6 @@ class PaymentOrder(models.Model):
                 return 'forwarded'
             else:
                 return 'recieved'
-
-    @property
-    def expires(self):
-        return self.time_created + datetime.timedelta(minutes=10)
 
     def is_receipt_ready(self):
         """
@@ -253,7 +258,7 @@ class WithdrawalOrder(models.Model):
 
     @property
     def expires_at(self):
-        return self.time_created + datetime.timedelta(minutes=10)
+        return self.time_created + WITHDRAWAL_TIMEOUT
 
     @property
     def status(self):
@@ -273,18 +278,18 @@ class WithdrawalOrder(models.Model):
         if self.time_cancelled:
             return 'cancelled'
         if self.time_sent:
-            if self.expires_at >= timezone.now():
+            if self.time_created + WITHDRAWAL_BROADCAST_TIMEOUT < timezone.now():
+                return 'failed'
+            else:
                 if self.time_broadcasted:
                     return 'broadcasted'
                 else:
                     return 'sent'
-            else:
-                return 'failed'
         else:
-            if self.expires_at >= timezone.now():
-                return 'new'
-            else:
+            if self.time_created + WITHDRAWAL_TIMEOUT < timezone.now():
                 return 'timeout'
+            else:
+                return 'new'
 
 
 def gen_payment_reference():
