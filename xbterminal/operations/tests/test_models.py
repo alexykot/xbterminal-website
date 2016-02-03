@@ -142,15 +142,20 @@ class WithdrawalOrderTestCase(TestCase):
         self.assertEqual(order.status, 'broadcasted')
         order.time_completed = timezone.now()
         self.assertEqual(order.status, 'completed')
-
+        # Timeout
         order = WithdrawalOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=1))
         self.assertEqual(order.status, 'timeout')
-
+        # Failed
         order = WithdrawalOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=2),
             time_sent=timezone.now() - datetime.timedelta(hours=1))
         self.assertEqual(order.status, 'failed')
+        # Cancelled
+        order = WithdrawalOrderFactory.create()
+        self.assertEqual(order.status, 'new')
+        order.time_cancelled = timezone.now()
+        self.assertEqual(order.status, 'cancelled')
 
     def test_urls_for_receipts(self):
         order = WithdrawalOrderFactory.create(outgoing_tx_id='0' * 64)
