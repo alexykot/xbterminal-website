@@ -135,7 +135,9 @@ class BTCAccountAdmin(admin.ModelAdmin):
             field = form.base_fields[field_name]
             if field_name == 'address':
                 field.widget = BitcoinAddressWidget(network=obj.network)
-                field.required = False
+                field.required = True
+                # Workaround for address field with blank=True
+                field.clean = lambda *args: obj.address
         return form
 
 
