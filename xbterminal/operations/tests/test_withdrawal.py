@@ -7,7 +7,9 @@ from bitcoin.core import COutPoint
 
 from website.tests.factories import BTCAccountFactory, DeviceFactory
 from operations.models import WithdrawalOrder
-from operations.tests.factories import WithdrawalOrderFactory
+from operations.tests.factories import (
+    WithdrawalOrderFactory,
+    outpoint_factory)
 from operations import withdrawal
 
 
@@ -21,11 +23,12 @@ class PrepareWithdrawalTestCase(TestCase):
             merchant=device.merchant,
             address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
         fiat_amount = Decimal('1.00')
-        exchange_rate = Decimal(200)
+        exchange_rate = Decimal(100)
         get_rate_mock.return_value = exchange_rate
         bc_mock.return_value = Mock(**{
             'get_unspent_outputs.return_value': [
-                {'amount': Decimal('0.1'), 'outpoint': COutPoint(n=1)},
+                {'amount': Decimal('0.005'), 'outpoint': outpoint_factory()},
+                {'amount': Decimal('0.007'), 'outpoint': outpoint_factory()},
             ],
         })
 
@@ -37,9 +40,9 @@ class PrepareWithdrawalTestCase(TestCase):
                          device.merchant.currency.pk)
         self.assertEqual(order.fiat_amount, fiat_amount)
         self.assertEqual(order.exchange_rate, exchange_rate)
-        self.assertEqual(order.customer_btc_amount, Decimal('0.005'))
+        self.assertEqual(order.customer_btc_amount, Decimal('0.01'))
         self.assertEqual(order.tx_fee_btc_amount, Decimal('0.0001'))
-        self.assertEqual(order.change_btc_amount, Decimal('0.0949'))
+        self.assertEqual(order.change_btc_amount, Decimal('0.0019'))
         self.assertIsNotNone(order.reserved_outputs)
         self.assertEqual(order.status, 'new')
 
@@ -78,11 +81,35 @@ class PrepareWithdrawalTestCase(TestCase):
         get_rate_mock.return_value = Decimal(200)
         bc_mock.return_value = Mock(**{
             'get_unspent_outputs.return_value':
-                [{'amount': Decimal('0.9'), 'outpoint': COutPoint(n=1)}],
+                [{'amount': Decimal('0.9'), 'outpoint': outpoint_factory()}],
         })
 
-        with self.assertRaises(withdrawal.WithdrawalError):
+        with self.assertRaises(withdrawal.WithdrawalError) as context:
             withdrawal.prepare_withdrawal(device, fiat_amount)
+        self.assertEqual(context.exception.message, 'Insufficient funds')
+
+    @patch('operations.withdrawal.BlockChain')
+    @patch('operations.withdrawal.get_exchange_rate')
+    def test_already_reserved(self, get_rate_mock, bc_mock):
+        device = DeviceFactory.create()
+        btc_account = BTCAccountFactory.create(
+            merchant=device.merchant,
+            address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+        reserved_output = outpoint_factory()
+        order = WithdrawalOrderFactory.create(
+            device=device,
+            reserved_outputs=[reserved_output])
+
+        fiat_amount = Decimal('200.00')
+        get_rate_mock.return_value = Decimal(200)
+        bc_mock.return_value = Mock(**{
+            'get_unspent_outputs.return_value': [
+                {'amount': Decimal('1.5'), 'outpoint': reserved_output},
+            ],
+        })
+        with self.assertRaises(withdrawal.WithdrawalError) as context:
+            withdrawal.prepare_withdrawal(device, fiat_amount)
+        self.assertEqual(context.exception.message, 'Insufficient funds')
 
     @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.get_exchange_rate')
@@ -96,7 +123,7 @@ class PrepareWithdrawalTestCase(TestCase):
         get_rate_mock.return_value = exchange_rate
         bc_mock.return_value = Mock(**{
             'get_unspent_outputs.return_value': [
-                {'amount': Decimal('0.005105'), 'outpoint': COutPoint(n=1)},
+                {'amount': Decimal('0.005105'), 'outpoint': outpoint_factory()},
             ],
         })
 
@@ -159,6 +186,17 @@ class SendTransactionTestCase(TestCase):
         customer_address = 'mhXPmYBSUsjEKmyi568cEoZYR3QHHkhMyG'
         with self.assertRaises(withdrawal.WithdrawalError):
             withdrawal.send_transaction(order, customer_address)
+
+    def test_outputs_already_reserved(self):
+        order_1, order_2 = WithdrawalOrderFactory.create_batch(
+            2,
+            merchant_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
+            reserved_outputs=[outpoint_factory()])
+        customer_address = '1NdS5JCXzbhNv4STQAaknq56iGstfgRCXg'
+
+        with self.assertRaises(withdrawal.WithdrawalError) as context:
+            withdrawal.send_transaction(order_2, customer_address)
+        self.assertEqual(context.exception.message, 'Insufficient funds')
 
 
 class WaitForBroadcastTestCase(TestCase):

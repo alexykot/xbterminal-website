@@ -69,7 +69,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
             payment_order.device.bitcoin_network,
             [(payment_order.local_address, payment_order.btc_amount)],
             payment_order.time_created,
-            payment_order.expires,
+            payment_order.expires_at,
             payment_response_url,
             device.merchant.company_name)
         payment_order.save()
@@ -93,7 +93,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
                 payment_order.device.bitcoin_network,
                 [(payment_order.local_address, payment_order.btc_amount)],
                 payment_order.time_created,
-                payment_order.expires,
+                payment_order.expires_at,
                 payment_bluetooth_url,
                 device.merchant.company_name)
             # Send payment request in response
@@ -136,7 +136,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
     @detail_route(methods=['GET'], renderer_classes=[PaymentRequestRenderer])
     def request(self, *args, **kwargs):
         payment_order = self.get_object()
-        if payment_order.expires < timezone.now():
+        if payment_order.expires_at < timezone.now():
             raise Http404
         response = Response(payment_order.request)
         response['Content-Transfer-Encoding'] = 'binary'

@@ -194,7 +194,7 @@ class PaymentInitView(View):
             payment_order.device.bitcoin_network,
             [(payment_order.local_address, payment_order.btc_amount)],
             payment_order.time_created,
-            payment_order.expires,
+            payment_order.expires_at,
             payment_response_url,
             device.merchant.company_name)
         payment_order.save()
@@ -218,7 +218,7 @@ class PaymentInitView(View):
                 payment_order.device.bitcoin_network,
                 [(payment_order.local_address, payment_order.btc_amount)],
                 payment_order.time_created,
-                payment_order.expires,
+                payment_order.expires_at,
                 payment_bluetooth_url,
                 device.merchant.company_name)
             # Send payment request in response
@@ -252,7 +252,7 @@ class PaymentRequestView(View):
             payment_order = PaymentOrder.objects.get(uid=self.kwargs.get('payment_uid'))
         except PaymentOrder.DoesNotExist:
             raise Http404
-        if payment_order.expires < timezone.now():
+        if payment_order.expires_at < timezone.now():
             raise Http404
         response = HttpResponse(payment_order.request,
                                 content_type='application/bitcoin-paymentrequest')
