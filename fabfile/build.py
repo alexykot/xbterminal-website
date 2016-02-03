@@ -53,6 +53,11 @@ def compilemessages():
             env.run("django-admin.py compilemessages")
 
 
+@task
+def clean():
+    env.run("find . -name '*.pyc' -delete")
+
+
 @task(default=True)
 def all(development='yes'):
     dirs()

@@ -11,7 +11,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 from website.files import get_verification_file_name
-from operations import blockr
+from operations.services import blockcypher
 
 
 class ButtonGroupChoiceInput(RadioChoiceInput):
@@ -121,9 +121,13 @@ class BitcoinAddressWidget(Widget):
         super(BitcoinAddressWidget, self).__init__(*args, **kwargs)
 
     def render(self, name, value, attrs=None):
-        output = format_html('<a target="_blank" href="{0}">{1}</a>',
-                             blockr.get_address_url(value, self.network),
-                             value)
+        if value:
+            output = format_html(
+                '<a target="_blank" href="{0}">{1}</a>',
+                blockcypher.get_address_url(value, self.network),
+                value)
+        else:
+            output = '-'
         return mark_safe(output)
 
 
@@ -134,9 +138,13 @@ class BitcoinTransactionWidget(Widget):
         super(BitcoinTransactionWidget, self).__init__(*args, **kwargs)
 
     def render(self, name, value, attrs=None):
-        output = format_html('<a target="_blank" href="{0}">{1}</a>',
-                             blockr.get_tx_url(value, self.network),
-                             value)
+        if value:
+            output = format_html(
+                '<a target="_blank" href="{0}">{1}</a>',
+                blockcypher.get_tx_url(value, self.network),
+                value)
+        else:
+            output = '-'
         return mark_safe(output)
 
 
@@ -156,3 +164,6 @@ class ReadOnlyAdminWidget(Widget):
 
     def value_from_datadict(self, data, files, name):
         return data.get(name, '')
+
+    def decompress(self, value):
+        return []

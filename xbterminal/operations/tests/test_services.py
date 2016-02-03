@@ -39,3 +39,13 @@ class BlockcypherTestCase(TestCase):
         tx_id = '0' * 64
         self.assertTrue(blockcypher.is_tx_reliable(tx_id, 'mainnet'))
         self.assertIn('/btc/main/', get_mock.call_args[0][0])
+
+    def test_get_tx_url(self):
+        tx = 'test'
+        self.assertEqual(blockcypher.get_tx_url(tx, 'mainnet'),
+                         'https://live.blockcypher.com/btc/tx/test/')
+
+    def test_get_address_url(self):
+        address = 'test'
+        self.assertEqual(blockcypher.get_address_url(address, 'mainnet'),
+                         'https://live.blockcypher.com/btc/address/test/')
