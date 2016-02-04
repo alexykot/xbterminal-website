@@ -1,5 +1,7 @@
 from decimal import Decimal
+import datetime
 from django.test import TestCase
+from django.utils import timezone
 from mock import patch, Mock
 
 from constance import config
@@ -463,3 +465,42 @@ class WaitForConfirmationTestCase(TestCase):
         order.refresh_from_db()
         self.assertIsNone(order.time_confirmed)
         self.assertFalse(cancel_mock.called)
+
+
+class CheckPaymentStatusTestCase(TestCase):
+
+    @patch('operations.payment.cancel_current_task')
+    def test_order_does_not_exist(self, cancel_mock):
+        payment.check_payment_status(123456)
+        self.assertTrue(cancel_mock.called)
+
+    @patch('operations.payment.cancel_current_task')
+    def test_new(self, cancel_mock):
+        order = PaymentOrderFactory.create()
+        payment.check_payment_status(order.uid)
+        self.assertFalse(cancel_mock.called)
+
+    @patch('operations.payment.cancel_current_task')
+    def test_completed(self, cancel_mock):
+        order = PaymentOrderFactory.create(time_finished=timezone.now())
+        payment.check_payment_status(order.uid)
+        self.assertTrue(cancel_mock.called)
+
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.send_error_message')
+    def test_failed(self, send_mock, cancel_mock):
+        order = PaymentOrderFactory.create(
+            time_created=timezone.now() - datetime.timedelta(hours=2),
+            time_recieved=timezone.now() - datetime.timedelta(hours=1))
+        payment.check_payment_status(order.uid)
+        self.assertTrue(cancel_mock.called)
+        self.assertTrue(send_mock.called)
+
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.send_error_message')
+    def test_timeout(self, send_mock, cancel_mock):
+        order = PaymentOrderFactory.create(
+            time_created=timezone.now() - datetime.timedelta(hours=1))
+        payment.check_payment_status(order.uid)
+        self.assertTrue(cancel_mock.called)
+        self.assertFalse(send_mock.called)
