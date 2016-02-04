@@ -116,7 +116,8 @@ class PaymentViewSet(viewsets.GenericViewSet):
 
     def retrieve(self, *args, **kwargs):
         payment_order = self.get_object()
-        if payment_order.is_receipt_ready():
+        # status in ['forwarded', 'processed', 'completed']
+        if payment_order.time_forwarded is not None:
             receipt_url = self.request.build_absolute_uri(reverse(
                 'api:short:receipt',
                 kwargs={'order_uid': payment_order.uid}))

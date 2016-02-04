@@ -114,7 +114,7 @@ class PaymentOrder(models.Model):
             completed - customer notified about successful payment
             timeout - incoming transaction did not recieved
             failed - incoming transaction recieved,
-                but payment order is not marked as finished
+                but payment order is not marked as completed
         """
         if self.time_finished:
             return 'completed'
@@ -135,13 +135,6 @@ class PaymentOrder(models.Model):
                 return 'forwarded'
             else:
                 return 'recieved'
-
-    def is_receipt_ready(self):
-        """
-        Equivalent to:
-            status in ['forwarded', 'processed', 'completed']
-        """
-        return self.time_forwarded is not None
 
     @property
     def receipt_url(self):
