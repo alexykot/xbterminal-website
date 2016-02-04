@@ -133,7 +133,7 @@
         <td class="col1">{% trans 'Transaction time' %}</td>
         <td class="col2">
             {% language 'en' %}
-            {% if order.order_type == 'payment' %}{{ order.time_finished|date:'d M Y, h:i A' }}
+            {% if order.order_type == 'payment' %}{{ order.time_notified|date:'d M Y, h:i A' }}
             {% elif order.order_type == 'withdrawal' %}{{ order.time_completed|date:'d M Y, h:i A' }}
             {% endif %}
             {% endlanguage %}
