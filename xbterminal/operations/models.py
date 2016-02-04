@@ -22,6 +22,7 @@ from operations import (
     BTC_DEC_PLACES,
     PAYMENT_TIMEOUT,
     PAYMENT_VALIDATION_TIMEOUT,
+    PAYMENT_CONFIRMATION_TIMEOUT,
     WITHDRAWAL_TIMEOUT,
     WITHDRAWAL_BROADCAST_TIMEOUT)
 from operations.services import blockr
@@ -93,7 +94,7 @@ class PaymentOrder(models.Model):
     time_recieved = models.DateTimeField(null=True)
     time_forwarded = models.DateTimeField(null=True)
     time_exchanged = models.DateTimeField(null=True)
-    time_finished = models.DateTimeField(null=True)
+    time_notified = models.DateTimeField(null=True)
     time_confirmed = models.DateTimeField(null=True)
 
     def __unicode__(self):
@@ -111,13 +112,20 @@ class PaymentOrder(models.Model):
             recieved - incoming transaction receieved
             forwarded - payment forwarded
             processed - recieved confirmation from instantfiat service
-            completed - customer notified about successful payment
+            notified - customer notified about successful payment
+            confirmed - outgoing transaction confirmed
             timeout - incoming transaction did not recieved
             failed - incoming transaction recieved,
                 but payment order is not marked as completed
         """
-        if self.time_finished:
-            return 'completed'
+        if self.time_notified:
+            if self.time_confirmed:
+                return 'confirmed'
+            else:
+                if self.time_created + PAYMENT_CONFIRMATION_TIMEOUT < timezone.now():
+                    return 'failed'
+                else:
+                    return 'notified'
         if not self.time_recieved:
             if self.time_created + PAYMENT_TIMEOUT < timezone.now():
                 return 'timeout'

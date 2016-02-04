@@ -113,7 +113,7 @@ class MerchantAccountTestCase(TestCase):
                                              status='active',
                                              last_activity=timezone.now())
         payments = PaymentOrderFactory.create_batch(
-            3, device=active_device, time_finished=timezone.now())
+            3, device=active_device, time_notified=timezone.now())
 
         info = merchant.info
         self.assertEqual(info['active'], 1)

@@ -228,7 +228,7 @@ class PaymentResponseViewTestCase(TestCase):
 
 class PaymentCheckViewTestCase(TestCase):
 
-    def test_payment_not_finished(self):
+    def test_payment_not_notified(self):
         payment_order = PaymentOrderFactory.create()
         url = reverse('api:payment_check',
                       kwargs={'payment_uid': payment_order.uid})
@@ -237,10 +237,10 @@ class PaymentCheckViewTestCase(TestCase):
         data = json.loads(response.content)
         self.assertEqual(data['paid'], 0)
 
-    def test_payment_finished(self):
+    def test_payment_notified(self):
         payment_order = PaymentOrderFactory.create(
             time_forwarded=timezone.now())
-        self.assertIsNone(payment_order.time_finished)
+        self.assertIsNone(payment_order.time_notified)
         url = reverse('api:payment_check',
                       kwargs={'payment_uid': payment_order.uid})
         response = self.client.get(url)
@@ -250,7 +250,7 @@ class PaymentCheckViewTestCase(TestCase):
         self.assertIn('receipt_url', data)
         self.assertIn('qr_code_src', data)
         payment_order = PaymentOrder.objects.get(uid=payment_order.uid)
-        self.assertIsNotNone(payment_order.time_finished)
+        self.assertIsNotNone(payment_order.time_notified)
 
 
 class ReceiptViewTestCase(TestCase):
@@ -262,7 +262,7 @@ class ReceiptViewTestCase(TestCase):
         })
         get_template_mock.return_value = template_mock
         payment_order = PaymentOrderFactory.create(
-            time_finished=timezone.now())
+            time_notified=timezone.now())
         url = reverse('api:receipt',
                       kwargs={'order_uid': payment_order.uid})
         response = self.client.get(url)
@@ -270,7 +270,7 @@ class ReceiptViewTestCase(TestCase):
         self.assertEqual(response['Content-Type'], 'application/pdf')
         self.assertTrue(template_mock.render.called)
 
-    def test_payment_not_finished(self):
+    def test_payment_not_notified(self):
         payment_order = PaymentOrderFactory.create()
         url = reverse('api:receipt',
                       kwargs={'order_uid': payment_order.uid})

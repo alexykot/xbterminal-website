@@ -495,7 +495,7 @@ class ReconciliationViewTestCase(TestCase):
         orders = PaymentOrderFactory.create_batch(
             5,
             device=device,
-            time_finished=timezone.now())
+            time_notified=timezone.now())
         self.client.login(username=self.merchant.user.email,
                           password='password')
         url = reverse('website:reconciliation',
@@ -560,7 +560,7 @@ class ReportViewTestCase(TestCase):
         device = DeviceFactory.create(merchant=self.merchant)
         payment_order = PaymentOrderFactory.create(
             device=device,
-            time_finished=timezone.now())
+            time_notified=timezone.now())
         self.client.login(username=self.merchant.user.email,
                           password='password')
         url = reverse('website:report',
@@ -579,7 +579,7 @@ class ReceiptsViewTestCase(TestCase):
         device = DeviceFactory.create(merchant=self.merchant)
         payment_order = PaymentOrderFactory.create(
             device=device,
-            time_finished=timezone.now())
+            time_notified=timezone.now())
         self.client.login(username=self.merchant.user.email,
                           password='password')
         url = reverse('website:receipts',
@@ -598,14 +598,14 @@ class SendAllToEmailViewTestCase(TestCase):
         device = DeviceFactory.create(merchant=self.merchant)
         payment_order = PaymentOrderFactory.create(
             device=device,
-            time_finished=timezone.now())
+            time_notified=timezone.now())
         self.client.login(username=self.merchant.user.email,
                           password='password')
         url = reverse('website:send_all_to_email',
                       kwargs={'device_key': device.key})
         form_data = {
             'email': 'test@example.net',
-            'date': payment_order.time_finished.strftime('%Y-%m-%d'),
+            'date': payment_order.time_notified.strftime('%Y-%m-%d'),
         }
         response = self.client.post(url, data=form_data)
         self.assertEqual(response.status_code, 302)
@@ -618,14 +618,14 @@ class SendAllToEmailViewTestCase(TestCase):
         orders = PaymentOrderFactory.create_batch(
             5,
             device=device,
-            time_finished=timezone.now())
+            time_notified=timezone.now())
         self.client.login(username=self.merchant.user.email,
                           password='password')
         url = reverse('website:send_all_to_email',
                       kwargs={'device_key': device.key})
         form_data = {
             'email': 'test@example.net',
-            'date': orders[0].time_finished.strftime('%Y-%m-%d'),
+            'date': orders[0].time_notified.strftime('%Y-%m-%d'),
         }
         self.client.post(url, data=form_data)
         self.assertTrue(create_mock.called)

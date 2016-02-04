@@ -481,8 +481,16 @@ class CheckPaymentStatusTestCase(TestCase):
         self.assertFalse(cancel_mock.called)
 
     @patch('operations.payment.cancel_current_task')
-    def test_completed(self, cancel_mock):
-        order = PaymentOrderFactory.create(time_finished=timezone.now())
+    def test_notified(self, cancel_mock):
+        order = PaymentOrderFactory.create(time_notified=timezone.now())
+        payment.check_payment_status(order.uid)
+        self.assertFalse(cancel_mock.called)
+
+    @patch('operations.payment.cancel_current_task')
+    def test_confirmed(self, cancel_mock):
+        order = PaymentOrderFactory.create(
+            time_notified=timezone.now(),
+            time_confirmed=timezone.now())
         payment.check_payment_status(order.uid)
         self.assertTrue(cancel_mock.called)
 

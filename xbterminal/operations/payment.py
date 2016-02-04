@@ -398,5 +398,5 @@ def check_payment_status(payment_order_uid):
     if payment_order.status == 'failed':
         cancel_current_task()
         send_error_message(payment_order=payment_order)
-    elif payment_order.status in ['timeout', 'completed']:
+    elif payment_order.status in ['timeout', 'confirmed']:
         cancel_current_task()
