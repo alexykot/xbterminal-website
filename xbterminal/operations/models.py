@@ -92,9 +92,9 @@ class PaymentOrder(models.Model):
     time_created = models.DateTimeField(auto_now_add=True)
     time_recieved = models.DateTimeField(null=True)
     time_forwarded = models.DateTimeField(null=True)
-    time_broadcasted = models.DateTimeField(null=True)
     time_exchanged = models.DateTimeField(null=True)
     time_finished = models.DateTimeField(null=True)
+    time_confirmed = models.DateTimeField(null=True)
 
     def __unicode__(self):
         return str(self.pk)
