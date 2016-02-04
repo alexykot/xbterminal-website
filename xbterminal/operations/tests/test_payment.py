@@ -309,7 +309,7 @@ class WaitForValidationTestCase(TestCase):
                          payment_order.uid)
         self.assertEqual(run_task_mock.call_count, 1)
         self.assertEqual(run_task_mock.call_args[0][0].__name__,
-                         'wait_for_broadcast')
+                         'wait_for_confidence')
 
     @patch('operations.payment.cancel_current_task')
     @patch('operations.payment.blockcypher.is_tx_reliable')
@@ -327,7 +327,7 @@ class WaitForValidationTestCase(TestCase):
         self.assertTrue(forward_mock.called)
         self.assertEqual(run_task_mock.call_count, 2)
         calls = run_task_mock.call_args_list
-        self.assertEqual(calls[0][0][0].__name__, 'wait_for_broadcast')
+        self.assertEqual(calls[0][0][0].__name__, 'wait_for_confidence')
         self.assertEqual(calls[1][0][0].__name__, 'wait_for_exchange')
 
 
@@ -431,11 +431,11 @@ class ForwardTransactionTestCase(TestCase):
                          payment_order.merchant_btc_amount)
 
 
-class WaitForBroadCastTestCase(TestCase):
+class WaitForConfidenceTestCase(TestCase):
 
     @patch('operations.payment.cancel_current_task')
     def test_payment_order_does_not_exist(self, cancel_mock):
-        payment.wait_for_broadcast(123456)
+        payment.wait_for_confidence(123456)
         self.assertTrue(cancel_mock.called)
 
     @patch('operations.payment.cancel_current_task')
@@ -444,7 +444,7 @@ class WaitForBroadCastTestCase(TestCase):
         order = PaymentOrderFactory.create(
             outgoing_tx_id='0' * 64)
         tx_check_mock.return_value = True
-        payment.wait_for_broadcast(order.uid)
+        payment.wait_for_confidence(order.uid)
         order.refresh_from_db()
         self.assertIsNotNone(order.time_broadcasted)
         self.assertTrue(cancel_mock.called)
@@ -455,7 +455,7 @@ class WaitForBroadCastTestCase(TestCase):
         order = PaymentOrderFactory.create(
             outgoing_tx_id='0' * 64)
         tx_check_mock.return_value = False
-        payment.wait_for_broadcast(order.uid)
+        payment.wait_for_confidence(order.uid)
         order.refresh_from_db()
         self.assertIsNone(order.time_broadcasted)
         self.assertFalse(cancel_mock.called)

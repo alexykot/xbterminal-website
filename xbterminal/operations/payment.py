@@ -270,7 +270,7 @@ def wait_for_validation(payment_order_uid):
             return
         cancel_current_task()
         forward_transaction(payment_order)
-        run_periodic_task(wait_for_broadcast, [payment_order.uid], interval=15)
+        run_periodic_task(wait_for_confidence, [payment_order.uid], interval=15)
         if payment_order.instantfiat_invoice_id is None:
             # Payment finished
             logger.info('payment order closed ({0})'.format(payment_order.uid))
@@ -334,7 +334,7 @@ def forward_transaction(payment_order):
         btc_account.save()
 
 
-def wait_for_broadcast(payment_order_uid):
+def wait_for_confidence(payment_order_uid):
     """
     Asynchronous task
     Accepts:

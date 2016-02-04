@@ -149,10 +149,10 @@ def send_transaction(order, customer_address):
     btc_account.balance -= order.btc_amount
     btc_account.save()
 
-    run_periodic_task(wait_for_broadcast, [order.uid], interval=5)
+    run_periodic_task(wait_for_confidence, [order.uid], interval=5)
 
 
-def wait_for_broadcast(order_uid):
+def wait_for_confidence(order_uid):
     """
     Asynchronous task
     Accepts:
