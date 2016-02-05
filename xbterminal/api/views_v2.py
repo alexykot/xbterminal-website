@@ -214,6 +214,8 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
         order = self.get_object()
         if not self._verify_signature(order.device):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
+        if order.status != 'new':
+            raise Http404
         customer_address = self.request.data.get('address')
         try:
             withdrawal.send_transaction(order, customer_address)
@@ -222,6 +224,17 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(order)
         return Response(serializer.data)
+
+    @detail_route(methods=['POST'])
+    def cancel(self, *args, **kwargs):
+        order = self.get_object()
+        if not self._verify_signature(order.device):
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        if order.status != 'new':
+            raise Http404
+        order.time_cancelled = timezone.now()
+        order.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def retrieve(self, request, uid=None):
         order = self.get_object()

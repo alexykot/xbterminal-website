@@ -111,6 +111,14 @@ class PrepareWithdrawalTestCase(TestCase):
             withdrawal.prepare_withdrawal(device, fiat_amount)
         self.assertEqual(context.exception.message, 'Insufficient funds')
 
+        # Order cancelled
+        order.time_cancelled = timezone.now()
+        order.save()
+
+        new_order = withdrawal.prepare_withdrawal(device, fiat_amount)
+        self.assertEqual(order.reserved_outputs,
+                         new_order.reserved_outputs)
+
     @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.get_exchange_rate')
     def test_dust_change(self, get_rate_mock, bc_mock):

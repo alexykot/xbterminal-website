@@ -296,8 +296,12 @@ class WithdrawalViewSetTestCase(APITestCase):
 
     @patch('api.views_v2.withdrawal.send_transaction')
     def test_confirm(self, send_mock):
-        order = WithdrawalOrderFactory.create()
+        def write_time_sent(order, address):
+            order.time_sent = timezone.now()
+            order.save()
+        send_mock.side_effect = write_time_sent
 
+        order = WithdrawalOrderFactory.create()
         view = WithdrawalViewSet.as_view(
             actions={'post': 'confirm'})
         form_data = {'address': '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'}
@@ -309,8 +313,47 @@ class WithdrawalViewSetTestCase(APITestCase):
 
         response = view(request, uid=order.uid)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('status', response.data)
+        self.assertEqual(response.data['status'], 'sent')
         self.assertTrue(send_mock.called)
+
+    def test_confirm_already_sent(self):
+        order = WithdrawalOrderFactory.create(time_sent=timezone.now())
+        view = WithdrawalViewSet.as_view(actions={'post': 'confirm'})
+        form_data = {'address': '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'}
+        url = reverse('api:v2:withdrawal-confirm', kwargs={'uid': order.uid})
+        request = self.factory.post(url, form_data, format='json')
+        order.device.api_key, request.META['HTTP_X_SIGNATURE'] = \
+            create_test_signature(request.body)
+        order.device.save()
+
+        response = view(request, uid=order.uid)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_cancel(self):
+        order = WithdrawalOrderFactory.create()
+        view = WithdrawalViewSet.as_view(actions={'post': 'cancel'})
+        url = reverse('api:v2:withdrawal-cancel', kwargs={'uid': order.uid})
+        request = self.factory.post(url, {}, format='json')
+        order.device.api_key, request.META['HTTP_X_SIGNATURE'] = \
+            create_test_signature(request.body)
+        order.device.save()
+
+        response = view(request, uid=order.uid)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        order.refresh_from_db()
+        self.assertEqual(order.status, 'cancelled')
+
+    def test_cancel_not_new(self):
+        order = WithdrawalOrderFactory.create(time_sent=timezone.now())
+        view = WithdrawalViewSet.as_view(actions={'post': 'cancel'})
+        url = reverse('api:v2:withdrawal-cancel', kwargs={'uid': order.uid})
+        request = self.factory.post(url, {}, format='json')
+        order.device.api_key, request.META['HTTP_X_SIGNATURE'] = \
+            create_test_signature(request.body)
+        order.device.save()
+
+        response = view(request, uid=order.uid)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_check(self):
         order = WithdrawalOrderFactory.create(time_sent=timezone.now())
