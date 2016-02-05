@@ -238,9 +238,12 @@ def reverse_payment(order):
         amount += output['amount']
     amount -= blockchain.get_tx_fee(1, 1)
     tx_outputs = {order.refund_address: amount}
-    reverse_tx = bc.create_raw_transaction(tx_inputs, tx_outputs)
-    reverse_tx_signed = bc.sign_raw_transaction(reverse_tx)
-    bc.send_raw_transaction(reverse_tx_signed)
+    refund_tx = bc.create_raw_transaction(tx_inputs, tx_outputs)
+    refund_tx_signed = bc.sign_raw_transaction(refund_tx)
+    bc.send_raw_transaction(refund_tx_signed)
+    order.refund_tx_id = blockchain.get_txid(refund_tx)
+    order.time_refunded = timezone.now()
+    order.save()
     logger.warning('payment returned ({0})'.format(order.uid))
 
 
@@ -403,7 +406,7 @@ def check_payment_status(payment_order_uid):
         # PaymentOrder deleted, cancel job
         cancel_current_task()
         return
-    if payment_order.status == 'failed':
+    if payment_order.status in ['failed', 'refunded']:
         cancel_current_task()
         send_error_message(payment_order=payment_order)
     elif payment_order.status in ['timeout', 'confirmed']:

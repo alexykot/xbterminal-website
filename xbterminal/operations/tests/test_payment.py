@@ -311,7 +311,8 @@ class ValidatePaymentTestCase(TestCase):
 class ReversePaymentTestCase(TestCase):
 
     @patch('operations.payment.blockchain.BlockChain')
-    def test_reverse(self, bc_cls_mock):
+    @patch('operations.payment.blockchain.get_txid')
+    def test_reverse(self, get_txid_mock, bc_cls_mock):
         order = PaymentOrderFactory.create(
             merchant_btc_amount=Decimal('0.1'),
             fee_btc_amount=Decimal('0.001'),
@@ -326,13 +327,18 @@ class ReversePaymentTestCase(TestCase):
             'sign_raw_transaction.return_value': 'test_tx_signed',
             'send_raw_transaction.return_value': 'test_tx_id',
         })
-        payment.reverse_payment(order)
+        refund_tx_id = '5' * 64
+        get_txid_mock.return_value = refund_tx_id
 
+        payment.reverse_payment(order)
         tx_outputs = bc_mock.create_raw_transaction.call_args[0][1]
         self.assertEqual(tx_outputs[order.refund_address],
                          Decimal('0.101'))
         self.assertTrue(bc_mock.sign_raw_transaction.called)
         self.assertTrue(bc_mock.send_raw_transaction.called)
+        order.refresh_from_db()
+        self.assertEqual(order.refund_tx_id, refund_tx_id)
+        self.assertEqual(order.status, 'refunded')
 
 
 class WaitForValidationTestCase(TestCase):
@@ -590,6 +596,17 @@ class CheckPaymentStatusTestCase(TestCase):
         order = PaymentOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=2),
             time_recieved=timezone.now() - datetime.timedelta(hours=1))
+        payment.check_payment_status(order.uid)
+        self.assertTrue(cancel_mock.called)
+        self.assertTrue(send_mock.called)
+
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.send_error_message')
+    def test_refunded(self, send_mock, cancel_mock):
+        order = PaymentOrderFactory.create(
+            time_created=timezone.now(),
+            time_recieved=timezone.now(),
+            time_refunded=timezone.now())
         payment.check_payment_status(order.uid)
         self.assertTrue(cancel_mock.called)
         self.assertTrue(send_mock.called)
