@@ -94,7 +94,7 @@ class PaymentOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
             else:
                 self.message_user(
                     request,
-                    'Payment order "{0}" was refunded successfuly.'.format(order.pk),
+                    'Payment order "{0}" was refunded successfully.'.format(order.pk),
                     messages.SUCCESS)
 
     refund.short_description = 'Refund selected payment orders'
