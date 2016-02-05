@@ -30,7 +30,6 @@ def check_payment_orders(network):
     bc = BlockChain(network)
     orders = PaymentOrder.objects.filter(
         bitcoin_network=network,
-        time_forwarded__isnull=True,
         time_created__lt=timezone.now() - datetime.timedelta(hours=6))
     for order in orders:
         balance = bc.get_address_balance(order.local_address)
