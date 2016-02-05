@@ -225,7 +225,8 @@ class WaitForPaymentTestCase(TestCase):
         payment.wait_for_payment(payment_order.uid)
         self.assertTrue(validate_mock.called)
         self.assertTrue(reverse_mock.called)
-        self.assertTrue(cancel_mock.called)
+        self.assertFalse(reverse_mock.call_args[1]['close_order'])
+        self.assertFalse(cancel_mock.called)
 
 
 class ValidatePaymentTestCase(TestCase):
@@ -312,7 +313,7 @@ class ReversePaymentTestCase(TestCase):
 
     @patch('operations.payment.blockchain.BlockChain')
     @patch('operations.payment.blockchain.get_txid')
-    def test_reverse(self, get_txid_mock, bc_cls_mock):
+    def test_reverse_dont_close(self, get_txid_mock, bc_cls_mock):
         order = PaymentOrderFactory.create(
             merchant_btc_amount=Decimal('0.1'),
             fee_btc_amount=Decimal('0.001'),
@@ -330,15 +331,15 @@ class ReversePaymentTestCase(TestCase):
         refund_tx_id = '5' * 64
         get_txid_mock.return_value = refund_tx_id
 
-        payment.reverse_payment(order)
+        payment.reverse_payment(order, close_order=False)
         tx_outputs = bc_mock.create_raw_transaction.call_args[0][1]
         self.assertEqual(tx_outputs[order.refund_address],
                          Decimal('0.101'))
         self.assertTrue(bc_mock.sign_raw_transaction.called)
         self.assertTrue(bc_mock.send_raw_transaction.called)
         order.refresh_from_db()
-        self.assertEqual(order.refund_tx_id, refund_tx_id)
-        self.assertEqual(order.status, 'refunded')
+        self.assertIsNone(order.refund_tx_id)
+        self.assertEqual(order.status, 'new')
 
 
 class WaitForValidationTestCase(TestCase):

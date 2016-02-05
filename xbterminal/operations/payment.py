@@ -156,8 +156,10 @@ def wait_for_payment(payment_order_uid):
         try:
             validate_payment(payment_order, transactions, 'bip0021')
         except exceptions.InsufficientFunds:
-            reverse_payment(payment_order)
-        cancel_current_task()
+            reverse_payment(payment_order, close_order=False)
+            # Don't cancel task, wait for next transaction
+        else:
+            cancel_current_task()
 
 
 def parse_payment(payment_order, payment_message):
@@ -224,11 +226,12 @@ def validate_payment(payment_order, transactions, payment_type):
     logger.info('payment recieved ({0})'.format(payment_order.uid))
 
 
-def reverse_payment(order):
+def reverse_payment(order, close_order=True):
     """
     Send all money back to customer
     Accepts:
         order: PaymentOrder instance
+        close_order: whether to write time_refunded or not, boolean
     """
     bc = blockchain.BlockChain(order.bitcoin_network)
     tx_inputs = []
@@ -241,9 +244,11 @@ def reverse_payment(order):
     refund_tx = bc.create_raw_transaction(tx_inputs, tx_outputs)
     refund_tx_signed = bc.sign_raw_transaction(refund_tx)
     bc.send_raw_transaction(refund_tx_signed)
-    order.refund_tx_id = blockchain.get_txid(refund_tx)
-    order.time_refunded = timezone.now()
-    order.save()
+    if close_order:
+        # Changing order status, customer should be notified
+        order.refund_tx_id = blockchain.get_txid(refund_tx)
+        order.time_refunded = timezone.now()
+        order.save()
     logger.warning('payment returned ({0})'.format(order.uid))
 
 
