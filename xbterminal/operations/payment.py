@@ -252,10 +252,10 @@ def reverse_payment(order, close_order=True):
     tx_outputs = {order.refund_address: amount}
     refund_tx = bc.create_raw_transaction(tx_inputs, tx_outputs)
     refund_tx_signed = bc.sign_raw_transaction(refund_tx)
-    bc.send_raw_transaction(refund_tx_signed)
+    refund_tx_id = bc.send_raw_transaction(refund_tx_signed)
     if close_order:
         # Changing order status, customer should be notified
-        order.refund_tx_id = blockchain.get_txid(refund_tx)
+        order.refund_tx_id = refund_tx_id
         order.time_refunded = timezone.now()
         order.save()
     logger.warning('payment returned ({0})'.format(order.uid))

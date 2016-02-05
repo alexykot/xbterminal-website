@@ -312,13 +312,13 @@ class ValidatePaymentTestCase(TestCase):
 class ReversePaymentTestCase(TestCase):
 
     @patch('operations.payment.blockchain.BlockChain')
-    @patch('operations.payment.blockchain.get_txid')
-    def test_reverse(self, get_txid_mock, bc_cls_mock):
+    def test_reverse(self, bc_cls_mock):
         order = PaymentOrderFactory.create(
             merchant_btc_amount=Decimal('0.1'),
             fee_btc_amount=Decimal('0.001'),
             btc_amount=Decimal('0.1011'),
             refund_address='1KYwqZshnYNUNweXrDkCAdLaixxPhePRje')
+        refund_tx_id = '5' * 64
         bc_cls_mock.return_value = bc_mock = Mock(**{
             'get_unspent_outputs.return_value': [{
                 'outpoint': 'test_outpoint',
@@ -326,10 +326,8 @@ class ReversePaymentTestCase(TestCase):
             }],
             'create_raw_transaction.return_value': 'test_tx',
             'sign_raw_transaction.return_value': 'test_tx_signed',
-            'send_raw_transaction.return_value': 'test_tx_id',
+            'send_raw_transaction.return_value': refund_tx_id,
         })
-        refund_tx_id = '5' * 64
-        get_txid_mock.return_value = refund_tx_id
 
         payment.reverse_payment(order)
         tx_outputs = bc_mock.create_raw_transaction.call_args[0][1]
