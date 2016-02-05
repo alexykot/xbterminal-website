@@ -204,7 +204,10 @@ def validate_payment(payment_order, transactions, payment_type):
     incoming_tx_signed = bc.sign_raw_transaction(incoming_tx)
     # Save refund address (BIP0021)
     if payment_type == 'bip0021':
-        payment_order.refund_address = str(bc.get_tx_inputs(incoming_tx)[0]['address'])
+        tx_inputs = bc.get_tx_inputs(incoming_tx)
+        if len(tx_inputs) > 1:
+            logger.warning('incoming tx contains more than one input')
+        payment_order.refund_address = str(tx_inputs[0]['address'])
     # Check amount
     btc_amount = BTC_DEC_PLACES
     for output in bc.get_tx_outputs(incoming_tx):
