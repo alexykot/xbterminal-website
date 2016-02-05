@@ -38,3 +38,8 @@ class InsufficientFunds(PaymentError):
 class InvalidPaymentMessage(PaymentError):
 
     message = "Invalid BIP0070 Payment message"
+
+
+class RefundError(PaymentError):
+
+    message = 'Refund error'

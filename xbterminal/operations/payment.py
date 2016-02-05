@@ -236,12 +236,18 @@ def reverse_payment(order, close_order=True):
         order: PaymentOrder instance
         close_order: whether to write time_refunded or not, boolean
     """
+    if order.time_forwarded is not None:
+        raise exceptions.RefundError
+    if order.time_refunded is not None:
+        raise exceptions.RefundError
     bc = blockchain.BlockChain(order.bitcoin_network)
     tx_inputs = []
     amount = BTC_DEC_PLACES
     for output in bc.get_unspent_outputs(order.local_address):
         tx_inputs.append(output['outpoint'])
         amount += output['amount']
+    if not amount:
+        raise exceptions.RefundError
     amount -= blockchain.get_tx_fee(1, 1)
     tx_outputs = {order.refund_address: amount}
     refund_tx = bc.create_raw_transaction(tx_inputs, tx_outputs)

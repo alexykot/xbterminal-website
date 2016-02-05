@@ -313,7 +313,7 @@ class ReversePaymentTestCase(TestCase):
 
     @patch('operations.payment.blockchain.BlockChain')
     @patch('operations.payment.blockchain.get_txid')
-    def test_reverse_dont_close(self, get_txid_mock, bc_cls_mock):
+    def test_reverse(self, get_txid_mock, bc_cls_mock):
         order = PaymentOrderFactory.create(
             merchant_btc_amount=Decimal('0.1'),
             fee_btc_amount=Decimal('0.001'),
@@ -331,15 +331,64 @@ class ReversePaymentTestCase(TestCase):
         refund_tx_id = '5' * 64
         get_txid_mock.return_value = refund_tx_id
 
-        payment.reverse_payment(order, close_order=False)
+        payment.reverse_payment(order)
         tx_outputs = bc_mock.create_raw_transaction.call_args[0][1]
         self.assertEqual(tx_outputs[order.refund_address],
                          Decimal('0.101'))
         self.assertTrue(bc_mock.sign_raw_transaction.called)
         self.assertTrue(bc_mock.send_raw_transaction.called)
         order.refresh_from_db()
+        self.assertEqual(order.refund_tx_id, refund_tx_id)
+        self.assertEqual(order.status, 'refunded')
+
+    @patch('operations.payment.blockchain.BlockChain')
+    def test_reverse_dont_close(self, bc_cls_mock):
+        order = PaymentOrderFactory.create(
+            merchant_btc_amount=Decimal('0.1'),
+            fee_btc_amount=Decimal('0.001'),
+            btc_amount=Decimal('0.1011'),
+            refund_address='1KYwqZshnYNUNweXrDkCAdLaixxPhePRje')
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'get_unspent_outputs.return_value': [{
+                'outpoint': 'test_outpoint',
+                'amount': order.btc_amount,
+            }],
+            'create_raw_transaction.return_value': 'test_tx',
+            'sign_raw_transaction.return_value': 'test_tx_signed',
+            'send_raw_transaction.return_value': 'test_tx_id',
+        })
+
+        payment.reverse_payment(order, close_order=False)
+        order.refresh_from_db()
         self.assertIsNone(order.refund_tx_id)
         self.assertEqual(order.status, 'new')
+
+    def test_already_forwarded(self):
+        order = PaymentOrderFactory.create(
+            time_recieved=timezone.now(),
+            time_forwarded=timezone.now())
+        with self.assertRaises(exceptions.RefundError):
+            payment.reverse_payment(order)
+
+    def test_already_refunded(self):
+        order = PaymentOrderFactory.create(
+            time_recieved=timezone.now(),
+            time_refunded=timezone.now())
+        with self.assertRaises(exceptions.RefundError):
+            payment.reverse_payment(order)
+
+    @patch('operations.payment.blockchain.BlockChain')
+    def test_nothing_to_send(self, bc_cls_mock):
+        order = PaymentOrderFactory.create(
+            merchant_btc_amount=Decimal('0.1'),
+            fee_btc_amount=Decimal('0.001'),
+            btc_amount=Decimal('0.1011'),
+            refund_address='1KYwqZshnYNUNweXrDkCAdLaixxPhePRje')
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'get_unspent_outputs.return_value': [],
+        })
+        with self.assertRaises(exceptions.RefundError):
+            payment.reverse_payment(order)
 
 
 class WaitForValidationTestCase(TestCase):
