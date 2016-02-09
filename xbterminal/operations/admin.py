@@ -5,6 +5,7 @@ from operations import models
 from website.widgets import (
     BitcoinAddressWidget,
     BitcoinTransactionWidget,
+    BitcoinTransactionArrayWidget,
     ReadOnlyAdminWidget)
 from website.admin import url_to_object
 from website.utils import generate_qr_code
@@ -27,6 +28,8 @@ class OrderAdminFormMixin(object):
                 field.widget = BitcoinAddressWidget(network=network)
             elif field_name.endswith('_tx_id'):
                 field.widget = BitcoinTransactionWidget(network=network)
+            elif field_name.endswith('_tx_ids'):
+                field.widget = BitcoinTransactionArrayWidget(network=network)
             else:
                 field.widget = ReadOnlyAdminWidget(instance=obj)
             field.required = False

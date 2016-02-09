@@ -19,12 +19,24 @@ class PaymentOrderTestCase(TestCase):
         self.assertEqual(payment_order.status, 'new')
         self.assertEqual(payment_order.bitcoin_network,
                          payment_order.device.bitcoin_network)
+        self.assertEqual(len(payment_order.incoming_tx_ids), 0)
 
         expected_btc_amount = (payment_order.merchant_btc_amount +
                                payment_order.instantfiat_btc_amount +
                                payment_order.fee_btc_amount +
                                payment_order.tx_fee_btc_amount)
         self.assertEqual(payment_order.btc_amount, expected_btc_amount)
+
+    def test_incoming_tx_ids(self):
+        order = PaymentOrderFactory.create()
+        tx_1 = '1' * 64
+        tx_2 = '2' * 64
+        order.incoming_tx_ids.append(tx_1)
+        order.incoming_tx_ids.append(tx_2)
+        self.assertIn(tx_1, order.incoming_tx_ids)
+        self.assertIn(tx_2, order.incoming_tx_ids)
+        order.save()
+        self.assertEqual(len(order.incoming_tx_ids), 2)
 
     def test_status(self):
         # Without instantfiat

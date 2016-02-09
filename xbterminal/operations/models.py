@@ -8,6 +8,7 @@ from django.db import models
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django_countries.fields import CountryField
+from django.contrib.postgres.fields import ArrayField
 from django.contrib.sites.models import Site
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
@@ -85,6 +86,9 @@ class PaymentOrder(models.Model):
 
     incoming_tx_id = models.CharField(
         max_length=64, validators=[validate_transaction], null=True)
+    incoming_tx_ids = ArrayField(
+        models.CharField(max_length=64, validators=[validate_transaction]),
+        default=list)
     outgoing_tx_id = models.CharField(
         max_length=64, validators=[validate_transaction], null=True)
     refund_tx_id = models.CharField(
