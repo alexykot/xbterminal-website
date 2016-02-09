@@ -1,5 +1,7 @@
 from decimal import Decimal
+import datetime
 from django.test import TestCase
+from django.utils import timezone
 from mock import patch, Mock
 
 from constance import config
@@ -399,7 +401,7 @@ class WaitForValidationTestCase(TestCase):
                          payment_order.uid)
         self.assertEqual(run_task_mock.call_count, 1)
         self.assertEqual(run_task_mock.call_args[0][0].__name__,
-                         'wait_for_broadcast')
+                         'wait_for_confirmation')
 
     @patch('operations.payment.cancel_current_task')
     @patch('operations.payment.blockcypher.is_tx_reliable')
@@ -417,7 +419,7 @@ class WaitForValidationTestCase(TestCase):
         self.assertTrue(forward_mock.called)
         self.assertEqual(run_task_mock.call_count, 2)
         calls = run_task_mock.call_args_list
-        self.assertEqual(calls[0][0][0].__name__, 'wait_for_broadcast')
+        self.assertEqual(calls[0][0][0].__name__, 'wait_for_confirmation')
         self.assertEqual(calls[1][0][0].__name__, 'wait_for_exchange')
 
 
@@ -519,3 +521,84 @@ class ForwardTransactionTestCase(TestCase):
         self.assertEqual(btc_account.address, account_address)
         self.assertEqual(btc_account.balance,
                          payment_order.merchant_btc_amount)
+
+
+class WaitForConfirmationTestCase(TestCase):
+
+    @patch('operations.payment.cancel_current_task')
+    def test_payment_order_does_not_exist(self, cancel_mock):
+        payment.wait_for_confirmation(123456)
+        self.assertTrue(cancel_mock.called)
+
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.blockchain.BlockChain')
+    def test_tx_confirmed(self, bc_cls_mock, cancel_mock):
+        order = PaymentOrderFactory.create(
+            outgoing_tx_id='0' * 64)
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'is_tx_confirmed.return_value': True,
+        })
+        payment.wait_for_confirmation(order.uid)
+        order.refresh_from_db()
+        self.assertIsNotNone(order.time_confirmed)
+        self.assertTrue(cancel_mock.called)
+
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.blockchain.BlockChain')
+    def test_tx_not_broadcasted(self, bc_cls_mock, cancel_mock):
+        order = PaymentOrderFactory.create(
+            outgoing_tx_id='0' * 64)
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'is_tx_confirmed.return_value': False,
+        })
+        payment.wait_for_confirmation(order.uid)
+        order.refresh_from_db()
+        self.assertIsNone(order.time_confirmed)
+        self.assertFalse(cancel_mock.called)
+
+
+class CheckPaymentStatusTestCase(TestCase):
+
+    @patch('operations.payment.cancel_current_task')
+    def test_order_does_not_exist(self, cancel_mock):
+        payment.check_payment_status(123456)
+        self.assertTrue(cancel_mock.called)
+
+    @patch('operations.payment.cancel_current_task')
+    def test_new(self, cancel_mock):
+        order = PaymentOrderFactory.create()
+        payment.check_payment_status(order.uid)
+        self.assertFalse(cancel_mock.called)
+
+    @patch('operations.payment.cancel_current_task')
+    def test_notified(self, cancel_mock):
+        order = PaymentOrderFactory.create(time_notified=timezone.now())
+        payment.check_payment_status(order.uid)
+        self.assertFalse(cancel_mock.called)
+
+    @patch('operations.payment.cancel_current_task')
+    def test_confirmed(self, cancel_mock):
+        order = PaymentOrderFactory.create(
+            time_notified=timezone.now(),
+            time_confirmed=timezone.now())
+        payment.check_payment_status(order.uid)
+        self.assertTrue(cancel_mock.called)
+
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.send_error_message')
+    def test_failed(self, send_mock, cancel_mock):
+        order = PaymentOrderFactory.create(
+            time_created=timezone.now() - datetime.timedelta(hours=2),
+            time_recieved=timezone.now() - datetime.timedelta(hours=1))
+        payment.check_payment_status(order.uid)
+        self.assertTrue(cancel_mock.called)
+        self.assertTrue(send_mock.called)
+
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.send_error_message')
+    def test_timeout(self, send_mock, cancel_mock):
+        order = PaymentOrderFactory.create(
+            time_created=timezone.now() - datetime.timedelta(hours=1))
+        payment.check_payment_status(order.uid)
+        self.assertTrue(cancel_mock.called)
+        self.assertFalse(send_mock.called)

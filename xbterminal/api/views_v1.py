@@ -141,7 +141,7 @@ class ReceiptView(View):
         order_uid = self.kwargs.get('order_uid')
         try:
             order = PaymentOrder.objects.get(
-                uid=order_uid, time_finished__isnull=False)
+                uid=order_uid, time_notified__isnull=False)
         except PaymentOrder.DoesNotExist:
             raise Http404
         result = generate_pdf(
@@ -305,7 +305,7 @@ class PaymentCheckView(View):
             payment_order = PaymentOrder.objects.get(uid=self.kwargs.get('payment_uid'))
         except PaymentOrder.DoesNotExist:
             raise Http404
-        if payment_order.is_receipt_ready():
+        if payment_order.time_forwarded is not None:
             receipt_url = self.request.build_absolute_uri(reverse(
                 'api:short:receipt',
                 kwargs={'order_uid': payment_order.uid}))
@@ -315,8 +315,8 @@ class PaymentCheckView(View):
                 'receipt_url': receipt_url,
                 'qr_code_src': qr_code_src,
             }
-            if payment_order.time_finished is None:
-                payment_order.time_finished = timezone.now()
+            if payment_order.time_notified is None:
+                payment_order.time_notified = timezone.now()
                 payment_order.save()
         else:
             data = {'paid': 0}

@@ -674,7 +674,7 @@ class ReconciliationView(DeviceMixin, TemplateResponseMixin, CabinetView):
         context['form'] = forms.SendDailyReconciliationForm()
         context['daily_payments_info'] = context['device'].\
             get_payments().\
-            extra({'date': "date(time_finished)"}).\
+            extra({'date': "date(time_notified)"}).\
             values('date', 'fiat_currency').\
             annotate(
                 count=Count('id'),

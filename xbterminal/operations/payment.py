@@ -17,13 +17,13 @@ from operations import (
     BTC_MIN_OUTPUT,
     PAYMENT_TIMEOUT,
     PAYMENT_VALIDATION_TIMEOUT,
-    PAYMENT_BROADCAST_TIMEOUT,
     PAYMENT_EXCHANGE_TIMEOUT,
+    PAYMENT_CONFIRMATION_TIMEOUT,
     blockchain,
     instantfiat,
     exceptions,
     protocol)
-from operations.services import blockcypher, blockr
+from operations.services import blockcypher
 from operations.services.price import get_exchange_rate
 from operations.rq_helpers import run_periodic_task, cancel_current_task
 from operations.models import PaymentOrder
@@ -278,7 +278,7 @@ def wait_for_validation(payment_order_uid):
             return
         cancel_current_task()
         forward_transaction(payment_order)
-        run_periodic_task(wait_for_broadcast, [payment_order.uid], interval=15)
+        run_periodic_task(wait_for_confirmation, [payment_order.uid], interval=15)
         if payment_order.instantfiat_invoice_id is None:
             # Payment finished
             logger.info('payment order closed ({0})'.format(payment_order.uid))
@@ -342,27 +342,27 @@ def forward_transaction(payment_order):
         btc_account.save()
 
 
-def wait_for_broadcast(payment_order_uid):
+def wait_for_confirmation(order_uid):
     """
     Asynchronous task
     Accepts:
-        payment_order_uid: PaymentOrder unique identifier
+        order_uid: PaymentOrder unique identifier
     """
     try:
-        payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
+        order = PaymentOrder.objects.get(uid=order_uid)
     except PaymentOrder.DoesNotExist:
         # PaymentOrder deleted, cancel job
         cancel_current_task()
         return
-    if payment_order.time_created + PAYMENT_BROADCAST_TIMEOUT < timezone.now():
+    if order.time_created + PAYMENT_CONFIRMATION_TIMEOUT < timezone.now():
         # Timeout, cancel job
         cancel_current_task()
-    if blockr.is_tx_broadcasted(payment_order.outgoing_tx_id,
-                                payment_order.device.bitcoin_network):
+    bc = blockchain.BlockChain(order.bitcoin_network)
+    if bc.is_tx_confirmed(order.outgoing_tx_id):
         cancel_current_task()
-        if payment_order.time_broadcasted is None:
-            payment_order.time_broadcasted = timezone.now()
-            payment_order.save()
+        if order.time_confirmed is None:
+            order.time_confirmed = timezone.now()
+            order.save()
 
 
 def wait_for_exchange(payment_order_uid):
@@ -406,5 +406,5 @@ def check_payment_status(payment_order_uid):
     if payment_order.status == 'failed':
         cancel_current_task()
         send_error_message(payment_order=payment_order)
-    elif payment_order.status in ['timeout', 'completed']:
+    elif payment_order.status in ['timeout', 'confirmed']:
         cancel_current_task()

@@ -21,7 +21,7 @@ from api.utils.pdf import generate_pdf
 
 REPORT_FIELDS = [
     ('ID', 'id'),
-    ('datetime', lambda p: p.time_finished.strftime('%d-%b-%Y %l:%M %p')),
+    ('datetime', lambda p: p.time_notified.strftime('%d-%b-%Y %l:%M %p')),
     ('POS', lambda p: p.device.name),
     ('currency', 'fiat_currency'),
     ('amount', lambda p: "{0:.2f}".format(p.fiat_amount)),
@@ -33,7 +33,7 @@ REPORT_FIELDS = [
 
 REPORT_FIELDS_SHORT = [
     ('ID', 'id'),
-    ('datetime', lambda t: t.time_finished.strftime('%d-%b-%Y %l:%M %p')),
+    ('datetime', lambda t: t.time_notified.strftime('%d-%b-%Y %l:%M %p')),
     ('currency', 'fiat_currency'),
     ('amount', 'fiat_amount'),
 ]

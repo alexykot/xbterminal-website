@@ -6,7 +6,7 @@ from operations import (
     BTC_DEC_PLACES,
     BTC_MIN_OUTPUT,
     WITHDRAWAL_BROADCAST_TIMEOUT)
-from operations.services import blockr
+from operations.services import blockcypher
 from operations.services.price import get_exchange_rate
 from operations.blockchain import (
     BlockChain,
@@ -149,10 +149,10 @@ def send_transaction(order, customer_address):
     btc_account.balance -= order.btc_amount
     btc_account.save()
 
-    run_periodic_task(wait_for_broadcast, [order.uid], interval=5)
+    run_periodic_task(wait_for_confidence, [order.uid], interval=5)
 
 
-def wait_for_broadcast(order_uid):
+def wait_for_confidence(order_uid):
     """
     Asynchronous task
     Accepts:
@@ -167,8 +167,15 @@ def wait_for_broadcast(order_uid):
     if order.time_created + WITHDRAWAL_BROADCAST_TIMEOUT < timezone.now():
         # Timeout, cancel job
         cancel_current_task()
-    if blockr.is_tx_broadcasted(order.outgoing_tx_id,
-                                order.device.bitcoin_network):
+    try:
+        outgoing_tx_reliable = blockcypher.is_tx_reliable(
+            order.outgoing_tx_id,
+            order.bitcoin_network)
+    except Exception as error:
+        # Error when accessing blockcypher API, try again
+        logger.exception(error)
+        return
+    if outgoing_tx_reliable:
         cancel_current_task()
         if order.time_broadcasted is None:
             order.time_broadcasted = timezone.now()

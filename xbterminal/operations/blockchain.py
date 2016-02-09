@@ -177,6 +177,18 @@ class BlockChain(object):
         transaction_id = self._proxy.sendrawtransaction(transaction)
         return b2lx(transaction_id)
 
+    def is_tx_confirmed(self, transaction_id, minconf=1):
+        """
+        Accepts:
+            transaction_id: hex string
+        Returns:
+            True or False
+        """
+        tx_info = self._proxy.gettransaction(lx(transaction_id))
+        if tx_info['confirmations'] >= minconf:
+            return True
+        return False
+
 
 def construct_bitcoin_uri(address, amount_btc, name, *request_urls):
     """

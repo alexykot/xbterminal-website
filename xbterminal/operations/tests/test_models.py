@@ -33,14 +33,15 @@ class PaymentOrderTestCase(TestCase):
         payment_order.time_recieved = (payment_order.time_created +
                                        datetime.timedelta(minutes=1))
         self.assertEqual(payment_order.status, 'recieved')
-        self.assertFalse(payment_order.is_receipt_ready())
         payment_order.time_forwarded = (payment_order.time_recieved +
                                         datetime.timedelta(minutes=1))
         self.assertEqual(payment_order.status, 'processed')
-        self.assertTrue(payment_order.is_receipt_ready())
-        payment_order.time_finished = (payment_order.time_forwarded +
+        payment_order.time_notified = (payment_order.time_forwarded +
                                        datetime.timedelta(minutes=1))
-        self.assertEqual(payment_order.status, 'completed')
+        self.assertEqual(payment_order.status, 'notified')
+        payment_order.time_confirmed = (payment_order.time_notified +
+                                        datetime.timedelta(minutes=1))
+        self.assertEqual(payment_order.status, 'confirmed')
         # With instantfiat
         payment_order = PaymentOrderFactory.create(
             instantfiat_invoice_id='invoice01')
@@ -48,17 +49,18 @@ class PaymentOrderTestCase(TestCase):
         payment_order.time_recieved = (payment_order.time_created +
                                        datetime.timedelta(minutes=1))
         self.assertEqual(payment_order.status, 'recieved')
-        self.assertFalse(payment_order.is_receipt_ready())
         payment_order.time_forwarded = (payment_order.time_recieved +
                                         datetime.timedelta(minutes=1))
         self.assertEqual(payment_order.status, 'forwarded')
-        self.assertTrue(payment_order.is_receipt_ready())
         payment_order.time_exchanged = (payment_order.time_forwarded +
                                         datetime.timedelta(minutes=1))
         self.assertEqual(payment_order.status, 'processed')
-        payment_order.time_finished = (payment_order.time_exchanged +
+        payment_order.time_notified = (payment_order.time_exchanged +
                                        datetime.timedelta(minutes=1))
-        self.assertEqual(payment_order.status, 'completed')
+        self.assertEqual(payment_order.status, 'notified')
+        payment_order.time_confirmed = (payment_order.time_notified +
+                                        datetime.timedelta(minutes=1))
+        self.assertEqual(payment_order.status, 'confirmed')
         # Timeout
         payment_order = PaymentOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=1))
@@ -67,6 +69,13 @@ class PaymentOrderTestCase(TestCase):
         payment_order = PaymentOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=2),
             time_recieved=timezone.now() - datetime.timedelta(hours=1))
+        self.assertEqual(payment_order.status, 'failed')
+        # Failed #2
+        payment_order = PaymentOrderFactory.create(
+            time_created=timezone.now() - datetime.timedelta(hours=5),
+            time_recieved=timezone.now() - datetime.timedelta(hours=5),
+            time_forwarded=timezone.now() - datetime.timedelta(hours=5),
+            time_notified=timezone.now() - datetime.timedelta(hours=5))
         self.assertEqual(payment_order.status, 'failed')
 
     def test_scaled_btc_amount(self):

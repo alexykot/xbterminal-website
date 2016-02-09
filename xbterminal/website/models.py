@@ -245,7 +245,7 @@ class MerchantAccount(models.Model):
         today = timezone.localtime(timezone.now()).\
             replace(hour=0, minute=0, second=0, microsecond=0)
         transactions = apps.get_model('operations', 'PaymentOrder').\
-            objects.filter(device__merchant=self, time_finished__gte=today)
+            objects.filter(device__merchant=self, time_notified__gte=today)
         tx_count = transactions.count()
         tx_sum = transactions.aggregate(s=models.Sum('fiat_amount'))['s']
         return {'name': self.trading_name or self.company_name,
@@ -475,7 +475,7 @@ class Device(models.Model):
         return ''
 
     def get_payments(self):
-        return self.paymentorder_set.filter(time_finished__isnull=False)
+        return self.paymentorder_set.filter(time_notified__isnull=False)
 
     def get_payments_by_date(self, date):
         """
@@ -491,7 +491,7 @@ class Device(models.Model):
                 timezone.get_current_timezone())
         else:
             beg, end = date
-        return self.paymentorder_set.filter(time_finished__range=(beg, end))
+        return self.paymentorder_set.filter(time_notified__range=(beg, end))
 
     def is_online(self):
         if self.last_activity is None:

@@ -116,7 +116,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
 
     def retrieve(self, *args, **kwargs):
         payment_order = self.get_object()
-        if payment_order.is_receipt_ready():
+        if payment_order.time_forwarded is not None:
             receipt_url = self.request.build_absolute_uri(reverse(
                 'api:short:receipt',
                 kwargs={'order_uid': payment_order.uid}))
@@ -126,8 +126,8 @@ class PaymentViewSet(viewsets.GenericViewSet):
                 'receipt_url': receipt_url,
                 'qr_code_src': qr_code_src,
             }
-            if payment_order.time_finished is None:
-                payment_order.time_finished = timezone.now()
+            if payment_order.time_notified is None:
+                payment_order.time_notified = timezone.now()
                 payment_order.save()
         else:
             data = {'paid': 0}
@@ -166,7 +166,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
     @detail_route(methods=['GET'], renderer_classes=[PDFRenderer])
     def receipt(self, *args, **kwargs):
         order = self.get_object()
-        if not order.time_finished:
+        if not order.time_notified:
             raise Http404
         result = generate_pdf('pdf/receipt.html', {'order': order})
         response = Response(result.getvalue())

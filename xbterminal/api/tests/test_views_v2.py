@@ -114,7 +114,7 @@ class PaymentViewSetTestCase(APITestCase):
         response = self.client.post(url, form_data)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_retrieve_not_finished(self):
+    def test_retrieve_not_notified(self):
         payment_order = PaymentOrderFactory.create()
         url = reverse('api:v2:payment-detail',
                       kwargs={'uid': payment_order.uid})
@@ -123,10 +123,10 @@ class PaymentViewSetTestCase(APITestCase):
         data = response.data
         self.assertEqual(data['paid'], 0)
 
-    def test_retrieve_finished(self):
+    def test_retrieve_notified(self):
         payment_order = PaymentOrderFactory.create(
             time_forwarded=timezone.now())
-        self.assertIsNone(payment_order.time_finished)
+        self.assertIsNone(payment_order.time_notified)
         url = reverse('api:v2:payment-detail',
                       kwargs={'uid': payment_order.uid})
         response = self.client.get(url)
@@ -136,7 +136,7 @@ class PaymentViewSetTestCase(APITestCase):
         self.assertIn('receipt_url', data)
         self.assertIn('qr_code_src', data)
         payment_order = PaymentOrder.objects.get(uid=payment_order.uid)
-        self.assertIsNotNone(payment_order.time_finished)
+        self.assertIsNotNone(payment_order.time_notified)
 
     def test_payment_request(self):
         data = '009A8B'.decode('hex')
@@ -184,7 +184,7 @@ class PaymentViewSetTestCase(APITestCase):
             'render.return_value': 'test',
         })
         order = PaymentOrderFactory.create(
-            time_finished=timezone.now())
+            time_notified=timezone.now())
         url = reverse('api:v2:payment-receipt',
                       kwargs={'uid': order.uid})
         response = self.client.get(url)
@@ -205,7 +205,7 @@ class PaymentViewSetTestCase(APITestCase):
             'render.return_value': 'test',
         })
         order = PaymentOrderFactory.create(
-            time_finished=timezone.now())
+            time_notified=timezone.now())
         url = reverse('api:short:payment-receipt',
                       kwargs={'uid': order.uid})
         response = self.client.get(url)
@@ -214,7 +214,7 @@ class PaymentViewSetTestCase(APITestCase):
 
     def test_receipt_short_post(self):
         order = PaymentOrderFactory.create(
-            time_finished=timezone.now())
+            time_notified=timezone.now())
         url = reverse('api:short:payment-receipt',
                       kwargs={'uid': order.uid})
         response = self.client.post(url, {})
