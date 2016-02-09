@@ -84,8 +84,6 @@ class PaymentOrder(models.Model):
     instantfiat_invoice_id = models.CharField(
         max_length=255, null=True)
 
-    incoming_tx_id = models.CharField(
-        max_length=64, validators=[validate_transaction], null=True)
     incoming_tx_ids = ArrayField(
         models.CharField(max_length=64, validators=[validate_transaction]),
         default=list)
