@@ -112,7 +112,7 @@ class PaymentOrderTestCase(TestCase):
                          Decimal('0.01'))
 
     def test_urls_for_receipts(self):
-        order = PaymentOrderFactory.create(incoming_tx_id='0' * 64)
+        order = PaymentOrderFactory.create(incoming_tx_ids=['0' * 64])
         self.assertIn('/prc/{0}'.format(order.uid), order.receipt_url)
         self.assertIsNotNone(order.payment_address_url)
         self.assertIsNotNone(order.incoming_tx_url)

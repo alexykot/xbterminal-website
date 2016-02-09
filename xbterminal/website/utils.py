@@ -27,7 +27,7 @@ REPORT_FIELDS = [
     ('amount', lambda p: "{0:.2f}".format(p.fiat_amount)),
     ('amount mBTC', lambda p: "{0:.5f}".format(p.scaled_btc_amount)),
     ('exchange rate', lambda p: "{0:.4f}".format(p.scaled_effective_exchange_rate)),
-    ('bitcoin transaction ID #1', 'incoming_tx_id'),
+    ('bitcoin transaction ID #1', lambda p: p.incoming_tx_ids[0]),
     ('bitcoin transaction ID #2', 'outgoing_tx_id'),
 ]
 

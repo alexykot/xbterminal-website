@@ -222,7 +222,7 @@ def validate_payment(payment_order, transactions, payment_type):
         except JSONRPCException as error:
             logger.exception(error)
     # Save incoming transaction id
-    payment_order.incoming_tx_id = blockchain.get_txid(incoming_tx)
+    payment_order.incoming_tx_ids = [blockchain.get_txid(incoming_tx)]
     payment_order.payment_type = payment_type
     payment_order.time_recieved = timezone.now()
     payment_order.save()
@@ -283,7 +283,7 @@ def wait_for_validation(payment_order_uid):
     if payment_order.time_recieved is not None:
         try:
             incoming_tx_reliable = blockcypher.is_tx_reliable(
-                payment_order.incoming_tx_id,
+                payment_order.incoming_tx_ids[0],
                 payment_order.bitcoin_network)
         except Exception as error:
             # Error when accessing blockcypher API
@@ -311,7 +311,7 @@ def forward_transaction(payment_order):
     # Connect to bitcoind
     bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
     # Wait for transaction
-    incoming_tx = bc.get_raw_transaction(payment_order.incoming_tx_id)
+    incoming_tx = bc.get_raw_transaction(payment_order.incoming_tx_ids[0])
     # Get outputs
     unspent_outputs = bc.get_unspent_outputs(
         CBitcoinAddress(payment_order.local_address))

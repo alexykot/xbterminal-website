@@ -66,7 +66,7 @@ class PreparePaymentTestCase(TestCase):
         self.assertEqual(payment_order.btc_amount,
                          expected_btc_amount)
         self.assertIsNone(payment_order.instantfiat_invoice_id)
-        self.assertIsNone(payment_order.incoming_tx_id)
+        self.assertEqual(len(payment_order.incoming_tx_ids), 0)
         self.assertIsNone(payment_order.outgoing_tx_id)
         self.assertEqual(payment_order.status, 'new')
 
@@ -168,7 +168,7 @@ class WaitForPaymentTestCase(TestCase):
     def test_payment_already_validated(self, bc_mock, cancel_mock):
         payment_order = PaymentOrderFactory.create(
             time_recieved=timezone.now(),
-            incoming_tx_id='0' * 64)
+            incoming_tx_ids=['0' * 64])
         payment.wait_for_payment(payment_order.uid)
         self.assertTrue(cancel_mock.called)
         self.assertFalse(bc_mock.called)
@@ -258,7 +258,7 @@ class ValidatePaymentTestCase(TestCase):
 
         payment_order = PaymentOrder.objects.get(uid=payment_order.uid)
         self.assertEqual(payment_order.refund_address, customer_address)
-        self.assertEqual(payment_order.incoming_tx_id, incoming_tx_id)
+        self.assertEqual(payment_order.incoming_tx_ids[0], incoming_tx_id)
         self.assertEqual(payment_order.payment_type, 'bip0021')
         self.assertEqual(payment_order.status, 'recieved')
 
@@ -282,7 +282,7 @@ class ValidatePaymentTestCase(TestCase):
         self.assertTrue(bc_mock.send_raw_transaction.called)
         order.refresh_from_db()
         self.assertIsNone(order.refund_address)
-        self.assertEqual(order.incoming_tx_id, incoming_tx_id)
+        self.assertEqual(order.incoming_tx_ids[0], incoming_tx_id)
         self.assertEqual(order.payment_type, 'bip0070')
         self.assertEqual(order.status, 'recieved')
 
@@ -307,7 +307,7 @@ class ValidatePaymentTestCase(TestCase):
         self.assertTrue(bc_mock.sign_raw_transaction.called)
         self.assertFalse(bc_mock.send_raw_transaction.called)
         self.assertEqual(order.refund_address, customer_address)
-        self.assertIsNone(order.incoming_tx_id)
+        self.assertEqual(len(order.incoming_tx_ids), 0)
 
 
 class ReversePaymentTestCase(TestCase):
@@ -414,7 +414,7 @@ class WaitForValidationTestCase(TestCase):
         payment_order = PaymentOrderFactory.create(
             time_recieved=timezone.now(),
             time_forwarded=timezone.now(),
-            incoming_tx_id='0' * 64,
+            incoming_tx_ids=['0' * 64],
             outgoing_tx_id='0' * 64)
         payment.wait_for_validation(payment_order.uid)
         self.assertTrue(cancel_mock.called)
@@ -427,7 +427,7 @@ class WaitForValidationTestCase(TestCase):
         conf_chk_mock.return_value = False
         payment_order = PaymentOrderFactory.create(
             time_recieved=timezone.now(),
-            incoming_tx_id='0' * 64)
+            incoming_tx_ids=['0' * 64])
         payment.wait_for_validation(payment_order.uid)
         self.assertFalse(cancel_mock.called)
         self.assertFalse(forward_mock.called)
@@ -439,7 +439,7 @@ class WaitForValidationTestCase(TestCase):
         conf_chk_mock.side_effect = ValueError
         payment_order = PaymentOrderFactory.create(
             time_recieved=timezone.now(),
-            incoming_tx_id='0' * 64)
+            incoming_tx_ids=['0' * 64])
         payment.wait_for_validation(payment_order.uid)
         self.assertTrue(cancel_mock.called)
         self.assertFalse(forward_mock.called)
@@ -453,7 +453,7 @@ class WaitForValidationTestCase(TestCase):
         conf_chk_mock.return_value = True
         payment_order = PaymentOrderFactory.create(
             time_recieved=timezone.now(),
-            incoming_tx_id='0' * 64)
+            incoming_tx_ids=['0' * 64])
         payment.wait_for_validation(payment_order.uid)
 
         self.assertTrue(cancel_mock.called)
@@ -473,7 +473,7 @@ class WaitForValidationTestCase(TestCase):
         conf_chk_mock.return_value = True
         payment_order = PaymentOrderFactory.create(
             time_recieved=timezone.now(),
-            incoming_tx_id='0' * 64,
+            incoming_tx_ids=['0' * 64],
             instantfiat_invoice_id='test_invoice')
         payment.wait_for_validation(payment_order.uid)
 
@@ -494,7 +494,7 @@ class ForwardTransactionTestCase(TestCase):
             fee_btc_amount=Decimal('0.001'),
             btc_amount=Decimal('0.1011'),
             instantfiat_btc_amount=Decimal(0),
-            incoming_tx_id='0' * 64)
+            incoming_tx_ids=['0' * 64])
         outgoing_tx_id = '1' * 64
 
         bc_instance_mock = Mock(**{
@@ -546,7 +546,7 @@ class ForwardTransactionTestCase(TestCase):
             fee_btc_amount=Decimal('0.001'),
             btc_amount=Decimal('0.1011'),
             instantfiat_btc_amount=Decimal(0),
-            incoming_tx_id='0' * 64)
+            incoming_tx_ids=['0' * 64])
         outgoing_tx_id = '1' * 64
         account_address = '13tmm98hpFexSa3gi15DdD1p4kN2WsEBXX'
 

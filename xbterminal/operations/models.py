@@ -165,7 +165,7 @@ class PaymentOrder(models.Model):
     @property
     def incoming_tx_url(self):
         """For receipts"""
-        return blockr.get_tx_url(self.incoming_tx_id, self.device.bitcoin_network)
+        return blockr.get_tx_url(self.incoming_tx_ids[0], self.device.bitcoin_network)
 
     @property
     def payment_address_url(self):
