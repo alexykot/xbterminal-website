@@ -167,6 +167,7 @@ class WaitForPaymentTestCase(TestCase):
     @patch('operations.payment.blockchain.BlockChain')
     def test_payment_already_validated(self, bc_mock, cancel_mock):
         payment_order = PaymentOrderFactory.create(
+            time_recieved=timezone.now(),
             incoming_tx_id='0' * 64)
         payment.wait_for_payment(payment_order.uid)
         self.assertTrue(cancel_mock.called)
@@ -401,7 +402,8 @@ class WaitForValidationTestCase(TestCase):
     @patch('operations.payment.cancel_current_task')
     @patch('operations.payment.forward_transaction')
     def test_payment_not_validated(self, forward_mock, cancel_mock):
-        payment_order = PaymentOrderFactory.create(incoming_tx_id=None)
+        payment_order = PaymentOrderFactory.create()
+        self.assertIsNone(payment_order.time_recieved)
         payment.wait_for_validation(payment_order.uid)
         self.assertFalse(cancel_mock.called)
         self.assertFalse(forward_mock.called)
@@ -410,6 +412,8 @@ class WaitForValidationTestCase(TestCase):
     @patch('operations.payment.forward_transaction')
     def test_payment_already_forwarded(self, forward_mock, cancel_mock):
         payment_order = PaymentOrderFactory.create(
+            time_recieved=timezone.now(),
+            time_forwarded=timezone.now(),
             incoming_tx_id='0' * 64,
             outgoing_tx_id='0' * 64)
         payment.wait_for_validation(payment_order.uid)
@@ -422,6 +426,7 @@ class WaitForValidationTestCase(TestCase):
     def test_tx_not_reliable(self, forward_mock, conf_chk_mock, cancel_mock):
         conf_chk_mock.return_value = False
         payment_order = PaymentOrderFactory.create(
+            time_recieved=timezone.now(),
             incoming_tx_id='0' * 64)
         payment.wait_for_validation(payment_order.uid)
         self.assertFalse(cancel_mock.called)
@@ -433,6 +438,7 @@ class WaitForValidationTestCase(TestCase):
     def test_blockcypher_error(self, forward_mock, conf_chk_mock, cancel_mock):
         conf_chk_mock.side_effect = ValueError
         payment_order = PaymentOrderFactory.create(
+            time_recieved=timezone.now(),
             incoming_tx_id='0' * 64)
         payment.wait_for_validation(payment_order.uid)
         self.assertTrue(cancel_mock.called)
@@ -446,6 +452,7 @@ class WaitForValidationTestCase(TestCase):
                          cancel_mock):
         conf_chk_mock.return_value = True
         payment_order = PaymentOrderFactory.create(
+            time_recieved=timezone.now(),
             incoming_tx_id='0' * 64)
         payment.wait_for_validation(payment_order.uid)
 
@@ -465,6 +472,7 @@ class WaitForValidationTestCase(TestCase):
                                  conf_chk_mock, cancel_mock):
         conf_chk_mock.return_value = True
         payment_order = PaymentOrderFactory.create(
+            time_recieved=timezone.now(),
             incoming_tx_id='0' * 64,
             instantfiat_invoice_id='test_invoice')
         payment.wait_for_validation(payment_order.uid)

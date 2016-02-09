@@ -144,7 +144,7 @@ def wait_for_payment(payment_order_uid):
     if payment_order.time_created + PAYMENT_TIMEOUT < timezone.now():
         # Timeout, cancel job
         cancel_current_task()
-    if payment_order.incoming_tx_id is not None:
+    if payment_order.time_recieved is not None:
         # Payment already validated, cancel job
         cancel_current_task()
         return
@@ -276,11 +276,11 @@ def wait_for_validation(payment_order_uid):
     if payment_order.time_created + PAYMENT_VALIDATION_TIMEOUT < timezone.now():
         # Timeout, cancel job
         cancel_current_task()
-    if payment_order.outgoing_tx_id is not None:
+    if payment_order.time_forwarded is not None:
         # Payment already forwarded, cancel job
         cancel_current_task()
         return
-    if payment_order.incoming_tx_id is not None:
+    if payment_order.time_recieved is not None:
         try:
             incoming_tx_reliable = blockcypher.is_tx_reliable(
                 payment_order.incoming_tx_id,
