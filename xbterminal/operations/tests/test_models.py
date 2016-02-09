@@ -187,7 +187,9 @@ class WithdrawalOrderTestCase(TestCase):
         self.assertEqual(order.status, 'cancelled')
 
     def test_urls_for_receipts(self):
-        order = WithdrawalOrderFactory.create(outgoing_tx_id='0' * 64)
+        order = WithdrawalOrderFactory.create(
+            customer_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
+            outgoing_tx_id='0' * 64)
         self.assertIn('/wrc/{0}'.format(order.uid), order.receipt_url)
         self.assertIsNotNone(order.customer_address_url)
         self.assertIsNotNone(order.outgoing_tx_url)

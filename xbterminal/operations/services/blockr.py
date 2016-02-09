@@ -27,10 +27,12 @@ def is_tx_broadcasted(tx_id, network):
 
 
 def get_tx_url(tx_id, network):
+    assert tx_id
     url = '{0}/tx/info/{1}'.format(BLOCKR[network], tx_id)
     return url
 
 
 def get_address_url(address, network):
+    assert address
     url = '{0}/address/info/{1}'.format(BLOCKR[network], address)
     return url
