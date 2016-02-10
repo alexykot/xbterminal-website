@@ -70,13 +70,13 @@ class PaymentOrderTestCase(TestCase):
             time_created=timezone.now() - datetime.timedelta(hours=2),
             time_recieved=timezone.now() - datetime.timedelta(hours=1))
         self.assertEqual(payment_order.status, 'failed')
-        # Failed #2
+        # Unconfirmed
         payment_order = PaymentOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=5),
             time_recieved=timezone.now() - datetime.timedelta(hours=5),
             time_forwarded=timezone.now() - datetime.timedelta(hours=5),
             time_notified=timezone.now() - datetime.timedelta(hours=5))
-        self.assertEqual(payment_order.status, 'failed')
+        self.assertEqual(payment_order.status, 'unconfirmed')
         # Refunded
         payment_order = PaymentOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=2),

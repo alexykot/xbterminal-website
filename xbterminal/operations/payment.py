@@ -428,5 +428,8 @@ def check_payment_status(payment_order_uid):
             pass
         send_error_message(payment_order=payment_order)
         cancel_current_task()
+    elif payment_order.status == 'unconfirmed':
+        send_error_message(payment_order=payment_order)
+        cancel_current_task()
     elif payment_order.status in ['timeout', 'refunded', 'confirmed']:
         cancel_current_task()

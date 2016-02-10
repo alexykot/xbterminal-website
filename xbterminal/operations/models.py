@@ -120,7 +120,9 @@ class PaymentOrder(models.Model):
             refunded - payment sent back to customer
             timeout - incoming transaction did not recieved
             failed - incoming transaction recieved,
-                but payment order is not marked as completed
+                but payment order is not marked as notified
+            unconfirmed - customer notified about successful payment,
+                but outgoing transaction is not confirmed
         """
         if self.time_refunded:
             return 'refunded'
@@ -129,7 +131,7 @@ class PaymentOrder(models.Model):
                 return 'confirmed'
             else:
                 if self.time_created + PAYMENT_CONFIRMATION_TIMEOUT < timezone.now():
-                    return 'failed'
+                    return 'unconfirmed'
                 else:
                     return 'notified'
         if not self.time_recieved:

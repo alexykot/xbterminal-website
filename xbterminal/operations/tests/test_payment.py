@@ -652,19 +652,16 @@ class CheckPaymentStatusTestCase(TestCase):
 
     @patch('operations.payment.cancel_current_task')
     @patch('operations.payment.send_error_message')
-    @patch('operations.payment.reverse_payment')
-    def test_forwarded_and_failed(self, reverse_mock, send_mock, cancel_mock):
+    def test_unconfirmed(self, send_mock, cancel_mock):
         order = PaymentOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=4),
             time_recieved=timezone.now() - datetime.timedelta(hours=3),
             time_forwarded=timezone.now() - datetime.timedelta(hours=3),
             time_notified=timezone.now() - datetime.timedelta(hours=3))
-        self.assertEqual(order.status, 'failed')
-        reverse_mock.side_effect = exceptions.RefundError
+        self.assertEqual(order.status, 'unconfirmed')
         payment.check_payment_status(order.uid)
         self.assertTrue(cancel_mock.called)
         self.assertTrue(send_mock.called)
-        self.assertTrue(reverse_mock.called)
 
     @patch('operations.payment.cancel_current_task')
     @patch('operations.payment.send_error_message')
