@@ -153,13 +153,35 @@ def wait_for_payment(payment_order_uid):
     transactions = bc.get_unspent_transactions(
         CBitcoinAddress(payment_order.local_address))
     if transactions:
+        if len(transactions) > 1:
+            logger.warning('multiple incoming tx')
+        # Save tx ids
+        for incoming_tx in transactions:
+            incoming_tx_id = blockchain.get_txid(incoming_tx)
+            if incoming_tx_id not in payment_order.incoming_tx_ids:
+                payment_order.incoming_tx_ids.append(incoming_tx_id)
+        # Save refund address
+        tx_inputs = bc.get_tx_inputs(transactions[0])
+        if len(tx_inputs) > 1:
+            logger.warning('incoming tx contains more than one input')
+        payment_order.refund_address = str(tx_inputs[0]['address'])
+        payment_order.save()
+        # Validate payment
         try:
-            validate_payment(payment_order, transactions, 'bip0021')
+            validate_payment(payment_order, transactions)
         except exceptions.InsufficientFunds:
-            reverse_payment(payment_order, close_order=False)
             # Don't cancel task, wait for next transaction
+            pass
+        except Exception as error:
+            cancel_current_task()
+            logger.exception(error)
         else:
             cancel_current_task()
+            # Update status
+            payment_order.payment_type = 'bip0021'
+            payment_order.time_recieved = timezone.now()
+            payment_order.save()
+            logger.info('payment recieved ({0})'.format(payment_order.uid))
 
 
 def parse_payment(payment_order, payment_message):
@@ -179,57 +201,49 @@ def parse_payment(payment_order, payment_message):
          payment_ack) = protocol.parse_payment(payment_message)
     except Exception as error:
         raise exceptions.InvalidPaymentMessage
-    # Save refund address
-    if refund_addresses:
-        payment_order.refund_address = refund_addresses[0]
-        payment_order.save()
-    # Validate payment
-    validate_payment(payment_order, transactions, 'bip0070')
-    # Broadcast transactions
+    # Broadcast transactions, save ids
     for incoming_tx in transactions:
         try:
             incoming_tx_signed = bc.sign_raw_transaction(incoming_tx)
             bc.send_raw_transaction(incoming_tx_signed)
         except JSONRPCException as error:
             logger.exception(error)
-    return payment_ack
-
-
-def validate_payment(payment_order, transactions, payment_type):
-    """
-    Validates payment and stores incoming transaction id
-    in PaymentOrder instance
-    Accepts:
-        payment_order: PaymentOrder instance
-        transactions: list of CTransaction
-        payment_type: bip0021 or bip0070
-    """
-    assert payment_type in ['bip0021', 'bip0070']
-    bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
-    if len(transactions) != 1:
-        raise exceptions.PaymentError('Expecting single transaction')
-    incoming_tx = transactions[0]
-    # Validate transaction
-    incoming_tx_signed = bc.sign_raw_transaction(incoming_tx)
-    # Save refund address (BIP0021)
-    if payment_type == 'bip0021':
-        tx_inputs = bc.get_tx_inputs(incoming_tx)
-        if len(tx_inputs) > 1:
-            logger.warning('incoming tx contains more than one input')
-        payment_order.refund_address = str(tx_inputs[0]['address'])
-    # Check amount
-    btc_amount = BTC_DEC_PLACES
-    for output in bc.get_tx_outputs(incoming_tx):
-        if str(output['address']) == payment_order.local_address:
-            btc_amount += output['amount']
-    if btc_amount < payment_order.btc_amount:
-        raise exceptions.InsufficientFunds
-    # Save incoming transaction id
-    payment_order.incoming_tx_ids = [blockchain.get_txid(incoming_tx)]
-    payment_order.payment_type = payment_type
+        incoming_tx_id = blockchain.get_txid(incoming_tx)
+        if incoming_tx_id not in payment_order.incoming_tx_ids:
+            payment_order.incoming_tx_ids.append(incoming_tx_id)
+    # Save refund address
+    if refund_addresses:
+        payment_order.refund_address = refund_addresses[0]
+    payment_order.save()
+    # Validate payment
+    validate_payment(payment_order, transactions)
+    # Update status
+    payment_order.payment_type = 'bip0070'
     payment_order.time_recieved = timezone.now()
     payment_order.save()
     logger.info('payment recieved ({0})'.format(payment_order.uid))
+    return payment_ack
+
+
+def validate_payment(payment_order, transactions):
+    """
+    Validates payment
+    Accepts:
+        payment_order: PaymentOrder instance
+        transactions: list of CTransaction
+    """
+    bc = blockchain.BlockChain(payment_order.bitcoin_network)
+    # Validate transactions
+    for incoming_tx in transactions:
+        bc.sign_raw_transaction(incoming_tx)
+    # Check amount
+    btc_amount = BTC_DEC_PLACES
+    for incoming_tx in transactions:
+        for output in bc.get_tx_outputs(incoming_tx):
+            if str(output['address']) == payment_order.local_address:
+                btc_amount += output['amount']
+    if btc_amount < payment_order.btc_amount:
+        raise exceptions.InsufficientFunds
 
 
 def reverse_payment(order, close_order=True):
