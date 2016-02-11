@@ -298,26 +298,28 @@ def wait_for_validation(payment_order_uid):
         cancel_current_task()
         return
     if payment_order.time_recieved is not None:
-        try:
-            incoming_tx_reliable = blockcypher.is_tx_reliable(
-                payment_order.incoming_tx_ids[0],
-                payment_order.bitcoin_network)
-        except Exception as error:
-            # Error when accessing blockcypher API
-            logger.exception(error)
-            cancel_current_task()
-            return
-        if not incoming_tx_reliable:
-            # Wait
-            return
-        cancel_current_task()
-        forward_transaction(payment_order)
-        run_periodic_task(wait_for_confirmation, [payment_order.uid], interval=15)
-        if payment_order.instantfiat_invoice_id is None:
-            # Payment finished
-            logger.info('payment order closed ({0})'.format(payment_order.uid))
+        for incoming_tx_id in payment_order.incoming_tx_ids:
+            try:
+                incoming_tx_reliable = blockcypher.is_tx_reliable(
+                    incoming_tx_id,
+                    payment_order.bitcoin_network)
+            except Exception as error:
+                # Error when accessing blockcypher API
+                logger.exception(error)
+                cancel_current_task()
+                return
+            if not incoming_tx_reliable:
+                # Break cycle, wait for confidence
+                break
         else:
-            run_periodic_task(wait_for_exchange, [payment_order.uid])
+            cancel_current_task()
+            forward_transaction(payment_order)
+            run_periodic_task(wait_for_confirmation, [payment_order.uid], interval=15)
+            if payment_order.instantfiat_invoice_id is None:
+                # Payment finished
+                logger.info('payment order closed ({0})'.format(payment_order.uid))
+            else:
+                run_periodic_task(wait_for_exchange, [payment_order.uid])
 
 
 def forward_transaction(payment_order):

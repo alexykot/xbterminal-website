@@ -627,6 +627,20 @@ class WaitForValidationTestCase(TestCase):
     @patch('operations.payment.cancel_current_task')
     @patch('operations.payment.blockcypher.is_tx_reliable')
     @patch('operations.payment.forward_transaction')
+    def test_multiple_tx_not_reliable(self, forward_mock,
+                                      conf_chk_mock, cancel_mock):
+        conf_chk_mock.side_effect = [False, False]
+        payment_order = PaymentOrderFactory.create(
+            time_recieved=timezone.now(),
+            incoming_tx_ids=['0' * 64, '1' * 64])
+        payment.wait_for_validation(payment_order.uid)
+        self.assertEqual(conf_chk_mock.call_count, 1)
+        self.assertFalse(cancel_mock.called)
+        self.assertFalse(forward_mock.called)
+
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.blockcypher.is_tx_reliable')
+    @patch('operations.payment.forward_transaction')
     def test_blockcypher_error(self, forward_mock, conf_chk_mock, cancel_mock):
         conf_chk_mock.side_effect = ValueError
         payment_order = PaymentOrderFactory.create(
@@ -655,6 +669,20 @@ class WaitForValidationTestCase(TestCase):
         self.assertEqual(run_task_mock.call_count, 1)
         self.assertEqual(run_task_mock.call_args[0][0].__name__,
                          'wait_for_confirmation')
+
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.blockcypher.is_tx_reliable')
+    @patch('operations.payment.forward_transaction')
+    @patch('operations.payment.run_periodic_task')
+    def test_forward_btc_multiple_tx(self, run_task_mock, forward_mock,
+                                     conf_chk_mock, cancel_mock):
+        conf_chk_mock.side_effect = [True, True]
+        payment_order = PaymentOrderFactory.create(
+            time_recieved=timezone.now(),
+            incoming_tx_ids=['0' * 64, '1' * 64])
+        payment.wait_for_validation(payment_order.uid)
+        self.assertTrue(cancel_mock.called)
+        self.assertTrue(forward_mock.called)
 
     @patch('operations.payment.cancel_current_task')
     @patch('operations.payment.blockcypher.is_tx_reliable')
