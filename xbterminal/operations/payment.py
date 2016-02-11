@@ -246,12 +246,11 @@ def validate_payment(payment_order, transactions):
         raise exceptions.InsufficientFunds
 
 
-def reverse_payment(order, close_order=True):
+def reverse_payment(order):
     """
     Send all money back to customer
     Accepts:
         order: PaymentOrder instance
-        close_order: whether to write time_refunded or not, boolean
     """
     if order.time_forwarded is not None:
         raise exceptions.RefundError
@@ -270,11 +269,10 @@ def reverse_payment(order, close_order=True):
     refund_tx = bc.create_raw_transaction(tx_inputs, tx_outputs)
     refund_tx_signed = bc.sign_raw_transaction(refund_tx)
     refund_tx_id = bc.send_raw_transaction(refund_tx_signed)
-    if close_order:
-        # Changing order status, customer should be notified
-        order.refund_tx_id = refund_tx_id
-        order.time_refunded = timezone.now()
-        order.save()
+    # Changing order status, customer should be notified
+    order.refund_tx_id = refund_tx_id
+    order.time_refunded = timezone.now()
+    order.save()
     logger.warning('payment returned ({0})'.format(order.uid))
 
 
