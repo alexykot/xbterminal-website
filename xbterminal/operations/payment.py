@@ -333,7 +333,10 @@ def forward_transaction(payment_order):
     unspent_outputs = bc.get_unspent_outputs(
         CBitcoinAddress(payment_order.local_address))
     total_available = sum(out['amount'] for out in unspent_outputs)
-    payment_order.extra_btc_amount = total_available - payment_order.btc_amount
+    # Extra
+    extra_btc_amount = total_available - payment_order.btc_amount
+    if extra_btc_amount > BTC_MIN_OUTPUT:
+        payment_order.extra_btc_amount = extra_btc_amount
     # Select destination address
     btc_account = BTCAccount.objects.filter(
         merchant=payment_order.device.merchant,
