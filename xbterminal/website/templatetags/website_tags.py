@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.staticfiles import finders
 from django.utils.html import format_html
 
+from operations.services import blockcypher
 from website.utils import generate_qr_code
 
 register = template.Library()
@@ -38,3 +39,13 @@ def pdf_static(path):
         finders.find(path),
         os.path.join(settings.BASE_DIR, '..'))
     return result
+
+
+@register.simple_tag
+def btc_address_url(address, network):
+    return blockcypher.get_address_url(address, network)
+
+
+@register.simple_tag
+def btc_tx_url(tx_id, network):
+    return blockcypher.get_tx_url(tx_id, network)
