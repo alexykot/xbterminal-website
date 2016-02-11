@@ -230,6 +230,34 @@ class WaitForPaymentTestCase(TestCase):
         self.assertFalse(cancel_mock.called)
 
 
+class ParsePaymentTestCase(TestCase):
+
+    @patch('operations.payment.blockchain.BlockChain')
+    @patch('operations.payment.protocol.parse_payment')
+    @patch('operations.payment.validate_payment')
+    def test_valid(self, validate_mock, parse_mock, bc_cls_mock):
+        order = PaymentOrderFactory.create()
+        parse_mock.return_value = (
+            ['test_tx'], ['test_address'], 'test_ack')
+        result = payment.parse_payment(order, 'test_message')
+        self.assertTrue(parse_mock.called)
+        self.assertTrue(validate_mock.called)
+        self.assertEqual(result, 'test_ack')
+        order.refresh_from_db()
+        self.assertEqual(order.refund_address, 'test_address')
+
+    @patch('operations.payment.blockchain.BlockChain')
+    @patch('operations.payment.protocol.parse_payment')
+    @patch('operations.payment.validate_payment')
+    def test_invalid(self, validate_mock, parse_mock, bc_cls_mock):
+        order = PaymentOrderFactory.create()
+        parse_mock.side_effect = ValueError
+        with self.assertRaises(exceptions.InvalidPaymentMessage):
+            payment.parse_payment(order, 'test_message')
+        self.assertTrue(parse_mock.called)
+        self.assertFalse(validate_mock.called)
+
+
 class ValidatePaymentTestCase(TestCase):
 
     @patch('operations.payment.blockchain.BlockChain')
