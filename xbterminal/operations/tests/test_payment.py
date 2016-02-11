@@ -907,9 +907,11 @@ class CheckPaymentStatusTestCase(TestCase):
 
     @patch('operations.payment.cancel_current_task')
     @patch('operations.payment.send_error_message')
-    def test_timeout(self, send_mock, cancel_mock):
+    @patch('operations.payment.reverse_payment')
+    def test_timeout(self, reverse_mock, send_mock, cancel_mock):
         order = PaymentOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=1))
         payment.check_payment_status(order.uid)
         self.assertTrue(cancel_mock.called)
         self.assertFalse(send_mock.called)
+        self.assertTrue(reverse_mock.called)

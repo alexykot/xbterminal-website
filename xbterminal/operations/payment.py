@@ -440,8 +440,13 @@ def check_payment_status(payment_order_uid):
         # PaymentOrder deleted, cancel job
         cancel_current_task()
         return
-    # TODO: refund on timeout
-    if payment_order.status == 'failed':
+    if payment_order.status == 'timeout':
+        try:
+            reverse_payment(payment_order)
+        except exceptions.RefundError:
+            pass
+        cancel_current_task()
+    elif payment_order.status == 'failed':
         try:
             reverse_payment(payment_order)
         except exceptions.RefundError:
@@ -451,5 +456,5 @@ def check_payment_status(payment_order_uid):
     elif payment_order.status == 'unconfirmed':
         send_error_message(payment_order=payment_order)
         cancel_current_task()
-    elif payment_order.status in ['timeout', 'refunded', 'confirmed']:
+    elif payment_order.status in ['refunded', 'confirmed']:
         cancel_current_task()
