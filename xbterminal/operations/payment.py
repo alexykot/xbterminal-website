@@ -156,8 +156,10 @@ def wait_for_payment(payment_order_uid):
         try:
             validate_payment(payment_order, transactions, 'bip0021')
         except exceptions.InsufficientFunds:
-            reverse_payment(payment_order)
-        cancel_current_task()
+            reverse_payment(payment_order, close_order=False)
+            # Don't cancel task, wait for next transaction
+        else:
+            cancel_current_task()
 
 
 def parse_payment(payment_order, payment_message):
@@ -202,7 +204,10 @@ def validate_payment(payment_order, transactions, payment_type):
     incoming_tx_signed = bc.sign_raw_transaction(incoming_tx)
     # Save refund address (BIP0021)
     if payment_type == 'bip0021':
-        payment_order.refund_address = str(bc.get_tx_inputs(incoming_tx)[0]['address'])
+        tx_inputs = bc.get_tx_inputs(incoming_tx)
+        if len(tx_inputs) > 1:
+            logger.warning('incoming tx contains more than one input')
+        payment_order.refund_address = str(tx_inputs[0]['address'])
     # Check amount
     btc_amount = BTC_DEC_PLACES
     for output in bc.get_tx_outputs(incoming_tx):
@@ -224,23 +229,35 @@ def validate_payment(payment_order, transactions, payment_type):
     logger.info('payment recieved ({0})'.format(payment_order.uid))
 
 
-def reverse_payment(order):
+def reverse_payment(order, close_order=True):
     """
     Send all money back to customer
     Accepts:
         order: PaymentOrder instance
+        close_order: whether to write time_refunded or not, boolean
     """
+    if order.time_forwarded is not None:
+        raise exceptions.RefundError
+    if order.time_refunded is not None:
+        raise exceptions.RefundError
     bc = blockchain.BlockChain(order.bitcoin_network)
     tx_inputs = []
     amount = BTC_DEC_PLACES
     for output in bc.get_unspent_outputs(order.local_address):
         tx_inputs.append(output['outpoint'])
         amount += output['amount']
+    if not amount:
+        raise exceptions.RefundError
     amount -= blockchain.get_tx_fee(1, 1)
     tx_outputs = {order.refund_address: amount}
-    reverse_tx = bc.create_raw_transaction(tx_inputs, tx_outputs)
-    reverse_tx_signed = bc.sign_raw_transaction(reverse_tx)
-    bc.send_raw_transaction(reverse_tx_signed)
+    refund_tx = bc.create_raw_transaction(tx_inputs, tx_outputs)
+    refund_tx_signed = bc.sign_raw_transaction(refund_tx)
+    refund_tx_id = bc.send_raw_transaction(refund_tx_signed)
+    if close_order:
+        # Changing order status, customer should be notified
+        order.refund_tx_id = refund_tx_id
+        order.time_refunded = timezone.now()
+        order.save()
     logger.warning('payment returned ({0})'.format(order.uid))
 
 
@@ -403,8 +420,13 @@ def check_payment_status(payment_order_uid):
         # PaymentOrder deleted, cancel job
         cancel_current_task()
         return
+    # TODO: refund on timeout
     if payment_order.status == 'failed':
-        cancel_current_task()
+        try:
+            reverse_payment(payment_order)
+        except exceptions.RefundError:
+            pass
         send_error_message(payment_order=payment_order)
-    elif payment_order.status in ['timeout', 'confirmed']:
+        cancel_current_task()
+    elif payment_order.status in ['timeout', 'refunded', 'confirmed']:
         cancel_current_task()

@@ -225,7 +225,8 @@ class WaitForPaymentTestCase(TestCase):
         payment.wait_for_payment(payment_order.uid)
         self.assertTrue(validate_mock.called)
         self.assertTrue(reverse_mock.called)
-        self.assertTrue(cancel_mock.called)
+        self.assertFalse(reverse_mock.call_args[1]['close_order'])
+        self.assertFalse(cancel_mock.called)
 
 
 class ValidatePaymentTestCase(TestCase):
@@ -317,6 +318,34 @@ class ReversePaymentTestCase(TestCase):
             fee_btc_amount=Decimal('0.001'),
             btc_amount=Decimal('0.1011'),
             refund_address='1KYwqZshnYNUNweXrDkCAdLaixxPhePRje')
+        refund_tx_id = '5' * 64
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'get_unspent_outputs.return_value': [{
+                'outpoint': 'test_outpoint',
+                'amount': order.btc_amount,
+            }],
+            'create_raw_transaction.return_value': 'test_tx',
+            'sign_raw_transaction.return_value': 'test_tx_signed',
+            'send_raw_transaction.return_value': refund_tx_id,
+        })
+
+        payment.reverse_payment(order)
+        tx_outputs = bc_mock.create_raw_transaction.call_args[0][1]
+        self.assertEqual(tx_outputs[order.refund_address],
+                         Decimal('0.101'))
+        self.assertTrue(bc_mock.sign_raw_transaction.called)
+        self.assertTrue(bc_mock.send_raw_transaction.called)
+        order.refresh_from_db()
+        self.assertEqual(order.refund_tx_id, refund_tx_id)
+        self.assertEqual(order.status, 'refunded')
+
+    @patch('operations.payment.blockchain.BlockChain')
+    def test_reverse_dont_close(self, bc_cls_mock):
+        order = PaymentOrderFactory.create(
+            merchant_btc_amount=Decimal('0.1'),
+            fee_btc_amount=Decimal('0.001'),
+            btc_amount=Decimal('0.1011'),
+            refund_address='1KYwqZshnYNUNweXrDkCAdLaixxPhePRje')
         bc_cls_mock.return_value = bc_mock = Mock(**{
             'get_unspent_outputs.return_value': [{
                 'outpoint': 'test_outpoint',
@@ -326,13 +355,38 @@ class ReversePaymentTestCase(TestCase):
             'sign_raw_transaction.return_value': 'test_tx_signed',
             'send_raw_transaction.return_value': 'test_tx_id',
         })
-        payment.reverse_payment(order)
 
-        tx_outputs = bc_mock.create_raw_transaction.call_args[0][1]
-        self.assertEqual(tx_outputs[order.refund_address],
-                         Decimal('0.101'))
-        self.assertTrue(bc_mock.sign_raw_transaction.called)
-        self.assertTrue(bc_mock.send_raw_transaction.called)
+        payment.reverse_payment(order, close_order=False)
+        order.refresh_from_db()
+        self.assertIsNone(order.refund_tx_id)
+        self.assertEqual(order.status, 'new')
+
+    def test_already_forwarded(self):
+        order = PaymentOrderFactory.create(
+            time_recieved=timezone.now(),
+            time_forwarded=timezone.now())
+        with self.assertRaises(exceptions.RefundError):
+            payment.reverse_payment(order)
+
+    def test_already_refunded(self):
+        order = PaymentOrderFactory.create(
+            time_recieved=timezone.now(),
+            time_refunded=timezone.now())
+        with self.assertRaises(exceptions.RefundError):
+            payment.reverse_payment(order)
+
+    @patch('operations.payment.blockchain.BlockChain')
+    def test_nothing_to_send(self, bc_cls_mock):
+        order = PaymentOrderFactory.create(
+            merchant_btc_amount=Decimal('0.1'),
+            fee_btc_amount=Decimal('0.001'),
+            btc_amount=Decimal('0.1011'),
+            refund_address='1KYwqZshnYNUNweXrDkCAdLaixxPhePRje')
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'get_unspent_outputs.return_value': [],
+        })
+        with self.assertRaises(exceptions.RefundError):
+            payment.reverse_payment(order)
 
 
 class WaitForValidationTestCase(TestCase):
@@ -586,13 +640,42 @@ class CheckPaymentStatusTestCase(TestCase):
 
     @patch('operations.payment.cancel_current_task')
     @patch('operations.payment.send_error_message')
-    def test_failed(self, send_mock, cancel_mock):
+    @patch('operations.payment.reverse_payment')
+    def test_failed(self, reverse_mock, send_mock, cancel_mock):
         order = PaymentOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=2),
             time_recieved=timezone.now() - datetime.timedelta(hours=1))
         payment.check_payment_status(order.uid)
         self.assertTrue(cancel_mock.called)
         self.assertTrue(send_mock.called)
+        self.assertTrue(reverse_mock.called)
+
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.send_error_message')
+    @patch('operations.payment.reverse_payment')
+    def test_forwarded_and_failed(self, reverse_mock, send_mock, cancel_mock):
+        order = PaymentOrderFactory.create(
+            time_created=timezone.now() - datetime.timedelta(hours=4),
+            time_recieved=timezone.now() - datetime.timedelta(hours=3),
+            time_forwarded=timezone.now() - datetime.timedelta(hours=3),
+            time_notified=timezone.now() - datetime.timedelta(hours=3))
+        self.assertEqual(order.status, 'failed')
+        reverse_mock.side_effect = exceptions.RefundError
+        payment.check_payment_status(order.uid)
+        self.assertTrue(cancel_mock.called)
+        self.assertTrue(send_mock.called)
+        self.assertTrue(reverse_mock.called)
+
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.send_error_message')
+    def test_refunded(self, send_mock, cancel_mock):
+        order = PaymentOrderFactory.create(
+            time_created=timezone.now(),
+            time_recieved=timezone.now(),
+            time_refunded=timezone.now())
+        payment.check_payment_status(order.uid)
+        self.assertTrue(cancel_mock.called)
+        self.assertFalse(send_mock.called)
 
     @patch('operations.payment.cancel_current_task')
     @patch('operations.payment.send_error_message')

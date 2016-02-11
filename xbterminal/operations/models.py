@@ -87,6 +87,8 @@ class PaymentOrder(models.Model):
         max_length=64, validators=[validate_transaction], null=True)
     outgoing_tx_id = models.CharField(
         max_length=64, validators=[validate_transaction], null=True)
+    refund_tx_id = models.CharField(
+        max_length=64, validators=[validate_transaction], null=True)
     payment_type = models.CharField(
         max_length=10, choices=PAYMENT_TYPES)
 
@@ -96,6 +98,7 @@ class PaymentOrder(models.Model):
     time_exchanged = models.DateTimeField(null=True)
     time_notified = models.DateTimeField(null=True)
     time_confirmed = models.DateTimeField(null=True)
+    time_refunded = models.DateTimeField(null=True)
 
     def __unicode__(self):
         return str(self.pk)
@@ -114,10 +117,13 @@ class PaymentOrder(models.Model):
             processed - recieved confirmation from instantfiat service
             notified - customer notified about successful payment
             confirmed - outgoing transaction confirmed
+            refunded - payment sent back to customer
             timeout - incoming transaction did not recieved
             failed - incoming transaction recieved,
                 but payment order is not marked as completed
         """
+        if self.time_refunded:
+            return 'refunded'
         if self.time_notified:
             if self.time_confirmed:
                 return 'confirmed'

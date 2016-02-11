@@ -1,4 +1,4 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.utils.html import format_html
 
 from operations import models
@@ -10,6 +10,7 @@ from website.admin import url_to_object
 from website.utils import generate_qr_code
 from api.utils.urls import construct_absolute_url
 from operations.blockchain import construct_bitcoin_uri
+from operations import payment, exceptions
 
 
 class OrderAdminFormMixin(object):
@@ -45,8 +46,8 @@ class PaymentOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
         'time_created',
         'status',
     ]
-
     readonly_fields = ['status', 'payment_request_qr_code']
+    actions = ['refund']
 
     def has_add_permission(self, request):
         return False
@@ -80,6 +81,23 @@ class PaymentOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
         return output
 
     payment_request_qr_code.allow_tags = True
+
+    def refund(self, request, queryset):
+        for order in queryset:
+            try:
+                payment.reverse_payment(order)
+            except exceptions.RefundError:
+                self.message_user(
+                    request,
+                    'Payment order "{0}" can not be refunded.'.format(order.pk),
+                    messages.WARNING)
+            else:
+                self.message_user(
+                    request,
+                    'Payment order "{0}" was refunded successfully.'.format(order.pk),
+                    messages.SUCCESS)
+
+    refund.short_description = 'Refund selected payment orders'
 
 
 @admin.register(models.Order)
