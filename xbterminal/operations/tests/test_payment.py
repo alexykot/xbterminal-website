@@ -237,11 +237,17 @@ class ParsePaymentTestCase(TestCase):
     @patch('operations.payment.validate_payment')
     def test_valid(self, validate_mock, parse_mock, bc_cls_mock):
         order = PaymentOrderFactory.create()
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'sign_raw_transaction.return_value': Mock(),
+            'send_raw_transaction.return_value': 'test_tx_id',
+        })
         parse_mock.return_value = (
             ['test_tx'], ['test_address'], 'test_ack')
         result = payment.parse_payment(order, 'test_message')
         self.assertTrue(parse_mock.called)
         self.assertTrue(validate_mock.called)
+        self.assertEqual(bc_mock.sign_raw_transaction.call_count, 1)
+        self.assertEqual(bc_mock.send_raw_transaction.call_count, 1)
         self.assertEqual(result, 'test_ack')
         order.refresh_from_db()
         self.assertEqual(order.refund_address, 'test_address')
@@ -307,7 +313,7 @@ class ValidatePaymentTestCase(TestCase):
 
         payment.validate_payment(order, [incoming_tx], 'bip0070')
         self.assertTrue(bc_mock.sign_raw_transaction.called)
-        self.assertTrue(bc_mock.send_raw_transaction.called)
+        self.assertFalse(bc_mock.send_raw_transaction.called)
         order.refresh_from_db()
         self.assertIsNone(order.refund_address)
         self.assertEqual(order.incoming_tx_ids[0], incoming_tx_id)

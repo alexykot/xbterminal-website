@@ -179,10 +179,19 @@ def parse_payment(payment_order, payment_message):
          payment_ack) = protocol.parse_payment(payment_message)
     except Exception as error:
         raise exceptions.InvalidPaymentMessage
-    validate_payment(payment_order, transactions, 'bip0070')
+    # Save refund address
     if refund_addresses:
         payment_order.refund_address = refund_addresses[0]
         payment_order.save()
+    # Validate payment
+    validate_payment(payment_order, transactions, 'bip0070')
+    # Broadcast transactions
+    for incoming_tx in transactions:
+        try:
+            incoming_tx_signed = bc.sign_raw_transaction(incoming_tx)
+            bc.send_raw_transaction(incoming_tx_signed)
+        except JSONRPCException as error:
+            logger.exception(error)
     return payment_ack
 
 
@@ -215,12 +224,6 @@ def validate_payment(payment_order, transactions, payment_type):
             btc_amount += output['amount']
     if btc_amount < payment_order.btc_amount:
         raise exceptions.InsufficientFunds
-    # Broadcast transaction (BIP0070)
-    if payment_type == 'bip0070':
-        try:
-            bc.send_raw_transaction(incoming_tx_signed)
-        except JSONRPCException as error:
-            logger.exception(error)
     # Save incoming transaction id
     payment_order.incoming_tx_ids = [blockchain.get_txid(incoming_tx)]
     payment_order.payment_type = payment_type
