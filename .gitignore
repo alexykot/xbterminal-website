@@ -2,6 +2,7 @@
 local_settings.py
 venv
 .vagrant
+vagrant/settings.yml
 .coverage
 /static
 /media
