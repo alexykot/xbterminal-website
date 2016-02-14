@@ -22,11 +22,12 @@ class BlockChain(object):
         # TODO: don't set global params
         bitcoin.SelectParams(self.network)
         config = settings.BITCOIND_SERVERS[self.network]
-        service_url = "https://{user}:{password}@{host}:{port}".format(
+        service_url = "{protocol}://{user}:{password}@{host}:{port}".format(
+            protocol='https' if config.get('USE_SSL', True) else 'http',
             user=config['USER'],
             password=config['PASSWORD'],
             host=config['HOST'],
-            port=bitcoin.params.RPC_PORT)
+            port=config.get('PORT', bitcoin.params.RPC_PORT))
         self._proxy = bitcoin.rpc.Proxy(service_url)
 
     def get_new_address(self):
