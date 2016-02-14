@@ -25,6 +25,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vbguest.auto_update = false
 
+  config.vm.provision "fix-no-tty", type: "shell" do |sh|
+    sh.privileged = false
+    sh.inline = "sudo sed -i '/tty/!s/mesg n/tty -s \\&\\& mesg n/' /root/.profile"
+  end
+
   config.vm.synced_folder "vagrant/salt/roots/", "/srv/"
 
   config.vm.provision :salt do |salt|
