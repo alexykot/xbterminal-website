@@ -36,4 +36,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     salt.pillar(settings['pillar'])
   end
 
+  config.trigger.before :halt do
+    run_remote  "bash /vagrant/vagrant/backup.sh"
+  end
+
 end
