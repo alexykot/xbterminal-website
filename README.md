@@ -1,6 +1,6 @@
 # README
 
-### Requirements
+## Requirements
 
 * Python 2
 * Postgresql
@@ -9,6 +9,22 @@
 * supervisord
 * Debian packages: `apt-get install libffi-dev libpq-dev libjpeg-dev`
 * Python packages listed in `requirements.txt`
+
+## Run vagrant
+
+Install requirements:
+
+* VirtualBox
+* Vagrant
+* vagrant-triggers plugin
+
+Edit `vagrant/settings.yml` (see [example](vagrant/default_settings.yml)).
+
+Start VM:
+
+```
+vagrant up
+```
 
 ### Local settings
 
