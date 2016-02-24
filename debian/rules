@@ -1,0 +1,10 @@
+#!/usr/bin/make -f
+export DH_VERBOSE=1
+
+%:
+	dh $@ --with python-virtualenv  --buildsystem=dh_virtualenv
+
+override_dh_virtualenv:
+	dh_virtualenv --preinstall='pip==8.0.2' --extra-pip-arg='--use-wheel' --install-suffix='../../../var/www/xbterminal.com/venv' --skip-install
+
+

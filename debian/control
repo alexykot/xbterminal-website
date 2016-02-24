@@ -1,0 +1,15 @@
+Source: xbterminal-website
+Section: python
+Priority: extra
+Maintainer: Marat Shakirov <ya@maratsh.ru>
+Build-Depends: debhelper (>= 9), python, dh-virtualenv (>= 0.11), libpq-dev, python2.7-dev, libjpeg-dev, libffi-dev, libprotobuf-c-dev, libssl-dev, virtualenv
+Standards-Version: 3.9.5
+
+
+Package: xbterminal-website
+Architecture: amd64
+Pre-Depends: dpkg (>= 1.16.1), python2.7
+Depends: libpq5, openssl, virtualenv, libjpeg62-turbo, libprotobuf9, libffi6
+Description: xbterminal-website with venv blob
+
+
