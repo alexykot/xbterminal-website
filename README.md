@@ -1,6 +1,8 @@
 # README
 
-## Requirements
+## Production
+
+Requirements:
 
 * Python 2
 * Postgresql
@@ -10,13 +12,17 @@
 * Debian packages: `apt-get install libffi-dev libpq-dev libjpeg-dev`
 * Python packages listed in `requirements.txt`
 
-## Run vagrant
+## Development
 
-Install requirements:
+Requirements:
 
+* Python 2
 * VirtualBox
 * vagrant
 * vagrant-triggers plugin
+* fabric
+
+### Run vagrant
 
 Edit `vagrant/settings.yml` (see [example](vagrant/default_settings.yml)).
 
@@ -24,6 +30,12 @@ Start VM:
 
 ```
 vagrant up
+```
+
+### Prepare virtual env
+
+```
+fab build
 ```
 
 ### Local settings
@@ -38,3 +50,9 @@ These variables should be redefined in `xbterminal/xbterminal/local_settings.py`
 * RECAPTCHA_* - reCaptcha settings
 * SALT_SERVERS - Salt server settings
 * APTLY_SERVERS - Aptly server settings
+
+### Testing
+
+```
+fab check
+```
