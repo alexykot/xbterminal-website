@@ -1,14 +1,11 @@
 require 'yaml'
 
-VAGRANTFILE_API_VERSION = "2"
-
-settings = YAML::load_file("vagrant/default_settings.yml")
-begin
-  settings.merge!(YAML::load_file("vagrant/settings.yml"))
-rescue Errno::ENOENT
-end
-
-Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+Vagrant.configure("2") do |config|
+  settings = YAML::load_file("vagrant/default_settings.yml")
+  begin
+    settings.merge!(YAML::load_file("vagrant/settings.yml"))
+  rescue Errno::ENOENT
+  end
 
   config.vm.box = "ubuntu/trusty64"
   config.vm.hostname = "xbt-server-dev"
@@ -22,8 +19,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     vb.memory = settings['vm']['memory']
     vb.cpus = settings['vm']['cpus']
   end
-
-  config.vbguest.auto_update = false
 
   config.vm.provision "fix-no-tty", type: "shell" do |sh|
     sh.privileged = false

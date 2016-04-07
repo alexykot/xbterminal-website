@@ -15,7 +15,7 @@
 Install requirements:
 
 * VirtualBox
-* Vagrant
+* vagrant
 * vagrant-triggers plugin
 
 Edit `vagrant/settings.yml` (see [example](vagrant/default_settings.yml)).
