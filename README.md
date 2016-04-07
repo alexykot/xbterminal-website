@@ -51,6 +51,13 @@ These variables should be redefined in `xbterminal/xbterminal/local_settings.py`
 * SALT_SERVERS - Salt server settings
 * APTLY_SERVERS - Aptly server settings
 
+### Start server
+
+```
+. venv/bin/activate
+honcho start
+```
+
 ### Testing
 
 ```

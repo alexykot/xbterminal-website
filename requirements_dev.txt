@@ -3,3 +3,4 @@ flake8==2.4.0
 factory-boy==2.5.2
 mock==1.0.1
 coverage==4.0
+honcho==0.6.6
