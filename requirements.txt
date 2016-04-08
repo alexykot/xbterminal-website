@@ -11,7 +11,7 @@ django-recaptcha==1.0.5
 django-redis==4.3.0
 django-rq==0.9.0
 djangorestframework==3.2.5
-cryptography==1.2.1
+cryptography==1.2.3
 xhtml2pdf==0.0.6
 reportlab==2.7
 PyPDF2==1.24

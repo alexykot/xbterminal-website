@@ -1,0 +1,14 @@
+vm:
+  memory: 2048
+  cpus: 1
+  ports:
+    postgresql: 5432
+    redis: 6379
+    bitcoind: 18332
+
+pillar:
+  postgresql:
+    user: xbt
+    password: xbt
+    createdb: true
+    database: xbt
