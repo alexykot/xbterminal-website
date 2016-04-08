@@ -2,7 +2,6 @@ from decimal import Decimal
 import logging
 
 from django.conf import settings
-from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.utils import timezone
 
@@ -26,6 +25,7 @@ from api.renderers import (
     PaymentACKRenderer)
 from api.utils.crypto import verify_signature
 from api.utils.pdf import generate_pdf
+from api.utils.urls import construct_absolute_url
 
 from operations.models import PaymentOrder, WithdrawalOrder
 import operations.payment
@@ -55,15 +55,15 @@ class PaymentViewSet(viewsets.GenericViewSet):
         payment_order = operations.payment.prepare_payment(
             device, form.cleaned_data['amount'])
         # Urls
-        payment_request_url = self.request.build_absolute_uri(reverse(
+        payment_request_url = construct_absolute_url(
             'api:v2:payment-request',
-            kwargs={'uid': payment_order.uid}))
-        payment_response_url = self.request.build_absolute_uri(reverse(
+            kwargs={'uid': payment_order.uid})
+        payment_response_url = construct_absolute_url(
             'api:v2:payment-response',
-            kwargs={'uid': payment_order.uid}))
-        payment_check_url = self.request.build_absolute_uri(reverse(
+            kwargs={'uid': payment_order.uid})
+        payment_check_url = construct_absolute_url(
             'api:v2:payment-detail',
-            kwargs={'uid': payment_order.uid}))
+            kwargs={'uid': payment_order.uid})
         # Create payment request
         payment_order.request = operations.protocol.create_payment_request(
             payment_order.device.bitcoin_network,
@@ -117,9 +117,9 @@ class PaymentViewSet(viewsets.GenericViewSet):
     def retrieve(self, *args, **kwargs):
         payment_order = self.get_object()
         if payment_order.time_forwarded is not None:
-            receipt_url = self.request.build_absolute_uri(reverse(
+            receipt_url = construct_absolute_url(
                 'api:short:receipt',
-                kwargs={'order_uid': payment_order.uid}))
+                kwargs={'order_uid': payment_order.uid})
             qr_code_src = generate_qr_code(receipt_url, size=3)
             data = {
                 'paid': 1,
