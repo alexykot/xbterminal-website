@@ -111,7 +111,13 @@
     <tr>
         <td class="col1">{% trans 'Bitcoin transaction ID' %}</td>
         {% if order.order_type == 'payment' %}
-        <td class="col2"><a class="blockr-link" href="{{ order.incoming_tx_url }}">{{ order.incoming_tx_id }}</a></td>
+        <td class="col2">
+            {% for incoming_tx_id in order.incoming_tx_ids %}
+            <a class="blockr-link" href="{% btc_tx_url incoming_tx_id order.bitcoin_network %}">
+                {{ incoming_tx_id }}
+            </a>
+            {% endfor %}
+        </td>
         {% elif order.order_type == 'withdrawal' %}
         <td class="col2"><a class="blockr-link" href="{{ order.outgoing_tx_url }}">{{ order.outgoing_tx_id }}</a></td>
         {% endif %}

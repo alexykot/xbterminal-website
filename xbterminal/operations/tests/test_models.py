@@ -19,12 +19,24 @@ class PaymentOrderTestCase(TestCase):
         self.assertEqual(payment_order.status, 'new')
         self.assertEqual(payment_order.bitcoin_network,
                          payment_order.device.bitcoin_network)
+        self.assertEqual(len(payment_order.incoming_tx_ids), 0)
 
         expected_btc_amount = (payment_order.merchant_btc_amount +
                                payment_order.instantfiat_btc_amount +
                                payment_order.fee_btc_amount +
                                payment_order.tx_fee_btc_amount)
         self.assertEqual(payment_order.btc_amount, expected_btc_amount)
+
+    def test_incoming_tx_ids(self):
+        order = PaymentOrderFactory.create()
+        tx_1 = '1' * 64
+        tx_2 = '2' * 64
+        order.incoming_tx_ids.append(tx_1)
+        order.incoming_tx_ids.append(tx_2)
+        self.assertIn(tx_1, order.incoming_tx_ids)
+        self.assertIn(tx_2, order.incoming_tx_ids)
+        order.save()
+        self.assertEqual(len(order.incoming_tx_ids), 2)
 
     def test_status(self):
         # Without instantfiat
@@ -70,13 +82,13 @@ class PaymentOrderTestCase(TestCase):
             time_created=timezone.now() - datetime.timedelta(hours=2),
             time_recieved=timezone.now() - datetime.timedelta(hours=1))
         self.assertEqual(payment_order.status, 'failed')
-        # Failed #2
+        # Unconfirmed
         payment_order = PaymentOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=5),
             time_recieved=timezone.now() - datetime.timedelta(hours=5),
             time_forwarded=timezone.now() - datetime.timedelta(hours=5),
             time_notified=timezone.now() - datetime.timedelta(hours=5))
-        self.assertEqual(payment_order.status, 'failed')
+        self.assertEqual(payment_order.status, 'unconfirmed')
         # Refunded
         payment_order = PaymentOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=2),
@@ -100,7 +112,7 @@ class PaymentOrderTestCase(TestCase):
                          Decimal('0.01'))
 
     def test_urls_for_receipts(self):
-        order = PaymentOrderFactory.create(incoming_tx_id='0' * 64)
+        order = PaymentOrderFactory.create(incoming_tx_ids=['0' * 64])
         self.assertIn('/prc/{0}'.format(order.uid), order.receipt_url)
         self.assertIsNotNone(order.payment_address_url)
         self.assertIsNotNone(order.incoming_tx_url)
@@ -175,7 +187,9 @@ class WithdrawalOrderTestCase(TestCase):
         self.assertEqual(order.status, 'cancelled')
 
     def test_urls_for_receipts(self):
-        order = WithdrawalOrderFactory.create(outgoing_tx_id='0' * 64)
+        order = WithdrawalOrderFactory.create(
+            customer_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
+            outgoing_tx_id='0' * 64)
         self.assertIn('/wrc/{0}'.format(order.uid), order.receipt_url)
         self.assertIsNotNone(order.customer_address_url)
         self.assertIsNotNone(order.outgoing_tx_url)

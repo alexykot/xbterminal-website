@@ -560,6 +560,7 @@ class ReportViewTestCase(TestCase):
         device = DeviceFactory.create(merchant=self.merchant)
         payment_order = PaymentOrderFactory.create(
             device=device,
+            incoming_tx_ids=['0' * 64],
             time_notified=timezone.now())
         self.client.login(username=self.merchant.user.email,
                           password='password')
@@ -579,6 +580,7 @@ class ReceiptsViewTestCase(TestCase):
         device = DeviceFactory.create(merchant=self.merchant)
         payment_order = PaymentOrderFactory.create(
             device=device,
+            incoming_tx_ids=['0' * 64],
             time_notified=timezone.now())
         self.client.login(username=self.merchant.user.email,
                           password='password')
@@ -598,6 +600,7 @@ class SendAllToEmailViewTestCase(TestCase):
         device = DeviceFactory.create(merchant=self.merchant)
         payment_order = PaymentOrderFactory.create(
             device=device,
+            incoming_tx_ids=['0' * 64],
             time_notified=timezone.now())
         self.client.login(username=self.merchant.user.email,
                           password='password')
@@ -618,6 +621,7 @@ class SendAllToEmailViewTestCase(TestCase):
         orders = PaymentOrderFactory.create_batch(
             5,
             device=device,
+            incoming_tx_ids=['0' * 64],
             time_notified=timezone.now())
         self.client.login(username=self.merchant.user.email,
                           password='password')

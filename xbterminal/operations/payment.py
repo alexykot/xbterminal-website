@@ -144,7 +144,7 @@ def wait_for_payment(payment_order_uid):
     if payment_order.time_created + PAYMENT_TIMEOUT < timezone.now():
         # Timeout, cancel job
         cancel_current_task()
-    if payment_order.incoming_tx_id is not None:
+    if payment_order.time_recieved is not None:
         # Payment already validated, cancel job
         cancel_current_task()
         return
@@ -153,13 +153,35 @@ def wait_for_payment(payment_order_uid):
     transactions = bc.get_unspent_transactions(
         CBitcoinAddress(payment_order.local_address))
     if transactions:
+        if len(transactions) > 1:
+            logger.warning('multiple incoming tx')
+        # Save tx ids
+        for incoming_tx in transactions:
+            incoming_tx_id = blockchain.get_txid(incoming_tx)
+            if incoming_tx_id not in payment_order.incoming_tx_ids:
+                payment_order.incoming_tx_ids.append(incoming_tx_id)
+        # Save refund address
+        tx_inputs = bc.get_tx_inputs(transactions[0])
+        if len(tx_inputs) > 1:
+            logger.warning('incoming tx contains more than one input')
+        payment_order.refund_address = str(tx_inputs[0]['address'])
+        payment_order.save()
+        # Validate payment
         try:
-            validate_payment(payment_order, transactions, 'bip0021')
+            validate_payment(payment_order, transactions)
         except exceptions.InsufficientFunds:
-            reverse_payment(payment_order, close_order=False)
             # Don't cancel task, wait for next transaction
+            pass
+        except Exception as error:
+            cancel_current_task()
+            logger.exception(error)
         else:
             cancel_current_task()
+            # Update status
+            payment_order.payment_type = 'bip0021'
+            payment_order.time_recieved = timezone.now()
+            payment_order.save()
+            logger.info('payment recieved ({0})'.format(payment_order.uid))
 
 
 def parse_payment(payment_order, payment_message):
@@ -179,62 +201,56 @@ def parse_payment(payment_order, payment_message):
          payment_ack) = protocol.parse_payment(payment_message)
     except Exception as error:
         raise exceptions.InvalidPaymentMessage
-    validate_payment(payment_order, transactions, 'bip0070')
-    if refund_addresses:
-        payment_order.refund_address = refund_addresses[0]
-        payment_order.save()
-    return payment_ack
-
-
-def validate_payment(payment_order, transactions, payment_type):
-    """
-    Validates payment and stores incoming transaction id
-    in PaymentOrder instance
-    Accepts:
-        payment_order: PaymentOrder instance
-        transactions: list of CTransaction
-        payment_type: bip0021 or bip0070
-    """
-    assert payment_type in ['bip0021', 'bip0070']
-    bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
-    if len(transactions) != 1:
-        raise exceptions.PaymentError('Expecting single transaction')
-    incoming_tx = transactions[0]
-    # Validate transaction
-    incoming_tx_signed = bc.sign_raw_transaction(incoming_tx)
-    # Save refund address (BIP0021)
-    if payment_type == 'bip0021':
-        tx_inputs = bc.get_tx_inputs(incoming_tx)
-        if len(tx_inputs) > 1:
-            logger.warning('incoming tx contains more than one input')
-        payment_order.refund_address = str(tx_inputs[0]['address'])
-    # Check amount
-    btc_amount = BTC_DEC_PLACES
-    for output in bc.get_tx_outputs(incoming_tx):
-        if str(output['address']) == payment_order.local_address:
-            btc_amount += output['amount']
-    if btc_amount < payment_order.btc_amount:
-        raise exceptions.InsufficientFunds
-    # Broadcast transaction (BIP0070)
-    if payment_type == 'bip0070':
+    # Broadcast transactions, save ids
+    for incoming_tx in transactions:
         try:
+            incoming_tx_signed = bc.sign_raw_transaction(incoming_tx)
             bc.send_raw_transaction(incoming_tx_signed)
         except JSONRPCException as error:
             logger.exception(error)
-    # Save incoming transaction id
-    payment_order.incoming_tx_id = blockchain.get_txid(incoming_tx)
-    payment_order.payment_type = payment_type
+        incoming_tx_id = blockchain.get_txid(incoming_tx)
+        if incoming_tx_id not in payment_order.incoming_tx_ids:
+            payment_order.incoming_tx_ids.append(incoming_tx_id)
+    # Save refund address
+    if refund_addresses:
+        payment_order.refund_address = refund_addresses[0]
+    payment_order.save()
+    # Validate payment
+    validate_payment(payment_order, transactions)
+    # Update status
+    payment_order.payment_type = 'bip0070'
     payment_order.time_recieved = timezone.now()
     payment_order.save()
     logger.info('payment recieved ({0})'.format(payment_order.uid))
+    return payment_ack
 
 
-def reverse_payment(order, close_order=True):
+def validate_payment(payment_order, transactions):
+    """
+    Validates payment
+    Accepts:
+        payment_order: PaymentOrder instance
+        transactions: list of CTransaction
+    """
+    bc = blockchain.BlockChain(payment_order.bitcoin_network)
+    # Validate transactions
+    for incoming_tx in transactions:
+        bc.sign_raw_transaction(incoming_tx)
+    # Check amount
+    btc_amount = BTC_DEC_PLACES
+    for incoming_tx in transactions:
+        for output in bc.get_tx_outputs(incoming_tx):
+            if str(output['address']) == payment_order.local_address:
+                btc_amount += output['amount']
+    if btc_amount < payment_order.btc_amount:
+        raise exceptions.InsufficientFunds
+
+
+def reverse_payment(order):
     """
     Send all money back to customer
     Accepts:
         order: PaymentOrder instance
-        close_order: whether to write time_refunded or not, boolean
     """
     if order.time_forwarded is not None:
         raise exceptions.RefundError
@@ -253,11 +269,10 @@ def reverse_payment(order, close_order=True):
     refund_tx = bc.create_raw_transaction(tx_inputs, tx_outputs)
     refund_tx_signed = bc.sign_raw_transaction(refund_tx)
     refund_tx_id = bc.send_raw_transaction(refund_tx_signed)
-    if close_order:
-        # Changing order status, customer should be notified
-        order.refund_tx_id = refund_tx_id
-        order.time_refunded = timezone.now()
-        order.save()
+    # Changing order status, customer should be notified
+    order.refund_tx_id = refund_tx_id
+    order.time_refunded = timezone.now()
+    order.save()
     logger.warning('payment returned ({0})'.format(order.uid))
 
 
@@ -276,31 +291,33 @@ def wait_for_validation(payment_order_uid):
     if payment_order.time_created + PAYMENT_VALIDATION_TIMEOUT < timezone.now():
         # Timeout, cancel job
         cancel_current_task()
-    if payment_order.outgoing_tx_id is not None:
+    if payment_order.time_forwarded is not None:
         # Payment already forwarded, cancel job
         cancel_current_task()
         return
-    if payment_order.incoming_tx_id is not None:
-        try:
-            incoming_tx_reliable = blockcypher.is_tx_reliable(
-                payment_order.incoming_tx_id,
-                payment_order.bitcoin_network)
-        except Exception as error:
-            # Error when accessing blockcypher API
-            logger.exception(error)
-            cancel_current_task()
-            return
-        if not incoming_tx_reliable:
-            # Wait
-            return
-        cancel_current_task()
-        forward_transaction(payment_order)
-        run_periodic_task(wait_for_confirmation, [payment_order.uid], interval=15)
-        if payment_order.instantfiat_invoice_id is None:
-            # Payment finished
-            logger.info('payment order closed ({0})'.format(payment_order.uid))
+    if payment_order.time_recieved is not None:
+        for incoming_tx_id in payment_order.incoming_tx_ids:
+            try:
+                incoming_tx_reliable = blockcypher.is_tx_reliable(
+                    incoming_tx_id,
+                    payment_order.bitcoin_network)
+            except Exception as error:
+                # Error when accessing blockcypher API
+                logger.exception(error)
+                cancel_current_task()
+                return
+            if not incoming_tx_reliable:
+                # Break cycle, wait for confidence
+                break
         else:
-            run_periodic_task(wait_for_exchange, [payment_order.uid])
+            cancel_current_task()
+            forward_transaction(payment_order)
+            run_periodic_task(wait_for_confirmation, [payment_order.uid], interval=15)
+            if payment_order.instantfiat_invoice_id is None:
+                # Payment finished
+                logger.info('payment order closed ({0})'.format(payment_order.uid))
+            else:
+                run_periodic_task(wait_for_exchange, [payment_order.uid])
 
 
 def forward_transaction(payment_order):
@@ -311,12 +328,15 @@ def forward_transaction(payment_order):
     # Connect to bitcoind
     bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
     # Wait for transaction
-    incoming_tx = bc.get_raw_transaction(payment_order.incoming_tx_id)
+    incoming_tx = bc.get_raw_transaction(payment_order.incoming_tx_ids[0])
     # Get outputs
     unspent_outputs = bc.get_unspent_outputs(
         CBitcoinAddress(payment_order.local_address))
     total_available = sum(out['amount'] for out in unspent_outputs)
-    payment_order.extra_btc_amount = total_available - payment_order.btc_amount
+    # Extra
+    extra_btc_amount = total_available - payment_order.btc_amount
+    if extra_btc_amount > BTC_MIN_OUTPUT:
+        payment_order.extra_btc_amount = extra_btc_amount
     # Select destination address
     btc_account = BTCAccount.objects.filter(
         merchant=payment_order.device.merchant,
@@ -420,13 +440,21 @@ def check_payment_status(payment_order_uid):
         # PaymentOrder deleted, cancel job
         cancel_current_task()
         return
-    # TODO: refund on timeout
-    if payment_order.status == 'failed':
+    if payment_order.status == 'timeout':
+        try:
+            reverse_payment(payment_order)
+        except exceptions.RefundError:
+            pass
+        cancel_current_task()
+    elif payment_order.status == 'failed':
         try:
             reverse_payment(payment_order)
         except exceptions.RefundError:
             pass
         send_error_message(payment_order=payment_order)
         cancel_current_task()
-    elif payment_order.status in ['timeout', 'refunded', 'confirmed']:
+    elif payment_order.status == 'unconfirmed':
+        send_error_message(payment_order=payment_order)
+        cancel_current_task()
+    elif payment_order.status in ['refunded', 'confirmed']:
         cancel_current_task()

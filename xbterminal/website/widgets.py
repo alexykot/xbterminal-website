@@ -148,6 +148,25 @@ class BitcoinTransactionWidget(Widget):
         return mark_safe(output)
 
 
+class BitcoinTransactionArrayWidget(Widget):
+
+    def __init__(self, *args, **kwargs):
+        self.network = kwargs.pop('network', None)
+        super(BitcoinTransactionArrayWidget, self).__init__(*args, **kwargs)
+
+    def render(self, name, value, attrs=None):
+        output = ''
+        if value:
+            for tx_id in value.split(','):
+                output += format_html(
+                    '<a target="_blank" href="{0}">{1}</a><br>',
+                    blockcypher.get_tx_url(tx_id, self.network),
+                    tx_id)
+        else:
+            output = '-'
+        return mark_safe(output)
+
+
 class ReadOnlyAdminWidget(Widget):
 
     def __init__(self, *args, **kwargs):

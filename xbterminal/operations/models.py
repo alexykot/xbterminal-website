@@ -8,6 +8,7 @@ from django.db import models
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django_countries.fields import CountryField
+from django.contrib.postgres.fields import ArrayField
 from django.contrib.sites.models import Site
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
@@ -83,8 +84,9 @@ class PaymentOrder(models.Model):
     instantfiat_invoice_id = models.CharField(
         max_length=255, null=True)
 
-    incoming_tx_id = models.CharField(
-        max_length=64, validators=[validate_transaction], null=True)
+    incoming_tx_ids = ArrayField(
+        models.CharField(max_length=64, validators=[validate_transaction]),
+        default=list)
     outgoing_tx_id = models.CharField(
         max_length=64, validators=[validate_transaction], null=True)
     refund_tx_id = models.CharField(
@@ -120,7 +122,9 @@ class PaymentOrder(models.Model):
             refunded - payment sent back to customer
             timeout - incoming transaction did not recieved
             failed - incoming transaction recieved,
-                but payment order is not marked as completed
+                but payment order is not marked as notified
+            unconfirmed - customer notified about successful payment,
+                but outgoing transaction is not confirmed
         """
         if self.time_refunded:
             return 'refunded'
@@ -129,7 +133,7 @@ class PaymentOrder(models.Model):
                 return 'confirmed'
             else:
                 if self.time_created + PAYMENT_CONFIRMATION_TIMEOUT < timezone.now():
-                    return 'failed'
+                    return 'unconfirmed'
                 else:
                     return 'notified'
         if not self.time_recieved:
@@ -159,7 +163,7 @@ class PaymentOrder(models.Model):
     @property
     def incoming_tx_url(self):
         """For receipts"""
-        return blockr.get_tx_url(self.incoming_tx_id, self.device.bitcoin_network)
+        return blockr.get_tx_url(self.incoming_tx_ids[0], self.device.bitcoin_network)
 
     @property
     def payment_address_url(self):
