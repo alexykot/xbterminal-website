@@ -6,10 +6,8 @@ from bitcoin import base58
 
 from django.db import models
 from django.conf import settings
-from django.core.urlresolvers import reverse
 from django_countries.fields import CountryField
 from django.contrib.postgres.fields import ArrayField
-from django.contrib.sites.models import Site
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
@@ -27,6 +25,7 @@ from operations import (
     WITHDRAWAL_TIMEOUT,
     WITHDRAWAL_BROADCAST_TIMEOUT)
 from operations.services import blockr
+from api.utils.urls import construct_absolute_url
 
 
 def gen_payment_uid():
@@ -156,9 +155,9 @@ class PaymentOrder(models.Model):
 
     @property
     def receipt_url(self):
-        domain = Site.objects.get_current().domain
-        path = reverse('api:short:payment-receipt', kwargs={'uid': self.uid})
-        return 'https://{0}{1}'.format(domain, path)
+        return construct_absolute_url(
+            'api:short:payment-receipt',
+            kwargs={'uid': self.uid})
 
     @property
     def incoming_tx_url(self):
@@ -263,9 +262,9 @@ class WithdrawalOrder(models.Model):
 
     @property
     def receipt_url(self):
-        domain = Site.objects.get_current().domain
-        path = reverse('api:short:withdrawal-receipt', kwargs={'uid': self.uid})
-        return 'https://{0}{1}'.format(domain, path)
+        return construct_absolute_url(
+            'api:short:withdrawal-receipt',
+            kwargs={'uid': self.uid})
 
     @property
     def expires_at(self):
