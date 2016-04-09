@@ -729,9 +729,9 @@ class ForwardTransactionTestCase(TestCase):
         self.assertTrue(bc_instance_mock.sign_raw_transaction.called)
         self.assertTrue(bc_instance_mock.send_raw_transaction.called)
 
-        payment_order = PaymentOrder.objects.get(
-            pk=payment_order.pk)
+        payment_order.refresh_from_db()
         self.assertEqual(payment_order.extra_btc_amount, extra_btc_amount)
+        self.assertEqual(payment_order.tx_fee_btc_amount, Decimal('0.0001'))
         self.assertEqual(payment_order.outgoing_tx_id, outgoing_tx_id)
         self.assertIsNotNone(payment_order.time_forwarded)
 
@@ -757,6 +757,7 @@ class ForwardTransactionTestCase(TestCase):
         payment.forward_transaction(order)
         order.refresh_from_db()
         self.assertEqual(order.extra_btc_amount, 0)
+        self.assertEqual(order.tx_fee_btc_amount, Decimal('0.00015'))
         self.assertIsNotNone(order.time_forwarded)
 
     @patch('operations.payment.blockchain.BlockChain')

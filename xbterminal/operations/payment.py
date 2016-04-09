@@ -337,6 +337,8 @@ def forward_transaction(payment_order):
     extra_btc_amount = total_available - payment_order.btc_amount
     if extra_btc_amount > BTC_MIN_OUTPUT:
         payment_order.extra_btc_amount = extra_btc_amount
+    else:
+        payment_order.tx_fee_btc_amount += extra_btc_amount
     # Select destination address
     btc_account = BTCAccount.objects.filter(
         merchant=payment_order.device.merchant,
