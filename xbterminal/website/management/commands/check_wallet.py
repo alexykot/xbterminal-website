@@ -14,9 +14,17 @@ class Command(BaseCommand):
 
     help = "Compare merchants' balances and bitcoind wallet balance"
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'network', type=str, nargs='?', default='mainnet')
+        parser.add_argument(
+            '--strict', action='store_true')
+
     def handle(self, *args, **options):
-        check_wallet('mainnet')
-        check_wallet('testnet')
+        if options['strict']:
+            check_wallet_strict(options['network'])
+        else:
+            check_wallet(options['network'])
 
 
 def check_wallet(network):
@@ -33,9 +41,11 @@ def check_wallet(network):
             'wallet_value': wallet_value,
             'db_value': db_value,
         })
-        logger.critical('Balance mismatch on {0} wallet'.format(network))
+        logger.critical('Balance mismatch on {0} wallet ({1} != {2})'.format(
+            network, wallet_value, db_value))
     else:
-        logger.info('Balance OK on {0} wallet'.format(network))
+        logger.info('Balance OK on {0} wallet ({1} total)'.format(
+            network, wallet_value))
 
 
 def check_wallet_strict(network):
@@ -50,6 +60,8 @@ def check_wallet_strict(network):
             'wallet_value': wallet_value,
             'db_value': db_value,
         })
-        logger.critical('Balance mismatch on {0} wallet'.format(network))
+        logger.critical('Balance mismatch on {0} wallet ({1} != {2})'.format(
+            network, wallet_value, db_value))
     else:
-        logger.info('Balance OK on {0} wallet'.format(network))
+        logger.info('Balance OK on {0} wallet ({1} total)'.format(
+            network, wallet_value))
