@@ -24,7 +24,6 @@ from operations import (
     PAYMENT_CONFIRMATION_TIMEOUT,
     WITHDRAWAL_TIMEOUT,
     WITHDRAWAL_BROADCAST_TIMEOUT)
-from operations.services import blockr
 from api.utils.urls import construct_absolute_url
 
 
@@ -160,16 +159,6 @@ class PaymentOrder(models.Model):
             kwargs={'uid': self.uid})
 
     @property
-    def incoming_tx_url(self):
-        """For receipts"""
-        return blockr.get_tx_url(self.incoming_tx_ids[0], self.device.bitcoin_network)
-
-    @property
-    def payment_address_url(self):
-        """For receipts"""
-        return blockr.get_address_url(self.local_address, self.device.bitcoin_network)
-
-    @property
     def effective_exchange_rate(self):
         return (self.fiat_amount / self.btc_amount).quantize(BTC_DEC_PLACES)
 
@@ -249,16 +238,6 @@ class WithdrawalOrder(models.Model):
     @property
     def scaled_effective_exchange_rate(self):
         return self.effective_exchange_rate / settings.BITCOIN_SCALE_DIVIZER
-
-    @property
-    def outgoing_tx_url(self):
-        """For receipts"""
-        return blockr.get_tx_url(self.outgoing_tx_id, self.bitcoin_network)
-
-    @property
-    def customer_address_url(self):
-        """For receipts"""
-        return blockr.get_address_url(self.customer_address, self.bitcoin_network)
 
     @property
     def receipt_url(self):
