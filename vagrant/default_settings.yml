@@ -12,3 +12,6 @@ pillar:
     password: xbt
     createdb: true
     database: xbt
+  bitcoind:
+    user: xbt
+    password: xbt
