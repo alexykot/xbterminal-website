@@ -71,7 +71,7 @@
     .col1 {
         text-align: right;
     }
-    .blockr-link {
+    .external-link {
         font-size: 13px;
     }
 </style>
@@ -103,9 +103,17 @@
     <tr>
         <td class="col1">{% trans 'Destination address' %}</td>
         {% if order.order_type == 'payment' %}
-        <td class="col2"><a class="blockr-link" href="{{ order.payment_address_url }}">{{ order.local_address }}</a></td>
+        <td class="col2">
+            <a class="external-link" href="{% btc_address_url order.local_address order.bitcoin_network %}">
+                {{ order.local_address }}
+            </a>
+        </td>
         {% elif order.order_type == 'withdrawal' %}
-        <td class="col2"><a class="blockr-link" href="{{ order.customer_address_url }}">{{ order.customer_address }}</a></td>
+        <td class="col2">
+            <a class="external-link" href="{% btc_address_url order.customer_address order.bitcoin_network %}">
+                {{ order.customer_address }}
+            </a>
+        </td>
         {% endif %}
     </tr>
     <tr>
@@ -113,13 +121,17 @@
         {% if order.order_type == 'payment' %}
         <td class="col2">
             {% for incoming_tx_id in order.incoming_tx_ids %}
-            <a class="blockr-link" href="{% btc_tx_url incoming_tx_id order.bitcoin_network %}">
+            <a class="external-link" href="{% btc_tx_url incoming_tx_id order.bitcoin_network %}">
                 {{ incoming_tx_id }}
             </a>
             {% endfor %}
         </td>
         {% elif order.order_type == 'withdrawal' %}
-        <td class="col2"><a class="blockr-link" href="{{ order.outgoing_tx_url }}">{{ order.outgoing_tx_id }}</a></td>
+        <td class="col2">
+            <a class="external-link" href="{% btc_tx_url order.outgoing_tx_id order.bitcoin_network %}">
+                {{ order.outgoing_tx_id }}
+            </a>
+        </td>
         {% endif %}
     </tr>
     <tr></tr>
