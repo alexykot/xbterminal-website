@@ -622,7 +622,7 @@ class SendAllToEmailViewTestCase(TestCase):
             5,
             device=device,
             incoming_tx_ids=['0' * 64],
-            time_notified=timezone.now())
+            time_notified=timezone.now().replace(hour=12))
         self.client.login(username=self.merchant.user.email,
                           password='password')
         url = reverse('website:send_all_to_email',
