@@ -32,7 +32,7 @@ class SendReconciliationTestCase(TestCase):
 
     def test_not_ready(self):
         device = DeviceFactory.create()
-        rectime = ReconciliationTimeFactory.create(
+        ReconciliationTimeFactory.create(
             device=device, time=datetime.time(0, 0))
         call_command('send_reconciliation')
         self.assertEqual(len(mail.outbox), 0)

@@ -54,7 +54,7 @@ class PrepareWithdrawalTestCase(TestCase):
 
     def test_no_address(self):
         device = DeviceFactory.create()
-        btc_account = BTCAccountFactory.create(merchant=device.merchant)
+        BTCAccountFactory.create(merchant=device.merchant)
         fiat_amount = Decimal('1.00')
         with self.assertRaises(withdrawal.WithdrawalError):
             withdrawal.prepare_withdrawal(device, fiat_amount)
@@ -62,7 +62,7 @@ class PrepareWithdrawalTestCase(TestCase):
     @patch('operations.withdrawal.get_exchange_rate')
     def test_dust_threshold(self, get_rate_mock):
         device = DeviceFactory.create()
-        btc_account = BTCAccountFactory.create(
+        BTCAccountFactory.create(
             merchant=device.merchant,
             address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
         fiat_amount = Decimal('0.05')
@@ -74,7 +74,7 @@ class PrepareWithdrawalTestCase(TestCase):
     @patch('operations.withdrawal.get_exchange_rate')
     def test_insufficient_funds(self, get_rate_mock, bc_mock):
         device = DeviceFactory.create()
-        btc_account = BTCAccountFactory.create(
+        BTCAccountFactory.create(
             merchant=device.merchant,
             address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
         fiat_amount = Decimal('200.00')
@@ -92,7 +92,7 @@ class PrepareWithdrawalTestCase(TestCase):
     @patch('operations.withdrawal.get_exchange_rate')
     def test_already_reserved(self, get_rate_mock, bc_mock):
         device = DeviceFactory.create()
-        btc_account = BTCAccountFactory.create(
+        BTCAccountFactory.create(
             merchant=device.merchant,
             address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
         reserved_output = outpoint_factory()
@@ -123,7 +123,7 @@ class PrepareWithdrawalTestCase(TestCase):
     @patch('operations.withdrawal.get_exchange_rate')
     def test_dust_change(self, get_rate_mock, bc_mock):
         device = DeviceFactory.create()
-        btc_account = BTCAccountFactory.create(
+        BTCAccountFactory.create(
             merchant=device.merchant,
             address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
         fiat_amount = Decimal('1.00')
@@ -147,7 +147,7 @@ class SendTransactionTestCase(TestCase):
     @patch('operations.withdrawal.run_periodic_task')
     def test_send_tx(self, run_task_mock, bc_mock):
         device = DeviceFactory.create()
-        btc_account = BTCAccountFactory.create(
+        BTCAccountFactory.create(
             merchant=device.merchant,
             balance=Decimal('0.01'),
             address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')

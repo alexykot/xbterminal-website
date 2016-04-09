@@ -62,7 +62,7 @@ class CryptoPayTestCase(TestCase):
             'text': 'test',
         })
         with self.assertRaises(InstantFiatError) as error:
-            result = instantfiat.cryptopay.create_invoice(
+            instantfiat.cryptopay.create_invoice(
                 Decimal('1.0'), 'GBP', 'test', 'description')
             self.assertEqual(str(error), 'test')
 

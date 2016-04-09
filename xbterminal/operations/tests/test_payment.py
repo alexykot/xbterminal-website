@@ -226,8 +226,8 @@ class WaitForPaymentTestCase(TestCase):
     @patch('operations.payment.validate_payment')
     @patch('operations.payment.blockchain.get_txid')
     def test_mutilple_tx(self, get_txid_mock, validate_mock,
-                         bc_mock, cancel_mock):
-        bc_mock.return_value = bc_instance_mock = Mock(**{
+                         bc_cls_mock, cancel_mock):
+        bc_cls_mock.return_value = Mock(**{
             'get_unspent_transactions.return_value': ['test_tx_1', 'test_tx_2'],
             'get_tx_inputs.return_value': [{'address': 'test_address'}],
         })
@@ -252,7 +252,7 @@ class WaitForPaymentTestCase(TestCase):
     def test_insufficient_funds(self, get_txid_mock, reverse_mock,
                                 validate_mock, bc_cls_mock, cancel_mock):
         customer_address = 'a' * 32
-        bc_cls_mock.return_value = bc_mock = Mock(**{
+        bc_cls_mock.return_value = Mock(**{
             'get_unspent_transactions.return_value': ['test_tx'],
             'get_tx_inputs.return_value': [{'address': customer_address}],
         })
@@ -277,7 +277,7 @@ class WaitForPaymentTestCase(TestCase):
     @patch('operations.payment.blockchain.get_txid')
     def test_validation_error(self, get_txid_mock, reverse_mock,
                               validate_mock, bc_cls_mock, cancel_mock):
-        bc_cls_mock.return_value = bc_mock = Mock(**{
+        bc_cls_mock.return_value = Mock(**{
             'get_unspent_transactions.return_value': ['test_tx'],
             'get_tx_inputs.return_value': [{'address': 'test_address'}],
         })
@@ -298,9 +298,9 @@ class WaitForPaymentTestCase(TestCase):
     @patch('operations.payment.validate_payment')
     @patch('operations.payment.blockchain.get_txid')
     def test_repeat(self, get_txid_mock, validate_mock,
-                    bc_mock, cancel_mock):
+                    bc_cls_mock, cancel_mock):
         customer_address = 'a' * 32
-        bc_mock.return_value = bc_instance_mock = Mock(**{
+        bc_cls_mock.return_value = Mock(**{
             'get_unspent_transactions.side_effect': [
                 ['test_tx_1'],
                 ['test_tx_1', 'test_tx_2'],
@@ -368,6 +368,7 @@ class ParsePaymentTestCase(TestCase):
         incoming_tx_id_2 = '2' * 64
         get_txid_mock.side_effect = [incoming_tx_id_1, incoming_tx_id_2]
         result = payment.parse_payment(order, 'test_message')
+        self.assertIsNotNone(result)
         self.assertEqual(len(validate_mock.call_args[0][1]), 2)
         self.assertEqual(bc_mock.sign_raw_transaction.call_count, 2)
         self.assertEqual(bc_mock.send_raw_transaction.call_count, 2)
@@ -553,7 +554,7 @@ class ReversePaymentTestCase(TestCase):
             fee_btc_amount=Decimal('0.001'),
             btc_amount=Decimal('0.1011'),
             refund_address='1KYwqZshnYNUNweXrDkCAdLaixxPhePRje')
-        bc_cls_mock.return_value = bc_mock = Mock(**{
+        bc_cls_mock.return_value = Mock(**{
             'get_unspent_outputs.return_value': [],
         })
         with self.assertRaises(exceptions.RefundError):
@@ -742,7 +743,7 @@ class ForwardTransactionTestCase(TestCase):
             btc_amount=Decimal('0.1011'),
             instantfiat_btc_amount=Decimal(0),
             incoming_tx_ids=['0' * 64])
-        bc_cls_mock.return_value = bc_mock = Mock(**{
+        bc_cls_mock.return_value = Mock(**{
             'get_raw_transaction.return_value': 'test_incoming_tx',
             'get_unspent_outputs.return_value': [{
                 'outpoint': 'test_outpoint',
@@ -820,7 +821,7 @@ class WaitForConfirmationTestCase(TestCase):
     def test_tx_confirmed(self, bc_cls_mock, cancel_mock):
         order = PaymentOrderFactory.create(
             outgoing_tx_id='0' * 64)
-        bc_cls_mock.return_value = bc_mock = Mock(**{
+        bc_cls_mock.return_value = Mock(**{
             'is_tx_confirmed.return_value': True,
         })
         payment.wait_for_confirmation(order.uid)
@@ -833,7 +834,7 @@ class WaitForConfirmationTestCase(TestCase):
     def test_tx_not_broadcasted(self, bc_cls_mock, cancel_mock):
         order = PaymentOrderFactory.create(
             outgoing_tx_id='0' * 64)
-        bc_cls_mock.return_value = bc_mock = Mock(**{
+        bc_cls_mock.return_value = Mock(**{
             'is_tx_confirmed.return_value': False,
         })
         payment.wait_for_confirmation(order.uid)

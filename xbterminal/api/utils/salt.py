@@ -106,7 +106,7 @@ class Salt(object):
             'fun': 'key.delete',
             'match': minion_id,
         }
-        result = self._send_request('post', '/', data=payload)
+        self._send_request('post', '/', data=payload)
         logger.info('minion deleted')
 
     def ping(self, minion_id):

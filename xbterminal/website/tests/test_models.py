@@ -91,7 +91,7 @@ class MerchantAccountTestCase(TestCase):
     def test_get_account_balance(self):
         merchant = MerchantAccountFactory.create()
         self.assertIsNone(merchant.get_account_balance('mainnet'))
-        btc_account = BTCAccountFactory.create(
+        BTCAccountFactory.create(
             merchant=merchant, network='mainnet', balance=Decimal('0.5'))
         self.assertEqual(merchant.get_account_balance('mainnet'),
                          Decimal('0.5'))
