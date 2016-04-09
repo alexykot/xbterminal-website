@@ -138,7 +138,10 @@ class PaymentOrder(models.Model):
             if self.time_created + PAYMENT_TIMEOUT < timezone.now():
                 return 'timeout'
             else:
-                return 'new'
+                if len(self.incoming_tx_ids) > 0:
+                    return 'underpaid'
+                else:
+                    return 'new'
         else:
             if self.time_created + PAYMENT_VALIDATION_TIMEOUT < timezone.now():
                 return 'failed'

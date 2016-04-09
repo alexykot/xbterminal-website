@@ -42,6 +42,8 @@ class PaymentOrderTestCase(TestCase):
         # Without instantfiat
         payment_order = PaymentOrderFactory.create()
         self.assertEqual(payment_order.status, 'new')
+        payment_order.incoming_tx_ids.append('0' * 64)
+        self.assertEqual(payment_order.status, 'underpaid')
         payment_order.time_recieved = (payment_order.time_created +
                                        datetime.timedelta(minutes=1))
         self.assertEqual(payment_order.status, 'recieved')
