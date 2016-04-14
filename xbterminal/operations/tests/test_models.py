@@ -42,6 +42,8 @@ class PaymentOrderTestCase(TestCase):
         # Without instantfiat
         payment_order = PaymentOrderFactory.create()
         self.assertEqual(payment_order.status, 'new')
+        payment_order.incoming_tx_ids.append('0' * 64)
+        self.assertEqual(payment_order.status, 'underpaid')
         payment_order.time_recieved = (payment_order.time_created +
                                        datetime.timedelta(minutes=1))
         self.assertEqual(payment_order.status, 'recieved')
@@ -114,8 +116,6 @@ class PaymentOrderTestCase(TestCase):
     def test_urls_for_receipts(self):
         order = PaymentOrderFactory.create(incoming_tx_ids=['0' * 64])
         self.assertIn('/prc/{0}'.format(order.uid), order.receipt_url)
-        self.assertIsNotNone(order.payment_address_url)
-        self.assertIsNotNone(order.incoming_tx_url)
 
 
 class WithdrawalOrderTestCase(TestCase):
@@ -191,5 +191,3 @@ class WithdrawalOrderTestCase(TestCase):
             customer_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
             outgoing_tx_id='0' * 64)
         self.assertIn('/wrc/{0}'.format(order.uid), order.receipt_url)
-        self.assertIsNotNone(order.customer_address_url)
-        self.assertIsNotNone(order.outgoing_tx_url)

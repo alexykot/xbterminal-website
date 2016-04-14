@@ -16,7 +16,7 @@ class BlockChainTestCase(TestCase):
     @patch('operations.blockchain.bitcoin.SelectParams')
     @patch('operations.blockchain.bitcoin.rpc.Proxy')
     def test_init(self, proxy_mock, select_params_mock):
-        bc = BlockChain('mainnet')
+        BlockChain('mainnet')
         self.assertTrue(select_params_mock.called)
         self.assertEqual(select_params_mock.call_args[0][0], 'mainnet')
         self.assertTrue(proxy_mock.called)

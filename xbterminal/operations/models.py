@@ -6,10 +6,8 @@ from bitcoin import base58
 
 from django.db import models
 from django.conf import settings
-from django.core.urlresolvers import reverse
 from django_countries.fields import CountryField
 from django.contrib.postgres.fields import ArrayField
-from django.contrib.sites.models import Site
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
@@ -26,7 +24,7 @@ from operations import (
     PAYMENT_CONFIRMATION_TIMEOUT,
     WITHDRAWAL_TIMEOUT,
     WITHDRAWAL_BROADCAST_TIMEOUT)
-from operations.services import blockr
+from api.utils.urls import construct_absolute_url
 
 
 def gen_payment_uid():
@@ -140,7 +138,10 @@ class PaymentOrder(models.Model):
             if self.time_created + PAYMENT_TIMEOUT < timezone.now():
                 return 'timeout'
             else:
-                return 'new'
+                if len(self.incoming_tx_ids) > 0:
+                    return 'underpaid'
+                else:
+                    return 'new'
         else:
             if self.time_created + PAYMENT_VALIDATION_TIMEOUT < timezone.now():
                 return 'failed'
@@ -156,19 +157,9 @@ class PaymentOrder(models.Model):
 
     @property
     def receipt_url(self):
-        domain = Site.objects.get_current().domain
-        path = reverse('api:short:payment-receipt', kwargs={'uid': self.uid})
-        return 'https://{0}{1}'.format(domain, path)
-
-    @property
-    def incoming_tx_url(self):
-        """For receipts"""
-        return blockr.get_tx_url(self.incoming_tx_ids[0], self.device.bitcoin_network)
-
-    @property
-    def payment_address_url(self):
-        """For receipts"""
-        return blockr.get_address_url(self.local_address, self.device.bitcoin_network)
+        return construct_absolute_url(
+            'api:short:payment-receipt',
+            kwargs={'uid': self.uid})
 
     @property
     def effective_exchange_rate(self):
@@ -252,20 +243,10 @@ class WithdrawalOrder(models.Model):
         return self.effective_exchange_rate / settings.BITCOIN_SCALE_DIVIZER
 
     @property
-    def outgoing_tx_url(self):
-        """For receipts"""
-        return blockr.get_tx_url(self.outgoing_tx_id, self.bitcoin_network)
-
-    @property
-    def customer_address_url(self):
-        """For receipts"""
-        return blockr.get_address_url(self.customer_address, self.bitcoin_network)
-
-    @property
     def receipt_url(self):
-        domain = Site.objects.get_current().domain
-        path = reverse('api:short:withdrawal-receipt', kwargs={'uid': self.uid})
-        return 'https://{0}{1}'.format(domain, path)
+        return construct_absolute_url(
+            'api:short:withdrawal-receipt',
+            kwargs={'uid': self.uid})
 
     @property
     def expires_at(self):

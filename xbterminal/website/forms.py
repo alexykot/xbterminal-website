@@ -182,8 +182,7 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             _("Registration for XBTerminal.io"),
             "email/registration.html",
             {'email': instance.contact_email,
-             'password': password,
-            },
+             'password': password},
             settings.DEFAULT_FROM_EMAIL,
             [instance.contact_email])
         message.send(fail_silently=False)

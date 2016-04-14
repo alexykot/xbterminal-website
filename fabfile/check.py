@@ -8,7 +8,6 @@ def python():
         local('flake8 '
               '--exclude=migrations,paymentrequest_pb2.py '
               '--max-line-length=140 '
-              '--ignore=E124,F841 '
               'xbterminal')
 
 

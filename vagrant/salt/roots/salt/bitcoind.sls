@@ -41,6 +41,10 @@ bitcoin:
   file.managed:
     - name: /etc/bitcoin/bitcoin.conf
     - source: salt://bitcoind/bitcoin.conf
+    - template: jinja
+    - context:
+      rpc_user: {{ pillar['bitcoind']['user'] }}
+      rpc_password: {{ pillar['bitcoind']['password'] }}
     - user: bitcoin
     - group: bitcoin
     - mode: 660

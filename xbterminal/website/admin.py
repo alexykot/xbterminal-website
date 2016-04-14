@@ -95,8 +95,8 @@ class UserAdmin(UserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'password1', 'password2')}
-        ),
+            'fields': ('email', 'password1', 'password2'),
+        }),
     )
     form = forms.UserChangeForm
     add_form = forms.UserCreationForm
@@ -128,6 +128,8 @@ class KYCDocumentInline(admin.TabularInline):
 
 @admin.register(models.BTCAccount)
 class BTCAccountAdmin(admin.ModelAdmin):
+
+    list_display = ['__unicode__', 'balance']
 
     def get_form(self, request, obj, **kwargs):
         form = super(BTCAccountAdmin, self).get_form(request, obj, **kwargs)

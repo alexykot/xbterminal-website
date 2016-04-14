@@ -92,7 +92,7 @@ class DeviceRegistrationSerializerTestCase(TestCase):
 
     @patch('api.serializers.Salt')
     def test_batch_size(self, salt_cls_mock):
-        salt_cls_mock.return_value = salt_mock = Mock(**{
+        salt_cls_mock.return_value = Mock(**{
             'check_fingerprint.return_value': True})
         batch = DeviceBatchFactory.create(size=0)
         data = {
@@ -108,7 +108,7 @@ class DeviceRegistrationSerializerTestCase(TestCase):
 
     @patch('api.serializers.Salt')
     def test_invalid_device_key(self, salt_cls_mock):
-        salt_cls_mock.return_value = salt_mock = Mock(**{
+        salt_cls_mock.return_value = Mock(**{
             'check_fingerprint.return_value': True})
         batch = DeviceBatchFactory.create()
         data = {
@@ -137,7 +137,7 @@ class DeviceRegistrationSerializerTestCase(TestCase):
 
     @patch('api.serializers.Salt')
     def test_invalid_api_key(self, salt_cls_mock):
-        salt_cls_mock.return_value = salt_mock = Mock(**{
+        salt_cls_mock.return_value = Mock(**{
             'check_fingerprint.return_value': True})
         batch = DeviceBatchFactory.create()
         data = {

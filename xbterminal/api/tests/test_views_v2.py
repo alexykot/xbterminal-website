@@ -416,7 +416,7 @@ class DeviceViewSetTestCase(APITestCase):
 
     @patch('api.serializers.Salt')
     def test_create(self, salt_cls_mock):
-        salt_cls_mock.return_value = salt_mock = Mock(**{
+        salt_cls_mock.return_value = Mock(**{
             'check_fingerprint.return_value': True,
         })
         batch = DeviceBatchFactory.create()
