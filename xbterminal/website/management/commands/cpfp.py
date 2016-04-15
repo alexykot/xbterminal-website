@@ -22,10 +22,16 @@ class Command(BaseCommand):
 
 
 def get_data():
-    for order in PaymentOrder.objects.filter(bitcoin_network='mainnet'):
+    orders = PaymentOrder.objects.\
+        filter(bitcoin_network='mainnet').\
+        order_by('time_created')
+    for order in orders:
         for tx_id in order.incoming_tx_ids:
             api_url = 'https://blockchain.info/rawtx/{0}/'.format(tx_id)
             response = requests.get(api_url)
+            if response.status_code != 200:
+                yield order.time_created, tx_id, None, None
+                continue
             data = response.json()
             size = data['size']
             inp_sum = 0
@@ -35,4 +41,4 @@ def get_data():
             for out in data['out']:
                 out_sum += out['value']
             fee = Decimal(inp_sum - out_sum) / COIN
-            yield tx_id, size, fee
+            yield order.time_created, tx_id, size, fee
