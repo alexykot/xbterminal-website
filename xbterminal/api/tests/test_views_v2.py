@@ -133,9 +133,7 @@ class PaymentViewSetTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data
         self.assertEqual(data['paid'], 1)
-        self.assertIn('receipt_url', data)
-        self.assertIn('qr_code_src', data)
-        payment_order = PaymentOrder.objects.get(uid=payment_order.uid)
+        payment_order.refresh_from_db()
         self.assertIsNotNone(payment_order.time_notified)
 
     def test_payment_request(self):

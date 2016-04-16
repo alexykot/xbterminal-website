@@ -117,15 +117,8 @@ class PaymentViewSet(viewsets.GenericViewSet):
     def retrieve(self, *args, **kwargs):
         payment_order = self.get_object()
         if payment_order.time_forwarded is not None:
-            receipt_url = construct_absolute_url(
-                'api:short:receipt',
-                kwargs={'order_uid': payment_order.uid})
-            qr_code_src = generate_qr_code(receipt_url, size=3)
-            data = {
-                'paid': 1,
-                'receipt_url': receipt_url,
-                'qr_code_src': qr_code_src,
-            }
+            # Close order
+            data = {'paid': 1}
             if payment_order.time_notified is None:
                 payment_order.time_notified = timezone.now()
                 payment_order.save()
