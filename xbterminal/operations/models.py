@@ -99,6 +99,7 @@ class PaymentOrder(models.Model):
     time_notified = models.DateTimeField(null=True)
     time_confirmed = models.DateTimeField(null=True)
     time_refunded = models.DateTimeField(null=True)
+    time_cancelled = models.DateTimeField(null=True)
 
     def __unicode__(self):
         return str(self.pk)
@@ -123,9 +124,12 @@ class PaymentOrder(models.Model):
                 but payment order is not marked as notified
             unconfirmed - customer notified about successful payment,
                 but outgoing transaction is not confirmed
+            cancelled: payment cancelled by the customer
         """
         if self.time_refunded:
             return 'refunded'
+        if self.time_cancelled:
+            return 'cancelled'
         if self.time_notified:
             if self.time_confirmed:
                 return 'confirmed'
@@ -260,10 +264,10 @@ class WithdrawalOrder(models.Model):
             sent - transaction has been sent
             broadcasted: transaction has been broadcasted
             completed: customer notified about successful withdrawal
-            cancelled: withdrawal order cancelled by the customer
             timeout - transaction has not been sent
             failed - transaction has been sent,
                 but withdrawal order is not marked as completed
+            cancelled: withdrawal order cancelled by the customer
         """
         if self.time_completed:
             return 'completed'
