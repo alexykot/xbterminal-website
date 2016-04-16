@@ -172,11 +172,16 @@ def generate_qr_code(text, size=4):
     return qr_code_src
 
 
-def send_error_message(tb=None, payment_order=None):
+def send_error_message(tb=None, order=None):
+    """
+    Accepts:
+        tb: traceback object
+        order: PaymentOrder or WithdrawalOrder instance
+    """
     email = create_html_message(
         'XBTerminal - error',
         'email/error.html',
-        {'traceback': tb, 'payment_order': payment_order},
+        {'traceback': tb, 'order': order},
         settings.DEFAULT_FROM_EMAIL,
         settings.CONTACT_EMAIL_RECIPIENTS)
     email.send(fail_silently=False)
