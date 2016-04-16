@@ -1,3 +1,4 @@
+import datetime
 from decimal import Decimal
 import hashlib
 
@@ -148,6 +149,22 @@ class PaymentViewSetTestCase(APITestCase):
                          'application/bitcoin-paymentrequest')
         self.assertEqual(response.content, data)
 
+    def test_payment_request_timeout(self):
+        order = PaymentOrderFactory.create(
+            time_created=timezone.now() - datetime.timedelta(hours=1))
+        self.assertEqual(order.status, 'timeout')
+        url = reverse('api:v2:payment-request', kwargs={'uid': order.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_payment_request_cancelled(self):
+        order = PaymentOrderFactory.create(
+            time_cancelled=timezone.now())
+        self.assertEqual(order.status, 'cancelled')
+        url = reverse('api:v2:payment-request', kwargs={'uid': order.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
     @patch('api.views_v2.operations.payment.parse_payment')
     def test_payment_response(self, parse_mock):
         payment_order = PaymentOrderFactory.create()
@@ -175,6 +192,14 @@ class PaymentViewSetTestCase(APITestCase):
             url, data,
             content_type='application/octet-stream')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_payment_response_already_received(self):
+        order = PaymentOrderFactory.create(time_recieved=timezone.now())
+        url = reverse('api:v2:payment-response', kwargs={'uid': order.uid})
+        response = self.client.post(
+            url, '',
+            content_type='application/bitcoin-payment')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     @patch('api.utils.pdf.get_template')
     def test_receipt(self, get_template_mock):

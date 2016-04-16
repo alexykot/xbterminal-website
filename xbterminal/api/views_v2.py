@@ -129,7 +129,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
     @detail_route(methods=['GET'], renderer_classes=[PaymentRequestRenderer])
     def request(self, *args, **kwargs):
         payment_order = self.get_object()
-        if payment_order.expires_at < timezone.now():
+        if payment_order.status not in ['new', 'underpaid']:
             raise Http404
         response = Response(payment_order.request)
         response['Content-Transfer-Encoding'] = 'binary'
@@ -138,6 +138,8 @@ class PaymentViewSet(viewsets.GenericViewSet):
     @detail_route(methods=['POST'], renderer_classes=[PaymentACKRenderer])
     def response(self, *args, **kwargs):
         payment_order = self.get_object()
+        if payment_order.status not in ['new', 'underpaid']:
+            raise Http404
         # Check and parse message
         content_type = self.request.META.get('CONTENT_TYPE')
         if content_type != 'application/bitcoin-payment':
