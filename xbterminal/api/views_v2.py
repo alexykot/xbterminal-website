@@ -126,6 +126,15 @@ class PaymentViewSet(viewsets.GenericViewSet):
             data = {'paid': 0}
         return Response(data)
 
+    @detail_route(methods=['POST'])
+    def cancel(self, *args, **kwargs):
+        order = self.get_object()
+        if order.status != 'new':
+            raise Http404
+        order.time_cancelled = timezone.now()
+        order.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     @detail_route(methods=['GET'], renderer_classes=[PaymentRequestRenderer])
     def request(self, *args, **kwargs):
         payment_order = self.get_object()

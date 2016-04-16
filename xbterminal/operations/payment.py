@@ -148,6 +148,9 @@ def wait_for_payment(payment_order_uid):
         # Payment already validated, cancel job
         cancel_current_task()
         return
+    if payment_order.status == 'cancelled':
+        cancel_current_task()
+        return
     # Connect to bitcoind
     bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
     transactions = bc.get_unspent_transactions(
@@ -293,6 +296,9 @@ def wait_for_validation(payment_order_uid):
         cancel_current_task()
     if payment_order.time_forwarded is not None:
         # Payment already forwarded, cancel job
+        cancel_current_task()
+        return
+    if payment_order.status == 'cancelled':
         cancel_current_task()
         return
     if payment_order.time_recieved is not None:
@@ -458,5 +464,5 @@ def check_payment_status(payment_order_uid):
     elif payment_order.status == 'unconfirmed':
         send_error_message(payment_order=payment_order)
         cancel_current_task()
-    elif payment_order.status in ['refunded', 'confirmed']:
+    elif payment_order.status in ['refunded', 'confirmed', 'cancelled']:
         cancel_current_task()

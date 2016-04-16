@@ -175,6 +175,15 @@ class WaitForPaymentTestCase(TestCase):
 
     @patch('operations.payment.cancel_current_task')
     @patch('operations.payment.blockchain.BlockChain')
+    def test_payment_cancelled(self, bc_cls_mock, cancel_mock):
+        order = PaymentOrderFactory.create(
+            time_cancelled=timezone.now())
+        payment.wait_for_payment(order.uid)
+        self.assertTrue(cancel_mock.called)
+        self.assertFalse(bc_cls_mock.called)
+
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.blockchain.BlockChain')
     @patch('operations.payment.validate_payment')
     def test_no_transactions(self, validate_mock, bc_mock, cancel_mock):
         bc_instance_mock = Mock(**{
@@ -592,6 +601,15 @@ class WaitForValidationTestCase(TestCase):
         self.assertFalse(forward_mock.called)
 
     @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.forward_transaction')
+    def test_payment_cancelled(self, forward_mock, cancel_mock):
+        order = PaymentOrderFactory.create(
+            time_cancelled=timezone.now())
+        payment.wait_for_validation(order.uid)
+        self.assertTrue(cancel_mock.called)
+        self.assertFalse(forward_mock.called)
+
+    @patch('operations.payment.cancel_current_task')
     @patch('operations.payment.blockcypher.is_tx_reliable')
     @patch('operations.payment.forward_transaction')
     def test_tx_not_reliable(self, forward_mock, conf_chk_mock, cancel_mock):
@@ -903,6 +921,15 @@ class CheckPaymentStatusTestCase(TestCase):
             time_created=timezone.now(),
             time_recieved=timezone.now(),
             time_refunded=timezone.now())
+        payment.check_payment_status(order.uid)
+        self.assertTrue(cancel_mock.called)
+        self.assertFalse(send_mock.called)
+
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.send_error_message')
+    def test_cancelled(self, send_mock, cancel_mock):
+        order = PaymentOrderFactory.create(
+            time_cancelled=timezone.now())
         payment.check_payment_status(order.uid)
         self.assertTrue(cancel_mock.called)
         self.assertFalse(send_mock.called)
