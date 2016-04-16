@@ -17,6 +17,7 @@ from operations.blockchain import (
 from operations.rq_helpers import cancel_current_task, run_periodic_task
 from operations.models import WithdrawalOrder
 from website.models import BTCAccount
+from website.utils import send_error_message
 
 logger = logging.getLogger(__name__)
 
@@ -166,6 +167,7 @@ def wait_for_confidence(order_uid):
         return
     if order.time_created + WITHDRAWAL_BROADCAST_TIMEOUT < timezone.now():
         # Timeout, cancel job
+        send_error_message(order=order)
         cancel_current_task()
     try:
         outgoing_tx_reliable = blockcypher.is_tx_reliable(

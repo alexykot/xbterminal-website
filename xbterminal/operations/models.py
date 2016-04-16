@@ -262,6 +262,7 @@ class WithdrawalOrder(models.Model):
             completed: customer notified about successful withdrawal
             cancelled: withdrawal order cancelled by the customer
             timeout - transaction has not been sent
+                (order is not confirmed)
             failed - transaction has been sent,
                 but withdrawal order is not marked as completed
         """
