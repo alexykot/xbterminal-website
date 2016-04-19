@@ -10,7 +10,7 @@ from mock import patch, Mock
 
 from website.models import Device
 from website.tests.factories import (
-    BTCAccountFactory,
+    AccountFactory,
     DeviceFactory,
     ReconciliationTimeFactory)
 from website.management.commands.check_wallet import \
@@ -60,7 +60,7 @@ class CheckWalletTestCase(TestCase):
     @patch('website.management.commands.check_wallet.BlockChain')
     @patch('website.utils.send_balance_admin_notification')
     def test_check_ok(self, send_ntf_mock, bc_mock):
-        BTCAccountFactory.create_batch(
+        AccountFactory.create_batch(
             2, network='mainnet', balance=Decimal('0.2'))
         bc_mock.return_value = Mock(**{
             'get_balance.return_value': Decimal('0.4'),
@@ -72,7 +72,7 @@ class CheckWalletTestCase(TestCase):
 
     @patch('website.management.commands.check_wallet.BlockChain')
     def test_check_mismatch(self, bc_mock):
-        BTCAccountFactory.create_batch(
+        AccountFactory.create_batch(
             2, network='mainnet', balance=Decimal('0.2'))
         bc_mock.return_value = Mock(**{
             'get_address_balance.return_value': Decimal('0.3'),
@@ -85,7 +85,7 @@ class CheckWalletTestCase(TestCase):
 
     @patch('website.management.commands.check_wallet.BlockChain')
     def test_strict_check_mismatch(self, bc_mock):
-        BTCAccountFactory.create_batch(
+        AccountFactory.create_batch(
             2, network='mainnet', balance=Decimal('0.2'))
         bc_mock.return_value = Mock(**{
             'get_balance.return_value': Decimal('0.5'),

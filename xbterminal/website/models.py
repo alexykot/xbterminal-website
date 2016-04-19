@@ -228,7 +228,7 @@ class MerchantAccount(models.Model):
             latest('uploaded')
 
     def get_account_balance(self, network):
-        account = self.btcaccount_set.\
+        account = self.account_set.\
             filter(network=network).first()
         if account:
             return account.balance
@@ -262,7 +262,7 @@ BITCOIN_NETWORKS = [
 ]
 
 
-class BTCAccount(models.Model):
+class Account(models.Model):
 
     merchant = models.ForeignKey(MerchantAccount)
     network = models.CharField(max_length=50,

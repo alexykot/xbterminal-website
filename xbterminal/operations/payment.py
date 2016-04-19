@@ -29,7 +29,7 @@ from operations.services.price import get_exchange_rate
 from operations.rq_helpers import run_periodic_task, cancel_current_task
 from operations.models import PaymentOrder
 
-from website.models import BTCAccount
+from website.models import Account
 from website.utils import send_error_message
 
 logger = logging.getLogger(__name__)
@@ -352,7 +352,7 @@ def forward_transaction(payment_order):
     else:
         payment_order.tx_fee_btc_amount += extra_btc_amount
     # Select destination address
-    btc_account = BTCAccount.objects.filter(
+    btc_account = Account.objects.filter(
         merchant=payment_order.device.merchant,
         network=payment_order.device.bitcoin_network).first()
     if btc_account and \

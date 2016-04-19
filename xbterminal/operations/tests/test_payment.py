@@ -6,10 +6,10 @@ from mock import patch, Mock
 
 from constance import config
 
-from website.models import BTCAccount
+from website.models import Account
 from website.tests.factories import (
     MerchantAccountFactory,
-    BTCAccountFactory,
+    AccountFactory,
     DeviceFactory)
 from operations.models import PaymentOrder
 from operations.tests.factories import PaymentOrderFactory
@@ -808,8 +808,8 @@ class ForwardTransactionTestCase(TestCase):
     @patch('operations.payment.blockchain.BlockChain')
     def test_forward_balance(self, bc_mock):
         merchant = MerchantAccountFactory.create()
-        btc_account = BTCAccountFactory.create(merchant=merchant,
-                                               balance_max=Decimal('1.0'))
+        btc_account = AccountFactory.create(merchant=merchant,
+                                            balance_max=Decimal('1.0'))
         payment_order = PaymentOrderFactory.create(
             device__merchant=merchant,
             merchant_btc_amount=Decimal('0.1'),
@@ -849,7 +849,7 @@ class ForwardTransactionTestCase(TestCase):
         self.assertEqual(payment_order.outgoing_tx_id, outgoing_tx_id)
         self.assertIsNotNone(payment_order.time_forwarded)
 
-        btc_account = BTCAccount.objects.get(pk=btc_account.pk)
+        btc_account = Account.objects.get(pk=btc_account.pk)
         self.assertEqual(btc_account.address, account_address)
         self.assertEqual(btc_account.balance,
                          payment_order.merchant_btc_amount)

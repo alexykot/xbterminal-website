@@ -8,7 +8,7 @@ from oauth2_provider.models import Application
 from website.models import (
     User,
     MerchantAccount,
-    BTCAccount,
+    Account,
     DeviceBatch,
     Device,
     ReconciliationTime)
@@ -54,10 +54,10 @@ class MerchantAccountFactory(factory.DjangoModelFactory):
     contact_email = factory.LazyAttribute(lambda ma: ma.user.email)
 
 
-class BTCAccountFactory(factory.DjangoModelFactory):
+class AccountFactory(factory.DjangoModelFactory):
 
     class Meta:
-        model = BTCAccount
+        model = Account
 
     merchant = factory.SubFactory(MerchantAccountFactory)
 

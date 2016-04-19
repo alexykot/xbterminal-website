@@ -126,13 +126,13 @@ class KYCDocumentInline(admin.TabularInline):
     extra = 0
 
 
-@admin.register(models.BTCAccount)
-class BTCAccountAdmin(admin.ModelAdmin):
+@admin.register(models.Account)
+class AccountAdmin(admin.ModelAdmin):
 
     list_display = ['__unicode__', 'balance']
 
     def get_form(self, request, obj, **kwargs):
-        form = super(BTCAccountAdmin, self).get_form(request, obj, **kwargs)
+        form = super(AccountAdmin, self).get_form(request, obj, **kwargs)
         for field_name in form.base_fields:
             field = form.base_fields[field_name]
             if field_name == 'address':
@@ -143,9 +143,9 @@ class BTCAccountAdmin(admin.ModelAdmin):
         return form
 
 
-class BTCAccountInline(admin.TabularInline):
+class AccountInline(admin.TabularInline):
 
-    model = models.BTCAccount
+    model = models.Account
     readonly_fields = ['address']
     extra = 1
 
@@ -171,7 +171,7 @@ class MerchantAccountAdmin(admin.ModelAdmin):
     ordering = ['id']
 
     inlines = [
-        BTCAccountInline,
+        AccountInline,
         KYCDocumentInline,
     ]
 

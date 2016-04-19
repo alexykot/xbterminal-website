@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from website.models import BTCAccount
+from website.models import Account
 from operations import BTC_DEC_PLACES, blockchain
 
 
@@ -19,8 +19,8 @@ class Command(BaseCommand):
 
 def withdraw_btc(account_id, address):
     try:
-        account = BTCAccount.objects.get(pk=account_id)
-    except BTCAccount.DoesNotExist:
+        account = Account.objects.get(pk=account_id)
+    except Account.DoesNotExist:
         return 'invalid account id'
     if not account.address:
         return 'nothing to withdraw'

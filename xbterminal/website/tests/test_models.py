@@ -10,13 +10,13 @@ from website.models import (
     User,
     UITheme,
     MerchantAccount,
-    BTCAccount,
+    Account,
     Device,
     DeviceBatch)
 from website.tests.factories import (
     UserFactory,
     MerchantAccountFactory,
-    BTCAccountFactory,
+    AccountFactory,
     DeviceBatchFactory,
     DeviceFactory,
     ReconciliationTimeFactory)
@@ -91,7 +91,7 @@ class MerchantAccountTestCase(TestCase):
     def test_get_account_balance(self):
         merchant = MerchantAccountFactory.create()
         self.assertIsNone(merchant.get_account_balance('mainnet'))
-        BTCAccountFactory.create(
+        AccountFactory.create(
             merchant=merchant, network='mainnet', balance=Decimal('0.5'))
         self.assertEqual(merchant.get_account_balance('mainnet'),
                          Decimal('0.5'))
@@ -123,22 +123,22 @@ class MerchantAccountTestCase(TestCase):
                          sum(p.fiat_amount for p in payments))
 
 
-class BTCAccountTestCase(TestCase):
+class AccountTestCase(TestCase):
 
     def test_create_btc_account(self):
         merchant = MerchantAccountFactory.create()
-        btc_account = BTCAccount.objects.create(merchant=merchant)
+        account = Account.objects.create(merchant=merchant)
         # Check defaults
-        self.assertEqual(btc_account.network, 'mainnet')
-        self.assertEqual(btc_account.balance, 0)
-        self.assertEqual(btc_account.balance_max, 0)
-        self.assertIsNone(btc_account.address)
+        self.assertEqual(account.network, 'mainnet')
+        self.assertEqual(account.balance, 0)
+        self.assertEqual(account.balance_max, 0)
+        self.assertIsNone(account.address)
 
     def test_btc_account_factory(self):
-        btc_account = BTCAccountFactory.create()
-        self.assertEqual(btc_account.balance, 0)
-        self.assertEqual(btc_account.balance_max, 0)
-        self.assertIsNone(btc_account.address)
+        account = AccountFactory.create()
+        self.assertEqual(account.balance, 0)
+        self.assertEqual(account.balance_max, 0)
+        self.assertIsNone(account.address)
 
 
 class DeviceTestCase(TestCase):

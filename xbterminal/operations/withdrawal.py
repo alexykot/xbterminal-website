@@ -16,7 +16,7 @@ from operations.blockchain import (
     deserialize_outputs)
 from operations.rq_helpers import cancel_current_task, run_periodic_task
 from operations.models import WithdrawalOrder
-from website.models import BTCAccount
+from website.models import Account
 from website.utils import send_error_message
 
 logger = logging.getLogger(__name__)
@@ -60,10 +60,10 @@ def prepare_withdrawal(device, fiat_amount):
         order: WithdrawalOrder instance
     """
     try:
-        account = BTCAccount.objects.get(merchant=device.merchant,
-                                         network=device.bitcoin_network,
-                                         address__isnull=False)
-    except BTCAccount.DoesNotExist:
+        account = Account.objects.get(merchant=device.merchant,
+                                      network=device.bitcoin_network,
+                                      address__isnull=False)
+    except Account.DoesNotExist:
         raise WithdrawalError('Merchant doesn\'t have BTC account for {0}'.format(
             device.bitcoin_network))
 
@@ -144,7 +144,7 @@ def send_transaction(order, customer_address):
     order.save()
 
     # Update balance
-    btc_account = BTCAccount.objects.filter(
+    btc_account = Account.objects.filter(
         merchant=order.device.merchant,
         network=order.bitcoin_network).first()
     btc_account.balance -= order.btc_amount
