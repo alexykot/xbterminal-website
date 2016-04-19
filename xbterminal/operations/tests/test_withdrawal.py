@@ -1,4 +1,6 @@
+import datetime
 from decimal import Decimal
+
 from django.test import TestCase
 from django.utils import timezone
 from mock import patch, Mock
@@ -237,3 +239,16 @@ class WaitForConfidenceTestCase(TestCase):
         withdrawal.wait_for_confidence('invalid_uid')
         self.assertTrue(cancel_mock.called)
         self.assertFalse(tx_check_mock.called)
+
+    @patch('operations.withdrawal.cancel_current_task')
+    @patch('operations.withdrawal.send_error_message')
+    def test_timeout(self, send_mock, cancel_mock):
+        order = WithdrawalOrderFactory.create(
+            time_created=timezone.now() - datetime.timedelta(hours=1),
+            time_sent=timezone.now() - datetime.timedelta(hours=1))
+        withdrawal.wait_for_confidence(order.uid)
+        order.refresh_from_db()
+        self.assertEqual(order.status, 'failed')
+        self.assertTrue(cancel_mock.called)
+        self.assertTrue(send_mock.called)
+        self.assertEqual(send_mock.call_args[1]['order'].pk, order.pk)

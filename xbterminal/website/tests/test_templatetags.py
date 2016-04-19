@@ -1,9 +1,15 @@
 from django.test import TestCase
 
 from website.templatetags import website_tags
+from website.tests.factories import DeviceFactory
 
 
 class TemplateTagsTestCase(TestCase):
+
+    def test_admin_url(self):
+        device = DeviceFactory.create()
+        url = website_tags.admin_url(device)
+        self.assertIn('/admin/website/device/', url)
 
     def test_btc_tx_url(self):
         tx_id = '1' * 64

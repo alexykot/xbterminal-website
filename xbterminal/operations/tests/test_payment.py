@@ -881,6 +881,7 @@ class CheckPaymentStatusTestCase(TestCase):
         payment.check_payment_status(order.uid)
         self.assertTrue(cancel_mock.called)
         self.assertTrue(send_mock.called)
+        self.assertEqual(send_mock.call_args[1]['order'].pk, order.pk)
         self.assertTrue(reverse_mock.called)
 
     @patch('operations.payment.cancel_current_task')
@@ -895,6 +896,7 @@ class CheckPaymentStatusTestCase(TestCase):
         payment.check_payment_status(order.uid)
         self.assertTrue(cancel_mock.called)
         self.assertTrue(send_mock.called)
+        self.assertEqual(send_mock.call_args[1]['order'].pk, order.pk)
 
     @patch('operations.payment.cancel_current_task')
     @patch('operations.payment.send_error_message')
