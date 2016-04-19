@@ -99,6 +99,11 @@ class PaymentOrderTestCase(TestCase):
         payment_order.time_refunded = (payment_order.time_recieved +
                                        datetime.timedelta(minutes=10))
         self.assertEqual(payment_order.status, 'refunded')
+        # Cancelled
+        order = PaymentOrderFactory.create()
+        self.assertEqual(order.status, 'new')
+        order.time_cancelled = timezone.now()
+        self.assertEqual(order.status, 'cancelled')
 
     def test_scaled_btc_amount(self):
         order = PaymentOrderFactory.create(btc_amount=Decimal('0.1003'))

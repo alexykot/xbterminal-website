@@ -2,6 +2,7 @@ from decimal import Decimal
 import logging
 
 from django.conf import settings
+from django.db.transaction import atomic
 from django.http import Http404
 from django.utils import timezone
 
@@ -117,15 +118,8 @@ class PaymentViewSet(viewsets.GenericViewSet):
     def retrieve(self, *args, **kwargs):
         payment_order = self.get_object()
         if payment_order.time_forwarded is not None:
-            receipt_url = construct_absolute_url(
-                'api:short:receipt',
-                kwargs={'order_uid': payment_order.uid})
-            qr_code_src = generate_qr_code(receipt_url, size=3)
-            data = {
-                'paid': 1,
-                'receipt_url': receipt_url,
-                'qr_code_src': qr_code_src,
-            }
+            # Close order
+            data = {'paid': 1}
             if payment_order.time_notified is None:
                 payment_order.time_notified = timezone.now()
                 payment_order.save()
@@ -133,10 +127,20 @@ class PaymentViewSet(viewsets.GenericViewSet):
             data = {'paid': 0}
         return Response(data)
 
+    @detail_route(methods=['POST'])
+    @atomic
+    def cancel(self, *args, **kwargs):
+        order = self.get_object()
+        if order.status not in ['new', 'underpaid', 'recieved']:
+            raise Http404
+        order.time_cancelled = timezone.now()
+        order.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     @detail_route(methods=['GET'], renderer_classes=[PaymentRequestRenderer])
     def request(self, *args, **kwargs):
         payment_order = self.get_object()
-        if payment_order.expires_at < timezone.now():
+        if payment_order.status not in ['new', 'underpaid']:
             raise Http404
         response = Response(payment_order.request)
         response['Content-Transfer-Encoding'] = 'binary'
@@ -145,6 +149,8 @@ class PaymentViewSet(viewsets.GenericViewSet):
     @detail_route(methods=['POST'], renderer_classes=[PaymentACKRenderer])
     def response(self, *args, **kwargs):
         payment_order = self.get_object()
+        if payment_order.status not in ['new', 'underpaid']:
+            raise Http404
         # Check and parse message
         content_type = self.request.META.get('CONTENT_TYPE')
         if content_type != 'application/bitcoin-payment':
