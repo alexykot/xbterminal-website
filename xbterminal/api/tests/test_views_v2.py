@@ -149,6 +149,16 @@ class PaymentViewSetTestCase(APITestCase):
         order = PaymentOrderFactory.create(time_recieved=timezone.now())
         url = reverse('api:v2:payment-cancel', kwargs={'uid': order.uid})
         response = self.client.post(url, {}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        order.refresh_from_db()
+        self.assertEqual(order.status, 'cancelled')
+
+    def test_cancel_already_forwarded(self):
+        order = PaymentOrderFactory.create(
+            time_recieved=timezone.now(),
+            time_forwarded=timezone.now())
+        url = reverse('api:v2:payment-cancel', kwargs={'uid': order.uid})
+        response = self.client.post(url, {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_payment_request(self):

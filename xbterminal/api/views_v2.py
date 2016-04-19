@@ -2,6 +2,7 @@ from decimal import Decimal
 import logging
 
 from django.conf import settings
+from django.db.transaction import atomic
 from django.http import Http404
 from django.utils import timezone
 
@@ -127,9 +128,10 @@ class PaymentViewSet(viewsets.GenericViewSet):
         return Response(data)
 
     @detail_route(methods=['POST'])
+    @atomic
     def cancel(self, *args, **kwargs):
         order = self.get_object()
-        if order.status != 'new':
+        if order.status not in ['new', 'underpaid', 'recieved']:
             raise Http404
         order.time_cancelled = timezone.now()
         order.save()

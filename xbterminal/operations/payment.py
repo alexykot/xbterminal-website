@@ -8,6 +8,7 @@ from bitcoin.rpc import JSONRPCException
 from bitcoin.wallet import CBitcoinAddress
 
 from django.utils import timezone
+from django.db.transaction import atomic
 from constance import config
 
 from operations import (
@@ -224,7 +225,7 @@ def parse_payment(payment_order, payment_message):
     payment_order.payment_type = 'bip0070'
     payment_order.time_recieved = timezone.now()
     payment_order.save()
-    logger.info('payment recieved ({0})'.format(payment_order.uid))
+    logger.info('payment received ({0})'.format(payment_order.uid))
     return payment_ack
 
 
@@ -317,7 +318,12 @@ def wait_for_validation(payment_order_uid):
                 break
         else:
             cancel_current_task()
-            forward_transaction(payment_order)
+            with atomic():
+                payment_order.refresh_from_db()
+                if payment_order.status == 'cancelled':
+                    # Payment still can be cancelled at this moment
+                    return
+                forward_transaction(payment_order)
             run_periodic_task(wait_for_confirmation, [payment_order.uid], interval=15)
             if payment_order.instantfiat_invoice_id is None:
                 # Payment finished
@@ -448,7 +454,7 @@ def check_payment_status(payment_order_uid):
         # PaymentOrder deleted, cancel job
         cancel_current_task()
         return
-    if payment_order.status == 'timeout':
+    if payment_order.status in ['timeout', 'cancelled']:
         try:
             reverse_payment(payment_order)
         except exceptions.RefundError:
@@ -464,5 +470,5 @@ def check_payment_status(payment_order_uid):
     elif payment_order.status == 'unconfirmed':
         send_error_message(payment_order=payment_order)
         cancel_current_task()
-    elif payment_order.status in ['refunded', 'confirmed', 'cancelled']:
+    elif payment_order.status in ['refunded', 'confirmed']:
         cancel_current_task()
