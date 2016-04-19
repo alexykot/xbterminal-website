@@ -693,7 +693,8 @@ class ForwardTransactionTestCase(TestCase):
             fee_btc_amount=Decimal('0.001'),
             btc_amount=Decimal('0.1011'),
             instantfiat_btc_amount=Decimal(0),
-            incoming_tx_ids=['0' * 64])
+            incoming_tx_ids=['0' * 64],
+            refund_address='18GV9EWUjSVTU1jXMb1RmaGxAonSyBgKAc')
         outgoing_tx_id = '1' * 64
         extra_btc_amount = Decimal('0.001')
 
@@ -720,11 +721,13 @@ class ForwardTransactionTestCase(TestCase):
         args = bc_instance_mock.create_raw_transaction.call_args[0]
         self.assertEqual(args[0], ['test_outpoint'])
         outputs = args[1]
-        self.assertEqual(len(outputs.keys()), 2)
+        self.assertEqual(len(outputs.keys()), 3)
         self.assertEqual(outputs[payment_order.merchant_address],
                          payment_order.merchant_btc_amount)
         self.assertEqual(outputs[payment_order.fee_address],
-                         payment_order.fee_btc_amount + payment_order.extra_btc_amount)
+                         payment_order.fee_btc_amount)
+        self.assertEqual(outputs[payment_order.refund_address],
+                         payment_order.extra_btc_amount)
 
         self.assertTrue(bc_instance_mock.sign_raw_transaction.called)
         self.assertTrue(bc_instance_mock.send_raw_transaction.called)

@@ -359,9 +359,11 @@ def forward_transaction(payment_order):
         (destination_address,
          payment_order.merchant_btc_amount),
         (payment_order.fee_address,
-         payment_order.fee_btc_amount + payment_order.extra_btc_amount),
+         payment_order.fee_btc_amount),
         (payment_order.instantfiat_address,
          payment_order.instantfiat_btc_amount),
+        (payment_order.refund_address,
+         payment_order.extra_btc_amount),
     ]
     outputs = {}
     for address, amount in addresses:
