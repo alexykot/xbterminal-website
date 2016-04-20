@@ -368,11 +368,10 @@ def forward_transaction(payment_order):
         account_currency = Currency.objects.get(name='BTC')
     else:
         account_currency = Currency.objects.get(name='TBTC')
-    account = Account.objects.filter(
+    account = Account.objects.get(
         merchant=payment_order.device.merchant,
-        currency=account_currency).first()
-    if account and \
-            account.balance + payment_order.merchant_btc_amount <= \
+        currency=account_currency)
+    if account.balance + payment_order.merchant_btc_amount <= \
             account.balance_max:
         # Store bitcoins on merchant's internal account
         if not account.address:

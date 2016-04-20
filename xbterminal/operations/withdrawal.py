@@ -146,9 +146,8 @@ def send_transaction(order, customer_address):
         account_currency = Currency.objects.get(name='BTC')
     else:
         account_currency = Currency.objects.get(name='TBTC')
-    account = Account.objects.filter(
-        merchant=order.device.merchant,
-        currency=account_currency).first()
+    account = Account.objects.get(merchant=order.device.merchant,
+                                  currency=account_currency)
     account.balance -= order.btc_amount
     account.save()
 

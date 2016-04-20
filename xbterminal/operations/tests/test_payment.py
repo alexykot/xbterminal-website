@@ -750,6 +750,7 @@ class ForwardTransactionTestCase(TestCase):
             instantfiat_btc_amount=Decimal(0),
             incoming_tx_ids=['0' * 64],
             refund_address='18GV9EWUjSVTU1jXMb1RmaGxAonSyBgKAc')
+        AccountFactory.create(merchant=payment_order.device.merchant)
         outgoing_tx_id = '1' * 64
         extra_btc_amount = Decimal('0.001')
 
@@ -801,6 +802,7 @@ class ForwardTransactionTestCase(TestCase):
             btc_amount=Decimal('0.1011'),
             instantfiat_btc_amount=Decimal(0),
             incoming_tx_ids=['0' * 64])
+        AccountFactory.create(merchant=order.device.merchant)
         bc_cls_mock.return_value = Mock(**{
             'get_raw_transaction.return_value': 'test_incoming_tx',
             'get_unspent_outputs.return_value': [{

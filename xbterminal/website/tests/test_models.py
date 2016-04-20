@@ -1,5 +1,6 @@
 from decimal import Decimal
 from django.conf import settings
+from django.db import IntegrityError
 from django.test import TestCase
 from django.utils import timezone
 
@@ -166,6 +167,13 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.balance, 0)
         self.assertEqual(account.balance_max, 0)
         self.assertIsNone(account.address)
+
+    def test_unique_together(self):
+        merchant = MerchantAccountFactory.create()
+        AccountFactory.create(merchant=merchant, currency__name='TBTC')
+        with self.assertRaises(IntegrityError):
+            AccountFactory.create(merchant=merchant,
+                                  currency__name='TBTC')
 
 
 class DeviceTestCase(TestCase):

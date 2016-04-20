@@ -23,7 +23,8 @@ class AccountAdminTestCase(TestCase):
             'address': '',
         }
         form_cls = self.ma.get_form(mock.Mock(), account)
-        form = form_cls(data=data)
+        form = form_cls(data=data, instance=account)
         self.assertTrue(form.is_valid())
         account_updated = form.save()
+        self.assertEqual(account_updated.pk, account.pk)
         self.assertEqual(account_updated.address, account.address)

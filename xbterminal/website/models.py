@@ -273,9 +273,14 @@ class Account(models.Model):
                                       decimal_places=8,
                                       default=0)
     address = models.CharField(max_length=35,
+                               unique=True,
                                validators=[validate_bitcoin_address],
                                blank=True,
                                null=True)
+
+    class Meta:
+        ordering = ('merchant', 'currency')
+        unique_together = ('merchant', 'currency')
 
     def __unicode__(self):
         return u'{0} - {1}'.format(
