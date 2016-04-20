@@ -6,12 +6,24 @@ import factory
 
 from oauth2_provider.models import Application
 from website.models import (
+    Currency,
     User,
     MerchantAccount,
     Account,
     DeviceBatch,
     Device,
     ReconciliationTime)
+
+
+class CurrencyFactory(factory.DjangoModelFactory):
+
+    class Meta:
+        model = Currency
+
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        return model_class.objects.get(
+            name=kwargs.get('name', 'GBP'))
 
 
 class UserFactory(factory.DjangoModelFactory):

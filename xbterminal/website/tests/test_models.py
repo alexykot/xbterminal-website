@@ -15,6 +15,7 @@ from website.models import (
     Device,
     DeviceBatch)
 from website.tests.factories import (
+    CurrencyFactory,
     UserFactory,
     MerchantAccountFactory,
     AccountFactory,
@@ -60,6 +61,12 @@ class CurrencyTestCase(TestCase):
         tbtc = Currency.objects.get(name='TBTC')
         self.assertEqual(tbtc.prefix, '')
         self.assertEqual(tbtc.postfix, 'tBTC')
+
+    def test_factory(self):
+        gbp = CurrencyFactory.create()
+        self.assertEqual(gbp.name, 'GBP')
+        usd = CurrencyFactory.create(name='USD')
+        self.assertEqual(usd.pk, 2)
 
 
 class UIThemeTestCase(TestCase):
