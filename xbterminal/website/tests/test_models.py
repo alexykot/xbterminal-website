@@ -78,7 +78,7 @@ class UIThemeTestCase(TestCase):
 
 class MerchantAccountTestCase(TestCase):
 
-    def create_merchant_account(self):
+    def test_create_merchant_account(self):
         user = UserFactory.create()
         merchant = MerchantAccount.objects.create(
             user=user,
@@ -91,8 +91,6 @@ class MerchantAccountTestCase(TestCase):
         self.assertEqual(merchant.language.code, 'en')
         self.assertEqual(merchant.currency.name, 'GBP')
         self.assertEqual(merchant.ui_theme.name, 'default')
-        self.assertEqual(merchant.account_balance, 0)
-        self.assertEqual(merchant.account_balance_max, 0)
         self.assertEqual(merchant.payment_processor, 'gocoin')
         self.assertEqual(merchant.verification_status, 'unverified')
 
