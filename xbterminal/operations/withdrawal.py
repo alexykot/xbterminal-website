@@ -144,11 +144,11 @@ def send_transaction(order, customer_address):
     order.save()
 
     # Update balance
-    btc_account = Account.objects.filter(
+    account = Account.objects.filter(
         merchant=order.device.merchant,
         network=order.bitcoin_network).first()
-    btc_account.balance -= order.btc_amount
-    btc_account.save()
+    account.balance -= order.btc_amount
+    account.save()
 
     run_periodic_task(wait_for_confidence, [order.uid], interval=5)
 

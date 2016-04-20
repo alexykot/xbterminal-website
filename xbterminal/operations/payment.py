@@ -338,7 +338,7 @@ def forward_transaction(payment_order):
         payment_order: PaymentOrder instance
     """
     # Connect to bitcoind
-    bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
+    bc = blockchain.BlockChain(payment_order.bitcoin_network)
     # Wait for transaction
     bc.get_raw_transaction(payment_order.incoming_tx_ids[0])
     # Get outputs
@@ -352,17 +352,17 @@ def forward_transaction(payment_order):
     else:
         payment_order.tx_fee_btc_amount += extra_btc_amount
     # Select destination address
-    btc_account = Account.objects.filter(
+    account = Account.objects.filter(
         merchant=payment_order.device.merchant,
-        network=payment_order.device.bitcoin_network).first()
-    if btc_account and \
-            btc_account.balance + payment_order.merchant_btc_amount <= \
-            btc_account.balance_max:
+        network=payment_order.bitcoin_network).first()
+    if account and \
+            account.balance + payment_order.merchant_btc_amount <= \
+            account.balance_max:
         # Store bitcoins on merchant's internal account
-        if not btc_account.address:
-            btc_account.address = str(bc.get_new_address())
-        destination_address = btc_account.address
-        btc_account.balance += payment_order.merchant_btc_amount
+        if not account.address:
+            account.address = str(bc.get_new_address())
+        destination_address = account.address
+        account.balance += payment_order.merchant_btc_amount
     else:
         # Forward payment to merchant address (default)
         destination_address = payment_order.merchant_address
@@ -391,8 +391,8 @@ def forward_transaction(payment_order):
     payment_order.outgoing_tx_id = bc.send_raw_transaction(outgoing_tx_signed)
     payment_order.time_forwarded = timezone.now()
     payment_order.save()
-    if btc_account:
-        btc_account.save()
+    if account:
+        account.save()
 
 
 def wait_for_confirmation(order_uid):
