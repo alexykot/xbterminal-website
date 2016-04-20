@@ -3,7 +3,7 @@ import logging
 from django.core.management.base import BaseCommand
 from django.db.models import Sum
 
-from website.models import Account
+from website.models import Currency, Account
 from website.utils import send_balance_admin_notification
 from operations.blockchain import BlockChain
 
@@ -29,7 +29,9 @@ class Command(BaseCommand):
 
 def check_wallet(network):
     bc = BlockChain(network)
-    accounts = Account.objects.filter(network=network)
+    currency = Currency.objects.get(
+        name='BTC' if network == 'mainnet' else 'TBTC')
+    accounts = Account.objects.filter(currency=currency)
     wallet_value = Decimal(0)
     for address in accounts.values_list('address', flat=True):
         wallet_value += bc.get_address_balance(address)
@@ -50,8 +52,10 @@ def check_wallet(network):
 
 def check_wallet_strict(network):
     bc = BlockChain(network)
+    currency = Currency.objects.get(
+        name='BTC' if network == 'mainnet' else 'TBTC')
     wallet_value = bc.get_balance(minconf=0)
-    result = Account.objects.filter(network=network).\
+    result = Account.objects.filter(currency=currency).\
         aggregate(Sum('balance'))
     db_value = result['balance__sum'] or Decimal(0)
     if wallet_value != db_value:

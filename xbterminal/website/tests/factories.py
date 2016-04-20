@@ -1,8 +1,8 @@
 import datetime
 import hashlib
 import uuid
-import factory
 
+import factory
 
 from oauth2_provider.models import Application
 from website.models import (
@@ -72,6 +72,7 @@ class AccountFactory(factory.DjangoModelFactory):
         model = Account
 
     merchant = factory.SubFactory(MerchantAccountFactory)
+    currency = factory.SubFactory(CurrencyFactory, name='BTC')
 
 
 class DeviceBatchFactory(factory.DjangoModelFactory):

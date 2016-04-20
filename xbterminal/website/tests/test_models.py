@@ -112,10 +112,11 @@ class MerchantAccountTestCase(TestCase):
 
     def test_get_account_balance(self):
         merchant = MerchantAccountFactory.create()
-        self.assertIsNone(merchant.get_account_balance('mainnet'))
-        AccountFactory.create(
-            merchant=merchant, network='mainnet', balance=Decimal('0.5'))
-        self.assertEqual(merchant.get_account_balance('mainnet'),
+        self.assertIsNone(merchant.get_account_balance('BTC'))
+        AccountFactory.create(merchant=merchant,
+                              currency__name='BTC',
+                              balance=Decimal('0.5'))
+        self.assertEqual(merchant.get_account_balance('BTC'),
                          Decimal('0.5'))
 
     def test_info_new_merchant(self):
@@ -148,16 +149,20 @@ class MerchantAccountTestCase(TestCase):
 class AccountTestCase(TestCase):
 
     def test_create_btc_account(self):
-        merchant = MerchantAccountFactory.create()
-        account = Account.objects.create(merchant=merchant)
+        merchant = MerchantAccountFactory.create(company_name='mtest')
+        currency = CurrencyFactory.create(name='BTC')
+        account = Account.objects.create(merchant=merchant,
+                                         currency=currency)
         # Check defaults
-        self.assertEqual(account.network, 'mainnet')
+        self.assertEqual(account.currency.name, 'BTC')
         self.assertEqual(account.balance, 0)
         self.assertEqual(account.balance_max, 0)
         self.assertIsNone(account.address)
+        self.assertEqual(str(account), 'mtest (mtest) - BTC')
 
-    def test_btc_account_factory(self):
+    def test_factory(self):
         account = AccountFactory.create()
+        self.assertEqual(account.currency.name, 'BTC')
         self.assertEqual(account.balance, 0)
         self.assertEqual(account.balance_max, 0)
         self.assertIsNone(account.address)

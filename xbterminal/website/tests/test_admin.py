@@ -17,7 +17,7 @@ class AccountAdminTestCase(TestCase):
             address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
         data = {
             'merchant': account.merchant.pk,
-            'network': account.network,
+            'currency': account.currency.pk,
             'balance': '0.00',
             'balance_max': '1.00',
             'address': '',

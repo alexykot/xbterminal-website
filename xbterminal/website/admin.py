@@ -136,7 +136,10 @@ class AccountAdmin(admin.ModelAdmin):
         for field_name in form.base_fields:
             field = form.base_fields[field_name]
             if field_name == 'address':
-                field.widget = BitcoinAddressWidget(network=obj.network)
+                if obj.currency.name == 'BTC':
+                    field.widget = BitcoinAddressWidget(network='mainnet')
+                elif obj.currency.name == 'TBTC':
+                    field.widget = BitcoinAddressWidget(network='testnet')
                 field.required = True
                 # Workaround for address field with blank=True
                 field.clean = lambda *args: obj.address
@@ -209,12 +212,12 @@ class MerchantAccountAdmin(admin.ModelAdmin):
     contact_phone_.short_description = 'phone'
 
     def btc_balance(self, merchant):
-        value = merchant.get_account_balance('mainnet')
+        value = merchant.get_account_balance('BTC')
         return '{0:.8f}'.format(value) if value is not None else 'N/A'
     btc_balance.short_description = 'BTC balance'
 
     def tbtc_balance(self, merchant):
-        value = merchant.get_account_balance('testnet')
+        value = merchant.get_account_balance('TBTC')
         return '{0:.8f}'.format(value) if value is not None else 'N/A'
     tbtc_balance.short_description = 'TBTC balance'
 

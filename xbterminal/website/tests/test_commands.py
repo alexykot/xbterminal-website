@@ -61,7 +61,7 @@ class CheckWalletTestCase(TestCase):
     @patch('website.utils.send_balance_admin_notification')
     def test_check_ok(self, send_ntf_mock, bc_mock):
         AccountFactory.create_batch(
-            2, network='mainnet', balance=Decimal('0.2'))
+            2, currency__name='BTC', balance=Decimal('0.2'))
         bc_mock.return_value = Mock(**{
             'get_balance.return_value': Decimal('0.4'),
             'get_address_balance.return_value': Decimal('0.2'),
@@ -73,7 +73,7 @@ class CheckWalletTestCase(TestCase):
     @patch('website.management.commands.check_wallet.BlockChain')
     def test_check_mismatch(self, bc_mock):
         AccountFactory.create_batch(
-            2, network='mainnet', balance=Decimal('0.2'))
+            2, currency__name='BTC', balance=Decimal('0.2'))
         bc_mock.return_value = Mock(**{
             'get_address_balance.return_value': Decimal('0.3'),
         })
@@ -86,7 +86,7 @@ class CheckWalletTestCase(TestCase):
     @patch('website.management.commands.check_wallet.BlockChain')
     def test_strict_check_mismatch(self, bc_mock):
         AccountFactory.create_batch(
-            2, network='mainnet', balance=Decimal('0.2'))
+            2, currency__name='BTC', balance=Decimal('0.2'))
         bc_mock.return_value = Mock(**{
             'get_balance.return_value': Decimal('0.5'),
         })

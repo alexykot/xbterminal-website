@@ -227,9 +227,9 @@ class MerchantAccount(models.Model):
             exclude(status='uploaded').\
             latest('uploaded')
 
-    def get_account_balance(self, network):
+    def get_account_balance(self, currency_name):
         account = self.account_set.\
-            filter(network=network).first()
+            filter(currency__name=currency_name).first()
         if account:
             return account.balance
 
@@ -265,9 +265,7 @@ BITCOIN_NETWORKS = [
 class Account(models.Model):
 
     merchant = models.ForeignKey(MerchantAccount)
-    network = models.CharField(max_length=50,
-                               choices=BITCOIN_NETWORKS,
-                               default='mainnet')
+    currency = models.ForeignKey(Currency)
     balance = models.DecimalField(max_digits=20,
                                   decimal_places=8,
                                   default=0)
@@ -280,9 +278,9 @@ class Account(models.Model):
                                null=True)
 
     def __unicode__(self):
-        return u'{0} - {1} account'.format(
+        return u'{0} - {1}'.format(
             str(self.merchant),
-            'BTC' if self.network == 'mainnet' else 'TBTC')
+            self.currency.name)
 
 
 class KYCDocument(models.Model):

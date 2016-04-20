@@ -16,7 +16,7 @@ from operations.blockchain import (
     deserialize_outputs)
 from operations.rq_helpers import cancel_current_task, run_periodic_task
 from operations.models import WithdrawalOrder
-from website.models import Account
+from website.models import Currency, Account
 from website.utils import send_error_message
 
 logger = logging.getLogger(__name__)
@@ -59,13 +59,17 @@ def prepare_withdrawal(device, fiat_amount):
     Returns:
         order: WithdrawalOrder instance
     """
+    if device.bitcoin_network == 'mainnet':
+        account_currency = Currency.objects.get(name='BTC')
+    else:
+        account_currency = Currency.objects.get(name='TBTC')
     try:
         account = Account.objects.get(merchant=device.merchant,
-                                      network=device.bitcoin_network,
+                                      currency=account_currency,
                                       address__isnull=False)
     except Account.DoesNotExist:
-        raise WithdrawalError('Merchant doesn\'t have BTC account for {0}'.format(
-            device.bitcoin_network))
+        raise WithdrawalError('Merchant doesn\'t have {0} account'.format(
+            account_currency.name))
 
     order = WithdrawalOrder(
         device=device,
@@ -144,9 +148,13 @@ def send_transaction(order, customer_address):
     order.save()
 
     # Update balance
+    if order.bitcoin_network == 'mainnet':
+        account_currency = Currency.objects.get(name='BTC')
+    else:
+        account_currency = Currency.objects.get(name='TBTC')
     account = Account.objects.filter(
         merchant=order.device.merchant,
-        network=order.bitcoin_network).first()
+        currency=account_currency).first()
     account.balance -= order.btc_amount
     account.save()
 

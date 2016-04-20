@@ -51,8 +51,10 @@ class PrepareWithdrawalTestCase(TestCase):
     def test_no_account(self):
         device = DeviceFactory.create()
         fiat_amount = Decimal('1.00')
-        with self.assertRaises(withdrawal.WithdrawalError):
+        with self.assertRaises(withdrawal.WithdrawalError) as error:
             withdrawal.prepare_withdrawal(device, fiat_amount)
+            self.assertEqual(error.message,
+                             'Merchant doesn\'t have BTC account')
 
     def test_no_address(self):
         device = DeviceFactory.create()
@@ -188,7 +190,7 @@ class SendTransactionTestCase(TestCase):
         self.assertEqual(outputs[order.merchant_address],
                          Decimal('0.0049'))
 
-        self.assertEqual(device.merchant.get_account_balance('mainnet'),
+        self.assertEqual(device.merchant.get_account_balance('BTC'),
                          Decimal('0.0049'))
 
     def test_invalid_address(self):
