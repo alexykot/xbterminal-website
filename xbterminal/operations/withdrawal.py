@@ -16,17 +16,11 @@ from operations.blockchain import (
     deserialize_outputs)
 from operations.rq_helpers import cancel_current_task, run_periodic_task
 from operations.models import WithdrawalOrder
+from operations.exceptions import WithdrawalError
 from website.models import Currency, Account
 from website.utils import send_error_message
 
 logger = logging.getLogger(__name__)
-
-
-class WithdrawalError(Exception):
-
-    def __init__(self, message):
-        super(WithdrawalError, self).__init__()
-        self.message = message
 
 
 def _get_all_reserved_outputs(current_order):

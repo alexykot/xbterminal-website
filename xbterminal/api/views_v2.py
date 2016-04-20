@@ -213,7 +213,7 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
             order = withdrawal.prepare_withdrawal(
                 form.cleaned_data['device'],
                 form.cleaned_data['amount'])
-        except withdrawal.WithdrawalError as error:
+        except exceptions.WithdrawalError as error:
             return Response({'error': error.message},
                             status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(order)
@@ -229,7 +229,7 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
         customer_address = self.request.data.get('address')
         try:
             withdrawal.send_transaction(order, customer_address)
-        except withdrawal.WithdrawalError as error:
+        except exceptions.WithdrawalError as error:
             return Response({'error': error.message},
                             status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(order)

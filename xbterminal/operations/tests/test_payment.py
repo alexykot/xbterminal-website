@@ -161,10 +161,10 @@ class PreparePaymentTestCase(TestCase):
             percent=0,
             bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
         fiat_amount = Decimal('10')
-        with self.assertRaises(exceptions.PaymentError) as error:
+        with self.assertRaises(exceptions.PaymentError) as context:
             payment.prepare_payment(device, fiat_amount)
-            self.assertEqual(error.message,
-                             'Merchant doesn\'t have BTC account')
+        self.assertEqual(context.exception.message,
+                         'Merchant doesn\'t have BTC account')
 
 
 class WaitForPaymentTestCase(TestCase):
