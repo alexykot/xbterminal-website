@@ -21,6 +21,16 @@ CURRENCIES = [
         'name': 'CAD',
         'prefix': '$',
     },
+    {
+        'id': 5,
+        'name': 'BTC',
+        'postfix': 'BTC',
+    },
+    {
+        'id': 6,
+        'name': 'TBTC',
+        'postfix': 'tBTC',
+    },
 ]
 
 
@@ -31,5 +41,6 @@ def update_currencies(apps, schema_editor):
             id=item['id'],
             defaults={
                 'name': item['name'],
-                'prefix': item['prefix'],
+                'prefix': item.get('prefix', ''),
+                'postfix': item.get('postfix', ''),
             })

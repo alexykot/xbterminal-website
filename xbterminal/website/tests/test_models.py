@@ -8,6 +8,7 @@ from django_fsm import TransitionNotAllowed
 
 from website.models import (
     User,
+    Currency,
     UITheme,
     MerchantAccount,
     Account,
@@ -43,6 +44,22 @@ class UserTestCase(TestCase):
     def test_get_full_name(self):
         user = UserFactory.create()
         self.assertEqual(user.get_full_name(), user.email)
+
+
+class CurrencyTestCase(TestCase):
+
+    def test_fixtures(self):
+        gbp = Currency.objects.get(name='GBP')
+        self.assertEqual(gbp.pk, 1)
+        usd = Currency.objects.get(name='USD')
+        self.assertEqual(usd.prefix, '$')
+        self.assertEqual(usd.postfix, '')
+        btc = Currency.objects.get(name='BTC')
+        self.assertEqual(btc.prefix, '')
+        self.assertEqual(btc.postfix, 'BTC')
+        tbtc = Currency.objects.get(name='TBTC')
+        self.assertEqual(tbtc.prefix, '')
+        self.assertEqual(tbtc.postfix, 'tBTC')
 
 
 class UIThemeTestCase(TestCase):
