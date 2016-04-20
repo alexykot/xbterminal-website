@@ -32,7 +32,7 @@ from operations.models import PaymentOrder, WithdrawalOrder
 import operations.payment
 import operations.blockchain
 import operations.protocol
-from operations import withdrawal
+from operations import withdrawal, exceptions
 
 logger = logging.getLogger(__name__)
 
@@ -53,8 +53,12 @@ class PaymentViewSet(viewsets.GenericViewSet):
                                         status='active')
         except Device.DoesNotExist:
             raise Http404
-        payment_order = operations.payment.prepare_payment(
-            device, form.cleaned_data['amount'])
+        try:
+            payment_order = operations.payment.prepare_payment(
+                device, form.cleaned_data['amount'])
+        except exceptions.PaymentError as error:
+            return Response({'error': error.message},
+                            status=status.HTTP_400_BAD_REQUEST)
         # Urls
         payment_request_url = construct_absolute_url(
             'api:v2:payment-request',

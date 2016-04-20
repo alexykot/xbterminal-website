@@ -16,8 +16,10 @@ from operations import preorder
 from operations.instantfiat import gocoin
 
 from website.models import (
+    Currency,
     User,
     MerchantAccount,
+    Account,
     Device,
     ReconciliationTime,
     KYCDocument,
@@ -198,6 +200,10 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             client_type='confidential',
             authorization_grant_type='password',
             client_secret='AFoUFXG8orJ2H5ztnycc5a95')
+        # Create BTC account
+        Account.objects.create(
+            merchant=instance,
+            currency=Currency.objects.get(name='BTC'))
         return instance
 
 

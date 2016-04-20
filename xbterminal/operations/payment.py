@@ -43,6 +43,18 @@ def prepare_payment(device, fiat_amount):
     Returns:
         payment_order: PaymentOrder instance
     """
+    # Check BTC/TBTC account
+    if device.bitcoin_network == 'mainnet':
+        account_currency = Currency.objects.get(name='BTC')
+    else:
+        account_currency = Currency.objects.get(name='TBTC')
+    try:
+        Account.objects.get(merchant=device.merchant,
+                            currency=account_currency)
+    except Account.DoesNotExist:
+        raise exceptions.PaymentError('Merchant doesn\'t have {0} account'.format(
+            account_currency.name))
+    # Prepare payment order
     details = {
         'bitcoin_network': None,
         'local_address': None,

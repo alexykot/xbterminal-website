@@ -26,6 +26,7 @@ class PreparePaymentTestCase(TestCase):
         device = DeviceFactory.create(
             percent=0,
             bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+        AccountFactory.create(merchant=device.merchant)
         fiat_amount = Decimal('10')
         exchange_rate = Decimal('235.64')
         local_address = '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje'
@@ -83,6 +84,7 @@ class PreparePaymentTestCase(TestCase):
             device_type='hardware',
             percent=0,
             bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+        AccountFactory.create(merchant=device.merchant)
         fiat_amount = Decimal('1')
         exchange_rate = Decimal('235.64')
         local_address = '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje'
@@ -112,6 +114,7 @@ class PreparePaymentTestCase(TestCase):
     @patch('operations.payment.run_periodic_task')
     def test_convert_full(self, run_task_mock, invoice_mock, bc_mock):
         device = DeviceFactory.create(percent=100, bitcoin_address='')
+        AccountFactory.create(merchant=device.merchant)
         fiat_amount = Decimal('10')
         local_address = '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje'
         instantfiat_invoice_id = 'test_invoice_123'
@@ -152,6 +155,16 @@ class PreparePaymentTestCase(TestCase):
                          expected_btc_amount)
         self.assertEqual(payment_order.instantfiat_invoice_id,
                          instantfiat_invoice_id)
+
+    def test_no_btc_account(self):
+        device = DeviceFactory.create(
+            percent=0,
+            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+        fiat_amount = Decimal('10')
+        with self.assertRaises(exceptions.PaymentError) as error:
+            payment.prepare_payment(device, fiat_amount)
+            self.assertEqual(error.message,
+                             'Merchant doesn\'t have BTC account')
 
 
 class WaitForPaymentTestCase(TestCase):

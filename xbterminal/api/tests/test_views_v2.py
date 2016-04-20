@@ -11,6 +11,7 @@ from rest_framework import status
 
 from api.views_v2 import WithdrawalViewSet
 from api.utils.crypto import create_test_signature, create_test_public_key
+from operations import exceptions
 from operations.models import PaymentOrder
 from operations.tests.factories import (
     PaymentOrderFactory,
@@ -93,6 +94,7 @@ class PaymentViewSetTestCase(APITestCase):
             'amount': 'aaa',
         }
         response = self.client.post(url, form_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         data = response.data
         self.assertIn('amount', data['errors'])
 
@@ -114,6 +116,22 @@ class PaymentViewSetTestCase(APITestCase):
         }
         response = self.client.post(url, form_data)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @patch('api.views_v2.operations.payment.prepare_payment')
+    def test_payment_error(self, prepare_mock):
+        prepare_mock.side_effect = exceptions.PaymentError
+        device = DeviceFactory.create(long_key=True)
+        fiat_amount = 10
+        bluetooth_mac = '12:34:56:78:9A:BC'
+        url = reverse('api:v2:payment-list')
+        form_data = {
+            'device_key': device.key,
+            'amount': fiat_amount,
+            'bt_mac': bluetooth_mac,
+        }
+        response = self.client.post(url, form_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'Payment error')
 
     def test_retrieve_not_notified(self):
         payment_order = PaymentOrderFactory.create()

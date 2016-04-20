@@ -28,6 +28,7 @@ import operations.payment
 import operations.blockchain
 import operations.protocol
 from operations.instantfiat import gocoin
+from operations import exceptions
 
 logger = logging.getLogger(__name__)
 
@@ -177,8 +178,13 @@ class PaymentInitView(View):
                                         status='active')
         except Device.DoesNotExist:
             raise Http404
-        payment_order = operations.payment.prepare_payment(
-            device, form.cleaned_data['amount'])
+        try:
+            payment_order = operations.payment.prepare_payment(
+                device, form.cleaned_data['amount'])
+        except exceptions.PaymentError as error:
+            return HttpResponseBadRequest(
+                json.dumps({'error': error.message}),
+                content_type='application/json')
         # Urls
         payment_request_url = construct_absolute_url(
             'api:short:payment_request',

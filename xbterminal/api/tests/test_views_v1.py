@@ -7,6 +7,7 @@ from django.utils import timezone
 from mock import patch, Mock
 from rest_framework import status
 
+from operations import exceptions
 from operations.models import PaymentOrder
 from operations.tests.factories import PaymentOrderFactory
 from website.tests.factories import (
@@ -161,6 +162,7 @@ class PaymentInitViewTestCase(TestCase):
             'amount': 'aaa',
         }
         response = self.client.post(self.url, form_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         data = json.loads(response.content)
         self.assertIn('amount', data['errors'])
 
@@ -170,7 +172,7 @@ class PaymentInitViewTestCase(TestCase):
             'amount': '0.5',
         }
         response = self.client.post(self.url, form_data)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_not_active(self):
         device = DeviceFactory.create(status='activation')
@@ -180,6 +182,22 @@ class PaymentInitViewTestCase(TestCase):
         }
         response = self.client.post(self.url, form_data)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @patch('api.views_v1.operations.payment.prepare_payment')
+    def test_payment_error(self, prepare_mock):
+        prepare_mock.side_effect = exceptions.PaymentError
+        device = DeviceFactory.create(long_key=True)
+        fiat_amount = 10
+        bluetooth_mac = '12:34:56:78:9A:BC'
+        form_data = {
+            'device_key': device.key,
+            'amount': fiat_amount,
+            'bt_mac': bluetooth_mac,
+        }
+        response = self.client.post(self.url, form_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        data = json.loads(response.content)
+        self.assertEqual(data['error'], 'Payment error')
 
 
 class PaymentRequestViewTestCase(TestCase):

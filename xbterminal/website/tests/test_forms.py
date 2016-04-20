@@ -49,6 +49,9 @@ class MerchantRegistrationFormTestCase(TestCase):
         self.assertTrue(gocoin_mock.called)
         oauth_app = Application.objects.get(user=merchant.user)
         self.assertEqual(oauth_app.client_id, form_data['contact_email'])
+        self.assertEqual(merchant.account_set.count(), 1)
+        self.assertEqual(merchant.get_account_balance('BTC'), 0)
+        self.assertIsNone(merchant.get_account_balance('TBTC'))
 
     def test_required(self):
         form = MerchantRegistrationForm(data={})
