@@ -479,8 +479,7 @@ class UpdateDeviceView(DeviceMixin, TemplateResponseMixin, CabinetView):
         context = self.get_context_data(**kwargs)
         context['form'] = forms.DeviceForm(
             instance=context['device'],
-            merchant=self.request.user.merchant,
-            initial={'payment_processing': context['device'].payment_processing})
+            merchant=self.request.user.merchant)
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):

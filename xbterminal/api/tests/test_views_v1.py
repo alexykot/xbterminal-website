@@ -58,7 +58,7 @@ class DevicesViewTestCase(TestCase):
         data = json.loads(response.content)
         self.assertEqual(data['name'], 'NewDevice')
         self.assertIn('key', data)
-        self.assertEqual(data['percent'], 100.0)
+        self.assertEqual(data['percent'], 0.0)
         self.assertEqual(data['type'], 'mobile')
         self.assertFalse(data['online'])
         device = Device.objects.get(key=data['key'])

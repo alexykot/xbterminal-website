@@ -180,7 +180,6 @@ class MerchantAccountAdmin(admin.ModelAdmin):
         'contact_name',
         'contact_phone_',
         'verification_status',
-        'processing',
         'btc_balance',
         'tbtc_balance',
         'date_joined_l',
@@ -235,11 +234,6 @@ class MerchantAccountAdmin(admin.ModelAdmin):
         value = merchant.get_account_balance('TBTC')
         return '{0:.8f}'.format(value) if value is not None else 'N/A'
     tbtc_balance.short_description = 'TBTC balance'
-
-    def processing(self, merchant):
-        return '{0}, {1}'.format(
-            merchant.get_payment_processor_display(),
-            str(bool(merchant.api_key)))
 
 
 @admin.register(models.DeviceBatch)

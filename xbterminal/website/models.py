@@ -26,7 +26,6 @@ from extended_choices import Choices
 from website.validators import (
     validate_phone,
     validate_post_code,
-    validate_percent,
     validate_bitcoin_address,
     validate_public_key)
 from website.files import (
@@ -422,10 +421,6 @@ class Device(models.Model):
         ('active', _('Operational')),
         ('suspended', _('Suspended')),
     ]
-    PAYMENT_PROCESSING_CHOICES = [
-        ('keep', _('keep bitcoins')),
-        ('full', _('convert full amount')),
-    ]
 
     merchant = models.ForeignKey(
         MerchantAccount,
@@ -458,13 +453,6 @@ class Device(models.Model):
         validators=[validate_public_key],
         help_text='API public key')
 
-    # TODO: remove percent field, use account field
-    percent = models.DecimalField(
-        _('Percent to convert'),
-        max_digits=4,
-        decimal_places=1,
-        validators=[validate_percent],
-        default=100)
     bitcoin_address = models.CharField(
         _('Bitcoin address to send to'),
         max_length=100,
@@ -523,20 +511,9 @@ class Device(models.Model):
         else:
             return True
 
-    @property
-    def payment_processing(self):
-        if self.percent == 0:
-            return 'keep'
-        elif self.percent == 100:
-            return 'full'
-        else:
-            raise AssertionError
-
     def payment_processor_info(self):
-        if self.percent > 0:
-            return '{0}, {1}% converted'.format(
-                self.merchant.get_payment_processor_display(),
-                self.percent)
+        if self.instantfiat:
+            return self.account.get_instantfiat_provider_display()
         return ''
 
     def get_payments(self):

@@ -215,7 +215,6 @@ class DeviceTestCase(TestCase):
         self.assertEqual(device.status, 'registered')
         self.assertEqual(len(device.key), 8)
         self.assertEqual(len(device.activation_code), 6)
-        self.assertEqual(device.percent, 100)
         self.assertIsNone(device.bitcoin_address)
         self.assertEqual(device.batch.batch_number,
                          settings.DEFAULT_BATCH_NUMBER)
@@ -291,17 +290,14 @@ class DeviceTestCase(TestCase):
     def test_instantfiat(self):
         device_1 = DeviceFactory.create(status='registered')
         self.assertIsNone(device_1.instantfiat)
-        self.assertEqual(device_1.percent, 0)
         self.assertIsNotNone(device_1.bitcoin_address)
         device_2 = DeviceFactory.create(status='active')
         self.assertFalse(device_2.instantfiat)
-        self.assertEqual(device_2.percent, 0)
         self.assertIsNotNone(device_2.bitcoin_address)
         device_3 = DeviceFactory.create(
             status='active',
             account__currency__name='USD')
         self.assertTrue(device_3.instantfiat)
-        self.assertEqual(device_3.percent, 100)
         self.assertIsNone(device_3.bitcoin_address)
 
 

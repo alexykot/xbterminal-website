@@ -90,7 +90,6 @@ class DeviceRegistrationSerializerTestCase(TestCase):
         self.assertEqual(device.key, device_key)
         self.assertEqual(device.api_key, api_key)
         self.assertEqual(device.batch.pk, batch.pk)
-        self.assertEqual(device.percent, 0)
         self.assertIsNone(device.bitcoin_address)
 
     @patch('api.serializers.Salt')
