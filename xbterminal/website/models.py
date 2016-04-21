@@ -461,7 +461,8 @@ class Device(models.Model):
     bitcoin_address = models.CharField(
         _('Bitcoin address to send to'),
         max_length=100,
-        blank=True)
+        blank=True,
+        null=True)
     bitcoin_network = models.CharField(
         max_length=50,
         choices=BITCOIN_NETWORKS,

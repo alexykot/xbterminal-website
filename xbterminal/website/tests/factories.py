@@ -106,7 +106,11 @@ class DeviceFactory(factory.DjangoModelFactory):
     device_type = 'hardware'
     name = factory.Sequence(lambda n: 'Terminal #{0}'.format(n))
     percent = 0
-    bitcoin_address = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
+
+    @factory.lazy_attribute
+    def bitcoin_address(self):
+        if self.percent != 100:
+            return '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
 
     @factory.post_generation
     def status(self, create, extracted, **kwargs):

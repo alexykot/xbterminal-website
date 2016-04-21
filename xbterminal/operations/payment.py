@@ -43,6 +43,7 @@ def prepare_payment(device, fiat_amount):
     Returns:
         payment_order: PaymentOrder instance
     """
+    # TODO: perform these checks at form validation step
     assert fiat_amount >= FIAT_MIN_OUTPUT
     # Check BTC/TBTC account
     if device.bitcoin_network == 'mainnet':
@@ -55,6 +56,9 @@ def prepare_payment(device, fiat_amount):
     except Account.DoesNotExist:
         raise exceptions.PaymentError('Merchant doesn\'t have {0} account'.format(
             account_currency.name))
+    if device.percent != 100 and not device.bitcoin_address:
+        raise exceptions.PaymentError(
+            'Payout address is not set for device.')
     # Prepare payment order
     order = PaymentOrder(
         device=device,

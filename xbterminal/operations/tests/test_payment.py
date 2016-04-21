@@ -165,6 +165,15 @@ class PreparePaymentTestCase(TestCase):
         self.assertEqual(context.exception.message,
                          'Merchant doesn\'t have BTC account')
 
+    def test_no_bitcoin_address(self):
+        device = DeviceFactory.create(percent=0, bitcoin_address=None)
+        AccountFactory.create(merchant=device.merchant)
+        fiat_amount = Decimal('10')
+        with self.assertRaises(exceptions.PaymentError) as context:
+            payment.prepare_payment(device, fiat_amount)
+        self.assertEqual(context.exception.message,
+                         'Payout address is not set for device.')
+
     @patch('operations.payment.blockchain.BlockChain')
     def test_convert_partially(self, bc_cls_mock):
         device = DeviceFactory.create(
