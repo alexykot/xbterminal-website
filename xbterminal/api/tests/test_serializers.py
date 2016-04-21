@@ -36,7 +36,7 @@ class DeviceSerializerTestCase(TestCase):
         device = DeviceFactory.create(status='registered')
         data = DeviceSerializer(device).data
         self.assertEqual(data['status'], 'registered')
-        self.assertEqual(data['bitcoin_network'], 'mainnet')
+        self.assertEqual(data['bitcoin_network'], None)
         self.assertEqual(data['language']['code'], 'en')
         self.assertEqual(data['currency']['name'], 'GBP')
 

@@ -468,11 +468,6 @@ class Device(models.Model):
         max_length=100,
         blank=True,
         null=True)
-    # TODO: remove field, use property
-    bitcoin_network = models.CharField(
-        max_length=50,
-        choices=BITCOIN_NETWORKS,
-        default='mainnet')
     our_fee_override = models.CharField(
         max_length=50,
         blank=True,
@@ -511,13 +506,18 @@ class Device(models.Model):
         pass
 
     @property
+    def bitcoin_network(self):
+        if self.account:
+            return self.account.bitcoin_network
+
+    @property
     def payment_processing(self):
         if self.percent == 0:
             return 'keep'
         elif self.percent == 100:
             return 'full'
         else:
-            return 'partially'
+            raise AssertionError
 
     def payment_processor_info(self):
         if self.percent > 0:

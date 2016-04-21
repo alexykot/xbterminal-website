@@ -158,12 +158,13 @@ class PreparePaymentTestCase(TestCase):
     def test_no_btc_account(self):
         device = DeviceFactory.create(
             percent=0,
-            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
+            status='registered')
         fiat_amount = Decimal('10')
         with self.assertRaises(exceptions.PaymentError) as context:
             payment.prepare_payment(device, fiat_amount)
         self.assertEqual(context.exception.message,
-                         'Merchant doesn\'t have BTC account')
+                         'Account is not set for device.')
 
     def test_no_bitcoin_address(self):
         device = DeviceFactory.create(percent=0, bitcoin_address=None)

@@ -45,17 +45,9 @@ def prepare_payment(device, fiat_amount):
     """
     # TODO: perform these checks at form validation step
     assert fiat_amount >= FIAT_MIN_OUTPUT
-    # Check BTC/TBTC account
-    if device.bitcoin_network == 'mainnet':
-        account_currency = Currency.objects.get(name='BTC')
-    else:
-        account_currency = Currency.objects.get(name='TBTC')
-    try:
-        Account.objects.get(merchant=device.merchant,
-                            currency=account_currency)
-    except Account.DoesNotExist:
-        raise exceptions.PaymentError('Merchant doesn\'t have {0} account'.format(
-            account_currency.name))
+    if not device.account:
+        raise exceptions.PaymentError(
+            'Account is not set for device.')
     if device.percent != 100 and not device.bitcoin_address:
         raise exceptions.PaymentError(
             'Payout address is not set for device.')
