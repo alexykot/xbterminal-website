@@ -14,7 +14,8 @@ from website.models import (
     MerchantAccount,
     Account,
     Device,
-    DeviceBatch)
+    DeviceBatch,
+    INSTANTFIAT_PROVIDERS)
 from website.tests.factories import (
     CurrencyFactory,
     UserFactory,
@@ -159,14 +160,28 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.balance, 0)
         self.assertEqual(account.balance_max, 0)
         self.assertIsNone(account.bitcoin_address)
+        self.assertIsNone(account.instantfiat_provider)
+        self.assertIsNone(account.instantfiat_api_key)
         self.assertEqual(str(account), 'mtest (mtest) - BTC')
 
-    def test_factory(self):
+    def test_factory_btc(self):
         account = AccountFactory.create()
         self.assertEqual(account.currency.name, 'BTC')
         self.assertEqual(account.balance, 0)
         self.assertEqual(account.balance_max, 0)
         self.assertIsNone(account.bitcoin_address)
+        self.assertIsNone(account.instantfiat_provider)
+        self.assertIsNone(account.instantfiat_api_key)
+
+    def test_factory_gbp(self):
+        account = AccountFactory.create(currency__name='GBP')
+        self.assertEqual(account.currency.name, 'GBP')
+        self.assertEqual(account.balance, 0)
+        self.assertEqual(account.balance_max, 0)
+        self.assertIsNone(account.bitcoin_address)
+        self.assertEqual(account.instantfiat_provider,
+                         INSTANTFIAT_PROVIDERS.CRYPTOPAY)
+        self.assertIsNotNone(account.instantfiat_api_key)
 
     def test_unique_together(self):
         merchant = MerchantAccountFactory.create()

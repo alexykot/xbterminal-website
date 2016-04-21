@@ -3,6 +3,7 @@ import hashlib
 import uuid
 
 import factory
+from faker import Faker
 
 from oauth2_provider.models import Application
 from website.models import (
@@ -12,7 +13,10 @@ from website.models import (
     Account,
     DeviceBatch,
     Device,
-    ReconciliationTime)
+    ReconciliationTime,
+    INSTANTFIAT_PROVIDERS)
+
+fake = Faker()
 
 
 class CurrencyFactory(factory.DjangoModelFactory):
@@ -73,6 +77,16 @@ class AccountFactory(factory.DjangoModelFactory):
 
     merchant = factory.SubFactory(MerchantAccountFactory)
     currency = factory.SubFactory(CurrencyFactory, name='BTC')
+
+    @factory.lazy_attribute
+    def instantfiat_provider(self):
+        if self.currency.name not in ['BTC', 'TBTC']:
+            return INSTANTFIAT_PROVIDERS.CRYPTOPAY
+
+    @factory.lazy_attribute
+    def instantfiat_api_key(self):
+        if self.currency.name not in ['BTC', 'TBTC']:
+            return fake.sha256(raw_output=False)
 
 
 class DeviceBatchFactory(factory.DjangoModelFactory):

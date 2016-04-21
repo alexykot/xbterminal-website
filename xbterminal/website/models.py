@@ -11,6 +11,7 @@ from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
     PermissionsMixin)
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
@@ -20,6 +21,7 @@ from django.utils.translation import ugettext_lazy as _
 from constance import config
 from django_countries.fields import CountryField
 from django_fsm import FSMField, transition
+from extended_choices import Choices
 
 from website.validators import (
     validate_phone,
@@ -262,6 +264,11 @@ BITCOIN_NETWORKS = [
 ]
 
 
+INSTANTFIAT_PROVIDERS = Choices(
+    ('CRYPTOPAY', 1, 'CryptoPay'),
+)
+
+
 class Account(models.Model):
     """
     Represents internal BTC account or external instantfiat account
@@ -280,6 +287,16 @@ class Account(models.Model):
         max_length=35,
         unique=True,
         validators=[validate_bitcoin_address],
+        blank=True,
+        null=True)
+    instantfiat_provider = models.PositiveSmallIntegerField(
+        _('InstantFiat provider'),
+        choices=INSTANTFIAT_PROVIDERS,
+        blank=True,
+        null=True)
+    instantfiat_api_key = models.CharField(
+        _('InstantFiat API key'),
+        max_length=200,
         blank=True,
         null=True)
 
@@ -301,6 +318,15 @@ class Account(models.Model):
         else:
             # Instantfiat services work only with mainnet
             return 'mainnet'
+
+    def clean(self):
+        if self.currency.name not in ['BTC', 'TBTC']:
+            if not self.instantfiat_provider:
+                raise ValidationError({
+                    'instantfiat_provider': 'This field is required.'})
+            if not self.instantfiat_api_key:
+                raise ValidationError({
+                    'instantfiat_api_key': 'This field is required.'})
 
 
 class KYCDocument(models.Model):
