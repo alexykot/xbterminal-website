@@ -44,6 +44,7 @@ class DeviceAdmin(FSMTransitionMixin, admin.ModelAdmin):
     list_display = [
         '__unicode__',
         'merchant_link',
+        'account_link',
         'device_type',
         'status',
         'last_activity',
@@ -72,9 +73,16 @@ class DeviceAdmin(FSMTransitionMixin, admin.ModelAdmin):
             return '-'
         else:
             return url_to_object(device.merchant)
-
     merchant_link.allow_tags = True
     merchant_link.short_description = 'merchant'
+
+    def account_link(self, device):
+        if not device.account:
+            return '-'
+        else:
+            return url_to_object(device.account)
+    account_link.allow_tags = True
+    account_link.short_description = 'account'
 
     def device_key_qr_code(self, device):
         src = generate_qr_code(device.key, 4)
