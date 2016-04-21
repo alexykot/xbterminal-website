@@ -133,6 +133,8 @@ class AccountAdmin(admin.ModelAdmin):
 
     def get_form(self, request, obj, **kwargs):
         form = super(AccountAdmin, self).get_form(request, obj, **kwargs)
+        if not obj:
+            return form
         for field_name in form.base_fields:
             field = form.base_fields[field_name]
             if field_name == 'bitcoin_address':
