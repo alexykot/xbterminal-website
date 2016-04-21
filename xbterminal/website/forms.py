@@ -462,16 +462,18 @@ class DeviceAdminForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super(DeviceAdminForm, self).clean()
-        addresses = ['bitcoin_address', 'our_fee_override']
-        network = cleaned_data['bitcoin_network']
-        for address in addresses:
-            try:
-                if cleaned_data[address]:
-                    validate_bitcoin_address(cleaned_data[address],
-                                             network=network)
-            except forms.ValidationError as error:
-                for error_message in error.messages:
-                    self.add_error(address, error_message)
+        account = cleaned_data.get('account')
+        if account:
+            addresses = ['bitcoin_address', 'our_fee_override']
+            for address in addresses:
+                try:
+                    if cleaned_data[address]:
+                        validate_bitcoin_address(
+                            cleaned_data[address],
+                            network=account.bitcoin_network)
+                except forms.ValidationError as error:
+                    for error_message in error.messages:
+                        self.add_error(address, error_message)
         return cleaned_data
 
 
