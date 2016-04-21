@@ -77,7 +77,7 @@ def prepare_payment(device, fiat_amount):
         (order.instantfiat_invoice_id,
          order.instantfiat_btc_amount,
          order.instantfiat_address) = instantfiat.create_invoice(
-            device.merchant,
+            device.account,
             order.instantfiat_fiat_amount)
         assert order.instantfiat_btc_amount > 0
         if order.instantfiat_btc_amount < BTC_MIN_OUTPUT:
@@ -421,7 +421,7 @@ def wait_for_exchange(payment_order_uid):
         # Timeout, cancel job
         cancel_current_task()
     invoice_paid = instantfiat.is_invoice_paid(
-        payment_order.device.merchant,
+        payment_order.device.account,
         payment_order.instantfiat_invoice_id)
     if invoice_paid:
         cancel_current_task()
