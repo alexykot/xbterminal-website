@@ -10,7 +10,7 @@ def create_btc_accounts(apps, schema_editor):
     Account = apps.get_model('website', 'Account')
     btc = Currency.objects.get(name='BTC')
     for merchant in MerchantAccount.objects.all():
-        Account.objects.create(merchant=merchant, currency=btc)
+        Account.objects.get_or_create(merchant=merchant, currency=btc)
     
 
 
