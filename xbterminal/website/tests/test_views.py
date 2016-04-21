@@ -131,8 +131,9 @@ class RegistrationViewTestCase(TestCase):
         data = json.loads(response.content)
         self.assertEqual(data['result'], 'ok')
 
-        self.assertTrue(gocoin_mock.called)
-        merchant = gocoin_mock.call_args[0][0]
+        self.assertFalse(gocoin_mock.called)
+        merchant = MerchantAccount.objects.get(
+            company_name=form_data['company_name'])
         self.assertEqual(merchant.company_name, form_data['company_name'])
         self.assertEqual(merchant.user.email,
                          form_data['contact_email'])
@@ -168,8 +169,9 @@ class RegistrationViewTestCase(TestCase):
         data = json.loads(response.content)
         self.assertEqual(data['result'], 'ok')
 
-        self.assertTrue(gocoin_mock.called)
-        merchant = gocoin_mock.call_args[0][0]
+        self.assertFalse(gocoin_mock.called)
+        merchant = MerchantAccount.objects.get(
+            company_name=form_data['company_name'])
         self.assertEqual(merchant.company_name, form_data['company_name'])
 
         self.assertTrue(create_invoice_mock.called)
@@ -212,8 +214,9 @@ class RegistrationViewTestCase(TestCase):
         data = json.loads(response.content)
         self.assertEqual(data['result'], 'ok')
 
-        self.assertTrue(gocoin_mock.called)
-        merchant = gocoin_mock.call_args[0][0]
+        self.assertFalse(gocoin_mock.called)
+        merchant = MerchantAccount.objects.get(
+            company_name=form_data['company_name'])
         self.assertEqual(merchant.company_name, form_data['company_name'])
 
         self.assertEqual(merchant.device_set.count(), 1)

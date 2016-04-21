@@ -47,7 +47,7 @@ class MerchantRegistrationFormTestCase(TestCase):
         self.assertEqual(merchant.currency.name, 'GBP')
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to[0], form_data['contact_email'])
-        self.assertTrue(gocoin_mock.called)
+        self.assertFalse(gocoin_mock.called)
         oauth_app = Application.objects.get(user=merchant.user)
         self.assertEqual(oauth_app.client_id, form_data['contact_email'])
         self.assertEqual(merchant.account_set.count(), 1)
@@ -107,7 +107,7 @@ class ProfileFormTestCase(TestCase):
         form = ProfileForm(data=form_data, instance=merchant)
         self.assertTrue(form.is_valid())
         merchant_updated = form.save()
-        self.assertTrue(gocoin_mock.get_merchants.called)
+        self.assertFalse(gocoin_mock.get_merchants.called)
         self.assertEqual(merchant_updated.pk, merchant.pk)
         self.assertEqual(merchant_updated.company_name, form_data['company_name'])
 
