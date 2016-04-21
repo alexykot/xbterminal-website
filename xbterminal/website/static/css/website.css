@@ -115,7 +115,7 @@ label[for="id_county"]:after {
 }
 
 #id_payment_processing > label {
-    width: 33.3%;
+    width: 50%;
 }
 
 #device-key-copy:hover {

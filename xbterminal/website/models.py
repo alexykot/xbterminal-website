@@ -422,7 +422,6 @@ class Device(models.Model):
     ]
     PAYMENT_PROCESSING_CHOICES = [
         ('keep', _('keep bitcoins')),
-        ('partially', _('convert partially')),
         ('full', _('convert full amount')),
     ]
 
@@ -452,6 +451,7 @@ class Device(models.Model):
         validators=[validate_public_key],
         help_text='API public key')
 
+    # TODO: remove percent field, use account field
     percent = models.DecimalField(
         _('Percent to convert'),
         max_digits=4,

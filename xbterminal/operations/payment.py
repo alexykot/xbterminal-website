@@ -72,10 +72,12 @@ def prepare_payment(device, fiat_amount):
         logger.exception(error)
         raise exceptions.NetworkError
     # Exchange service
-    order.instantfiat_fiat_amount = (order.fiat_amount *
-                                     Decimal(device.percent / 100)
-                                     ).quantize(FIAT_DEC_PLACES)
-    if order.instantfiat_fiat_amount >= FIAT_MIN_OUTPUT:
+    if device.percent == 0:
+        order.instantfiat_fiat_amount = FIAT_DEC_PLACES
+        order.instantfiat_btc_amount = BTC_DEC_PLACES
+        exchange_rate = get_exchange_rate(order.fiat_currency.name)
+    elif device.percent == 100:
+        order.instantfiat_fiat_amount = order.fiat_amount
         (order.instantfiat_invoice_id,
          order.instantfiat_btc_amount,
          order.instantfiat_address) = instantfiat.create_invoice(
@@ -86,9 +88,7 @@ def prepare_payment(device, fiat_amount):
             order.instantfiat_btc_amount = BTC_MIN_OUTPUT
         exchange_rate = order.instantfiat_fiat_amount / order.instantfiat_btc_amount
     else:
-        order.instantfiat_fiat_amount = FIAT_DEC_PLACES
-        order.instantfiat_btc_amount = BTC_DEC_PLACES
-        exchange_rate = get_exchange_rate(order.fiat_currency.name)
+        raise AssertionError
     # Validate addresses
     for address_field in ['local_address', 'merchant_address',
                           'fee_address', 'instantfiat_address']:

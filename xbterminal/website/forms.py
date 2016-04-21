@@ -27,7 +27,6 @@ from website.models import (
     get_currency)
 from website.widgets import (
     ButtonGroupRadioSelect,
-    PercentWidget,
     TimeWidget,
     FileWidget,
     ForeignKeyWidget)
@@ -407,7 +406,7 @@ class DeviceForm(forms.ModelForm):
         ]
         widgets = {
             'device_type': forms.HiddenInput,
-            'percent': PercentWidget,
+            'percent': forms.HiddenInput,
         }
 
     class Media:

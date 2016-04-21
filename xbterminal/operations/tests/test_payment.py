@@ -165,6 +165,19 @@ class PreparePaymentTestCase(TestCase):
         self.assertEqual(context.exception.message,
                          'Merchant doesn\'t have BTC account')
 
+    @patch('operations.payment.blockchain.BlockChain')
+    def test_convert_partially(self, bc_cls_mock):
+        device = DeviceFactory.create(
+            percent=50,
+            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+        AccountFactory.create(merchant=device.merchant)
+        fiat_amount = Decimal('10')
+        bc_cls_mock.return_value = Mock(**{
+            'get_new_address.return_value': '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje',
+        })
+        with self.assertRaises(AssertionError):
+            payment.prepare_payment(device, fiat_amount)
+
 
 class WaitForPaymentTestCase(TestCase):
 
