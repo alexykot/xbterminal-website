@@ -103,7 +103,9 @@ class DeviceFactory(factory.DjangoModelFactory):
         model = Device
 
     merchant = factory.SubFactory(MerchantAccountFactory)
-    account = factory.SubFactory(AccountFactory)
+    account = factory.SubFactory(
+        AccountFactory,
+        merchant=factory.SelfAttribute('..merchant'))
     device_type = 'hardware'
     name = factory.Sequence(lambda n: 'Terminal #{0}'.format(n))
     percent = 0

@@ -26,7 +26,6 @@ class PreparePaymentTestCase(TestCase):
         device = DeviceFactory.create(
             percent=0,
             bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
-        AccountFactory.create(merchant=device.merchant)
         fiat_amount = Decimal('10')
         exchange_rate = Decimal('235.64')
         local_address = '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje'
@@ -84,7 +83,6 @@ class PreparePaymentTestCase(TestCase):
             device_type='hardware',
             percent=0,
             bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
-        AccountFactory.create(merchant=device.merchant)
         fiat_amount = Decimal('1')
         exchange_rate = Decimal('235.64')
         local_address = '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje'
@@ -114,7 +112,6 @@ class PreparePaymentTestCase(TestCase):
     @patch('operations.payment.run_periodic_task')
     def test_convert_full(self, run_task_mock, invoice_mock, bc_mock):
         device = DeviceFactory.create(percent=100, bitcoin_address='')
-        AccountFactory.create(merchant=device.merchant)
         fiat_amount = Decimal('10')
         local_address = '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje'
         instantfiat_invoice_id = 'test_invoice_123'
@@ -168,7 +165,6 @@ class PreparePaymentTestCase(TestCase):
 
     def test_no_bitcoin_address(self):
         device = DeviceFactory.create(percent=0, bitcoin_address=None)
-        AccountFactory.create(merchant=device.merchant)
         fiat_amount = Decimal('10')
         with self.assertRaises(exceptions.PaymentError) as context:
             payment.prepare_payment(device, fiat_amount)
@@ -180,7 +176,6 @@ class PreparePaymentTestCase(TestCase):
         device = DeviceFactory.create(
             percent=50,
             bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
-        AccountFactory.create(merchant=device.merchant)
         fiat_amount = Decimal('10')
         bc_cls_mock.return_value = Mock(**{
             'get_new_address.return_value': '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje',
@@ -772,7 +767,6 @@ class ForwardTransactionTestCase(TestCase):
             instantfiat_btc_amount=Decimal(0),
             incoming_tx_ids=['0' * 64],
             refund_address='18GV9EWUjSVTU1jXMb1RmaGxAonSyBgKAc')
-        AccountFactory.create(merchant=payment_order.device.merchant)
         outgoing_tx_id = '1' * 64
         extra_btc_amount = Decimal('0.001')
 
@@ -824,7 +818,6 @@ class ForwardTransactionTestCase(TestCase):
             btc_amount=Decimal('0.1011'),
             instantfiat_btc_amount=Decimal(0),
             incoming_tx_ids=['0' * 64])
-        AccountFactory.create(merchant=order.device.merchant)
         bc_cls_mock.return_value = Mock(**{
             'get_raw_transaction.return_value': 'test_incoming_tx',
             'get_unspent_outputs.return_value': [{
@@ -849,6 +842,7 @@ class ForwardTransactionTestCase(TestCase):
                                             balance_max=Decimal('1.0'))
         payment_order = PaymentOrderFactory.create(
             device__merchant=merchant,
+            device__account=btc_account,
             merchant_btc_amount=Decimal('0.1'),
             fee_btc_amount=Decimal('0.001'),
             btc_amount=Decimal('0.1011'),

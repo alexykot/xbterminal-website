@@ -133,10 +133,15 @@ class MerchantAccountTestCase(TestCase):
 
     def test_info_with_payments(self):
         merchant = MerchantAccountFactory.create()
-        DeviceFactory.create(merchant=merchant, status='activation')
-        active_device = DeviceFactory.create(merchant=merchant,
-                                             status='active',
-                                             last_activity=timezone.now())
+        account = AccountFactory.create(merchant=merchant)
+        DeviceFactory.create(merchant=merchant,
+                             account=account,
+                             status='activation')
+        active_device = DeviceFactory.create(
+            merchant=merchant,
+            account=account,
+            status='active',
+            last_activity=timezone.now())
         payments = PaymentOrderFactory.create_batch(
             3, device=active_device, time_notified=timezone.now())
 
@@ -233,6 +238,7 @@ class DeviceTestCase(TestCase):
         device = DeviceFactory.create(status='activation')
         self.assertIsNotNone(device.merchant)
         self.assertIsNotNone(device.account)
+        self.assertEqual(device.account.merchant.pk, device.merchant.pk)
         self.assertEqual(device.status, 'activation')
         self.assertEqual(device.bitcoin_network, 'mainnet')
         # Active

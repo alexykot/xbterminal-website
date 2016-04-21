@@ -7,7 +7,7 @@ from mock import patch, Mock
 
 from bitcoin.core import COutPoint
 
-from website.tests.factories import AccountFactory, DeviceFactory
+from website.tests.factories import DeviceFactory
 from operations.models import WithdrawalOrder
 from operations.tests.factories import (
     WithdrawalOrderFactory,
@@ -20,10 +20,8 @@ class PrepareWithdrawalTestCase(TestCase):
     @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.get_exchange_rate')
     def test_prepare(self, get_rate_mock, bc_mock):
-        device = DeviceFactory.create()
-        btc_account = AccountFactory.create(
-            merchant=device.merchant,
-            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+        device = DeviceFactory.create(
+            account__bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
         fiat_amount = Decimal('1.00')
         exchange_rate = Decimal(100)
         get_rate_mock.return_value = exchange_rate
@@ -37,7 +35,8 @@ class PrepareWithdrawalTestCase(TestCase):
         order = withdrawal.prepare_withdrawal(device, fiat_amount)
         self.assertEqual(order.device.pk, device.pk)
         self.assertEqual(order.bitcoin_network, device.bitcoin_network)
-        self.assertEqual(order.merchant_address, btc_account.bitcoin_address)
+        self.assertEqual(order.merchant_address,
+                         device.account.bitcoin_address)
         self.assertEqual(order.fiat_currency.pk,
                          device.merchant.currency.pk)
         self.assertEqual(order.fiat_amount, fiat_amount)
@@ -49,26 +48,25 @@ class PrepareWithdrawalTestCase(TestCase):
         self.assertEqual(order.status, 'new')
 
     def test_no_account(self):
-        device = DeviceFactory.create()
+        device = DeviceFactory.create(status='registered')
+        fiat_amount = Decimal('1.00')
+        with self.assertRaises(exceptions.WithdrawalError) as context:
+            withdrawal.prepare_withdrawal(device, fiat_amount)
+        self.assertEqual(context.exception.message,
+                         'Merchant doesn\'t have TBTC account')
+
+    def test_no_address(self):
+        device = DeviceFactory.create(account__bitcoin_address=None)
         fiat_amount = Decimal('1.00')
         with self.assertRaises(exceptions.WithdrawalError) as context:
             withdrawal.prepare_withdrawal(device, fiat_amount)
         self.assertEqual(context.exception.message,
                          'Merchant doesn\'t have BTC account')
 
-    def test_no_address(self):
-        device = DeviceFactory.create()
-        AccountFactory.create(merchant=device.merchant)
-        fiat_amount = Decimal('1.00')
-        with self.assertRaises(exceptions.WithdrawalError):
-            withdrawal.prepare_withdrawal(device, fiat_amount)
-
     @patch('operations.withdrawal.get_exchange_rate')
     def test_dust_threshold(self, get_rate_mock):
-        device = DeviceFactory.create()
-        AccountFactory.create(
-            merchant=device.merchant,
-            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+        device = DeviceFactory.create(
+            account__bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
         fiat_amount = Decimal('0.05')
         get_rate_mock.return_value = Decimal(1000)
         with self.assertRaises(exceptions.WithdrawalError):
@@ -77,10 +75,8 @@ class PrepareWithdrawalTestCase(TestCase):
     @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.get_exchange_rate')
     def test_insufficient_funds(self, get_rate_mock, bc_mock):
-        device = DeviceFactory.create()
-        AccountFactory.create(
-            merchant=device.merchant,
-            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+        device = DeviceFactory.create(
+            account__bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
         fiat_amount = Decimal('200.00')
         get_rate_mock.return_value = Decimal(200)
         bc_mock.return_value = Mock(**{
@@ -95,10 +91,8 @@ class PrepareWithdrawalTestCase(TestCase):
     @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.get_exchange_rate')
     def test_already_reserved(self, get_rate_mock, bc_mock):
-        device = DeviceFactory.create()
-        AccountFactory.create(
-            merchant=device.merchant,
-            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+        device = DeviceFactory.create(
+            account__bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
         reserved_output = outpoint_factory()
         order = WithdrawalOrderFactory.create(
             device=device,
@@ -126,10 +120,8 @@ class PrepareWithdrawalTestCase(TestCase):
     @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.get_exchange_rate')
     def test_dust_change(self, get_rate_mock, bc_mock):
-        device = DeviceFactory.create()
-        AccountFactory.create(
-            merchant=device.merchant,
-            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+        device = DeviceFactory.create(
+            account__bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
         fiat_amount = Decimal('1.00')
         exchange_rate = Decimal(200)
         get_rate_mock.return_value = exchange_rate
@@ -150,11 +142,9 @@ class SendTransactionTestCase(TestCase):
     @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.run_periodic_task')
     def test_send_tx(self, run_task_mock, bc_mock):
-        device = DeviceFactory.create()
-        AccountFactory.create(
-            merchant=device.merchant,
-            balance=Decimal('0.01'),
-            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+        device = DeviceFactory.create(
+            account__balance=Decimal('0.01'),
+            account__bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
         incoming_tx_hash = b'\x01' * 32
         order = WithdrawalOrderFactory.create(
             device=device,

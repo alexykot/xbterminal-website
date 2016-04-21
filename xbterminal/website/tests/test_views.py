@@ -238,8 +238,9 @@ class DeviceListViewTestCase(TestCase):
 
     def test_get(self):
         merchant = MerchantAccountFactory.create()
+        account = AccountFactory.create(merchant=merchant)
         device_1, device_2 = DeviceFactory.create_batch(
-            2, merchant=merchant)
+            2, merchant=merchant, account=account)
         device_2.suspend()
         device_2.save()
         self.client.login(username=merchant.user.email,
