@@ -22,9 +22,9 @@ class InstantFiatTestCase(TestCase):
         self.assertEqual(call_args[1], 'GBP')
         self.assertEqual(call_args[2], 'test')
         self.assertIn(merchant.company_name, call_args[3])
-        self.assertEqual(result['instantfiat_invoice_id'], 'invoice_id')
-        self.assertEqual(result['instantfiat_btc_amount'], Decimal(0.1))
-        self.assertEqual(result['instantfiat_address'], 'address')
+        self.assertEqual(result[0], 'invoice_id')
+        self.assertEqual(result[1], Decimal(0.1))
+        self.assertEqual(result[2], 'address')
 
     @patch('operations.instantfiat.cryptopay.is_invoice_paid')
     def test_is_invoice_paid(self, is_paid_mock):

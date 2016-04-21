@@ -124,11 +124,10 @@ class PreparePaymentTestCase(TestCase):
         bc_mock.return_value = Mock(**{
             'get_new_address.return_value': local_address,
         })
-        invoice_mock.return_value = {
-            'instantfiat_invoice_id': instantfiat_invoice_id,
-            'instantfiat_btc_amount': instantfiat_btc_amount,
-            'instantfiat_address': instantfiat_address,
-        }
+        invoice_mock.return_value = (
+            instantfiat_invoice_id,
+            instantfiat_btc_amount,
+            instantfiat_address)
 
         payment_order = payment.prepare_payment(device, fiat_amount)
         expected_fee_btc_amount = (instantfiat_btc_amount *

@@ -39,10 +39,11 @@ def prepare_payment(device, fiat_amount):
     """
     Accepts:
         device: website.models.Device
-        amount_fiat: Decimal
+        fiat_amount: Decimal
     Returns:
         payment_order: PaymentOrder instance
     """
+    assert fiat_amount >= FIAT_MIN_OUTPUT
     # Check BTC/TBTC account
     if device.bitcoin_network == 'mainnet':
         account_currency = Currency.objects.get(name='BTC')
@@ -86,15 +87,15 @@ def prepare_payment(device, fiat_amount):
     # Exchange service
     details['fiat_currency'] = device.merchant.currency
     details['fiat_amount'] = fiat_amount.quantize(FIAT_DEC_PLACES)
-    assert details['fiat_amount'] >= FIAT_MIN_OUTPUT
     details['instantfiat_fiat_amount'] = (details['fiat_amount'] *
                                           Decimal(device.percent / 100)
                                           ).quantize(FIAT_DEC_PLACES)
     if details['instantfiat_fiat_amount'] >= FIAT_MIN_OUTPUT:
-        instantfiat_data = instantfiat.create_invoice(
+        (details['instantfiat_invoice_id'],
+         details['instantfiat_btc_amount'],
+         details['instantfiat_address']) = instantfiat.create_invoice(
             device.merchant,
             details['instantfiat_fiat_amount'])
-        details.update(instantfiat_data)
         assert details['instantfiat_btc_amount'] > 0
         if details['instantfiat_btc_amount'] < BTC_MIN_OUTPUT:
             details['instantfiat_btc_amount'] = BTC_MIN_OUTPUT
@@ -109,7 +110,7 @@ def prepare_payment(device, fiat_amount):
         if address:
             error_message = blockchain.validate_bitcoin_address(
                 address, device.bitcoin_network)
-        assert error_message is None
+            assert error_message is None
     # Fee
     details['fee_btc_amount'] = (details['fiat_amount'] *
                                  Decimal(config.OUR_FEE_SHARE) /

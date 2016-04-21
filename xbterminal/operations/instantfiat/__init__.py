@@ -31,11 +31,7 @@ def create_invoice(merchant, fiat_amount):
             merchant.currency.name,
             merchant.api_key or config.GOCOIN_AUTH_TOKEN,
             merchant.gocoin_merchant_id)
-    return {
-        'instantfiat_invoice_id': invoice_id,
-        'instantfiat_btc_amount': btc_amount,
-        'instantfiat_address': address,
-    }
+    return invoice_id, btc_amount, address
 
 
 def is_invoice_paid(merchant, invoice_id):
