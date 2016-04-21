@@ -7,7 +7,7 @@ from django.db import migrations, models
 def set_accounts(apps, schema_editor):
     Device = apps.get_model('website', 'Device')
     Account = apps.get_model('website', 'Account')
-    for device in Device.objects.all():
+    for device in Device.objects.exclude(status='registered'):
         if device.percent == 0:
             if device.bitcoin_network == 'mainnet':
                 device.account = Account.objects.get(
