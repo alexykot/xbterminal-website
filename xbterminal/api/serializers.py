@@ -129,4 +129,5 @@ class DeviceRegistrationSerializer(serializers.ModelSerializer):
             name='Device {0}'.format(validated_data['key'][:6]),
             key=validated_data['key'],
             batch=validated_data['batch'],
-            api_key=validated_data['api_key'])
+            api_key=validated_data['api_key'],
+            percent=0)
