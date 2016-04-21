@@ -60,7 +60,7 @@ def prepare_withdrawal(device, fiat_amount):
     try:
         account = Account.objects.get(merchant=device.merchant,
                                       currency=account_currency,
-                                      address__isnull=False)
+                                      bitcoin_address__isnull=False)
     except Account.DoesNotExist:
         raise WithdrawalError('Merchant doesn\'t have {0} account'.format(
             account_currency.name))
@@ -68,7 +68,7 @@ def prepare_withdrawal(device, fiat_amount):
     order = WithdrawalOrder(
         device=device,
         bitcoin_network=device.bitcoin_network,
-        merchant_address=account.address,
+        merchant_address=account.bitcoin_address,
         fiat_currency=device.merchant.currency,
         fiat_amount=fiat_amount)
     # Calculate BTC amount

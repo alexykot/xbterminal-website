@@ -34,7 +34,7 @@ def check_wallet(network):
         name='BTC' if network == 'mainnet' else 'TBTC')
     accounts = Account.objects.filter(currency=currency)
     wallet_value = Decimal(0)
-    for address in accounts.values_list('address', flat=True):
+    for address in accounts.values_list('bitcoin_address', flat=True):
         wallet_value += bc.get_address_balance(address)
     result = accounts.aggregate(Sum('balance'))
     db_value = result['balance__sum'] or Decimal(0)

@@ -22,14 +22,14 @@ def withdraw_btc(account_id, address):
         account = Account.objects.get(pk=account_id)
     except Account.DoesNotExist:
         return 'invalid account id'
-    if not account.address:
+    if not account.bitcoin_address:
         return 'nothing to withdraw'
     if blockchain.validate_bitcoin_address(address, account.bitcoin_network):
         return 'invalid bitcoin address'
     bc = blockchain.BlockChain(account.bitcoin_network)
     tx_inputs = []
     amount = BTC_DEC_PLACES
-    for output in bc.get_unspent_outputs(account.address):
+    for output in bc.get_unspent_outputs(account.bitcoin_address):
         tx_inputs.append(output['outpoint'])
         amount += output['amount']
     if not amount:

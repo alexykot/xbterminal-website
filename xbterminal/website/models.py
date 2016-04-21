@@ -268,17 +268,20 @@ class Account(models.Model):
     """
     merchant = models.ForeignKey(MerchantAccount)
     currency = models.ForeignKey(Currency)
-    balance = models.DecimalField(max_digits=20,
-                                  decimal_places=8,
-                                  default=0)
-    balance_max = models.DecimalField(max_digits=20,
-                                      decimal_places=8,
-                                      default=0)
-    address = models.CharField(max_length=35,
-                               unique=True,
-                               validators=[validate_bitcoin_address],
-                               blank=True,
-                               null=True)
+    balance = models.DecimalField(
+        max_digits=20,
+        decimal_places=8,
+        default=0)
+    balance_max = models.DecimalField(
+        max_digits=20,
+        decimal_places=8,
+        default=0)
+    bitcoin_address = models.CharField(
+        max_length=35,
+        unique=True,
+        validators=[validate_bitcoin_address],
+        blank=True,
+        null=True)
 
     class Meta:
         ordering = ('merchant', 'currency')

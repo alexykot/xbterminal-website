@@ -158,7 +158,7 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.currency.name, 'BTC')
         self.assertEqual(account.balance, 0)
         self.assertEqual(account.balance_max, 0)
-        self.assertIsNone(account.address)
+        self.assertIsNone(account.bitcoin_address)
         self.assertEqual(str(account), 'mtest (mtest) - BTC')
 
     def test_factory(self):
@@ -166,7 +166,7 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.currency.name, 'BTC')
         self.assertEqual(account.balance, 0)
         self.assertEqual(account.balance_max, 0)
-        self.assertIsNone(account.address)
+        self.assertIsNone(account.bitcoin_address)
 
     def test_unique_together(self):
         merchant = MerchantAccountFactory.create()

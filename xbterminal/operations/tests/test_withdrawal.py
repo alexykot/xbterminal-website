@@ -23,7 +23,7 @@ class PrepareWithdrawalTestCase(TestCase):
         device = DeviceFactory.create()
         btc_account = AccountFactory.create(
             merchant=device.merchant,
-            address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
         fiat_amount = Decimal('1.00')
         exchange_rate = Decimal(100)
         get_rate_mock.return_value = exchange_rate
@@ -37,7 +37,7 @@ class PrepareWithdrawalTestCase(TestCase):
         order = withdrawal.prepare_withdrawal(device, fiat_amount)
         self.assertEqual(order.device.pk, device.pk)
         self.assertEqual(order.bitcoin_network, device.bitcoin_network)
-        self.assertEqual(order.merchant_address, btc_account.address)
+        self.assertEqual(order.merchant_address, btc_account.bitcoin_address)
         self.assertEqual(order.fiat_currency.pk,
                          device.merchant.currency.pk)
         self.assertEqual(order.fiat_amount, fiat_amount)
@@ -68,7 +68,7 @@ class PrepareWithdrawalTestCase(TestCase):
         device = DeviceFactory.create()
         AccountFactory.create(
             merchant=device.merchant,
-            address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
         fiat_amount = Decimal('0.05')
         get_rate_mock.return_value = Decimal(1000)
         with self.assertRaises(exceptions.WithdrawalError):
@@ -80,7 +80,7 @@ class PrepareWithdrawalTestCase(TestCase):
         device = DeviceFactory.create()
         AccountFactory.create(
             merchant=device.merchant,
-            address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
         fiat_amount = Decimal('200.00')
         get_rate_mock.return_value = Decimal(200)
         bc_mock.return_value = Mock(**{
@@ -98,7 +98,7 @@ class PrepareWithdrawalTestCase(TestCase):
         device = DeviceFactory.create()
         AccountFactory.create(
             merchant=device.merchant,
-            address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
         reserved_output = outpoint_factory()
         order = WithdrawalOrderFactory.create(
             device=device,
@@ -129,7 +129,7 @@ class PrepareWithdrawalTestCase(TestCase):
         device = DeviceFactory.create()
         AccountFactory.create(
             merchant=device.merchant,
-            address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
         fiat_amount = Decimal('1.00')
         exchange_rate = Decimal(200)
         get_rate_mock.return_value = exchange_rate
@@ -154,7 +154,7 @@ class SendTransactionTestCase(TestCase):
         AccountFactory.create(
             merchant=device.merchant,
             balance=Decimal('0.01'),
-            address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
         incoming_tx_hash = b'\x01' * 32
         order = WithdrawalOrderFactory.create(
             device=device,
