@@ -171,7 +171,9 @@ class MerchantAccount(models.Model):
     contact_phone = models.CharField(_('Contact phone'), max_length=32, validators=[validate_phone], null=True)
     contact_email = models.EmailField(_('Contact email'), max_length=254, unique=True)
 
+    # Display language
     language = models.ForeignKey(Language, default=1)  # by default, English, see fixtures
+    # Display currency
     currency = models.ForeignKey(Currency, default=1)  # by default, GBP, see fixtures
     ui_theme = models.ForeignKey(UITheme, default=1)  # 'default' theme, see fixtures
 
@@ -509,6 +511,8 @@ class Device(models.Model):
     def bitcoin_network(self):
         if self.account:
             return self.account.bitcoin_network
+        else:
+            return 'mainnet'
 
     @property
     def instantfiat(self):
