@@ -263,7 +263,9 @@ BITCOIN_NETWORKS = [
 
 
 class Account(models.Model):
-
+    """
+    Represents internal BTC account or external instantfiat account
+    """
     merchant = models.ForeignKey(MerchantAccount)
     currency = models.ForeignKey(Currency)
     balance = models.DecimalField(max_digits=20,
@@ -286,6 +288,16 @@ class Account(models.Model):
         return u'{0} - {1}'.format(
             str(self.merchant),
             self.currency.name)
+
+    @property
+    def bitcoin_network(self):
+        if self.currency.name == 'BTC':
+            return 'mainnet'
+        elif self.currency.name == 'TBTC':
+            return 'testnet'
+        else:
+            # Instantfiat services work only with mainnet
+            return 'mainnet'
 
 
 class KYCDocument(models.Model):

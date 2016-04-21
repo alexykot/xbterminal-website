@@ -15,6 +15,7 @@ class Command(BaseCommand):
     help = "Compare merchants' balances and bitcoind wallet balance"
 
     def add_arguments(self, parser):
+        # TODO: accept currency name as first argument
         parser.add_argument(
             'network', type=str, nargs='?', default='mainnet')
         parser.add_argument(

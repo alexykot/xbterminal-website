@@ -175,6 +175,14 @@ class AccountTestCase(TestCase):
             AccountFactory.create(merchant=merchant,
                                   currency__name='TBTC')
 
+    def test_bitcoin_network(self):
+        account_1 = AccountFactory.create(currency__name='BTC')
+        self.assertEqual(account_1.bitcoin_network, 'mainnet')
+        account_2 = AccountFactory.create(currency__name='TBTC')
+        self.assertEqual(account_2.bitcoin_network, 'testnet')
+        account_3 = AccountFactory.create(currency__name='GBP')
+        self.assertEqual(account_3.bitcoin_network, 'mainnet')
+
 
 class DeviceTestCase(TestCase):
 
