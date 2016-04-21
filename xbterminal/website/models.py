@@ -511,6 +511,15 @@ class Device(models.Model):
             return self.account.bitcoin_network
 
     @property
+    def instantfiat(self):
+        if not self.account:
+            return None
+        if self.account.currency.name in ['BTC', 'TBTC']:
+            return False
+        else:
+            return True
+
+    @property
     def payment_processing(self):
         if self.percent == 0:
             return 'keep'

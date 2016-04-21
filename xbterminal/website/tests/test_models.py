@@ -277,6 +277,26 @@ class DeviceTestCase(TestCase):
         device.activate()
         self.assertEqual(device.status, 'active')
 
+    def test_bitcoin_network(self):
+        device_1 = DeviceFactory.create(status='registered')
+        self.assertIsNone(device_1.bitcoin_network)
+        device_2 = DeviceFactory.create(status='active')
+        self.assertEqual(device_2.bitcoin_network, 'mainnet')
+        device_3 = DeviceFactory.create(
+            status='active',
+            account__currency__name='TBTC')
+        self.assertEqual(device_3.bitcoin_network, 'testnet')
+
+    def test_instantfiat(self):
+        device_1 = DeviceFactory.create(status='registered')
+        self.assertIsNone(device_1.instantfiat)
+        device_2 = DeviceFactory.create(status='active')
+        self.assertFalse(device_2.instantfiat)
+        device_3 = DeviceFactory.create(
+            status='active',
+            account__currency__name='USD')
+        self.assertTrue(device_3.instantfiat)
+
 
 class DeviceBatchTestCase(TestCase):
 
