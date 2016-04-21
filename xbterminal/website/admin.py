@@ -137,7 +137,12 @@ class KYCDocumentInline(admin.TabularInline):
 @admin.register(models.Account)
 class AccountAdmin(admin.ModelAdmin):
 
-    list_display = ['__unicode__', 'balance']
+    list_display = [
+        '__unicode__',
+        'balance',
+        'balance_max',
+        'instantfiat_provider',
+    ]
 
     def get_form(self, request, obj, **kwargs):
         form = super(AccountAdmin, self).get_form(request, obj, **kwargs)
