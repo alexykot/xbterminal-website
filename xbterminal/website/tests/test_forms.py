@@ -11,6 +11,7 @@ from website.forms import (
     DeviceActivationForm)
 from website.tests.factories import (
     MerchantAccountFactory,
+    AccountFactory,
     DeviceFactory)
 
 
@@ -114,29 +115,48 @@ class ProfileFormTestCase(TestCase):
 
 class DeviceFormTestCase(TestCase):
 
+    def test_init(self):
+        with self.assertRaises(KeyError):
+            DeviceForm()
+
     def test_valid_data(self):
+        merchant = MerchantAccountFactory.create()
+        account = AccountFactory.create(merchant=merchant)
         form_data = {
             'device_type': 'hardware',
             'name': 'Terminal',
-            'payment_processing': 'keep',
-            'percent': '0',
+            'account': account.pk,
             'bitcoin_address': '1JpY93MNoeHJ914CHLCQkdhS7TvBM68Xp6',
         }
-        form = DeviceForm(data=form_data)
+        form = DeviceForm(data=form_data, merchant=merchant)
         self.assertTrue(form.is_valid())
         self.assertEqual(form.device_type_verbose(), 'Terminal')
-        device = form.save(commit=False)
+        device = form.save()
+        self.assertEqual(device.merchant.pk, merchant.pk)
         self.assertEqual(device.device_type, 'hardware')
         self.assertEqual(device.name, form_data['name'])
-        self.assertEqual(device.payment_processing, 'keep')
+        self.assertEqual(device.account.pk, account.pk)
 
     def test_required(self):
-        form = DeviceForm(data={})
+        merchant = MerchantAccountFactory.create()
+        form = DeviceForm(data={}, merchant=merchant)
         self.assertFalse(form.is_valid())
         self.assertIn('device_type', form.errors)
         self.assertIn('name', form.errors)
-        self.assertIn('payment_processing', form.errors)
-        self.assertIn('percent', form.errors)
+        self.assertIn('account', form.errors)
+
+    def test_invalid_bitcoin_address(self):
+        merchant = MerchantAccountFactory.create()
+        account = AccountFactory.create(merchant=merchant)
+        form_data = {
+            'device_type': 'hardware',
+            'name': 'Terminal',
+            'account': account.pk,
+            'bitcoin_address': 'xxx',
+        }
+        form = DeviceForm(data=form_data, merchant=merchant)
+        self.assertFalse(form.is_valid())
+        self.assertIn('bitcoin_address', form.errors)
 
 
 class DeviceActivationFormTestCase(TestCase):

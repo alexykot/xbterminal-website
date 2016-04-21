@@ -389,28 +389,26 @@ class KYCDocumentUploadForm(forms.ModelForm):
 
 class DeviceForm(forms.ModelForm):
 
-    payment_processing = forms.ChoiceField(
-        label=_('Payment processing'),
-        choices=Device.PAYMENT_PROCESSING_CHOICES,
-        widget=ButtonGroupRadioSelect,
-        initial='keep')
-
     class Meta:
         model = Device
         fields = [
             'device_type',
             'name',
-            'payment_processing',
-            'percent',
+            'account',
             'bitcoin_address',
         ]
         widgets = {
             'device_type': forms.HiddenInput,
-            'percent': forms.HiddenInput,
         }
 
     class Media:
         js = ['js/device-form.js']
+
+    def __init__(self, *args, **kwargs):
+        self.merchant = kwargs.pop('merchant')
+        super(DeviceForm, self).__init__(*args, **kwargs)
+        self.fields['account'].queryset = self.merchant.account_set.all()
+        self.fields['account'].required = True
 
     def device_type_verbose(self):
         device_types = dict(Device.DEVICE_TYPES)
@@ -419,21 +417,28 @@ class DeviceForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super(DeviceForm, self).clean()
-        try:
-            percent = cleaned_data['percent']
-            bitcoin_address = cleaned_data['bitcoin_address']
-        except KeyError:
-            return cleaned_data
-        if percent < 100 and not bitcoin_address:
-            self.add_error('bitcoin_address', 'This field is required.')
-        if self.instance and bitcoin_address:
-            try:
-                validate_bitcoin_address(bitcoin_address,
-                                         network=self.instance.bitcoin_network)
-            except forms.ValidationError as error:
-                for error_message in error.messages:
-                    self.add_error('bitcoin_address', error_message)
+        account = cleaned_data.get('account')
+        if account and account.currency.name in ['BTC', 'TBTC']:
+            bitcoin_address = cleaned_data.get('bitcoin_address')
+            if not bitcoin_address:
+                self.add_error('bitcoin_address', 'This field is required.')
+            else:
+                try:
+                    validate_bitcoin_address(
+                        bitcoin_address,
+                        network=account.bitcoin_network)
+                except forms.ValidationError as error:
+                    for error_message in error.messages:
+                        self.add_error('bitcoin_address', error_message)
         return cleaned_data
+
+    def save(self, commit=True):
+        device = super(DeviceForm, self).save(commit=False)
+        if not device.merchant:
+            device.merchant = self.merchant
+        if commit:
+            device.save()
+        return device
 
 
 class DeviceActivationForm(forms.Form):

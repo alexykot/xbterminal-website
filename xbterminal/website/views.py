@@ -387,20 +387,20 @@ class CreateDeviceView(TemplateResponseMixin, CabinetView):
             return HttpResponseBadRequest('')
         count = self.request.user.merchant.device_set.count()
         context = self.get_context_data(**kwargs)
-        context['form'] = forms.DeviceForm(initial={
-            'device_type': device_type,
-            'name': u'{0} #{1}'.format(device_types[device_type], count + 1),
-        })
+        context['form'] = forms.DeviceForm(
+            merchant=self.request.user.merchant,
+            initial={
+                'device_type': device_type,
+                'name': u'{0} #{1}'.format(device_types[device_type], count + 1),
+            })
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
         # TODO: remove this view
-        form = forms.DeviceForm(self.request.POST)
+        form = forms.DeviceForm(self.request.POST,
+                                merchant=self.request.user.merchant)
         if form.is_valid():
-            device = form.save(commit=False)
-            device.merchant = self.request.user.merchant
-            # Account is not set
-            device.save()
+            device = form.save()
             return redirect(reverse('website:device',
                                     kwargs={'device_key': device.key}))
         else:
@@ -479,13 +479,15 @@ class UpdateDeviceView(DeviceMixin, TemplateResponseMixin, CabinetView):
         context = self.get_context_data(**kwargs)
         context['form'] = forms.DeviceForm(
             instance=context['device'],
+            merchant=self.request.user.merchant,
             initial={'payment_processing': context['device'].payment_processing})
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         form = forms.DeviceForm(self.request.POST,
-                                instance=context['device'])
+                                instance=context['device'],
+                                merchant=self.request.user.merchant)
         if form.is_valid():
             device = form.save()
             return redirect(reverse('website:device',

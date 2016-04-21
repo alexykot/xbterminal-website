@@ -273,24 +273,24 @@ class CreateDeviceViewTestCase(TestCase):
 
     def test_post(self):
         merchant = MerchantAccountFactory.create()
+        account = AccountFactory.create(merchant=merchant,
+                                        currency__name='GBP')
         self.client.login(username=merchant.user.email,
                           password='password')
         self.assertEqual(merchant.device_set.count(), 0)
         form_data = {
             'device_type': 'hardware',
             'name': 'Terminal',
-            'payment_processing': 'full',
-            'percent': '100',
+            'account': account.pk,
         }
         response = self.client.post(self.url, form_data)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(merchant.device_set.count(), 1)
         device = merchant.device_set.first()
-        self.assertIsNone(device.account)
+        self.assertEqual(device.account.pk, account.pk)
         self.assertEqual(device.status, 'registered')
         self.assertEqual(device.device_type, 'hardware')
         self.assertEqual(device.name, 'Terminal')
-        self.assertEqual(device.payment_processing, 'full')
 
 
 class UpdateDeviceView(TestCase):
