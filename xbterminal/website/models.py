@@ -425,9 +425,14 @@ class Device(models.Model):
         ('full', _('convert full amount')),
     ]
 
-    merchant = models.ForeignKey(MerchantAccount,
-                                 blank=True,
-                                 null=True)
+    merchant = models.ForeignKey(
+        MerchantAccount,
+        blank=True,
+        null=True)
+    account = models.ForeignKey(
+        Account,
+        blank=True,
+        null=True)
     device_type = models.CharField(max_length=50, choices=DEVICE_TYPES)
     status = FSMField(max_length=50,
                       choices=DEVICE_STATUSES,
@@ -463,6 +468,7 @@ class Device(models.Model):
         max_length=100,
         blank=True,
         null=True)
+    # TODO: remove field, use property
     bitcoin_network = models.CharField(
         max_length=50,
         choices=BITCOIN_NETWORKS,
@@ -483,7 +489,7 @@ class Device(models.Model):
         return self.name
 
     def can_activate(self):
-        return self.merchant is not None
+        return self.merchant is not None and self.account is not None
 
     @transition(field=status,
                 source='registered',

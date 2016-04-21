@@ -247,12 +247,13 @@ class RegistrationView(TemplateResponseMixin, View):
         elif regtype == 'terminal':
             order = order_form.save(merchant)
             # Create devices
+            # TODO: disable this type of registration
             for idx in range(order.quantity):
                 device = models.Device(
                     device_type='hardware',
                     status='active',
                     name='Terminal #{0}'.format(idx + 1),
-                    merchant=merchant)
+                    merchant=merchant)  # Account is not set
                 device.save()
             utils.send_registration_info(merchant, order)
             response = {
@@ -260,11 +261,12 @@ class RegistrationView(TemplateResponseMixin, View):
                 'next': reverse('website:order', kwargs={'pk': order.pk}),
             }
         elif regtype == 'web':
+            # TODO: disable this type of registration
             device = models.Device(
                 device_type='web',
                 status='active',
                 name='Web POS #1',
-                merchant=merchant)
+                merchant=merchant)  # Account is not set
             device.save()
             utils.send_registration_info(merchant)
             response = {
@@ -392,12 +394,12 @@ class CreateDeviceView(TemplateResponseMixin, CabinetView):
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
+        # TODO: remove this view
         form = forms.DeviceForm(self.request.POST)
         if form.is_valid():
             device = form.save(commit=False)
             device.merchant = self.request.user.merchant
-            device.start_activation()
-            device.activate()
+            # Account is not set
             device.save()
             return redirect(reverse('website:device',
                                     kwargs={'device_key': device.key}))

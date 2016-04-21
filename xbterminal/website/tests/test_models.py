@@ -206,6 +206,7 @@ class DeviceTestCase(TestCase):
             device_type='hardware',
             name='TEST')
         self.assertIsNone(device.merchant)
+        self.assertIsNone(device.account)
         self.assertEqual(device.status, 'registered')
         self.assertEqual(len(device.key), 8)
         self.assertEqual(len(device.activation_code), 6)
@@ -221,6 +222,7 @@ class DeviceTestCase(TestCase):
         # Registration
         device = DeviceFactory.create(status='registered')
         self.assertIsNone(device.merchant)
+        self.assertIsNone(device.account)
         self.assertEqual(device.status, 'registered')
         self.assertEqual(len(device.key), 8)
         self.assertEqual(len(device.activation_code), 6)
@@ -230,10 +232,12 @@ class DeviceTestCase(TestCase):
         # Activation
         device = DeviceFactory.create(status='activation')
         self.assertIsNotNone(device.merchant)
+        self.assertIsNotNone(device.account)
         self.assertEqual(device.status, 'activation')
         # Active
         device = DeviceFactory.create(status='active')
         self.assertIsNotNone(device.merchant)
+        self.assertIsNotNone(device.account)
         self.assertEqual(device.status, 'active')
         # Without kwargs
         device = DeviceFactory.create()
@@ -241,6 +245,7 @@ class DeviceTestCase(TestCase):
         # Suspended
         device = DeviceFactory.create(status='suspended')
         self.assertIsNotNone(device.merchant)
+        self.assertIsNotNone(device.account)
         self.assertEqual(device.status, 'suspended')
 
     def test_transitions(self):
@@ -252,7 +257,14 @@ class DeviceTestCase(TestCase):
             device.activate()
         with self.assertRaises(TransitionNotAllowed):
             device.suspend()
+        # Set merchant
         device.merchant = MerchantAccountFactory.create()
+        with self.assertRaises(TransitionNotAllowed):
+            device.start_activation()
+        with self.assertRaises(TransitionNotAllowed):
+            device.activate()
+        # Set account
+        device.account = AccountFactory.create(merchant=device.merchant)
         with self.assertRaises(TransitionNotAllowed):
             device.activate()
         device.start_activation()

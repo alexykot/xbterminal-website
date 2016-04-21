@@ -96,11 +96,12 @@ class DevicesView(ProtectedResourceView):
         name = self.request.POST.get('name')
         if not name:
             return HttpResponseBadRequest()
+        # TODO: update or remove this view
         device = Device(
             device_type='mobile',
             status='active',
             name=name,
-            merchant=merchant)
+            merchant=merchant)  # Account is not set
         device.save()
         data = {
             'name': device.name,

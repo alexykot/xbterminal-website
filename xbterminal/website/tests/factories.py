@@ -103,6 +103,7 @@ class DeviceFactory(factory.DjangoModelFactory):
         model = Device
 
     merchant = factory.SubFactory(MerchantAccountFactory)
+    account = factory.SubFactory(AccountFactory)
     device_type = 'hardware'
     name = factory.Sequence(lambda n: 'Terminal #{0}'.format(n))
     percent = 0
@@ -119,6 +120,7 @@ class DeviceFactory(factory.DjangoModelFactory):
             self.activate()
         elif extracted == 'registered':
             self.merchant = None
+            self.account = None
         elif extracted == 'activation':
             self.start_activation()
         elif extracted == 'suspended':

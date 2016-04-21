@@ -10,6 +10,7 @@ from rest_framework import status
 from operations import exceptions
 from operations.models import PaymentOrder
 from operations.tests.factories import PaymentOrderFactory
+from website.models import Device
 from website.tests.factories import (
     MerchantAccountFactory,
     DeviceFactory)
@@ -60,6 +61,10 @@ class DevicesViewTestCase(TestCase):
         self.assertEqual(data['percent'], 100.0)
         self.assertEqual(data['type'], 'mobile')
         self.assertFalse(data['online'])
+        device = Device.objects.get(key=data['key'])
+        self.assertEqual(device.status, 'active')
+        self.assertEqual(device.merchant.pk, merchant.pk)
+        self.assertIsNone(device.account)
 
 
 class DeviceSettingsViewTestCase(TestCase):

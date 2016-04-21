@@ -10,6 +10,7 @@ from mock import Mock, patch
 from website.models import MerchantAccount, Device
 from website.tests.factories import (
     MerchantAccountFactory,
+    AccountFactory,
     DeviceFactory,
     ReconciliationTimeFactory)
 from operations.tests.factories import PaymentOrderFactory
@@ -187,6 +188,7 @@ class RegistrationViewTestCase(TestCase):
         device = merchant.device_set.first()
         self.assertEqual(device.device_type, 'hardware')
         self.assertEqual(device.status, 'active')
+        self.assertIsNone(device.account)
 
         self.assertEqual(len(mail.outbox), 2)
         self.assertEqual(mail.outbox[0].to[0],
@@ -223,6 +225,7 @@ class RegistrationViewTestCase(TestCase):
         device = merchant.device_set.first()
         self.assertEqual(device.device_type, 'web')
         self.assertEqual(device.status, 'active')
+        self.assertIsNone(device.account)
 
         self.assertEqual(len(mail.outbox), 2)
         self.assertEqual(mail.outbox[0].to[0],
@@ -282,7 +285,8 @@ class CreateDeviceViewTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(merchant.device_set.count(), 1)
         device = merchant.device_set.first()
-        self.assertEqual(device.status, 'active')
+        self.assertIsNone(device.account)
+        self.assertEqual(device.status, 'registered')
         self.assertEqual(device.device_type, 'hardware')
         self.assertEqual(device.name, 'Terminal')
         self.assertEqual(device.payment_processing, 'full')
@@ -346,6 +350,7 @@ class ActivateDeviceViewTestCase(TestCase):
     @patch('api.utils.activation.rq_helpers.run_periodic_task')
     def test_post_valid_code(self, run_periodic_mock, run_mock):
         merchant = MerchantAccountFactory.create()
+        account = AccountFactory.create(merchant=merchant)
         self.assertEqual(merchant.device_set.count(), 0)
         self.client.login(username=merchant.user.email,
                           password='password')
@@ -364,6 +369,7 @@ class ActivateDeviceViewTestCase(TestCase):
         self.assertEqual(merchant.device_set.count(), 1)
         active_device = merchant.device_set.first()
         self.assertEqual(active_device.status, 'activation')
+        self.assertEqual(active_device.account.pk, account.pk)
 
     @patch('api.utils.activation.rq_helpers.run_task')
     @patch('api.utils.activation.rq_helpers.run_periodic_task')
@@ -377,6 +383,7 @@ class ActivateDeviceViewTestCase(TestCase):
         run_mock.side_effect = activate
 
         merchant = MerchantAccountFactory.create()
+        account = AccountFactory.create(merchant=merchant)
         self.assertEqual(merchant.device_set.count(), 0)
         self.client.login(username=merchant.user.email,
                           password='password')
@@ -393,6 +400,7 @@ class ActivateDeviceViewTestCase(TestCase):
         self.assertRedirects(response, expected_url)
         active_device = merchant.device_set.first()
         self.assertEqual(active_device.status, 'active')
+        self.assertEqual(active_device.account.pk, account.pk)
 
     def test_post_error(self):
         merchant = MerchantAccountFactory.create()

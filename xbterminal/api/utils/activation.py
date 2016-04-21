@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 def start(device, merchant):
     device.merchant = merchant
+    device.account = merchant.account_set.get(currency__name='BTC')
     device.start_activation()
     device.save()
     job = rq_helpers.run_task(
