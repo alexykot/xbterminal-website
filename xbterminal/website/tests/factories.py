@@ -108,11 +108,17 @@ class DeviceFactory(factory.DjangoModelFactory):
         merchant=factory.SelfAttribute('..merchant'))
     device_type = 'hardware'
     name = factory.Sequence(lambda n: 'Terminal #{0}'.format(n))
-    percent = 0
+
+    @factory.lazy_attribute
+    def percent(self):
+        if self.account.currency.name not in ['BTC', 'TBTC']:
+            return 100
+        else:
+            return 0
 
     @factory.lazy_attribute
     def bitcoin_address(self):
-        if self.percent != 100:
+        if self.account.currency.name in ['BTC', 'TBTC']:
             return '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
 
     @factory.post_generation

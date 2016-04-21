@@ -55,7 +55,7 @@ class PaymentOrder(models.Model):
     local_address = models.CharField(
         max_length=35, validators=[validate_bitcoin_address])
     merchant_address = models.CharField(
-        max_length=35, validators=[validate_bitcoin_address])
+        max_length=35, validators=[validate_bitcoin_address], null=True)
     fee_address = models.CharField(
         max_length=35, validators=[validate_bitcoin_address])
     instantfiat_address = models.CharField(

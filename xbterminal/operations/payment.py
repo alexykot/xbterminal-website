@@ -48,7 +48,7 @@ def prepare_payment(device, fiat_amount):
     if not device.account:
         raise exceptions.PaymentError(
             'Account is not set for device.')
-    if device.percent != 100 and not device.bitcoin_address:
+    if not device.instantfiat and not device.bitcoin_address:
         raise exceptions.PaymentError(
             'Payout address is not set for device.')
     # Prepare payment order
@@ -68,11 +68,11 @@ def prepare_payment(device, fiat_amount):
         logger.exception(error)
         raise exceptions.NetworkError
     # Exchange service
-    if device.percent == 0:
+    if not device.instantfiat:
         order.instantfiat_fiat_amount = FIAT_DEC_PLACES
         order.instantfiat_btc_amount = BTC_DEC_PLACES
         exchange_rate = get_exchange_rate(order.fiat_currency.name)
-    elif device.percent == 100:
+    else:
         order.instantfiat_fiat_amount = order.fiat_amount
         (order.instantfiat_invoice_id,
          order.instantfiat_btc_amount,
@@ -83,8 +83,6 @@ def prepare_payment(device, fiat_amount):
         if order.instantfiat_btc_amount < BTC_MIN_OUTPUT:
             order.instantfiat_btc_amount = BTC_MIN_OUTPUT
         exchange_rate = order.instantfiat_fiat_amount / order.instantfiat_btc_amount
-    else:
-        raise AssertionError
     # Validate addresses
     for address_field in ['local_address', 'merchant_address',
                           'fee_address', 'instantfiat_address']:
