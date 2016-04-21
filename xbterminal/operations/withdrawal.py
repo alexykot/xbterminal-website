@@ -17,7 +17,6 @@ from operations.blockchain import (
 from operations.rq_helpers import cancel_current_task, run_periodic_task
 from operations.models import WithdrawalOrder
 from operations.exceptions import WithdrawalError
-from website.models import Currency, Account
 from website.utils import send_error_message
 
 logger = logging.getLogger(__name__)
@@ -53,22 +52,20 @@ def prepare_withdrawal(device, fiat_amount):
     Returns:
         order: WithdrawalOrder instance
     """
-    if device.bitcoin_network == 'mainnet':
-        account_currency = Currency.objects.get(name='BTC')
+    if not device.account:
+        raise WithdrawalError('Account is not set for device.')
+    if device.instantfiat:
+        raise WithdrawalError(
+            'Withdrawal from instantfiat accounts is not supported.')
     else:
-        account_currency = Currency.objects.get(name='TBTC')
-    try:
-        account = Account.objects.get(merchant=device.merchant,
-                                      currency=account_currency,
-                                      bitcoin_address__isnull=False)
-    except Account.DoesNotExist:
-        raise WithdrawalError('Merchant doesn\'t have {0} account'.format(
-            account_currency.name))
+        if not device.account.bitcoin_address:
+            raise WithdrawalError('Nothing to withdraw.')
 
+    # TODO: fiat currency -> currency
     order = WithdrawalOrder(
         device=device,
         bitcoin_network=device.bitcoin_network,
-        merchant_address=account.bitcoin_address,
+        merchant_address=device.account.bitcoin_address,
         fiat_currency=device.merchant.currency,
         fiat_amount=fiat_amount)
     # Calculate BTC amount
@@ -142,12 +139,7 @@ def send_transaction(order, customer_address):
     order.save()
 
     # Update balance
-    if order.bitcoin_network == 'mainnet':
-        account_currency = Currency.objects.get(name='BTC')
-    else:
-        account_currency = Currency.objects.get(name='TBTC')
-    account = Account.objects.get(merchant=order.device.merchant,
-                                  currency=account_currency)
+    account = order.device.account
     account.balance -= order.btc_amount
     account.save()
 

@@ -53,7 +53,16 @@ class PrepareWithdrawalTestCase(TestCase):
         with self.assertRaises(exceptions.WithdrawalError) as context:
             withdrawal.prepare_withdrawal(device, fiat_amount)
         self.assertEqual(context.exception.message,
-                         'Merchant doesn\'t have BTC account')
+                         'Account is not set for device.')
+
+    def test_instantfiat(self):
+        device = DeviceFactory.create(account__currency__name='GBP')
+        fiat_amount = Decimal('1.00')
+        with self.assertRaises(exceptions.WithdrawalError) as context:
+            withdrawal.prepare_withdrawal(device, fiat_amount)
+        self.assertEqual(
+            context.exception.message,
+            'Withdrawal from instantfiat accounts is not supported.')
 
     def test_no_address(self):
         device = DeviceFactory.create(account__bitcoin_address=None)
@@ -61,7 +70,7 @@ class PrepareWithdrawalTestCase(TestCase):
         with self.assertRaises(exceptions.WithdrawalError) as context:
             withdrawal.prepare_withdrawal(device, fiat_amount)
         self.assertEqual(context.exception.message,
-                         'Merchant doesn\'t have BTC account')
+                         'Nothing to withdraw.')
 
     @patch('operations.withdrawal.get_exchange_rate')
     def test_dust_threshold(self, get_rate_mock):

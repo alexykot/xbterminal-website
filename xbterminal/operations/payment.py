@@ -29,7 +29,6 @@ from operations.services.price import get_exchange_rate
 from operations.rq_helpers import run_periodic_task, cancel_current_task
 from operations.models import PaymentOrder
 
-from website.models import Currency, Account
 from website.utils import send_error_message
 
 logger = logging.getLogger(__name__)
@@ -52,6 +51,7 @@ def prepare_payment(device, fiat_amount):
         raise exceptions.PaymentError(
             'Payout address is not set for device.')
     # Prepare payment order
+    # TODO: fiat currency -> currency
     order = PaymentOrder(
         device=device,
         bitcoin_network=device.bitcoin_network,
@@ -342,13 +342,7 @@ def forward_transaction(payment_order):
     else:
         payment_order.tx_fee_btc_amount += extra_btc_amount
     # Select destination address
-    if payment_order.bitcoin_network == 'mainnet':
-        account_currency = Currency.objects.get(name='BTC')
-    else:
-        account_currency = Currency.objects.get(name='TBTC')
-    account = Account.objects.get(
-        merchant=payment_order.device.merchant,
-        currency=account_currency)
+    account = payment_order.device.account
     if account.balance + payment_order.merchant_btc_amount <= \
             account.balance_max:
         # Store bitcoins on merchant's internal account
