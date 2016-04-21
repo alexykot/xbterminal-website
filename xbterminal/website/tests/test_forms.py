@@ -6,6 +6,7 @@ from oauth2_provider.models import Application
 from website.forms import (
     MerchantRegistrationForm,
     ResetPasswordForm,
+    ProfileForm,
     DeviceForm,
     DeviceActivationForm)
 from website.tests.factories import (
@@ -83,6 +84,32 @@ class ResetPasswordFormTestCase(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('email', form.errors)
         self.assertIsNone(form._user)
+
+
+class ProfileFormTestCase(TestCase):
+
+    @patch('website.forms.gocoin')
+    def test_valid_data(self, gocoin_mock):
+        gocoin_mock.get_merchants.return_value = []
+        merchant = MerchantAccountFactory.create(
+            gocoin_merchant_id='test')
+        form_data = {
+            'company_name': 'Test Company',
+            'business_address': 'Test Address',
+            'town': 'Test Town',
+            'country': 'GB',
+            'post_code': '123456',
+            'contact_first_name': 'Test',
+            'contact_last_name': 'Test',
+            'contact_email': 'test@example.net',
+            'contact_phone': '+123456789',
+        }
+        form = ProfileForm(data=form_data, instance=merchant)
+        self.assertTrue(form.is_valid())
+        merchant_updated = form.save()
+        self.assertTrue(gocoin_mock.get_merchants.called)
+        self.assertEqual(merchant_updated.pk, merchant.pk)
+        self.assertEqual(merchant_updated.company_name, form_data['company_name'])
 
 
 class DeviceFormTestCase(TestCase):
