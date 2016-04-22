@@ -615,8 +615,8 @@ class VerificationFileView(View):
 
     def get(self, *args, **kwargs):
         if (
-            get_current_merchant(self.request) != self.merchant
-            and not self.request.user.is_staff
+            get_current_merchant(self.request) != self.merchant and
+            not self.request.user.is_staff
         ):
             raise Http404
         for document in self.merchant.kycdocument_set.all():
@@ -628,8 +628,8 @@ class VerificationFileView(View):
 
     def post(self, *args, **kwargs):
         if (
-            get_current_merchant(self.request) != self.merchant
-            or self.merchant.verification_status != 'unverified'
+            get_current_merchant(self.request) != self.merchant or
+            self.merchant.verification_status != 'unverified'
         ):
             raise Http404
         form = forms.KYCDocumentUploadForm(self.request.POST,
@@ -653,8 +653,8 @@ class VerificationFileView(View):
 
     def delete(self, *args, **kwargs):
         if (
-            get_current_merchant(self.request) != self.merchant
-            or self.merchant.verification_status != 'unverified'
+            get_current_merchant(self.request) != self.merchant or
+            self.merchant.verification_status != 'unverified'
         ):
             raise Http404
         document = self.merchant.get_kyc_document(

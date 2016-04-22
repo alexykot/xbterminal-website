@@ -150,8 +150,8 @@ class PaymentOrder(models.Model):
             if self.time_created + PAYMENT_VALIDATION_TIMEOUT < timezone.now():
                 return 'failed'
             elif (
-                not self.instantfiat_invoice_id and self.time_forwarded
-                or self.instantfiat_invoice_id and self.time_exchanged
+                not self.instantfiat_invoice_id and self.time_forwarded or
+                self.instantfiat_invoice_id and self.time_exchanged
             ):
                 return 'processed'
             elif self.time_forwarded:
