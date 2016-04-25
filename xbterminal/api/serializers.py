@@ -124,6 +124,7 @@ class DeviceRegistrationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         return Device.objects.create(
             merchant=None,
+            account=None,
             device_type='hardware',
             status='registered',
             name='Device {0}'.format(validated_data['key'][:6]),

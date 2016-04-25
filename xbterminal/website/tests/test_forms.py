@@ -6,10 +6,12 @@ from oauth2_provider.models import Application
 from website.forms import (
     MerchantRegistrationForm,
     ResetPasswordForm,
+    ProfileForm,
     DeviceForm,
     DeviceActivationForm)
 from website.tests.factories import (
     MerchantAccountFactory,
+    AccountFactory,
     DeviceFactory)
 
 
@@ -46,9 +48,12 @@ class MerchantRegistrationFormTestCase(TestCase):
         self.assertEqual(merchant.currency.name, 'GBP')
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to[0], form_data['contact_email'])
-        self.assertTrue(gocoin_mock.called)
+        self.assertFalse(gocoin_mock.called)
         oauth_app = Application.objects.get(user=merchant.user)
         self.assertEqual(oauth_app.client_id, form_data['contact_email'])
+        self.assertEqual(merchant.account_set.count(), 1)
+        self.assertEqual(merchant.get_account_balance('BTC'), 0)
+        self.assertIsNone(merchant.get_account_balance('TBTC'))
 
     def test_required(self):
         form = MerchantRegistrationForm(data={})
@@ -82,31 +87,89 @@ class ResetPasswordFormTestCase(TestCase):
         self.assertIsNone(form._user)
 
 
+class ProfileFormTestCase(TestCase):
+
+    @patch('website.forms.gocoin')
+    def test_valid_data(self, gocoin_mock):
+        gocoin_mock.get_merchants.return_value = []
+        merchant = MerchantAccountFactory.create(
+            gocoin_merchant_id='test')
+        form_data = {
+            'company_name': 'Test Company',
+            'business_address': 'Test Address',
+            'town': 'Test Town',
+            'country': 'GB',
+            'post_code': '123456',
+            'contact_first_name': 'Test',
+            'contact_last_name': 'Test',
+            'contact_email': 'test@example.net',
+            'contact_phone': '+123456789',
+        }
+        form = ProfileForm(data=form_data, instance=merchant)
+        self.assertTrue(form.is_valid())
+        merchant_updated = form.save()
+        self.assertFalse(gocoin_mock.get_merchants.called)
+        self.assertEqual(merchant_updated.pk, merchant.pk)
+        self.assertEqual(merchant_updated.company_name, form_data['company_name'])
+
+
 class DeviceFormTestCase(TestCase):
 
+    def test_init(self):
+        with self.assertRaises(KeyError):
+            DeviceForm()
+
     def test_valid_data(self):
+        merchant = MerchantAccountFactory.create()
+        account = AccountFactory.create(merchant=merchant)
         form_data = {
             'device_type': 'hardware',
             'name': 'Terminal',
-            'payment_processing': 'keep',
-            'percent': '0',
+            'account': account.pk,
             'bitcoin_address': '1JpY93MNoeHJ914CHLCQkdhS7TvBM68Xp6',
         }
-        form = DeviceForm(data=form_data)
+        form = DeviceForm(data=form_data, merchant=merchant)
         self.assertTrue(form.is_valid())
         self.assertEqual(form.device_type_verbose(), 'Terminal')
-        device = form.save(commit=False)
+        device = form.save()
+        self.assertEqual(device.merchant.pk, merchant.pk)
         self.assertEqual(device.device_type, 'hardware')
         self.assertEqual(device.name, form_data['name'])
-        self.assertEqual(device.payment_processing, 'keep')
+        self.assertEqual(device.account.pk, account.pk)
 
     def test_required(self):
-        form = DeviceForm(data={})
+        merchant = MerchantAccountFactory.create()
+        form = DeviceForm(data={}, merchant=merchant)
         self.assertFalse(form.is_valid())
         self.assertIn('device_type', form.errors)
         self.assertIn('name', form.errors)
-        self.assertIn('payment_processing', form.errors)
-        self.assertIn('percent', form.errors)
+        self.assertIn('account', form.errors)
+
+    def test_invalid_bitcoin_address(self):
+        merchant = MerchantAccountFactory.create()
+        account = AccountFactory.create(merchant=merchant)
+        form_data = {
+            'device_type': 'hardware',
+            'name': 'Terminal',
+            'account': account.pk,
+            'bitcoin_address': 'xxx',
+        }
+        form = DeviceForm(data=form_data, merchant=merchant)
+        self.assertFalse(form.is_valid())
+        self.assertIn('bitcoin_address', form.errors)
+
+    def test_invalid_account_currency(self):
+        merchant = MerchantAccountFactory.create(currency__name='USD')
+        account = AccountFactory.create(merchant=merchant,
+                                        currency__name='EUR')
+        form_data = {
+            'device_type': 'hardware',
+            'name': 'Terminal',
+            'account': account.pk,
+        }
+        form = DeviceForm(data=form_data, merchant=merchant)
+        self.assertFalse(form.is_valid())
+        self.assertIn('account', form.errors)
 
 
 class DeviceActivationFormTestCase(TestCase):

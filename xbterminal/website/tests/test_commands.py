@@ -10,11 +10,13 @@ from mock import patch, Mock
 
 from website.models import Device
 from website.tests.factories import (
-    BTCAccountFactory,
+    AccountFactory,
     DeviceFactory,
     ReconciliationTimeFactory)
 from website.management.commands.check_wallet import \
     check_wallet, check_wallet_strict
+from website.management.commands.withdraw_btc import withdraw_btc
+from operations.tests.factories import outpoint_factory
 
 
 class SendReconciliationTestCase(TestCase):
@@ -60,8 +62,8 @@ class CheckWalletTestCase(TestCase):
     @patch('website.management.commands.check_wallet.BlockChain')
     @patch('website.utils.send_balance_admin_notification')
     def test_check_ok(self, send_ntf_mock, bc_mock):
-        BTCAccountFactory.create_batch(
-            2, network='mainnet', balance=Decimal('0.2'))
+        AccountFactory.create_batch(
+            2, currency__name='BTC', balance=Decimal('0.2'))
         bc_mock.return_value = Mock(**{
             'get_balance.return_value': Decimal('0.4'),
             'get_address_balance.return_value': Decimal('0.2'),
@@ -72,8 +74,8 @@ class CheckWalletTestCase(TestCase):
 
     @patch('website.management.commands.check_wallet.BlockChain')
     def test_check_mismatch(self, bc_mock):
-        BTCAccountFactory.create_batch(
-            2, network='mainnet', balance=Decimal('0.2'))
+        AccountFactory.create_batch(
+            2, currency__name='BTC', balance=Decimal('0.2'))
         bc_mock.return_value = Mock(**{
             'get_address_balance.return_value': Decimal('0.3'),
         })
@@ -85,8 +87,8 @@ class CheckWalletTestCase(TestCase):
 
     @patch('website.management.commands.check_wallet.BlockChain')
     def test_strict_check_mismatch(self, bc_mock):
-        BTCAccountFactory.create_batch(
-            2, network='mainnet', balance=Decimal('0.2'))
+        AccountFactory.create_batch(
+            2, currency__name='BTC', balance=Decimal('0.2'))
         bc_mock.return_value = Mock(**{
             'get_balance.return_value': Decimal('0.5'),
         })
@@ -95,3 +97,31 @@ class CheckWalletTestCase(TestCase):
         self.assertIn(settings.CONTACT_EMAIL_RECIPIENTS[0],
                       mail.outbox[0].to)
         self.assertIn('mainnet', mail.outbox[0].body)
+
+
+class WithdrawBTCTestCase(TestCase):
+
+    @patch('website.management.commands.withdraw_btc.blockchain.BlockChain')
+    def test_command(self, bc_cls_mock):
+        account = AccountFactory.create(
+            currency__name='BTC',
+            balance=Decimal('0.2'),
+            balance_max=Decimal('0.5'),
+            bitcoin_address='1BESvTCjZG8jpK7Hvan7KzpXLFdaFRxWPk')
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'get_unspent_outputs.return_value': [
+                {'amount': Decimal('0.2'), 'outpoint': outpoint_factory()},
+            ],
+            'create_raw_transaction.return_value': 'tx',
+            'sign_raw_transaction.return_value': 'tx_signed',
+            'send_raw_transaction.return_value': '0000',
+        })
+        result = withdraw_btc(
+            account.pk,
+            '1Mavf5uXXUNiJbvi5vmD4CjvFghTm9pZvM')
+        self.assertEqual(
+            result,
+            'sent 0.19990000 BTC to 1Mavf5uXXUNiJbvi5vmD4CjvFghTm9pZvM, '
+            'tx id 0000')
+        self.assertEqual(bc_cls_mock.call_args[0][0], 'mainnet')
+        self.assertTrue(bc_mock.send_raw_transaction.called)

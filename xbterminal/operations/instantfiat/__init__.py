@@ -1,58 +1,39 @@
 """
 Instantfiat
 """
-from constance import config
+from website.models import INSTANTFIAT_PROVIDERS
+from operations.instantfiat import cryptopay
 
-from operations.instantfiat import bitpay, cryptopay, gocoin
 
-
-def create_invoice(merchant, fiat_amount):
+def create_invoice(account, fiat_amount):
     """
     Create invoice
     Accepts:
-        merchant: MerchantAccount instance
+        account: Account instance
         fiat_amount: Decimal
     """
-    service_name = merchant.payment_processor
-    if service_name == 'bitpay':
-        invoice_id, btc_amount, address = bitpay.create_invoice(
-            fiat_amount,
-            merchant.currency.name,
-            merchant.api_key)
-    elif service_name == 'cryptopay':
+    if account.instantfiat_provider == INSTANTFIAT_PROVIDERS.CRYPTOPAY:
         invoice_id, btc_amount, address = cryptopay.create_invoice(
             fiat_amount,
-            merchant.currency.name,
-            merchant.api_key,
-            "Payment to {0}".format(merchant.company_name))
-    elif service_name == 'gocoin':
-        invoice_id, btc_amount, address = gocoin.create_invoice(
-            fiat_amount,
-            merchant.currency.name,
-            merchant.api_key or config.GOCOIN_AUTH_TOKEN,
-            merchant.gocoin_merchant_id)
-    return {
-        'instantfiat_invoice_id': invoice_id,
-        'instantfiat_btc_amount': btc_amount,
-        'instantfiat_address': address,
-    }
+            account.currency.name,
+            account.instantfiat_api_key,
+            'Payment to {0}'.format(account.merchant.company_name))
+    else:
+        raise AssertionError
+    return invoice_id, btc_amount, address
 
 
-def is_invoice_paid(merchant, invoice_id):
+def is_invoice_paid(account, invoice_id):
     """
     Check payment
     Accepts:
-        merchant: MerchantAccount instance
+        account: Account instance
         invoice_id: string
     """
-    service_name = merchant.payment_processor
-    if service_name == 'bitpay':
-        result = bitpay.is_invoice_paid(invoice_id, merchant.api_key)
-    elif service_name == 'cryptopay':
-        result = cryptopay.is_invoice_paid(invoice_id, merchant.api_key)
-    elif service_name == 'gocoin':
-        result = gocoin.is_invoice_paid(
+    if account.instantfiat_provider == INSTANTFIAT_PROVIDERS.CRYPTOPAY:
+        result = cryptopay.is_invoice_paid(
             invoice_id,
-            merchant.api_key or config.GOCOIN_AUTH_TOKEN,
-            merchant.gocoin_merchant_id)
+            account.instantfiat_api_key)
+    else:
+        raise AssertionError
     return result

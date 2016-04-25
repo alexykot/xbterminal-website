@@ -29,7 +29,6 @@ from operations.services.price import get_exchange_rate
 from operations.rq_helpers import run_periodic_task, cancel_current_task
 from operations.models import PaymentOrder
 
-from website.models import BTCAccount
 from website.utils import send_error_message
 
 logger = logging.getLogger(__name__)
@@ -39,94 +38,89 @@ def prepare_payment(device, fiat_amount):
     """
     Accepts:
         device: website.models.Device
-        amount_fiat: Decimal
+        fiat_amount: Decimal
     Returns:
         payment_order: PaymentOrder instance
     """
-    details = {
-        'bitcoin_network': None,
-        'local_address': None,
-        'merchant_address': None,
-        'fee_address': None,
-        'instantfiat_address': None,
-        'fiat_currency': None,
-        'fiat_amount': FIAT_DEC_PLACES,
-        'instantfiat_fiat_amount': FIAT_DEC_PLACES,
-        'instantfiat_btc_amount': BTC_DEC_PLACES,
-        'merchant_btc_amount': BTC_DEC_PLACES,
-        'fee_btc_amount': BTC_DEC_PLACES,
-        'tx_fee_btc_amount': BTC_DEC_PLACES,
-        'btc_amount': BTC_DEC_PLACES,
-        'effective_exchange_rate': None,
-        'instantfiat_invoice_id': None,
-    }
+    # TODO: perform these checks at form validation step
+    assert fiat_amount >= FIAT_MIN_OUTPUT
+    if not device.account:
+        raise exceptions.PaymentError(
+            'Account is not set for device.')
+    if not device.instantfiat and not device.bitcoin_address:
+        raise exceptions.PaymentError(
+            'Payout address is not set for device.')
+    if device.instantfiat and \
+            device.merchant.currency != device.account.currency:
+        raise exceptions.PaymentError(
+            'Account currency should match merchant currency.')
+    # Prepare payment order
+    # TODO: fiat currency -> currency
+    order = PaymentOrder(
+        device=device,
+        bitcoin_network=device.bitcoin_network,
+        merchant_address=device.bitcoin_address,
+        fee_address=device.our_fee_address,
+        fiat_currency=device.merchant.currency,
+        fiat_amount=fiat_amount.quantize(FIAT_DEC_PLACES))
     # Connect to bitcoind
     bc = blockchain.BlockChain(device.bitcoin_network)
-    details['bitcoin_network'] = device.bitcoin_network
     # Addresses
     try:
-        details['local_address'] = str(bc.get_new_address())
+        order.local_address = str(bc.get_new_address())
     except Exception as error:
         logger.exception(error)
         raise exceptions.NetworkError
-    details['merchant_address'] = device.bitcoin_address
-    details['fee_address'] = device.our_fee_address
     # Exchange service
-    details['fiat_currency'] = device.merchant.currency
-    details['fiat_amount'] = fiat_amount.quantize(FIAT_DEC_PLACES)
-    assert details['fiat_amount'] >= FIAT_MIN_OUTPUT
-    details['instantfiat_fiat_amount'] = (details['fiat_amount'] *
-                                          Decimal(device.percent / 100)
-                                          ).quantize(FIAT_DEC_PLACES)
-    if details['instantfiat_fiat_amount'] >= FIAT_MIN_OUTPUT:
-        instantfiat_data = instantfiat.create_invoice(
-            device.merchant,
-            details['instantfiat_fiat_amount'])
-        details.update(instantfiat_data)
-        assert details['instantfiat_btc_amount'] > 0
-        if details['instantfiat_btc_amount'] < BTC_MIN_OUTPUT:
-            details['instantfiat_btc_amount'] = BTC_MIN_OUTPUT
-        exchange_rate = details['instantfiat_fiat_amount'] / details['instantfiat_btc_amount']
+    if not device.instantfiat:
+        order.instantfiat_fiat_amount = FIAT_DEC_PLACES
+        order.instantfiat_btc_amount = BTC_DEC_PLACES
+        exchange_rate = get_exchange_rate(order.fiat_currency.name)
     else:
-        details['instantfiat_fiat_amount'] = FIAT_DEC_PLACES
-        exchange_rate = get_exchange_rate(details['fiat_currency'].name)
+        order.instantfiat_fiat_amount = order.fiat_amount
+        (order.instantfiat_invoice_id,
+         order.instantfiat_btc_amount,
+         order.instantfiat_address) = instantfiat.create_invoice(
+            device.account,
+            order.instantfiat_fiat_amount)
+        assert order.instantfiat_btc_amount > 0
+        if order.instantfiat_btc_amount < BTC_MIN_OUTPUT:
+            order.instantfiat_btc_amount = BTC_MIN_OUTPUT
+        exchange_rate = order.instantfiat_fiat_amount / order.instantfiat_btc_amount
     # Validate addresses
     for address_field in ['local_address', 'merchant_address',
                           'fee_address', 'instantfiat_address']:
-        address = details[address_field]
+        address = getattr(order, address_field)
         if address:
             error_message = blockchain.validate_bitcoin_address(
-                address, device.bitcoin_network)
-        assert error_message is None
+                address, order.bitcoin_network)
+            assert error_message is None
     # Fee
-    details['fee_btc_amount'] = (details['fiat_amount'] *
-                                 Decimal(config.OUR_FEE_SHARE) /
-                                 exchange_rate).quantize(BTC_DEC_PLACES)
-    if details['fee_btc_amount'] < BTC_MIN_OUTPUT:
-        details['fee_btc_amount'] = BTC_DEC_PLACES
+    order.fee_btc_amount = (order.fiat_amount *
+                            Decimal(config.OUR_FEE_SHARE) /
+                            exchange_rate).quantize(BTC_DEC_PLACES)
+    if order.fee_btc_amount < BTC_MIN_OUTPUT:
+        order.fee_btc_amount = BTC_DEC_PLACES
     # Merchant
-    details['merchant_btc_amount'] = ((details['fiat_amount'] - details['instantfiat_fiat_amount']) /
-                                      exchange_rate).quantize(BTC_DEC_PLACES)
-    assert details['merchant_btc_amount'] >= 0
-    if 0 < details['merchant_btc_amount'] < BTC_MIN_OUTPUT:
-        details['merchant_btc_amount'] = BTC_MIN_OUTPUT
+    order.merchant_btc_amount = ((order.fiat_amount - order.instantfiat_fiat_amount) /
+                                 exchange_rate).quantize(BTC_DEC_PLACES)
+    assert order.merchant_btc_amount >= 0
+    if 0 < order.merchant_btc_amount < BTC_MIN_OUTPUT:
+        order.merchant_btc_amount = BTC_MIN_OUTPUT
     # TX fee
-    details['tx_fee_btc_amount'] = blockchain.get_tx_fee(1, 3)
+    order.tx_fee_btc_amount = blockchain.get_tx_fee(1, 3)
     # Total
-    details['btc_amount'] = (details['merchant_btc_amount'] +
-                             details['instantfiat_btc_amount'] +
-                             details['fee_btc_amount'] +
-                             details['tx_fee_btc_amount'])
-    # Prepare payment order
-    payment_order = PaymentOrder(
-        device=device,
-        **details)
-    payment_order.save()
+    order.btc_amount = (order.merchant_btc_amount +
+                        order.instantfiat_btc_amount +
+                        order.fee_btc_amount +
+                        order.tx_fee_btc_amount)
+    # Save order
+    order.save()
     # Schedule tasks
-    run_periodic_task(wait_for_payment, [payment_order.uid])
-    run_periodic_task(wait_for_validation, [payment_order.uid])
-    run_periodic_task(check_payment_status, [payment_order.uid], interval=60)
-    return payment_order
+    run_periodic_task(wait_for_payment, [order.uid])
+    run_periodic_task(wait_for_validation, [order.uid])
+    run_periodic_task(check_payment_status, [order.uid], interval=60)
+    return order
 
 
 def wait_for_payment(payment_order_uid):
@@ -338,7 +332,7 @@ def forward_transaction(payment_order):
         payment_order: PaymentOrder instance
     """
     # Connect to bitcoind
-    bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
+    bc = blockchain.BlockChain(payment_order.bitcoin_network)
     # Wait for transaction
     bc.get_raw_transaction(payment_order.incoming_tx_ids[0])
     # Get outputs
@@ -352,17 +346,14 @@ def forward_transaction(payment_order):
     else:
         payment_order.tx_fee_btc_amount += extra_btc_amount
     # Select destination address
-    btc_account = BTCAccount.objects.filter(
-        merchant=payment_order.device.merchant,
-        network=payment_order.device.bitcoin_network).first()
-    if btc_account and \
-            btc_account.balance + payment_order.merchant_btc_amount <= \
-            btc_account.balance_max:
+    account = payment_order.device.account
+    if account.balance + payment_order.merchant_btc_amount <= \
+            account.balance_max:
         # Store bitcoins on merchant's internal account
-        if not btc_account.address:
-            btc_account.address = str(bc.get_new_address())
-        destination_address = btc_account.address
-        btc_account.balance += payment_order.merchant_btc_amount
+        if not account.bitcoin_address:
+            account.bitcoin_address = str(bc.get_new_address())
+        destination_address = account.bitcoin_address
+        account.balance += payment_order.merchant_btc_amount
     else:
         # Forward payment to merchant address (default)
         destination_address = payment_order.merchant_address
@@ -391,8 +382,8 @@ def forward_transaction(payment_order):
     payment_order.outgoing_tx_id = bc.send_raw_transaction(outgoing_tx_signed)
     payment_order.time_forwarded = timezone.now()
     payment_order.save()
-    if btc_account:
-        btc_account.save()
+    if account:
+        account.save()
 
 
 def wait_for_confirmation(order_uid):
@@ -434,7 +425,7 @@ def wait_for_exchange(payment_order_uid):
         # Timeout, cancel job
         cancel_current_task()
     invoice_paid = instantfiat.is_invoice_paid(
-        payment_order.device.merchant,
+        payment_order.device.account,
         payment_order.instantfiat_invoice_id)
     if invoice_paid:
         cancel_current_task()

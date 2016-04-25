@@ -1,17 +1,33 @@
 import datetime
 import hashlib
 import uuid
-import factory
 
+import factory
+from faker import Faker
 
 from oauth2_provider.models import Application
 from website.models import (
+    Currency,
     User,
     MerchantAccount,
-    BTCAccount,
+    Account,
     DeviceBatch,
     Device,
-    ReconciliationTime)
+    ReconciliationTime,
+    INSTANTFIAT_PROVIDERS)
+
+fake = Faker()
+
+
+class CurrencyFactory(factory.DjangoModelFactory):
+
+    class Meta:
+        model = Currency
+
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        return model_class.objects.get(
+            name=kwargs.get('name', 'GBP'))
 
 
 class UserFactory(factory.DjangoModelFactory):
@@ -53,13 +69,26 @@ class MerchantAccountFactory(factory.DjangoModelFactory):
     contact_phone = '+123456789'
     contact_email = factory.LazyAttribute(lambda ma: ma.user.email)
 
+    currency = factory.SubFactory(CurrencyFactory)
 
-class BTCAccountFactory(factory.DjangoModelFactory):
+
+class AccountFactory(factory.DjangoModelFactory):
 
     class Meta:
-        model = BTCAccount
+        model = Account
 
     merchant = factory.SubFactory(MerchantAccountFactory)
+    currency = factory.SubFactory(CurrencyFactory, name='BTC')
+
+    @factory.lazy_attribute
+    def instantfiat_provider(self):
+        if self.currency.name not in ['BTC', 'TBTC']:
+            return INSTANTFIAT_PROVIDERS.CRYPTOPAY
+
+    @factory.lazy_attribute
+    def instantfiat_api_key(self):
+        if self.currency.name not in ['BTC', 'TBTC']:
+            return fake.sha256(raw_output=False)
 
 
 class DeviceBatchFactory(factory.DjangoModelFactory):
@@ -76,10 +105,16 @@ class DeviceFactory(factory.DjangoModelFactory):
         model = Device
 
     merchant = factory.SubFactory(MerchantAccountFactory)
+    account = factory.SubFactory(
+        AccountFactory,
+        merchant=factory.SelfAttribute('..merchant'))
     device_type = 'hardware'
     name = factory.Sequence(lambda n: 'Terminal #{0}'.format(n))
-    percent = 0
-    bitcoin_address = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
+
+    @factory.lazy_attribute
+    def bitcoin_address(self):
+        if self.account.currency.name in ['BTC', 'TBTC']:
+            return '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
 
     @factory.post_generation
     def status(self, create, extracted, **kwargs):
@@ -88,6 +123,7 @@ class DeviceFactory(factory.DjangoModelFactory):
             self.activate()
         elif extracted == 'registered':
             self.merchant = None
+            self.account = None
         elif extracted == 'activation':
             self.start_activation()
         elif extracted == 'suspended':

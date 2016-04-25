@@ -44,6 +44,7 @@ class DeviceAdmin(FSMTransitionMixin, admin.ModelAdmin):
     list_display = [
         '__unicode__',
         'merchant_link',
+        'account_link',
         'device_type',
         'status',
         'last_activity',
@@ -72,9 +73,16 @@ class DeviceAdmin(FSMTransitionMixin, admin.ModelAdmin):
             return '-'
         else:
             return url_to_object(device.merchant)
-
     merchant_link.allow_tags = True
     merchant_link.short_description = 'merchant'
+
+    def account_link(self, device):
+        if not device.account:
+            return '-'
+        else:
+            return url_to_object(device.account)
+    account_link.allow_tags = True
+    account_link.short_description = 'account'
 
     def device_key_qr_code(self, device):
         src = generate_qr_code(device.key, 4)
@@ -126,27 +134,37 @@ class KYCDocumentInline(admin.TabularInline):
     extra = 0
 
 
-@admin.register(models.BTCAccount)
-class BTCAccountAdmin(admin.ModelAdmin):
+@admin.register(models.Account)
+class AccountAdmin(admin.ModelAdmin):
 
-    list_display = ['__unicode__', 'balance']
+    list_display = [
+        '__unicode__',
+        'balance',
+        'balance_max',
+        'instantfiat_provider',
+    ]
 
     def get_form(self, request, obj, **kwargs):
-        form = super(BTCAccountAdmin, self).get_form(request, obj, **kwargs)
+        form = super(AccountAdmin, self).get_form(request, obj, **kwargs)
+        if not obj:
+            return form
         for field_name in form.base_fields:
             field = form.base_fields[field_name]
-            if field_name == 'address':
-                field.widget = BitcoinAddressWidget(network=obj.network)
+            if field_name == 'bitcoin_address':
+                if obj.currency.name == 'BTC':
+                    field.widget = BitcoinAddressWidget(network='mainnet')
+                elif obj.currency.name == 'TBTC':
+                    field.widget = BitcoinAddressWidget(network='testnet')
                 field.required = True
                 # Workaround for address field with blank=True
-                field.clean = lambda *args: obj.address
+                field.clean = lambda *args: obj.bitcoin_address
         return form
 
 
-class BTCAccountInline(admin.TabularInline):
+class AccountInline(admin.TabularInline):
 
-    model = models.BTCAccount
-    readonly_fields = ['address']
+    model = models.Account
+    readonly_fields = ['bitcoin_address']
     extra = 1
 
 
@@ -162,7 +180,6 @@ class MerchantAccountAdmin(admin.ModelAdmin):
         'contact_name',
         'contact_phone_',
         'verification_status',
-        'processing',
         'btc_balance',
         'tbtc_balance',
         'date_joined_l',
@@ -171,7 +188,7 @@ class MerchantAccountAdmin(admin.ModelAdmin):
     ordering = ['id']
 
     inlines = [
-        BTCAccountInline,
+        AccountInline,
         KYCDocumentInline,
     ]
 
@@ -209,19 +226,14 @@ class MerchantAccountAdmin(admin.ModelAdmin):
     contact_phone_.short_description = 'phone'
 
     def btc_balance(self, merchant):
-        value = merchant.get_account_balance('mainnet')
+        value = merchant.get_account_balance('BTC')
         return '{0:.8f}'.format(value) if value is not None else 'N/A'
     btc_balance.short_description = 'BTC balance'
 
     def tbtc_balance(self, merchant):
-        value = merchant.get_account_balance('testnet')
+        value = merchant.get_account_balance('TBTC')
         return '{0:.8f}'.format(value) if value is not None else 'N/A'
     tbtc_balance.short_description = 'TBTC balance'
-
-    def processing(self, merchant):
-        return '{0}, {1}'.format(
-            merchant.get_payment_processor_display(),
-            str(bool(merchant.api_key)))
 
 
 @admin.register(models.DeviceBatch)

@@ -247,12 +247,13 @@ class RegistrationView(TemplateResponseMixin, View):
         elif regtype == 'terminal':
             order = order_form.save(merchant)
             # Create devices
+            # TODO: disable this type of registration
             for idx in range(order.quantity):
                 device = models.Device(
                     device_type='hardware',
                     status='active',
                     name='Terminal #{0}'.format(idx + 1),
-                    merchant=merchant)
+                    merchant=merchant)  # Account is not set
                 device.save()
             utils.send_registration_info(merchant, order)
             response = {
@@ -260,11 +261,12 @@ class RegistrationView(TemplateResponseMixin, View):
                 'next': reverse('website:order', kwargs={'pk': order.pk}),
             }
         elif regtype == 'web':
+            # TODO: disable this type of registration
             device = models.Device(
                 device_type='web',
                 status='active',
                 name='Web POS #1',
-                merchant=merchant)
+                merchant=merchant)  # Account is not set
             device.save()
             utils.send_registration_info(merchant)
             response = {
@@ -385,20 +387,20 @@ class CreateDeviceView(TemplateResponseMixin, CabinetView):
             return HttpResponseBadRequest('')
         count = self.request.user.merchant.device_set.count()
         context = self.get_context_data(**kwargs)
-        context['form'] = forms.DeviceForm(initial={
-            'device_type': device_type,
-            'name': u'{0} #{1}'.format(device_types[device_type], count + 1),
-        })
+        context['form'] = forms.DeviceForm(
+            merchant=self.request.user.merchant,
+            initial={
+                'device_type': device_type,
+                'name': u'{0} #{1}'.format(device_types[device_type], count + 1),
+            })
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
-        form = forms.DeviceForm(self.request.POST)
+        # TODO: remove this view
+        form = forms.DeviceForm(self.request.POST,
+                                merchant=self.request.user.merchant)
         if form.is_valid():
-            device = form.save(commit=False)
-            device.merchant = self.request.user.merchant
-            device.start_activation()
-            device.activate()
-            device.save()
+            device = form.save()
             return redirect(reverse('website:device',
                                     kwargs={'device_key': device.key}))
         else:
@@ -477,13 +479,14 @@ class UpdateDeviceView(DeviceMixin, TemplateResponseMixin, CabinetView):
         context = self.get_context_data(**kwargs)
         context['form'] = forms.DeviceForm(
             instance=context['device'],
-            initial={'payment_processing': context['device'].payment_processing})
+            merchant=self.request.user.merchant)
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         form = forms.DeviceForm(self.request.POST,
-                                instance=context['device'])
+                                instance=context['device'],
+                                merchant=self.request.user.merchant)
         if form.is_valid():
             device = form.save()
             return redirect(reverse('website:device',
@@ -612,8 +615,8 @@ class VerificationFileView(View):
 
     def get(self, *args, **kwargs):
         if (
-            get_current_merchant(self.request) != self.merchant
-            and not self.request.user.is_staff
+            get_current_merchant(self.request) != self.merchant and
+            not self.request.user.is_staff
         ):
             raise Http404
         for document in self.merchant.kycdocument_set.all():
@@ -625,8 +628,8 @@ class VerificationFileView(View):
 
     def post(self, *args, **kwargs):
         if (
-            get_current_merchant(self.request) != self.merchant
-            or self.merchant.verification_status != 'unverified'
+            get_current_merchant(self.request) != self.merchant or
+            self.merchant.verification_status != 'unverified'
         ):
             raise Http404
         form = forms.KYCDocumentUploadForm(self.request.POST,
@@ -650,8 +653,8 @@ class VerificationFileView(View):
 
     def delete(self, *args, **kwargs):
         if (
-            get_current_merchant(self.request) != self.merchant
-            or self.merchant.verification_status != 'unverified'
+            get_current_merchant(self.request) != self.merchant or
+            self.merchant.verification_status != 'unverified'
         ):
             raise Http404
         document = self.merchant.get_kyc_document(

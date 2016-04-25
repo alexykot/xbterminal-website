@@ -29,8 +29,8 @@ class Command(BaseCommand):
                 assert document is not None
                 for result in results:
                     if (
-                        result['id'] == document.gocoin_document_id
-                        and result['status'] in ['denied', 'verified']
+                        result['id'] == document.gocoin_document_id and
+                        result['status'] in ['denied', 'verified']
                     ):
                         document.status = result['status']
                         document.comment = result['denied_memo']

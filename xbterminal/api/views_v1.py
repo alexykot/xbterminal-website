@@ -28,6 +28,7 @@ import operations.payment
 import operations.blockchain
 import operations.protocol
 from operations.instantfiat import gocoin
+from operations import exceptions
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +80,7 @@ class DevicesView(ProtectedResourceView):
             data.append({
                 'name': device.name,
                 'key': device.key,
-                'percent': float(device.percent),
+                'percent': float(100 if device.instantfiat else 0),
                 'type': device.device_type,
                 'online': device.is_online(),
             })
@@ -95,16 +96,17 @@ class DevicesView(ProtectedResourceView):
         name = self.request.POST.get('name')
         if not name:
             return HttpResponseBadRequest()
+        # TODO: update or remove this view
         device = Device(
             device_type='mobile',
             status='active',
             name=name,
-            merchant=merchant)
+            merchant=merchant)  # Account is not set
         device.save()
         data = {
             'name': device.name,
             'key': device.key,
-            'percent': float(device.percent),
+            'percent': float(100 if device.instantfiat else 0),
             'type': device.device_type,
             'online': device.is_online(),
         }
@@ -177,8 +179,13 @@ class PaymentInitView(View):
                                         status='active')
         except Device.DoesNotExist:
             raise Http404
-        payment_order = operations.payment.prepare_payment(
-            device, form.cleaned_data['amount'])
+        try:
+            payment_order = operations.payment.prepare_payment(
+                device, form.cleaned_data['amount'])
+        except exceptions.PaymentError as error:
+            return HttpResponseBadRequest(
+                json.dumps({'error': error.message}),
+                content_type='application/json')
         # Urls
         payment_request_url = construct_absolute_url(
             'api:short:payment_request',

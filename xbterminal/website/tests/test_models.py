@@ -1,5 +1,6 @@
 from decimal import Decimal
 from django.conf import settings
+from django.db import IntegrityError
 from django.test import TestCase
 from django.utils import timezone
 
@@ -8,15 +9,18 @@ from django_fsm import TransitionNotAllowed
 
 from website.models import (
     User,
+    Currency,
     UITheme,
     MerchantAccount,
-    BTCAccount,
+    Account,
     Device,
-    DeviceBatch)
+    DeviceBatch,
+    INSTANTFIAT_PROVIDERS)
 from website.tests.factories import (
+    CurrencyFactory,
     UserFactory,
     MerchantAccountFactory,
-    BTCAccountFactory,
+    AccountFactory,
     DeviceBatchFactory,
     DeviceFactory,
     ReconciliationTimeFactory)
@@ -45,6 +49,28 @@ class UserTestCase(TestCase):
         self.assertEqual(user.get_full_name(), user.email)
 
 
+class CurrencyTestCase(TestCase):
+
+    def test_fixtures(self):
+        gbp = Currency.objects.get(name='GBP')
+        self.assertEqual(gbp.pk, 1)
+        usd = Currency.objects.get(name='USD')
+        self.assertEqual(usd.prefix, '$')
+        self.assertEqual(usd.postfix, '')
+        btc = Currency.objects.get(name='BTC')
+        self.assertEqual(btc.prefix, '')
+        self.assertEqual(btc.postfix, 'BTC')
+        tbtc = Currency.objects.get(name='TBTC')
+        self.assertEqual(tbtc.prefix, '')
+        self.assertEqual(tbtc.postfix, 'tBTC')
+
+    def test_factory(self):
+        gbp = CurrencyFactory.create()
+        self.assertEqual(gbp.name, 'GBP')
+        usd = CurrencyFactory.create(name='USD')
+        self.assertEqual(usd.pk, 2)
+
+
 class UIThemeTestCase(TestCase):
 
     def test_create_theme(self):
@@ -54,7 +80,7 @@ class UIThemeTestCase(TestCase):
 
 class MerchantAccountTestCase(TestCase):
 
-    def create_merchant_account(self):
+    def test_create_merchant_account(self):
         user = UserFactory.create()
         merchant = MerchantAccount.objects.create(
             user=user,
@@ -67,8 +93,6 @@ class MerchantAccountTestCase(TestCase):
         self.assertEqual(merchant.language.code, 'en')
         self.assertEqual(merchant.currency.name, 'GBP')
         self.assertEqual(merchant.ui_theme.name, 'default')
-        self.assertEqual(merchant.account_balance, 0)
-        self.assertEqual(merchant.account_balance_max, 0)
         self.assertEqual(merchant.payment_processor, 'gocoin')
         self.assertEqual(merchant.verification_status, 'unverified')
 
@@ -76,6 +100,7 @@ class MerchantAccountTestCase(TestCase):
         merchant = MerchantAccountFactory.create()
         self.assertTrue(merchant.is_profile_complete)
         self.assertIsNotNone(merchant.info)
+        self.assertEqual(merchant.currency.name, 'GBP')
 
     def test_is_profile_complete(self):
         merchant = MerchantAccountFactory.create(
@@ -90,10 +115,11 @@ class MerchantAccountTestCase(TestCase):
 
     def test_get_account_balance(self):
         merchant = MerchantAccountFactory.create()
-        self.assertIsNone(merchant.get_account_balance('mainnet'))
-        BTCAccountFactory.create(
-            merchant=merchant, network='mainnet', balance=Decimal('0.5'))
-        self.assertEqual(merchant.get_account_balance('mainnet'),
+        self.assertIsNone(merchant.get_account_balance('BTC'))
+        AccountFactory.create(merchant=merchant,
+                              currency__name='BTC',
+                              balance=Decimal('0.5'))
+        self.assertEqual(merchant.get_account_balance('BTC'),
                          Decimal('0.5'))
 
     def test_info_new_merchant(self):
@@ -108,10 +134,15 @@ class MerchantAccountTestCase(TestCase):
 
     def test_info_with_payments(self):
         merchant = MerchantAccountFactory.create()
-        DeviceFactory.create(merchant=merchant, status='activation')
-        active_device = DeviceFactory.create(merchant=merchant,
-                                             status='active',
-                                             last_activity=timezone.now())
+        account = AccountFactory.create(merchant=merchant)
+        DeviceFactory.create(merchant=merchant,
+                             account=account,
+                             status='activation')
+        active_device = DeviceFactory.create(
+            merchant=merchant,
+            account=account,
+            status='active',
+            last_activity=timezone.now())
         payments = PaymentOrderFactory.create_batch(
             3, device=active_device, time_notified=timezone.now())
 
@@ -123,22 +154,55 @@ class MerchantAccountTestCase(TestCase):
                          sum(p.fiat_amount for p in payments))
 
 
-class BTCAccountTestCase(TestCase):
+class AccountTestCase(TestCase):
 
     def test_create_btc_account(self):
-        merchant = MerchantAccountFactory.create()
-        btc_account = BTCAccount.objects.create(merchant=merchant)
+        merchant = MerchantAccountFactory.create(company_name='mtest')
+        currency = CurrencyFactory.create(name='BTC')
+        account = Account.objects.create(merchant=merchant,
+                                         currency=currency)
         # Check defaults
-        self.assertEqual(btc_account.network, 'mainnet')
-        self.assertEqual(btc_account.balance, 0)
-        self.assertEqual(btc_account.balance_max, 0)
-        self.assertIsNone(btc_account.address)
+        self.assertEqual(account.currency.name, 'BTC')
+        self.assertEqual(account.balance, 0)
+        self.assertEqual(account.balance_max, 0)
+        self.assertIsNone(account.bitcoin_address)
+        self.assertIsNone(account.instantfiat_provider)
+        self.assertIsNone(account.instantfiat_api_key)
+        self.assertEqual(str(account), 'mtest (mtest) - BTC')
 
-    def test_btc_account_factory(self):
-        btc_account = BTCAccountFactory.create()
-        self.assertEqual(btc_account.balance, 0)
-        self.assertEqual(btc_account.balance_max, 0)
-        self.assertIsNone(btc_account.address)
+    def test_factory_btc(self):
+        account = AccountFactory.create()
+        self.assertEqual(account.currency.name, 'BTC')
+        self.assertEqual(account.balance, 0)
+        self.assertEqual(account.balance_max, 0)
+        self.assertIsNone(account.bitcoin_address)
+        self.assertIsNone(account.instantfiat_provider)
+        self.assertIsNone(account.instantfiat_api_key)
+
+    def test_factory_gbp(self):
+        account = AccountFactory.create(currency__name='GBP')
+        self.assertEqual(account.currency.name, 'GBP')
+        self.assertEqual(account.balance, 0)
+        self.assertEqual(account.balance_max, 0)
+        self.assertIsNone(account.bitcoin_address)
+        self.assertEqual(account.instantfiat_provider,
+                         INSTANTFIAT_PROVIDERS.CRYPTOPAY)
+        self.assertIsNotNone(account.instantfiat_api_key)
+
+    def test_unique_together(self):
+        merchant = MerchantAccountFactory.create()
+        AccountFactory.create(merchant=merchant, currency__name='TBTC')
+        with self.assertRaises(IntegrityError):
+            AccountFactory.create(merchant=merchant,
+                                  currency__name='TBTC')
+
+    def test_bitcoin_network(self):
+        account_1 = AccountFactory.create(currency__name='BTC')
+        self.assertEqual(account_1.bitcoin_network, 'mainnet')
+        account_2 = AccountFactory.create(currency__name='TBTC')
+        self.assertEqual(account_2.bitcoin_network, 'testnet')
+        account_3 = AccountFactory.create(currency__name='GBP')
+        self.assertEqual(account_3.bitcoin_network, 'mainnet')
 
 
 class DeviceTestCase(TestCase):
@@ -148,27 +212,34 @@ class DeviceTestCase(TestCase):
             device_type='hardware',
             name='TEST')
         self.assertIsNone(device.merchant)
+        self.assertIsNone(device.account)
         self.assertEqual(device.status, 'registered')
         self.assertEqual(len(device.key), 8)
         self.assertEqual(len(device.activation_code), 6)
-        self.assertEqual(device.bitcoin_network, 'mainnet')
+        self.assertIsNone(device.bitcoin_address)
         self.assertEqual(device.batch.batch_number,
                          settings.DEFAULT_BATCH_NUMBER)
+        self.assertIsNotNone(device.created_at)
+        self.assertIsNone(device.last_activity)
 
     def test_device_factory(self):
         # Registration
         device = DeviceFactory.create(status='registered')
         self.assertIsNone(device.merchant)
+        self.assertIsNone(device.account)
         self.assertEqual(device.status, 'registered')
         self.assertEqual(len(device.key), 8)
         self.assertEqual(len(device.activation_code), 6)
         # Activation
         device = DeviceFactory.create(status='activation')
         self.assertIsNotNone(device.merchant)
+        self.assertIsNotNone(device.account)
+        self.assertEqual(device.account.merchant.pk, device.merchant.pk)
         self.assertEqual(device.status, 'activation')
         # Active
         device = DeviceFactory.create(status='active')
         self.assertIsNotNone(device.merchant)
+        self.assertIsNotNone(device.account)
         self.assertEqual(device.status, 'active')
         # Without kwargs
         device = DeviceFactory.create()
@@ -176,6 +247,7 @@ class DeviceTestCase(TestCase):
         # Suspended
         device = DeviceFactory.create(status='suspended')
         self.assertIsNotNone(device.merchant)
+        self.assertIsNotNone(device.account)
         self.assertEqual(device.status, 'suspended')
 
     def test_transitions(self):
@@ -187,7 +259,14 @@ class DeviceTestCase(TestCase):
             device.activate()
         with self.assertRaises(TransitionNotAllowed):
             device.suspend()
+        # Set merchant
         device.merchant = MerchantAccountFactory.create()
+        with self.assertRaises(TransitionNotAllowed):
+            device.start_activation()
+        with self.assertRaises(TransitionNotAllowed):
+            device.activate()
+        # Set account
+        device.account = AccountFactory.create(merchant=device.merchant)
         with self.assertRaises(TransitionNotAllowed):
             device.activate()
         device.start_activation()
@@ -198,6 +277,29 @@ class DeviceTestCase(TestCase):
         self.assertEqual(device.status, 'suspended')
         device.activate()
         self.assertEqual(device.status, 'active')
+
+    def test_bitcoin_network(self):
+        device_1 = DeviceFactory.create(status='registered')
+        self.assertEqual(device_1.bitcoin_network, 'mainnet')
+        device_2 = DeviceFactory.create(status='active')
+        self.assertEqual(device_2.bitcoin_network, 'mainnet')
+        device_3 = DeviceFactory.create(
+            status='active',
+            account__currency__name='TBTC')
+        self.assertEqual(device_3.bitcoin_network, 'testnet')
+
+    def test_instantfiat(self):
+        device_1 = DeviceFactory.create(status='registered')
+        self.assertIsNone(device_1.instantfiat)
+        self.assertIsNotNone(device_1.bitcoin_address)
+        device_2 = DeviceFactory.create(status='active')
+        self.assertFalse(device_2.instantfiat)
+        self.assertIsNotNone(device_2.bitcoin_address)
+        device_3 = DeviceFactory.create(
+            status='active',
+            account__currency__name='USD')
+        self.assertTrue(device_3.instantfiat)
+        self.assertIsNone(device_3.bitcoin_address)
 
 
 class DeviceBatchTestCase(TestCase):

@@ -16,17 +16,10 @@ from operations.blockchain import (
     deserialize_outputs)
 from operations.rq_helpers import cancel_current_task, run_periodic_task
 from operations.models import WithdrawalOrder
-from website.models import BTCAccount
+from operations.exceptions import WithdrawalError
 from website.utils import send_error_message
 
 logger = logging.getLogger(__name__)
-
-
-class WithdrawalError(Exception):
-
-    def __init__(self, message):
-        super(WithdrawalError, self).__init__()
-        self.message = message
 
 
 def _get_all_reserved_outputs(current_order):
@@ -59,18 +52,20 @@ def prepare_withdrawal(device, fiat_amount):
     Returns:
         order: WithdrawalOrder instance
     """
-    try:
-        account = BTCAccount.objects.get(merchant=device.merchant,
-                                         network=device.bitcoin_network,
-                                         address__isnull=False)
-    except BTCAccount.DoesNotExist:
-        raise WithdrawalError('Merchant doesn\'t have BTC account for {0}'.format(
-            device.bitcoin_network))
+    if not device.account:
+        raise WithdrawalError('Account is not set for device.')
+    if device.instantfiat:
+        raise WithdrawalError(
+            'Withdrawal from instantfiat accounts is not supported.')
+    else:
+        if not device.account.bitcoin_address:
+            raise WithdrawalError('Nothing to withdraw.')
 
+    # TODO: fiat currency -> currency
     order = WithdrawalOrder(
         device=device,
         bitcoin_network=device.bitcoin_network,
-        merchant_address=account.address,
+        merchant_address=device.account.bitcoin_address,
         fiat_currency=device.merchant.currency,
         fiat_amount=fiat_amount)
     # Calculate BTC amount
@@ -144,11 +139,9 @@ def send_transaction(order, customer_address):
     order.save()
 
     # Update balance
-    btc_account = BTCAccount.objects.filter(
-        merchant=order.device.merchant,
-        network=order.bitcoin_network).first()
-    btc_account.balance -= order.btc_amount
-    btc_account.save()
+    account = order.device.account
+    account.balance -= order.btc_amount
+    account.save()
 
     run_periodic_task(wait_for_confidence, [order.uid], interval=5)
 

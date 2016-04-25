@@ -32,7 +32,7 @@ from operations.models import PaymentOrder, WithdrawalOrder
 import operations.payment
 import operations.blockchain
 import operations.protocol
-from operations import withdrawal
+from operations import withdrawal, exceptions
 
 logger = logging.getLogger(__name__)
 
@@ -53,8 +53,12 @@ class PaymentViewSet(viewsets.GenericViewSet):
                                         status='active')
         except Device.DoesNotExist:
             raise Http404
-        payment_order = operations.payment.prepare_payment(
-            device, form.cleaned_data['amount'])
+        try:
+            payment_order = operations.payment.prepare_payment(
+                device, form.cleaned_data['amount'])
+        except exceptions.PaymentError as error:
+            return Response({'error': error.message},
+                            status=status.HTTP_400_BAD_REQUEST)
         # Urls
         payment_request_url = construct_absolute_url(
             'api:v2:payment-request',
@@ -209,7 +213,7 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
             order = withdrawal.prepare_withdrawal(
                 form.cleaned_data['device'],
                 form.cleaned_data['amount'])
-        except withdrawal.WithdrawalError as error:
+        except exceptions.WithdrawalError as error:
             return Response({'error': error.message},
                             status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(order)
@@ -225,7 +229,7 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
         customer_address = self.request.data.get('address')
         try:
             withdrawal.send_transaction(order, customer_address)
-        except withdrawal.WithdrawalError as error:
+        except exceptions.WithdrawalError as error:
             return Response({'error': error.message},
                             status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(order)

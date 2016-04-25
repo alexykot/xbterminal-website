@@ -11,6 +11,7 @@ from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
     PermissionsMixin)
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
@@ -20,11 +21,11 @@ from django.utils.translation import ugettext_lazy as _
 from constance import config
 from django_countries.fields import CountryField
 from django_fsm import FSMField, transition
+from extended_choices import Choices
 
 from website.validators import (
     validate_phone,
     validate_post_code,
-    validate_percent,
     validate_bitcoin_address,
     validate_public_key)
 from website.files import (
@@ -169,10 +170,13 @@ class MerchantAccount(models.Model):
     contact_phone = models.CharField(_('Contact phone'), max_length=32, validators=[validate_phone], null=True)
     contact_email = models.EmailField(_('Contact email'), max_length=254, unique=True)
 
+    # Display language
     language = models.ForeignKey(Language, default=1)  # by default, English, see fixtures
+    # Display currency
     currency = models.ForeignKey(Currency, default=1)  # by default, GBP, see fixtures
     ui_theme = models.ForeignKey(UITheme, default=1)  # 'default' theme, see fixtures
 
+    # TODO: deprecated fields, remove later
     payment_processor = models.CharField(_('Payment processor'), max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, default='gocoin')
     api_key = models.CharField(_('API key'), max_length=255, blank=True)
     gocoin_merchant_id = models.CharField(max_length=36, blank=True, null=True)
@@ -227,9 +231,9 @@ class MerchantAccount(models.Model):
             exclude(status='uploaded').\
             latest('uploaded')
 
-    def get_account_balance(self, network):
-        account = self.btcaccount_set.\
-            filter(network=network).first()
+    def get_account_balance(self, currency_name):
+        account = self.account_set.\
+            filter(currency__name=currency_name).first()
         if account:
             return account.balance
 
@@ -262,27 +266,69 @@ BITCOIN_NETWORKS = [
 ]
 
 
-class BTCAccount(models.Model):
+INSTANTFIAT_PROVIDERS = Choices(
+    ('CRYPTOPAY', 1, 'CryptoPay'),
+)
 
+
+class Account(models.Model):
+    """
+    Represents internal BTC account or external instantfiat account
+    """
     merchant = models.ForeignKey(MerchantAccount)
-    network = models.CharField(max_length=50,
-                               choices=BITCOIN_NETWORKS,
-                               default='mainnet')
-    balance = models.DecimalField(max_digits=20,
-                                  decimal_places=8,
-                                  default=0)
-    balance_max = models.DecimalField(max_digits=20,
-                                      decimal_places=8,
-                                      default=0)
-    address = models.CharField(max_length=35,
-                               validators=[validate_bitcoin_address],
-                               blank=True,
-                               null=True)
+    currency = models.ForeignKey(Currency)
+    balance = models.DecimalField(
+        max_digits=20,
+        decimal_places=8,
+        default=0)
+    balance_max = models.DecimalField(
+        max_digits=20,
+        decimal_places=8,
+        default=0)
+    bitcoin_address = models.CharField(
+        max_length=35,
+        unique=True,
+        validators=[validate_bitcoin_address],
+        blank=True,
+        null=True)
+    instantfiat_provider = models.PositiveSmallIntegerField(
+        _('InstantFiat provider'),
+        choices=INSTANTFIAT_PROVIDERS,
+        blank=True,
+        null=True)
+    instantfiat_api_key = models.CharField(
+        _('InstantFiat API key'),
+        max_length=200,
+        blank=True,
+        null=True)
+
+    class Meta:
+        ordering = ('merchant', 'currency')
+        unique_together = ('merchant', 'currency')
 
     def __unicode__(self):
-        return u'{0} - {1} account'.format(
+        return u'{0} - {1}'.format(
             str(self.merchant),
-            'BTC' if self.network == 'mainnet' else 'TBTC')
+            self.currency.name)
+
+    @property
+    def bitcoin_network(self):
+        if self.currency.name == 'BTC':
+            return 'mainnet'
+        elif self.currency.name == 'TBTC':
+            return 'testnet'
+        else:
+            # Instantfiat services work only with mainnet
+            return 'mainnet'
+
+    def clean(self):
+        if self.currency.name not in ['BTC', 'TBTC']:
+            if not self.instantfiat_provider:
+                raise ValidationError({
+                    'instantfiat_provider': 'This field is required.'})
+            if not self.instantfiat_api_key:
+                raise ValidationError({
+                    'instantfiat_api_key': 'This field is required.'})
 
 
 class KYCDocument(models.Model):
@@ -375,15 +421,15 @@ class Device(models.Model):
         ('active', _('Operational')),
         ('suspended', _('Suspended')),
     ]
-    PAYMENT_PROCESSING_CHOICES = [
-        ('keep', _('keep bitcoins')),
-        ('partially', _('convert partially')),
-        ('full', _('convert full amount')),
-    ]
 
-    merchant = models.ForeignKey(MerchantAccount,
-                                 blank=True,
-                                 null=True)
+    merchant = models.ForeignKey(
+        MerchantAccount,
+        blank=True,
+        null=True)
+    account = models.ForeignKey(
+        Account,
+        blank=True,
+        null=True)
     device_type = models.CharField(max_length=50, choices=DEVICE_TYPES)
     status = FSMField(max_length=50,
                       choices=DEVICE_STATUSES,
@@ -407,20 +453,11 @@ class Device(models.Model):
         validators=[validate_public_key],
         help_text='API public key')
 
-    percent = models.DecimalField(
-        _('Percent to convert'),
-        max_digits=4,
-        decimal_places=1,
-        validators=[validate_percent],
-        default=100)
     bitcoin_address = models.CharField(
         _('Bitcoin address to send to'),
         max_length=100,
-        blank=True)
-    bitcoin_network = models.CharField(
-        max_length=50,
-        choices=BITCOIN_NETWORKS,
-        default='mainnet')
+        blank=True,
+        null=True)
     our_fee_override = models.CharField(
         max_length=50,
         blank=True,
@@ -437,7 +474,7 @@ class Device(models.Model):
         return self.name
 
     def can_activate(self):
-        return self.merchant is not None
+        return self.merchant is not None and self.account is not None
 
     @transition(field=status,
                 source='registered',
@@ -459,19 +496,24 @@ class Device(models.Model):
         pass
 
     @property
-    def payment_processing(self):
-        if self.percent == 0:
-            return 'keep'
-        elif self.percent == 100:
-            return 'full'
+    def bitcoin_network(self):
+        if self.account:
+            return self.account.bitcoin_network
         else:
-            return 'partially'
+            return 'mainnet'
+
+    @property
+    def instantfiat(self):
+        if not self.account:
+            return None
+        if self.account.currency.name in ['BTC', 'TBTC']:
+            return False
+        else:
+            return True
 
     def payment_processor_info(self):
-        if self.percent > 0:
-            return '{0}, {1}% converted'.format(
-                self.merchant.get_payment_processor_display(),
-                self.percent)
+        if self.instantfiat:
+            return self.account.get_instantfiat_provider_display()
         return ''
 
     def get_payments(self):

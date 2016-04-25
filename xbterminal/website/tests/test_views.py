@@ -10,6 +10,7 @@ from mock import Mock, patch
 from website.models import MerchantAccount, Device
 from website.tests.factories import (
     MerchantAccountFactory,
+    AccountFactory,
     DeviceFactory,
     ReconciliationTimeFactory)
 from operations.tests.factories import PaymentOrderFactory
@@ -131,8 +132,9 @@ class RegistrationViewTestCase(TestCase):
         data = json.loads(response.content)
         self.assertEqual(data['result'], 'ok')
 
-        self.assertTrue(gocoin_mock.called)
-        merchant = gocoin_mock.call_args[0][0]
+        self.assertFalse(gocoin_mock.called)
+        merchant = MerchantAccount.objects.get(
+            company_name=form_data['company_name'])
         self.assertEqual(merchant.company_name, form_data['company_name'])
         self.assertEqual(merchant.user.email,
                          form_data['contact_email'])
@@ -168,8 +170,9 @@ class RegistrationViewTestCase(TestCase):
         data = json.loads(response.content)
         self.assertEqual(data['result'], 'ok')
 
-        self.assertTrue(gocoin_mock.called)
-        merchant = gocoin_mock.call_args[0][0]
+        self.assertFalse(gocoin_mock.called)
+        merchant = MerchantAccount.objects.get(
+            company_name=form_data['company_name'])
         self.assertEqual(merchant.company_name, form_data['company_name'])
 
         self.assertTrue(create_invoice_mock.called)
@@ -185,6 +188,7 @@ class RegistrationViewTestCase(TestCase):
         device = merchant.device_set.first()
         self.assertEqual(device.device_type, 'hardware')
         self.assertEqual(device.status, 'active')
+        self.assertIsNone(device.account)
 
         self.assertEqual(len(mail.outbox), 2)
         self.assertEqual(mail.outbox[0].to[0],
@@ -212,14 +216,16 @@ class RegistrationViewTestCase(TestCase):
         data = json.loads(response.content)
         self.assertEqual(data['result'], 'ok')
 
-        self.assertTrue(gocoin_mock.called)
-        merchant = gocoin_mock.call_args[0][0]
+        self.assertFalse(gocoin_mock.called)
+        merchant = MerchantAccount.objects.get(
+            company_name=form_data['company_name'])
         self.assertEqual(merchant.company_name, form_data['company_name'])
 
         self.assertEqual(merchant.device_set.count(), 1)
         device = merchant.device_set.first()
         self.assertEqual(device.device_type, 'web')
         self.assertEqual(device.status, 'active')
+        self.assertIsNone(device.account)
 
         self.assertEqual(len(mail.outbox), 2)
         self.assertEqual(mail.outbox[0].to[0],
@@ -232,8 +238,9 @@ class DeviceListViewTestCase(TestCase):
 
     def test_get(self):
         merchant = MerchantAccountFactory.create()
+        account = AccountFactory.create(merchant=merchant)
         device_1, device_2 = DeviceFactory.create_batch(
-            2, merchant=merchant)
+            2, merchant=merchant, account=account)
         device_2.suspend()
         device_2.save()
         self.client.login(username=merchant.user.email,
@@ -266,23 +273,24 @@ class CreateDeviceViewTestCase(TestCase):
 
     def test_post(self):
         merchant = MerchantAccountFactory.create()
+        account = AccountFactory.create(merchant=merchant,
+                                        currency__name='GBP')
         self.client.login(username=merchant.user.email,
                           password='password')
         self.assertEqual(merchant.device_set.count(), 0)
         form_data = {
             'device_type': 'hardware',
             'name': 'Terminal',
-            'payment_processing': 'full',
-            'percent': '100',
+            'account': account.pk,
         }
         response = self.client.post(self.url, form_data)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(merchant.device_set.count(), 1)
         device = merchant.device_set.first()
-        self.assertEqual(device.status, 'active')
+        self.assertEqual(device.account.pk, account.pk)
+        self.assertEqual(device.status, 'registered')
         self.assertEqual(device.device_type, 'hardware')
         self.assertEqual(device.name, 'Terminal')
-        self.assertEqual(device.payment_processing, 'full')
 
 
 class UpdateDeviceView(TestCase):
@@ -343,6 +351,7 @@ class ActivateDeviceViewTestCase(TestCase):
     @patch('api.utils.activation.rq_helpers.run_periodic_task')
     def test_post_valid_code(self, run_periodic_mock, run_mock):
         merchant = MerchantAccountFactory.create()
+        account = AccountFactory.create(merchant=merchant)
         self.assertEqual(merchant.device_set.count(), 0)
         self.client.login(username=merchant.user.email,
                           password='password')
@@ -361,6 +370,7 @@ class ActivateDeviceViewTestCase(TestCase):
         self.assertEqual(merchant.device_set.count(), 1)
         active_device = merchant.device_set.first()
         self.assertEqual(active_device.status, 'activation')
+        self.assertEqual(active_device.account.pk, account.pk)
 
     @patch('api.utils.activation.rq_helpers.run_task')
     @patch('api.utils.activation.rq_helpers.run_periodic_task')
@@ -374,6 +384,7 @@ class ActivateDeviceViewTestCase(TestCase):
         run_mock.side_effect = activate
 
         merchant = MerchantAccountFactory.create()
+        account = AccountFactory.create(merchant=merchant)
         self.assertEqual(merchant.device_set.count(), 0)
         self.client.login(username=merchant.user.email,
                           password='password')
@@ -390,6 +401,7 @@ class ActivateDeviceViewTestCase(TestCase):
         self.assertRedirects(response, expected_url)
         active_device = merchant.device_set.first()
         self.assertEqual(active_device.status, 'active')
+        self.assertEqual(active_device.account.pk, account.pk)
 
     def test_post_error(self):
         merchant = MerchantAccountFactory.create()

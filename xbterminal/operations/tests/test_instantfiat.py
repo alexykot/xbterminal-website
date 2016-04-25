@@ -2,7 +2,7 @@ from decimal import Decimal
 from django.test import TestCase
 from mock import patch, Mock
 
-from website.tests.factories import MerchantAccountFactory
+from website.tests.factories import AccountFactory, INSTANTFIAT_PROVIDERS
 from operations import instantfiat
 from operations.exceptions import InstantFiatError
 
@@ -11,28 +11,30 @@ class InstantFiatTestCase(TestCase):
 
     @patch('operations.instantfiat.cryptopay.create_invoice')
     def test_create_invoice(self, create_invoice_mock):
-        merchant = MerchantAccountFactory.create(
-            payment_processor='cryptopay',
-            api_key='test')
+        account = AccountFactory.create(
+            currency__name='GBP',
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_api_key='test')
         create_invoice_mock.return_value = ('invoice_id',
                                             Decimal(0.1), 'address')
-        result = instantfiat.create_invoice(merchant, Decimal(1.0))
+        result = instantfiat.create_invoice(account, Decimal(1.0))
         self.assertTrue(create_invoice_mock.called)
         call_args = create_invoice_mock.call_args[0]
         self.assertEqual(call_args[1], 'GBP')
         self.assertEqual(call_args[2], 'test')
-        self.assertIn(merchant.company_name, call_args[3])
-        self.assertEqual(result['instantfiat_invoice_id'], 'invoice_id')
-        self.assertEqual(result['instantfiat_btc_amount'], Decimal(0.1))
-        self.assertEqual(result['instantfiat_address'], 'address')
+        self.assertIn(account.merchant.company_name, call_args[3])
+        self.assertEqual(result[0], 'invoice_id')
+        self.assertEqual(result[1], Decimal(0.1))
+        self.assertEqual(result[2], 'address')
 
     @patch('operations.instantfiat.cryptopay.is_invoice_paid')
     def test_is_invoice_paid(self, is_paid_mock):
-        merchant = MerchantAccountFactory.create(
-            payment_processor='cryptopay',
-            api_key='test')
+        account = AccountFactory.create(
+            currency__name='GBP',
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_api_key='test')
         is_paid_mock.return_value = True
-        result = instantfiat.is_invoice_paid(merchant, 'invoice_id')
+        result = instantfiat.is_invoice_paid(account, 'invoice_id')
         self.assertEqual(is_paid_mock.call_args[0][0], 'invoice_id')
         self.assertEqual(is_paid_mock.call_args[0][1], 'test')
         self.assertTrue(result)

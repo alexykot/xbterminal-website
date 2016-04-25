@@ -3,7 +3,7 @@ import logging
 from django.core.management.base import BaseCommand
 from django.db.models import Sum
 
-from website.models import BTCAccount
+from website.models import Currency, Account
 from website.utils import send_balance_admin_notification
 from operations.blockchain import BlockChain
 
@@ -15,6 +15,7 @@ class Command(BaseCommand):
     help = "Compare merchants' balances and bitcoind wallet balance"
 
     def add_arguments(self, parser):
+        # TODO: accept currency name as first argument
         parser.add_argument(
             'network', type=str, nargs='?', default='mainnet')
         parser.add_argument(
@@ -29,9 +30,11 @@ class Command(BaseCommand):
 
 def check_wallet(network):
     bc = BlockChain(network)
-    accounts = BTCAccount.objects.filter(network=network)
+    currency = Currency.objects.get(
+        name='BTC' if network == 'mainnet' else 'TBTC')
+    accounts = Account.objects.filter(currency=currency)
     wallet_value = Decimal(0)
-    for address in accounts.values_list('address', flat=True):
+    for address in accounts.values_list('bitcoin_address', flat=True):
         wallet_value += bc.get_address_balance(address)
     result = accounts.aggregate(Sum('balance'))
     db_value = result['balance__sum'] or Decimal(0)
@@ -50,8 +53,10 @@ def check_wallet(network):
 
 def check_wallet_strict(network):
     bc = BlockChain(network)
+    currency = Currency.objects.get(
+        name='BTC' if network == 'mainnet' else 'TBTC')
     wallet_value = bc.get_balance(minconf=0)
-    result = BTCAccount.objects.filter(network=network).\
+    result = Account.objects.filter(currency=currency).\
         aggregate(Sum('balance'))
     db_value = result['balance__sum'] or Decimal(0)
     if wallet_value != db_value:
