@@ -407,7 +407,9 @@ class DeviceForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.merchant = kwargs.pop('merchant')
         super(DeviceForm, self).__init__(*args, **kwargs)
-        self.fields['account'].queryset = self.merchant.account_set.all()
+        allowed_currencies = ['BTC', 'TBTC', self.merchant.currency.name]
+        self.fields['account'].queryset = self.merchant.account_set.\
+            filter(currency__name__in=allowed_currencies)
         self.fields['account'].required = True
 
     def device_type_verbose(self):

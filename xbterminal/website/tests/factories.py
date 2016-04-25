@@ -69,6 +69,8 @@ class MerchantAccountFactory(factory.DjangoModelFactory):
     contact_phone = '+123456789'
     contact_email = factory.LazyAttribute(lambda ma: ma.user.email)
 
+    currency = factory.SubFactory(CurrencyFactory)
+
 
 class AccountFactory(factory.DjangoModelFactory):
 

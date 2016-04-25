@@ -170,6 +170,16 @@ class PreparePaymentTestCase(TestCase):
         self.assertEqual(context.exception.message,
                          'Payout address is not set for device.')
 
+    def test_currency_mismatch(self):
+        device = DeviceFactory.create(
+            merchant__currency__name='GBP',
+            account__currency__name='USD')
+        fiat_amount = Decimal('1.5')
+        with self.assertRaises(exceptions.PaymentError) as context:
+            payment.prepare_payment(device, fiat_amount)
+        self.assertEqual(context.exception.message,
+                         'Account currency should match merchant currency.')
+
 
 class WaitForPaymentTestCase(TestCase):
 

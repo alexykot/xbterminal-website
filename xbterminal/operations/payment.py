@@ -50,6 +50,10 @@ def prepare_payment(device, fiat_amount):
     if not device.instantfiat and not device.bitcoin_address:
         raise exceptions.PaymentError(
             'Payout address is not set for device.')
+    if device.instantfiat and \
+            device.merchant.currency != device.account.currency:
+        raise exceptions.PaymentError(
+            'Account currency should match merchant currency.')
     # Prepare payment order
     # TODO: fiat currency -> currency
     order = PaymentOrder(

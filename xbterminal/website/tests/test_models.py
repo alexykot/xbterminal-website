@@ -100,6 +100,7 @@ class MerchantAccountTestCase(TestCase):
         merchant = MerchantAccountFactory.create()
         self.assertTrue(merchant.is_profile_complete)
         self.assertIsNotNone(merchant.info)
+        self.assertEqual(merchant.currency.name, 'GBP')
 
     def test_is_profile_complete(self):
         merchant = MerchantAccountFactory.create(

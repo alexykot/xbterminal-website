@@ -158,6 +158,19 @@ class DeviceFormTestCase(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('bitcoin_address', form.errors)
 
+    def test_invalid_account_currency(self):
+        merchant = MerchantAccountFactory.create(currency__name='USD')
+        account = AccountFactory.create(merchant=merchant,
+                                        currency__name='EUR')
+        form_data = {
+            'device_type': 'hardware',
+            'name': 'Terminal',
+            'account': account.pk,
+        }
+        form = DeviceForm(data=form_data, merchant=merchant)
+        self.assertFalse(form.is_valid())
+        self.assertIn('account', form.errors)
+
 
 class DeviceActivationFormTestCase(TestCase):
 
