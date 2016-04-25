@@ -19,10 +19,8 @@ from django.contrib import messages
 from django.utils import timezone
 from django.utils.translation import ugettext as _
 
-from constance import config
 from ipware.ip import get_real_ip
 
-from operations.instantfiat import gocoin
 from api.utils import activation
 
 from website import forms, models, utils
@@ -216,15 +214,7 @@ class RegistrationView(TemplateResponseMixin, View):
             }
             return HttpResponse(json.dumps(response),
                                 content_type='application/json')
-        try:
-            merchant = form.save()
-        except gocoin.GoCoinNameAlreadyTaken:
-            response = {
-                'result': 'error',
-                'errors': {'company_name': [_('This company is already registered.')]},
-            }
-            return HttpResponse(json.dumps(response),
-                                content_type='application/json')
+        merchant = form.save()
         utils.send_registration_info(merchant)
         response = {
             'result': 'ok',
@@ -429,13 +419,7 @@ class UpdateProfileView(TemplateResponseMixin, CabinetView):
         form = forms.ProfileForm(self.request.POST,
                                  instance=self.request.user.merchant)
         if form.is_valid():
-            try:
-                form.save()
-            except gocoin.GoCoinNameAlreadyTaken:
-                form.add_error('company_name',
-                               _('This company is already registered.'))
-                context['form'] = form
-                return self.render_to_response(context)
+            form.save()
             return redirect(reverse('website:profile'))
         else:
             context['form'] = form
@@ -497,8 +481,6 @@ class VerificationView(TemplateResponseMixin, CabinetView):
             kyc_documents.append(merchant.get_kyc_document(2, 'uploaded'))
         if all(kyc_documents):
             for document in kyc_documents:
-                document.gocoin_document_id = gocoin.upload_kyc_document(
-                    document, config.GOCOIN_AUTH_TOKEN)
                 document.status = 'unverified'
                 document.save()
             merchant.verification_status = 'pending'

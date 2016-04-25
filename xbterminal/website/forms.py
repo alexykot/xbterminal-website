@@ -8,12 +8,8 @@ from django.contrib.auth.forms import (
     UserChangeForm as DjangoUserChangeForm)
 from django.utils.translation import ugettext as _
 
-from constance import config
 from captcha.fields import ReCaptchaField
 from oauth2_provider.models import Application
-
-from operations import preorder
-from operations.instantfiat import gocoin  # flake8: noqa
 
 from website.models import (
     Currency,
@@ -26,13 +22,11 @@ from website.models import (
     get_language,
     get_currency)
 from website.widgets import (
-    ButtonGroupRadioSelect,
     TimeWidget,
     FileWidget,
     ForeignKeyWidget)
 from website.validators import validate_bitcoin_address
 from website.utils import create_html_message
-from operations.models import Order
 
 
 class UserCreationForm(DjangoUserCreationForm):
@@ -169,8 +163,6 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
         instance = super(SimpleMerchantRegistrationForm, self).save(commit=False)
         instance.language = get_language(instance.country.code)
         instance.currency = get_currency(instance.country.code)
-        # Create GoCoin account (disabled)
-        # instance.gocoin_merchant_id = gocoin.create_merchant(instance, config.GOCOIN_AUTH_TOKEN)
         # Create new user
         password = get_user_model().objects.make_random_password()
         user = get_user_model().objects.create_user(
@@ -277,11 +269,6 @@ class ProfileForm(forms.ModelForm):
         instance = super(ProfileForm, self).save(commit=False)
         instance.language = get_language(instance.country.code)
         instance.currency = get_currency(instance.country.code)
-        # if instance.gocoin_merchant_id:
-            # merchants = gocoin.get_merchants(config.GOCOIN_MERCHANT_ID,
-                                             # config.GOCOIN_AUTH_TOKEN)
-            # if instance.gocoin_merchant_id in merchants:
-                # gocoin.update_merchant(instance, config.GOCOIN_AUTH_TOKEN)
         if commit:
             instance.save()
         return instance
