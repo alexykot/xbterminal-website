@@ -22,7 +22,6 @@ from django.utils.translation import ugettext as _
 from constance import config
 from ipware.ip import get_real_ip
 
-from operations.blockchain import construct_bitcoin_uri
 from operations.instantfiat import gocoin
 from api.utils import activation
 
@@ -206,7 +205,6 @@ class RegistrationView(TemplateResponseMixin, View):
             return redirect(reverse('website:devices'))
         context = {
             'form': forms.MerchantRegistrationForm(initial={'regtype': regtype}),
-            'order_form': forms.TerminalOrderForm(initial={'quantity': 1}),
         }
         return self.render_to_response(context)
 
@@ -219,16 +217,6 @@ class RegistrationView(TemplateResponseMixin, View):
             }
             return HttpResponse(json.dumps(response),
                                 content_type='application/json')
-        regtype = form.cleaned_data['regtype']
-        if regtype == 'terminal':
-            order_form = forms.TerminalOrderForm(self.request.POST)
-            if not order_form.is_valid():
-                response = {
-                    'result': 'error',
-                    'errors': order_form.errors,
-                }
-                return HttpResponse(json.dumps(response),
-                                    content_type='application/json')
         try:
             merchant = form.save()
         except gocoin.GoCoinNameAlreadyTaken:
@@ -238,41 +226,11 @@ class RegistrationView(TemplateResponseMixin, View):
             }
             return HttpResponse(json.dumps(response),
                                 content_type='application/json')
-        if regtype == 'default':
-            utils.send_registration_info(merchant)
-            response = {
-                'result': 'ok',
-                'next': reverse('website:devices'),
-            }
-        elif regtype == 'terminal':
-            order = order_form.save(merchant)
-            # Create devices
-            # TODO: disable this type of registration
-            for idx in range(order.quantity):
-                device = models.Device(
-                    device_type='hardware',
-                    status='active',
-                    name='Terminal #{0}'.format(idx + 1),
-                    merchant=merchant)  # Account is not set
-                device.save()
-            utils.send_registration_info(merchant, order)
-            response = {
-                'result': 'ok',
-                'next': reverse('website:order', kwargs={'pk': order.pk}),
-            }
-        elif regtype == 'web':
-            # TODO: disable this type of registration
-            device = models.Device(
-                device_type='web',
-                status='active',
-                name='Web POS #1',
-                merchant=merchant)  # Account is not set
-            device.save()
-            utils.send_registration_info(merchant)
-            response = {
-                'result': 'ok',
-                'next': reverse('website:devices'),
-            }
+        utils.send_registration_info(merchant)
+        response = {
+            'result': 'ok',
+            'next': reverse('website:devices'),
+        }
         login(self.request, merchant.user)
         return HttpResponse(json.dumps(response),
                             content_type='application/json')
@@ -318,47 +276,6 @@ class CabinetView(ContextMixin, View):
         context = super(CabinetView, self).get_context_data(**kwargs)
         context['cabinet_page'] = resolve(self.request.path_info).url_name
         return context
-
-
-class OrderPaymentView(TemplateResponseMixin, CabinetView):
-    """
-    Terminal order page
-    """
-    template_name = "website/order.html"
-
-    def get(self, *args, **kwargs):
-        order = get_object_or_404(models.Order,
-                                  pk=self.kwargs.get('pk'),
-                                  merchant=self.request.user.merchant)
-        if order.payment_method == 'bitcoin':
-            context = self.get_context_data(**kwargs)
-            context['order'] = order
-            context['bitcoin_uri'] = construct_bitcoin_uri(
-                context['order'].instantfiat_address,
-                context['order'].instantfiat_btc_total_amount,
-                "xbterminal.io")
-            context['check_url'] = reverse('website:order_check',
-                                           kwargs={'pk': order.pk})
-            return self.render_to_response(context)
-        elif order.payment_method == 'wire':
-            utils.send_invoice(order)
-            return redirect(reverse('website:devices'))
-
-
-class OrderCheckView(CabinetView):
-    """
-    Check payment
-    """
-    def get(self, *args, **kwargs):
-        order = get_object_or_404(models.Order,
-                                  pk=self.kwargs.get('pk'),
-                                  merchant=self.request.user.merchant)
-        if order.payment_status == 'unpaid':
-            data = {'paid': 0}
-        else:
-            data = {'paid': 1, 'next': reverse('website:devices')}
-        return HttpResponse(json.dumps(data),
-                            content_type='application/json')
 
 
 class DeviceList(TemplateResponseMixin, CabinetView):
