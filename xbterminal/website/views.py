@@ -200,11 +200,10 @@ class RegistrationView(TemplateResponseMixin, View):
     template_name = "website/registration.html"
 
     def get(self, *args, **kwargs):
-        regtype = self.request.GET.get('regtype', 'default')
         if hasattr(self.request.user, 'merchant'):
             return redirect(reverse('website:devices'))
         context = {
-            'form': forms.MerchantRegistrationForm(initial={'regtype': regtype}),
+            'form': forms.MerchantRegistrationForm(),
         }
         return self.render_to_response(context)
 

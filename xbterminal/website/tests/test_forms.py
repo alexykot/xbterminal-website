@@ -17,18 +17,10 @@ from website.tests.factories import (
 
 class MerchantRegistrationFormTestCase(TestCase):
 
-    def test_init(self):
-        form = MerchantRegistrationForm()
-        regtype_choices = dict(form.fields['regtype'].choices)
-        self.assertIn('default', regtype_choices)
-        self.assertIn('terminal', regtype_choices)
-        self.assertIn('web', regtype_choices)
-
     @patch('website.forms.gocoin.create_merchant')
     def test_valid_data(self, gocoin_mock):
         gocoin_mock.return_value = 'x' * 32
         form_data = {
-            'regtype': 'default',
             'company_name': 'Test Company',
             'business_address': 'Test Address',
             'town': 'Test Town',
@@ -58,7 +50,6 @@ class MerchantRegistrationFormTestCase(TestCase):
     def test_required(self):
         form = MerchantRegistrationForm(data={})
         self.assertFalse(form.is_valid())
-        self.assertIn('regtype', form.errors)
         self.assertIn('company_name', form.errors)
         self.assertIn('business_address', form.errors)
         self.assertIn('town', form.errors)

@@ -210,14 +210,6 @@ class MerchantRegistrationForm(SimpleMerchantRegistrationForm):
     """
     Merchant registration form
     """
-    regtype = forms.ChoiceField(
-        choices=[
-            ('default', 'default'),
-            ('terminal', 'terminal'),
-            ('web', 'web'),
-        ],
-        widget=forms.HiddenInput)
-
     # Used at registration step 1
     company_name_copy = forms.CharField(
         label=_('Company name'),

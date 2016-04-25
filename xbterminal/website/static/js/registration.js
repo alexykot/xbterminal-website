@@ -79,7 +79,6 @@ var Registration = (function () {
                 $('#registration-step-1').hide();
                 $('#registration-step-2').show();
                 $('#step span').text('2');
-                var regtype = $('[name="regtype"]').val();
                 $('[name="company_name"]').val($('[name="company_name_copy"]').val());
             }
         });

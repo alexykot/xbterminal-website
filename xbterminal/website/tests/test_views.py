@@ -101,14 +101,9 @@ class RegistrationViewTestCase(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'website/registration.html')
-        form = response.context['form']
-        self.assertEqual(form.initial['regtype'], 'default')
 
-    @patch('website.forms.gocoin.create_merchant')
-    def test_post_default(self, gocoin_mock):
-        gocoin_mock.return_value = 'x' * 32
+    def test_post_default(self):
         form_data = {
-            'regtype': 'default',
             'company_name': 'Test Company 1',
             'business_address': 'Test Address',
             'town': 'Test Town',
@@ -124,7 +119,6 @@ class RegistrationViewTestCase(TestCase):
         data = json.loads(response.content)
         self.assertEqual(data['result'], 'ok')
 
-        self.assertFalse(gocoin_mock.called)
         merchant = MerchantAccount.objects.get(
             company_name=form_data['company_name'])
         self.assertEqual(merchant.company_name, form_data['company_name'])
