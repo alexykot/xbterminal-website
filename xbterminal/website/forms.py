@@ -467,6 +467,14 @@ class DeviceAdminForm(forms.ModelForm):
             'merchant': ForeignKeyWidget(model=MerchantAccount),
         }
 
+    def __init__(self, *args, **kwargs):
+        super(DeviceAdminForm, self).__init__(*args, **kwargs)
+        if self.instance.pk:
+            # django.contrib.admin.widgets.RelatedFieldWidgetWrapper
+            self.fields['merchant'].widget.widget.attrs['disabled'] = 'disabled'
+            self.fields['account'].queryset = self.instance.\
+                merchant.account_set.all()
+
     def clean(self):
         cleaned_data = super(DeviceAdminForm, self).clean()
         account = cleaned_data.get('account')

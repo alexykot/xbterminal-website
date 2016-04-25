@@ -56,17 +56,10 @@ class DeviceAdmin(FSMTransitionMixin, admin.ModelAdmin):
         'device_key_qr_code',
         'activation_code',
         'last_reconciliation',
-        'payment_processor',
         'is_online',
     ]
     fsm_field = ['status']
     form = forms.DeviceAdminForm
-
-    def payment_processor(self, device):
-        if device.status == 'registered':
-            return '-'
-        else:
-            return device.merchant.get_payment_processor_display()
 
     def merchant_link(self, device):
         if device.status == 'registered':
