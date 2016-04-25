@@ -16,29 +16,6 @@ var Landing = (function () {
     };
 
     var init = function () {
-        $('#terminal-subscribe-form').on('submit', function (event) {
-            event.preventDefault();
-            var form = $(this);
-            var formMessage = $('#terminal-subscribe-message');
-            $.ajax({
-                type: 'POST',
-                url: form.attr('action'),
-                data: form.serialize(),
-                beforeSend: function () {
-                    form.find('.loading-image').show();
-                }
-            }).done(function (data) {
-                if (data.errors) {
-                    formMessage.text('Error!');
-                } else {
-                    form.css('visibility', 'hidden');
-                    formMessage.text(gettext('Thank you for joining our mailing list!'));
-                }
-            }).always(function () {
-                form.find('.loading-image').hide();
-            });
-        });
-
         $(window).on('scroll', function () {
             var header = $('.header');
             var navHeight = header.height();
@@ -53,8 +30,7 @@ var Landing = (function () {
             }
         });
 
-        var sections = $('#about-section, #terminal-section, \
-                          #mobile-section, #web-section');
+        var sections = $('#about-section, #mobile-section');
 
         sections.on('scrollSpy:enter', function () {
             makeLinkActive($(this).attr('id'));

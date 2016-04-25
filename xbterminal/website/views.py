@@ -707,6 +707,7 @@ class SubscribeNewsView(View):
     Subscribe to newsletters (Ajax)
     """
     def post(self, *args, **kwargs):
+        # TODO: remove this view
         form = forms.SubscribeForm(self.request.POST)
         if form.is_valid():
             subscriber_email = form.cleaned_data['email']
