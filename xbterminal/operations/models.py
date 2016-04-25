@@ -294,6 +294,8 @@ def gen_payment_reference():
     return base58.encode(bts)[:10].upper()
 
 
+# TODO: remove model
+
 class Order(models.Model):
 
     PAYMENT_METHODS = [

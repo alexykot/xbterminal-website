@@ -103,11 +103,6 @@ class PaymentOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
     refund.short_description = 'Refund selected payment orders'
 
 
-@admin.register(models.Order)
-class OrderAdmin(admin.ModelAdmin):
-    readonly_fields = ['payment_reference']
-
-
 @admin.register(models.WithdrawalOrder)
 class WithdrawalOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
 
