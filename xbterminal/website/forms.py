@@ -469,7 +469,7 @@ class DeviceAdminForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(DeviceAdminForm, self).__init__(*args, **kwargs)
-        if self.instance.pk:
+        if self.instance.pk and self.instance.merchant:
             # django.contrib.admin.widgets.RelatedFieldWidgetWrapper
             self.fields['merchant'].widget.widget.attrs['disabled'] = 'disabled'
             self.fields['account'].queryset = self.instance.\
