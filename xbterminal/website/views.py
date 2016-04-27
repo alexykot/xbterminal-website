@@ -282,7 +282,7 @@ class DeviceList(TemplateResponseMixin, CabinetView):
 
 class CreateDeviceView(TemplateResponseMixin, CabinetView):
     """
-    Add terminal page
+    Create device page
     """
     template_name = "cabinet/device_form.html"
 
@@ -302,7 +302,6 @@ class CreateDeviceView(TemplateResponseMixin, CabinetView):
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
-        # TODO: remove this view
         form = forms.DeviceForm(self.request.POST,
                                 merchant=self.request.user.merchant)
         if form.is_valid():
