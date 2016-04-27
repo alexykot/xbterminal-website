@@ -187,7 +187,7 @@ class CreateDeviceViewTestCase(TestCase):
         self.assertEqual(merchant.device_set.count(), 1)
         device = merchant.device_set.first()
         self.assertEqual(device.account.pk, account.pk)
-        self.assertEqual(device.status, 'registered')
+        self.assertEqual(device.status, 'active')
         self.assertEqual(device.device_type, 'hardware')
         self.assertEqual(device.name, 'Terminal')
 
