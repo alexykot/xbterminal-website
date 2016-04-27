@@ -198,7 +198,7 @@ class AccountTestCase(TestCase):
         self.assertIsNone(account.bitcoin_address)
         self.assertIsNone(account.instantfiat_provider)
         self.assertIsNone(account.instantfiat_api_key)
-        self.assertEqual(str(account), 'mtest (mtest) - BTC')
+        self.assertEqual(str(account), 'BTC - 0.00000000')
 
     def test_factory_btc(self):
         account = AccountFactory.create()
@@ -208,6 +208,7 @@ class AccountTestCase(TestCase):
         self.assertIsNone(account.bitcoin_address)
         self.assertIsNone(account.instantfiat_provider)
         self.assertIsNone(account.instantfiat_api_key)
+        self.assertEqual(str(account), 'BTC - 0.00000000')
 
     def test_factory_gbp(self):
         account = AccountFactory.create(currency__name='GBP')
@@ -218,6 +219,7 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.instantfiat_provider,
                          INSTANTFIAT_PROVIDERS.CRYPTOPAY)
         self.assertIsNotNone(account.instantfiat_api_key)
+        self.assertEqual(str(account), 'GBP - 0.00 (CryptoPay)')
 
     def test_unique_together(self):
         merchant = MerchantAccountFactory.create()

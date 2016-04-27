@@ -307,9 +307,15 @@ class Account(models.Model):
         unique_together = ('merchant', 'currency')
 
     def __unicode__(self):
-        return u'{0} - {1}'.format(
-            str(self.merchant),
-            self.currency.name)
+        if self.currency.name in ['BTC', 'TBTC']:
+            return u'{name} - {amount:.8f}'.format(
+                name=self.currency.name,
+                amount=self.balance)
+        else:
+            return u'{name} - {amount:.2f} ({provider})'.format(
+                name=self.currency.name,
+                amount=self.balance,
+                provider=self.get_instantfiat_provider_display())
 
     @property
     def bitcoin_network(self):
