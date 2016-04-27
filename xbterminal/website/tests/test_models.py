@@ -115,6 +115,18 @@ class MerchantAccountTestCase(TestCase):
         merchant.save()
         self.assertTrue(merchant.is_profile_complete)
 
+    def test_get_kyc_document(self):
+        merchant = MerchantAccountFactory.create()
+        document = merchant.get_kyc_document(
+            KYCDocument.IDENTITY_DOCUMENT,
+            'uploaded')
+        self.assertIsNone(document)
+        KYCDocumentFactory.create(merchant=merchant)
+        document = merchant.get_kyc_document(
+            KYCDocument.IDENTITY_DOCUMENT,
+            'uploaded')
+        self.assertIsNotNone(document)
+
     def test_get_account_balance(self):
         merchant = MerchantAccountFactory.create()
         self.assertIsNone(merchant.get_account_balance('BTC'))
