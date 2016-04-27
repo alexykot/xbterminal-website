@@ -6,7 +6,7 @@ var Device = (function () {
 
         account.on('change', function () {
             var accountName = $(this).find('option:selected').text();
-            if (accountName.indexOf('BTC', accountName.length - 3) !== -1) {
+            if (accountName.indexOf('BTC') !== -1) {
                 bitcoinAddress.attr('disabled', false);
             } else {
                 bitcoinAddress.attr('disabled', true);
