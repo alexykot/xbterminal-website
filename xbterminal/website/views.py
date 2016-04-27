@@ -563,6 +563,18 @@ class VerificationFileView(View):
                             content_type='application/json')
 
 
+class AccountListView(TemplateResponseMixin, CabinetView):
+    """
+    Account list page
+    """
+    template_name = "cabinet/account_list.html"
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['accounts'] = self.request.user.merchant.account_set.all()
+        return self.render_to_response(context)
+
+
 class ReconciliationView(DeviceMixin, TemplateResponseMixin, CabinetView):
     """
     Reconciliation page

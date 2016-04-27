@@ -25,6 +25,8 @@ urlpatterns = [
         views.VerificationFileView.as_view(),
         name='verification_file'),
 
+    url(r'^accounts/$', views.AccountListView.as_view(), name='accounts'),
+
     url(r'^terminals/$', views.DeviceList.as_view(), name='devices'),
     url(r'^terminals/add/$', views.CreateDeviceView.as_view(), name='create_device'),
     url(r'^terminals/activate/$', views.ActivateDeviceView.as_view(), name='activate_device'),

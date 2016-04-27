@@ -1,0 +1,25 @@
+{% extends "cabinet/base.html" %}
+{% load i18n %}
+
+{% block cabinet_content %}
+<table id="accounts" class="table table-striped table-bordered table-responsive">
+    <tr>
+        <th>{% trans 'Currency' %}</th>
+        <th>{% trans 'Balance' %}</th>
+        <th>{% trans 'Payment processor' %}</th>
+    </tr>
+    {% for account in accounts %}
+    <tr>
+        <td>{{ account.currency.name }}</td>
+        <td>
+            {% if account.currency.name == 'BTC' or account.currency.name == 'TBTC' %}
+            {{ account.balance|floatformat:8 }}
+            {% else %}
+            {{ account.balance|floatformat:2 }}
+            {% endif %}
+        </td>
+        <td>{{ account.instantfiat_provider|default:'-' }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

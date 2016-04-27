@@ -504,6 +504,21 @@ class VerificationFileViewTestCase(TestCase):
         self.assertTrue(data['deleted'])
 
 
+class AccountListViewTestCase(TestCase):
+
+    def test_get(self):
+        merchant = MerchantAccountFactory.create()
+        account = AccountFactory.create(merchant=merchant)
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:accounts')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/account_list.html')
+        self.assertEqual(response.context['accounts'].first().pk,
+                         account.pk)
+
+
 class ReconciliationViewTestCase(TestCase):
 
     def setUp(self):
