@@ -19,11 +19,8 @@ from django.contrib import messages
 from django.utils import timezone
 from django.utils.translation import ugettext as _
 
-from constance import config
 from ipware.ip import get_real_ip
 
-from operations.blockchain import construct_bitcoin_uri
-from operations.instantfiat import gocoin
 from api.utils import activation
 
 from website import forms, models, utils
@@ -201,12 +198,10 @@ class RegistrationView(TemplateResponseMixin, View):
     template_name = "website/registration.html"
 
     def get(self, *args, **kwargs):
-        regtype = self.request.GET.get('regtype', 'default')
         if hasattr(self.request.user, 'merchant'):
             return redirect(reverse('website:devices'))
         context = {
-            'form': forms.MerchantRegistrationForm(initial={'regtype': regtype}),
-            'order_form': forms.TerminalOrderForm(initial={'quantity': 1}),
+            'form': forms.MerchantRegistrationForm(),
         }
         return self.render_to_response(context)
 
@@ -219,60 +214,12 @@ class RegistrationView(TemplateResponseMixin, View):
             }
             return HttpResponse(json.dumps(response),
                                 content_type='application/json')
-        regtype = form.cleaned_data['regtype']
-        if regtype == 'terminal':
-            order_form = forms.TerminalOrderForm(self.request.POST)
-            if not order_form.is_valid():
-                response = {
-                    'result': 'error',
-                    'errors': order_form.errors,
-                }
-                return HttpResponse(json.dumps(response),
-                                    content_type='application/json')
-        try:
-            merchant = form.save()
-        except gocoin.GoCoinNameAlreadyTaken:
-            response = {
-                'result': 'error',
-                'errors': {'company_name': [_('This company is already registered.')]},
-            }
-            return HttpResponse(json.dumps(response),
-                                content_type='application/json')
-        if regtype == 'default':
-            utils.send_registration_info(merchant)
-            response = {
-                'result': 'ok',
-                'next': reverse('website:devices'),
-            }
-        elif regtype == 'terminal':
-            order = order_form.save(merchant)
-            # Create devices
-            # TODO: disable this type of registration
-            for idx in range(order.quantity):
-                device = models.Device(
-                    device_type='hardware',
-                    status='active',
-                    name='Terminal #{0}'.format(idx + 1),
-                    merchant=merchant)  # Account is not set
-                device.save()
-            utils.send_registration_info(merchant, order)
-            response = {
-                'result': 'ok',
-                'next': reverse('website:order', kwargs={'pk': order.pk}),
-            }
-        elif regtype == 'web':
-            # TODO: disable this type of registration
-            device = models.Device(
-                device_type='web',
-                status='active',
-                name='Web POS #1',
-                merchant=merchant)  # Account is not set
-            device.save()
-            utils.send_registration_info(merchant)
-            response = {
-                'result': 'ok',
-                'next': reverse('website:devices'),
-            }
+        merchant = form.save()
+        utils.send_registration_info(merchant)
+        response = {
+            'result': 'ok',
+            'next': reverse('website:devices'),
+        }
         login(self.request, merchant.user)
         return HttpResponse(json.dumps(response),
                             content_type='application/json')
@@ -318,47 +265,6 @@ class CabinetView(ContextMixin, View):
         context = super(CabinetView, self).get_context_data(**kwargs)
         context['cabinet_page'] = resolve(self.request.path_info).url_name
         return context
-
-
-class OrderPaymentView(TemplateResponseMixin, CabinetView):
-    """
-    Terminal order page
-    """
-    template_name = "website/order.html"
-
-    def get(self, *args, **kwargs):
-        order = get_object_or_404(models.Order,
-                                  pk=self.kwargs.get('pk'),
-                                  merchant=self.request.user.merchant)
-        if order.payment_method == 'bitcoin':
-            context = self.get_context_data(**kwargs)
-            context['order'] = order
-            context['bitcoin_uri'] = construct_bitcoin_uri(
-                context['order'].instantfiat_address,
-                context['order'].instantfiat_btc_total_amount,
-                "xbterminal.io")
-            context['check_url'] = reverse('website:order_check',
-                                           kwargs={'pk': order.pk})
-            return self.render_to_response(context)
-        elif order.payment_method == 'wire':
-            utils.send_invoice(order)
-            return redirect(reverse('website:devices'))
-
-
-class OrderCheckView(CabinetView):
-    """
-    Check payment
-    """
-    def get(self, *args, **kwargs):
-        order = get_object_or_404(models.Order,
-                                  pk=self.kwargs.get('pk'),
-                                  merchant=self.request.user.merchant)
-        if order.payment_status == 'unpaid':
-            data = {'paid': 0}
-        else:
-            data = {'paid': 1, 'next': reverse('website:devices')}
-        return HttpResponse(json.dumps(data),
-                            content_type='application/json')
 
 
 class DeviceList(TemplateResponseMixin, CabinetView):
@@ -513,13 +419,7 @@ class UpdateProfileView(TemplateResponseMixin, CabinetView):
         form = forms.ProfileForm(self.request.POST,
                                  instance=self.request.user.merchant)
         if form.is_valid():
-            try:
-                form.save()
-            except gocoin.GoCoinNameAlreadyTaken:
-                form.add_error('company_name',
-                               _('This company is already registered.'))
-                context['form'] = form
-                return self.render_to_response(context)
+            form.save()
             return redirect(reverse('website:profile'))
         else:
             context['form'] = form
@@ -581,8 +481,6 @@ class VerificationView(TemplateResponseMixin, CabinetView):
             kyc_documents.append(merchant.get_kyc_document(2, 'uploaded'))
         if all(kyc_documents):
             for document in kyc_documents:
-                document.gocoin_document_id = gocoin.upload_kyc_document(
-                    document, config.GOCOIN_AUTH_TOKEN)
                 document.status = 'unverified'
                 document.save()
             merchant.verification_status = 'pending'
@@ -809,6 +707,7 @@ class SubscribeNewsView(View):
     Subscribe to newsletters (Ajax)
     """
     def post(self, *args, **kwargs):
+        # TODO: remove this view
         form = forms.SubscribeForm(self.request.POST)
         if form.is_valid():
             subscriber_email = form.cleaned_data['email']

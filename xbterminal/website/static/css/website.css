@@ -33,13 +33,11 @@ input:-ms-input-placeholder {
 }
 
 #registration-step-2,
-#registration-step-3,
 #loading-image {
     display: none;
 }
 
-label[for="id_business_address1"],
-label[for="id_delivery_address1"] {
+label[for="id_business_address1"] {
     display: none;
 }
 
@@ -49,59 +47,10 @@ label[for="id_county"]:after {
     content: " (optional)";
 }
 
-#quantity-plus,
-#quantity-minus {
-    display: inline-block;
-    font-size: 1.6em;
-    line-height: 34px;
-    margin-right: 4px;
-    padding: 0;
-    text-align: center;
-    text-decoration: none;
-    width: 34px;
-}
-
-#calculation {
-    color: green;
-    font-size: 1.4em;
-    margin-bottom: 30px;
-}
-
-#id_payment_method {
-    margin-bottom: 30px;
-}
-
-#delivery-address-group {
-    display: none;
-    margin-bottom: 30px;
-}
-
 /* Login page */
 
 #login-form {
     margin-bottom: 10px;
-}
-
-/* Order */
-
-#order-details {
-    margin-bottom: 20px;
-    width: 100%;
-}
-
-#order-details td {
-    padding: 4px 8px;
-    vertical-align: top;
-}
-
-.od-label {
-    font-weight: bold;
-    text-align: right;
-}
-
-#payment-bitcoin {
-    margin-bottom: 10px;
-    text-align: center;
 }
 
 /* Device page */

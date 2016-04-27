@@ -1,4 +1,3 @@
-from mock import patch
 from django.test import TestCase
 from django.core import mail
 
@@ -17,18 +16,8 @@ from website.tests.factories import (
 
 class MerchantRegistrationFormTestCase(TestCase):
 
-    def test_init(self):
-        form = MerchantRegistrationForm()
-        regtype_choices = dict(form.fields['regtype'].choices)
-        self.assertIn('default', regtype_choices)
-        self.assertIn('terminal', regtype_choices)
-        self.assertIn('web', regtype_choices)
-
-    @patch('website.forms.gocoin.create_merchant')
-    def test_valid_data(self, gocoin_mock):
-        gocoin_mock.return_value = 'x' * 32
+    def test_valid_data(self):
         form_data = {
-            'regtype': 'default',
             'company_name': 'Test Company',
             'business_address': 'Test Address',
             'town': 'Test Town',
@@ -48,7 +37,6 @@ class MerchantRegistrationFormTestCase(TestCase):
         self.assertEqual(merchant.currency.name, 'GBP')
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to[0], form_data['contact_email'])
-        self.assertFalse(gocoin_mock.called)
         oauth_app = Application.objects.get(user=merchant.user)
         self.assertEqual(oauth_app.client_id, form_data['contact_email'])
         self.assertEqual(merchant.account_set.count(), 1)
@@ -58,7 +46,6 @@ class MerchantRegistrationFormTestCase(TestCase):
     def test_required(self):
         form = MerchantRegistrationForm(data={})
         self.assertFalse(form.is_valid())
-        self.assertIn('regtype', form.errors)
         self.assertIn('company_name', form.errors)
         self.assertIn('business_address', form.errors)
         self.assertIn('town', form.errors)
@@ -89,9 +76,7 @@ class ResetPasswordFormTestCase(TestCase):
 
 class ProfileFormTestCase(TestCase):
 
-    @patch('website.forms.gocoin')
-    def test_valid_data(self, gocoin_mock):
-        gocoin_mock.get_merchants.return_value = []
+    def test_valid_data(self):
         merchant = MerchantAccountFactory.create(
             gocoin_merchant_id='test')
         form_data = {
@@ -108,7 +93,6 @@ class ProfileFormTestCase(TestCase):
         form = ProfileForm(data=form_data, instance=merchant)
         self.assertTrue(form.is_valid())
         merchant_updated = form.save()
-        self.assertFalse(gocoin_mock.get_merchants.called)
         self.assertEqual(merchant_updated.pk, merchant.pk)
         self.assertEqual(merchant_updated.company_name, form_data['company_name'])
 

@@ -8,12 +8,8 @@ from django.contrib.auth.forms import (
     UserChangeForm as DjangoUserChangeForm)
 from django.utils.translation import ugettext as _
 
-from constance import config
 from captcha.fields import ReCaptchaField
 from oauth2_provider.models import Application
-
-from operations import preorder
-from operations.instantfiat import gocoin  # flake8: noqa
 
 from website.models import (
     Currency,
@@ -26,13 +22,11 @@ from website.models import (
     get_language,
     get_currency)
 from website.widgets import (
-    ButtonGroupRadioSelect,
     TimeWidget,
     FileWidget,
     ForeignKeyWidget)
 from website.validators import validate_bitcoin_address
 from website.utils import create_html_message
-from operations.models import Order
 
 
 class UserCreationForm(DjangoUserCreationForm):
@@ -169,8 +163,6 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
         instance = super(SimpleMerchantRegistrationForm, self).save(commit=False)
         instance.language = get_language(instance.country.code)
         instance.currency = get_currency(instance.country.code)
-        # Create GoCoin account (disabled)
-        # instance.gocoin_merchant_id = gocoin.create_merchant(instance, config.GOCOIN_AUTH_TOKEN)
         # Create new user
         password = get_user_model().objects.make_random_password()
         user = get_user_model().objects.create_user(
@@ -210,14 +202,6 @@ class MerchantRegistrationForm(SimpleMerchantRegistrationForm):
     """
     Merchant registration form
     """
-    regtype = forms.ChoiceField(
-        choices=[
-            ('default', 'default'),
-            ('terminal', 'terminal'),
-            ('web', 'web'),
-        ],
-        widget=forms.HiddenInput)
-
     # Used at registration step 1
     company_name_copy = forms.CharField(
         label=_('Company name'),
@@ -246,82 +230,6 @@ class MerchantRegistrationForm(SimpleMerchantRegistrationForm):
             'contact_last_name': _('Last name'),
             'contact_email': _('Email'),
         }
-
-
-class TerminalOrderForm(forms.ModelForm):
-    """
-    Terminal order form
-    """
-    delivery_address_differs = forms.BooleanField(
-        label=_("Deliver to a different address"),
-        required=False)
-
-    class Meta:
-        model = Order
-        exclude = [
-            'merchant',
-            'created',
-            'fiat_total_amount',
-            'delivery_address2',
-            'delivery_contact_phone',
-            'instantfiat_invoice_id',
-            'instantfiat_btc_total_amount',
-            'instantfiat_address',
-            'payment_reference',
-            'payment_status',
-        ]
-        labels = {
-            'quantity': _('Terminals on order'),
-            'delivery_town': _('Town'),
-            'delivery_post_code': _('Post code/Zip code'),
-            'delivery_county': _('State / County'),
-            'delivery_country': _('Country'),
-        }
-        widgets = {
-            'quantity': forms.TextInput,
-            'payment_method': ButtonGroupRadioSelect,
-        }
-
-    @property
-    def terminal_price(self):
-        return preorder.get_terminal_price()
-
-    @property
-    def exchange_rate(self):
-        return preorder.get_exchange_rate()
-
-    def clean(self):
-        cleaned_data = super(TerminalOrderForm, self).clean()
-        if cleaned_data.get('delivery_address_differs'):
-            required_fields = [
-                'delivery_address',
-                'delivery_town',
-                'delivery_post_code',
-                'delivery_country',
-            ]
-            for field_name in required_fields:
-                if not cleaned_data.get(field_name):
-                    self.add_error(field_name, _('This field is required.'))
-        return cleaned_data
-
-    def save(self, merchant, commit=True):
-        assert commit  # Always commit
-        instance = super(TerminalOrderForm, self).save(commit=False)
-        instance.merchant = merchant
-        instance.fiat_total_amount = instance.quantity * self.terminal_price * 1.2
-        if not self.cleaned_data.get('delivery_address_differs'):
-            # Copy address fields from merchant instance
-            instance.delivery_address = merchant.business_address
-            instance.delivery_address1 = merchant.business_address1
-            instance.delivery_town = merchant.town
-            instance.delivery_county = merchant.county
-            instance.delivery_post_code = merchant.post_code
-            instance.delivery_country = merchant.country
-            instance.delivery_contact_phone = merchant.contact_phone
-        instance.save()
-        if instance.payment_method == "bitcoin":
-            preorder.create_invoice(instance)
-        return instance
 
 
 class ProfileForm(forms.ModelForm):
@@ -361,11 +269,6 @@ class ProfileForm(forms.ModelForm):
         instance = super(ProfileForm, self).save(commit=False)
         instance.language = get_language(instance.country.code)
         instance.currency = get_currency(instance.country.code)
-        # if instance.gocoin_merchant_id:
-            # merchants = gocoin.get_merchants(config.GOCOIN_MERCHANT_ID,
-                                             # config.GOCOIN_AUTH_TOKEN)
-            # if instance.gocoin_merchant_id in merchants:
-                # gocoin.update_merchant(instance, config.GOCOIN_AUTH_TOKEN)
         if commit:
             instance.save()
         return instance
