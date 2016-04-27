@@ -7,8 +7,9 @@ from django.core.cache import cache
 from django.utils import timezone
 from mock import Mock, patch
 
-from website.models import MerchantAccount, Device
+from website.models import MerchantAccount, Device, KYCDocument
 from website.tests.factories import (
+    create_image,
     MerchantAccountFactory,
     AccountFactory,
     DeviceFactory,
@@ -394,6 +395,43 @@ class ChangePasswordViewTestCase(TestCase):
         self.assertEqual(len(mail.outbox), 0)
         merchant_updated = MerchantAccount.objects.get(pk=merchant.pk)
         self.assertTrue(merchant_updated.user.check_password('xxx'))
+
+
+class VerificationViewTestCase(TestCase):
+
+    def setUp(self):
+        self.url = reverse('website:verification')
+
+    def test_get_unverified(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/verification.html')
+        self.assertIn('form_identity_doc', response.context)
+        self.assertIn('form_corporate_doc', response.context)
+
+
+class VerificationFileViewTestCase(TestCase):
+
+    def test_upload_identity_doc(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:verification_file', kwargs={
+            'merchant_pk': merchant.pk,
+            'name': 1,
+        })
+        with create_image(100) as data:
+            response = self.client.post(url, {'file': data},
+                                        format='multipart')
+            data = json.loads(response.content)
+            self.assertIn('filename', data)
+        self.assertEqual(merchant.kycdocument_set.count(), 1)
+        doc = merchant.kycdocument_set.first()
+        self.assertEqual(doc.status, 'uploaded')
+        self.assertEqual(doc.document_type, KYCDocument.IDENTITY_DOCUMENT)
 
 
 class ReconciliationViewTestCase(TestCase):

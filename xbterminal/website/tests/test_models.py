@@ -13,6 +13,7 @@ from website.models import (
     UITheme,
     MerchantAccount,
     Account,
+    KYCDocument,
     Device,
     DeviceBatch,
     INSTANTFIAT_PROVIDERS)
@@ -20,6 +21,7 @@ from website.tests.factories import (
     CurrencyFactory,
     UserFactory,
     MerchantAccountFactory,
+    KYCDocumentFactory,
     AccountFactory,
     DeviceBatchFactory,
     DeviceFactory,
@@ -152,6 +154,20 @@ class MerchantAccountTestCase(TestCase):
         self.assertEqual(info['tx_count'], len(payments))
         self.assertEqual(info['tx_sum'],
                          sum(p.fiat_amount for p in payments))
+
+
+class KYCDocumentTestCase(TestCase):
+
+    def test_factory(self):
+        document = KYCDocumentFactory.create()
+        self.assertIsNotNone(document.merchant)
+        self.assertEqual(document.document_type,
+                         KYCDocument.IDENTITY_DOCUMENT)
+        self.assertIsNotNone(document.file)
+        self.assertIsNotNone(document.uploaded)
+        self.assertEqual(document.status, 'uploaded')
+        self.assertIsNone(document.gocoin_document_id)
+        self.assertIsNone(document.comment)
 
 
 class AccountTestCase(TestCase):

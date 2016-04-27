@@ -14,7 +14,8 @@ def verification_file_path_gen(instance, filename):
         filename: filename
     """
     merchant_id = instance.merchant.id
-    normalized = unicodedata.normalize('NFKD', filename).encode('ascii', 'ignore')
+    normalized = unicodedata.normalize('NFKD', unicode(filename)).\
+        encode('ascii', 'ignore')
     prefixed = '{0}__{1}'.format(instance.document_type, normalized)
     return os.path.join(str(merchant_id), prefixed)
 
