@@ -180,6 +180,8 @@ class KYCDocumentTestCase(TestCase):
         self.assertEqual(document.status, 'uploaded')
         self.assertIsNone(document.gocoin_document_id)
         self.assertIsNone(document.comment)
+        self.assertEqual(document.base_name, '1__test.png')
+        self.assertEqual(document.original_name, 'test.png')
 
 
 class AccountTestCase(TestCase):
