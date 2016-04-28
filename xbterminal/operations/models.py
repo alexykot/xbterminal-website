@@ -84,11 +84,16 @@ class PaymentOrder(models.Model):
         models.CharField(max_length=64, validators=[validate_transaction]),
         default=list)
     outgoing_tx_id = models.CharField(
-        max_length=64, validators=[validate_transaction], null=True)
+        max_length=64,
+        validators=[validate_transaction],
+        null=True)
     refund_tx_id = models.CharField(
         max_length=64, validators=[validate_transaction], null=True)
     payment_type = models.CharField(
         max_length=10, choices=PAYMENT_TYPES)
+    account_tx = models.OneToOneField(
+        'website.Transaction',
+        null=True)
 
     time_created = models.DateTimeField(auto_now_add=True)
     time_recieved = models.DateTimeField(null=True)
@@ -224,6 +229,9 @@ class WithdrawalOrder(models.Model):
     outgoing_tx_id = models.CharField(
         max_length=64,
         validators=[validate_transaction],
+        null=True)
+    account_tx = models.OneToOneField(
+        'website.Transaction',
         null=True)
 
     time_created = models.DateTimeField(auto_now_add=True)
