@@ -1,8 +1,9 @@
 from decimal import Decimal
 import uuid
+
+from bitcoin.core import COutPoint
 import factory
 from factory import fuzzy
-from bitcoin.core import COutPoint
 
 from website.tests.factories import DeviceFactory
 from operations.models import PaymentOrder, WithdrawalOrder
@@ -24,10 +25,11 @@ class PaymentOrderFactory(factory.DjangoModelFactory):
     fiat_currency = factory.LazyAttribute(
         lambda po: po.device.merchant.currency)
 
-    fiat_amount = Decimal('1.11')
+    fiat_amount = fuzzy.FuzzyDecimal(0.1, 2.0)
     instantfiat_fiat_amount = Decimal(0)
     instantfiat_btc_amount = Decimal(0)
-    merchant_btc_amount = Decimal('0.00476722')
+    merchant_btc_amount = factory.LazyAttribute(
+        lambda po: (po.fiat_amount / 400).quantize(BTC_DEC_PLACES))
     fee_btc_amount = Decimal(0)
     tx_fee_btc_amount = Decimal('0.0001')
     # TODO: remove btc_amount field
