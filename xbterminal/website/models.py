@@ -337,6 +337,19 @@ class Account(models.Model):
                     'instantfiat_api_key': 'This field is required.'})
 
 
+class Transaction(models.Model):
+
+    account = models.ForeignKey(Account)
+    amount = models.DecimalField(max_digits=20, decimal_places=8)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __unicode__(self):
+        return str(self.pk)
+
+
 class KYCDocument(models.Model):
 
     IDENTITY_DOCUMENT = 1

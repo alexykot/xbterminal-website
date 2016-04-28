@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile
 import factory
+from factory import fuzzy
 from faker import Faker
 from PIL import Image
 
@@ -18,6 +19,7 @@ from website.models import (
     MerchantAccount,
     KYCDocument,
     Account,
+    Transaction,
     DeviceBatch,
     Device,
     ReconciliationTime,
@@ -142,6 +144,15 @@ class AccountFactory(factory.DjangoModelFactory):
     def instantfiat_api_key(self):
         if self.currency.name not in ['BTC', 'TBTC']:
             return fake.sha256(raw_output=False)
+
+
+class TransactionFactory(factory.DjangoModelFactory):
+
+    class Meta:
+        model = Transaction
+
+    account = factory.SubFactory(AccountFactory)
+    amount = fuzzy.FuzzyDecimal(0.01, 0.95)
 
 
 class DeviceBatchFactory(factory.DjangoModelFactory):

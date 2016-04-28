@@ -13,6 +13,7 @@ from website.models import (
     UITheme,
     MerchantAccount,
     Account,
+    Transaction,
     KYCDocument,
     Device,
     DeviceBatch,
@@ -23,6 +24,7 @@ from website.tests.factories import (
     MerchantAccountFactory,
     KYCDocumentFactory,
     AccountFactory,
+    TransactionFactory,
     DeviceBatchFactory,
     DeviceFactory,
     ReconciliationTimeFactory)
@@ -235,6 +237,22 @@ class AccountTestCase(TestCase):
         self.assertEqual(account_2.bitcoin_network, 'testnet')
         account_3 = AccountFactory.create(currency__name='GBP')
         self.assertEqual(account_3.bitcoin_network, 'mainnet')
+
+
+class TransactionTestCase(TestCase):
+
+    def test_create(self):
+        account = AccountFactory.create()
+        transaction = Transaction.objects.create(account=account,
+                                                 amount=Decimal('1.5'))
+        self.assertEqual(transaction.account.pk, account.pk)
+        self.assertIsNotNone(transaction.created_at)
+        self.assertEqual(str(transaction), str(transaction.pk))
+
+    def test_factory(self):
+        transaction = TransactionFactory.create()
+        self.assertIsNotNone(transaction.account)
+        self.assertGreater(transaction.amount, 0)
 
 
 class DeviceTestCase(TestCase):
