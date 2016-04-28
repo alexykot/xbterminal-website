@@ -131,7 +131,9 @@ class KYCDocumentInline(admin.TabularInline):
 class AccountAdmin(admin.ModelAdmin):
 
     list_display = [
-        '__unicode__',
+        'id',
+        'merchant',
+        'currency',
         'balance',
         'balance_max',
         'instantfiat_provider',

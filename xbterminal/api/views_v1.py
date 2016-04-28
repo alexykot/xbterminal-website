@@ -42,6 +42,8 @@ class CSRFExemptMixin(object):
 
 class MerchantView(CSRFExemptMixin, View):
 
+    # TODO: remove this view
+
     def post(self, *args, **kwargs):
         """
         Create merchant
@@ -65,6 +67,8 @@ class MerchantView(CSRFExemptMixin, View):
 
 
 class DevicesView(ProtectedResourceView):
+
+    # TODO: remove this view
 
     @csrf_exempt
     def dispatch(self, *args, **kwargs):
@@ -96,7 +100,6 @@ class DevicesView(ProtectedResourceView):
         name = self.request.POST.get('name')
         if not name:
             return HttpResponseBadRequest()
-        # TODO: update or remove this view
         device = Device(
             device_type='mobile',
             status='active',

@@ -1,3 +1,4 @@
+# TODO: move all functions to website.utils package
 import base64
 from cStringIO import StringIO
 import os

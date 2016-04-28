@@ -318,7 +318,7 @@ class DeviceForm(forms.ModelForm):
     def device_type_verbose(self):
         device_types = dict(Device.DEVICE_TYPES)
         device_type = self['device_type'].value()
-        return device_types[device_type]
+        return str(device_types[device_type])
 
     def clean(self):
         cleaned_data = super(DeviceForm, self).clean()
@@ -339,8 +339,10 @@ class DeviceForm(forms.ModelForm):
 
     def save(self, commit=True):
         device = super(DeviceForm, self).save(commit=False)
-        if not device.merchant:
+        if device.status == 'registered':
             device.merchant = self.merchant
+            device.start_activation()
+            device.activate()
         if commit:
             device.save()
         return device

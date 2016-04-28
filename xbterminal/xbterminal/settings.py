@@ -1,7 +1,9 @@
 import os
 import sys
+import tempfile
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+TEMP_DIR = tempfile.mkdtemp(prefix='xbt')
 
 DEBUG = False
 TESTING = 'test' in sys.argv
@@ -196,6 +198,9 @@ STATIC_URL = '/static/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, '..', 'media')
 MEDIA_URL = '/media/'
+
+if TESTING:
+    MEDIA_ROOT = TEMP_DIR
 
 # Email
 

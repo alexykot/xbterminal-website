@@ -282,7 +282,7 @@ class DeviceList(TemplateResponseMixin, CabinetView):
 
 class CreateDeviceView(TemplateResponseMixin, CabinetView):
     """
-    Add terminal page
+    Create device page
     """
     template_name = "cabinet/device_form.html"
 
@@ -302,7 +302,6 @@ class CreateDeviceView(TemplateResponseMixin, CabinetView):
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
-        # TODO: remove this view
         form = forms.DeviceForm(self.request.POST,
                                 merchant=self.request.user.merchant)
         if form.is_valid():
@@ -562,6 +561,18 @@ class VerificationFileView(View):
         document.delete()
         return HttpResponse(json.dumps({'deleted': True}),
                             content_type='application/json')
+
+
+class AccountListView(TemplateResponseMixin, CabinetView):
+    """
+    Account list page
+    """
+    template_name = "cabinet/account_list.html"
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['accounts'] = self.request.user.merchant.account_set.all()
+        return self.render_to_response(context)
 
 
 class ReconciliationView(DeviceMixin, TemplateResponseMixin, CabinetView):

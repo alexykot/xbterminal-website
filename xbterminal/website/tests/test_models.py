@@ -13,6 +13,7 @@ from website.models import (
     UITheme,
     MerchantAccount,
     Account,
+    KYCDocument,
     Device,
     DeviceBatch,
     INSTANTFIAT_PROVIDERS)
@@ -20,6 +21,7 @@ from website.tests.factories import (
     CurrencyFactory,
     UserFactory,
     MerchantAccountFactory,
+    KYCDocumentFactory,
     AccountFactory,
     DeviceBatchFactory,
     DeviceFactory,
@@ -113,6 +115,18 @@ class MerchantAccountTestCase(TestCase):
         merchant.save()
         self.assertTrue(merchant.is_profile_complete)
 
+    def test_get_kyc_document(self):
+        merchant = MerchantAccountFactory.create()
+        document = merchant.get_kyc_document(
+            KYCDocument.IDENTITY_DOCUMENT,
+            'uploaded')
+        self.assertIsNone(document)
+        KYCDocumentFactory.create(merchant=merchant)
+        document = merchant.get_kyc_document(
+            KYCDocument.IDENTITY_DOCUMENT,
+            'uploaded')
+        self.assertIsNotNone(document)
+
     def test_get_account_balance(self):
         merchant = MerchantAccountFactory.create()
         self.assertIsNone(merchant.get_account_balance('BTC'))
@@ -154,6 +168,22 @@ class MerchantAccountTestCase(TestCase):
                          sum(p.fiat_amount for p in payments))
 
 
+class KYCDocumentTestCase(TestCase):
+
+    def test_factory(self):
+        document = KYCDocumentFactory.create()
+        self.assertIsNotNone(document.merchant)
+        self.assertEqual(document.document_type,
+                         KYCDocument.IDENTITY_DOCUMENT)
+        self.assertIsNotNone(document.file)
+        self.assertIsNotNone(document.uploaded)
+        self.assertEqual(document.status, 'uploaded')
+        self.assertIsNone(document.gocoin_document_id)
+        self.assertIsNone(document.comment)
+        self.assertEqual(document.base_name, '1__test.png')
+        self.assertEqual(document.original_name, 'test.png')
+
+
 class AccountTestCase(TestCase):
 
     def test_create_btc_account(self):
@@ -168,7 +198,7 @@ class AccountTestCase(TestCase):
         self.assertIsNone(account.bitcoin_address)
         self.assertIsNone(account.instantfiat_provider)
         self.assertIsNone(account.instantfiat_api_key)
-        self.assertEqual(str(account), 'mtest (mtest) - BTC')
+        self.assertEqual(str(account), 'BTC - 0.00000000')
 
     def test_factory_btc(self):
         account = AccountFactory.create()
@@ -178,6 +208,7 @@ class AccountTestCase(TestCase):
         self.assertIsNone(account.bitcoin_address)
         self.assertIsNone(account.instantfiat_provider)
         self.assertIsNone(account.instantfiat_api_key)
+        self.assertEqual(str(account), 'BTC - 0.00000000')
 
     def test_factory_gbp(self):
         account = AccountFactory.create(currency__name='GBP')
@@ -188,6 +219,7 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.instantfiat_provider,
                          INSTANTFIAT_PROVIDERS.CRYPTOPAY)
         self.assertIsNotNone(account.instantfiat_api_key)
+        self.assertEqual(str(account), 'GBP - 0.00 (CryptoPay)')
 
     def test_unique_together(self):
         merchant = MerchantAccountFactory.create()

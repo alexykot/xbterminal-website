@@ -1,15 +1,22 @@
 import datetime
 import hashlib
+import StringIO
+import tempfile
 import uuid
+from contextlib import contextmanager
 
+from django.conf import settings
+from django.core.files.uploadedfile import InMemoryUploadedFile
 import factory
 from faker import Faker
+from PIL import Image
 
 from oauth2_provider.models import Application
 from website.models import (
     Currency,
     User,
     MerchantAccount,
+    KYCDocument,
     Account,
     DeviceBatch,
     Device,
@@ -17,6 +24,34 @@ from website.models import (
     INSTANTFIAT_PROVIDERS)
 
 fake = Faker()
+
+
+@contextmanager
+def create_image(size=100):
+    """
+    Context manager
+    Yields image o the given size (as bytes)
+    """
+    image = Image.frombytes('L', (size, size), '\x00' * size * size)
+    tmp_file = tempfile.NamedTemporaryFile(suffix='.jpg',
+                                           dir=settings.TEMP_DIR)
+    image.save(tmp_file)
+    tmp_file.seek(0)
+    yield tmp_file
+    tmp_file.close()
+
+
+def create_uploaded_image(size=100, name='test.png'):
+    """
+    Creates in-memory uploaded PNG image
+    """
+    buffer = StringIO.StringIO()
+    image = Image.frombytes('L', (size, size), '\x00' * size * size)
+    image.save(buffer, 'PNG')
+    file = InMemoryUploadedFile(buffer, None, name, 'image/png',
+                                buffer.len, None)
+    file.seek(0)
+    return file
 
 
 class CurrencyFactory(factory.DjangoModelFactory):
@@ -70,6 +105,24 @@ class MerchantAccountFactory(factory.DjangoModelFactory):
     contact_email = factory.LazyAttribute(lambda ma: ma.user.email)
 
     currency = factory.SubFactory(CurrencyFactory)
+
+
+class KYCDocumentFactory(factory.DjangoModelFactory):
+
+    class Meta:
+        model = KYCDocument
+
+    merchant = factory.SubFactory(MerchantAccountFactory)
+    document_type = KYCDocument.IDENTITY_DOCUMENT
+
+    @factory.post_generation
+    def file(self, create, extracted, **kwargs):
+        size = kwargs.get('size', 100)
+        name = kwargs.get('name', 'test.png')
+        image = create_uploaded_image(size=size, name=name)
+        self.file.field.save_form_data(self, image)
+        if create:
+            self.save()
 
 
 class AccountFactory(factory.DjangoModelFactory):

@@ -7,9 +7,11 @@ from django.core.cache import cache
 from django.utils import timezone
 from mock import Mock, patch
 
-from website.models import MerchantAccount, Device
+from website.models import MerchantAccount, Device, KYCDocument
 from website.tests.factories import (
+    create_image,
     MerchantAccountFactory,
+    KYCDocumentFactory,
     AccountFactory,
     DeviceFactory,
     ReconciliationTimeFactory)
@@ -187,7 +189,7 @@ class CreateDeviceViewTestCase(TestCase):
         self.assertEqual(merchant.device_set.count(), 1)
         device = merchant.device_set.first()
         self.assertEqual(device.account.pk, account.pk)
-        self.assertEqual(device.status, 'registered')
+        self.assertEqual(device.status, 'active')
         self.assertEqual(device.device_type, 'hardware')
         self.assertEqual(device.name, 'Terminal')
 
@@ -394,6 +396,127 @@ class ChangePasswordViewTestCase(TestCase):
         self.assertEqual(len(mail.outbox), 0)
         merchant_updated = MerchantAccount.objects.get(pk=merchant.pk)
         self.assertTrue(merchant_updated.user.check_password('xxx'))
+
+
+class VerificationViewTestCase(TestCase):
+
+    def setUp(self):
+        self.url = reverse('website:verification')
+
+    def test_get_unverified(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/verification.html')
+        self.assertIn('form_identity_doc', response.context)
+        self.assertIn('form_corporate_doc', response.context)
+
+    def test_get_verification_pending(self):
+        merchant = MerchantAccountFactory.create(
+            verification_status='pending')
+        KYCDocumentFactory.create(
+            merchant=merchant,
+            document_type=KYCDocument.IDENTITY_DOCUMENT,
+            status='unverified')
+        KYCDocumentFactory.create(
+            merchant=merchant,
+            document_type=KYCDocument.CORPORATE_DOCUMENT,
+            status='unverified')
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/verification.html')
+        self.assertNotIn('form_identity_doc', response.context)
+        self.assertNotIn('form_corporate_doc', response.context)
+
+    def test_post(self):
+        merchant = MerchantAccountFactory.create()
+        document_1 = KYCDocumentFactory.create(
+            merchant=merchant,
+            document_type=KYCDocument.IDENTITY_DOCUMENT)
+        document_2 = KYCDocumentFactory.create(
+            merchant=merchant,
+            document_type=KYCDocument.CORPORATE_DOCUMENT)
+        self.assertEqual(document_1.status, 'uploaded')
+        self.assertEqual(document_2.status, 'uploaded')
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertIn('next', data)
+        merchant.refresh_from_db()
+        self.assertEqual(merchant.verification_status, 'pending')
+        document_1.refresh_from_db()
+        document_2.refresh_from_db()
+        self.assertEqual(document_1.status, 'unverified')
+        self.assertEqual(document_2.status, 'unverified')
+
+
+class VerificationFileViewTestCase(TestCase):
+
+    def test_get_identity_doc(self):
+        merchant = MerchantAccountFactory.create()
+        KYCDocumentFactory.create(merchant=merchant)
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:verification_file', kwargs={
+            'merchant_pk': merchant.pk,
+            'name': '1__test.png',
+        })
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_upload_identity_doc(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:verification_file', kwargs={
+            'merchant_pk': merchant.pk,
+            'name': 1,
+        })
+        with create_image(100) as data:
+            response = self.client.post(url, {'file': data},
+                                        format='multipart')
+            self.assertEqual(response.status_code, 200)
+            data = json.loads(response.content)
+            self.assertIn('filename', data)
+        self.assertEqual(merchant.kycdocument_set.count(), 1)
+        doc = merchant.kycdocument_set.first()
+        self.assertEqual(doc.status, 'uploaded')
+        self.assertEqual(doc.document_type, KYCDocument.IDENTITY_DOCUMENT)
+
+    def test_delete_identity_doc(self):
+        merchant = MerchantAccountFactory.create()
+        KYCDocumentFactory.create(merchant=merchant)
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:verification_file', kwargs={
+            'merchant_pk': merchant.pk,
+            'name': '1__test.png',
+        })
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertTrue(data['deleted'])
+
+
+class AccountListViewTestCase(TestCase):
+
+    def test_get(self):
+        merchant = MerchantAccountFactory.create()
+        account = AccountFactory.create(merchant=merchant)
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:accounts')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/account_list.html')
+        self.assertEqual(response.context['accounts'].first().pk,
+                         account.pk)
 
 
 class ReconciliationViewTestCase(TestCase):

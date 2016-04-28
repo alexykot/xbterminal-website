@@ -103,23 +103,42 @@ class DeviceFormTestCase(TestCase):
         with self.assertRaises(KeyError):
             DeviceForm()
 
-    def test_valid_data(self):
+    def test_create_valid(self):
         merchant = MerchantAccountFactory.create()
         account = AccountFactory.create(merchant=merchant)
         form_data = {
-            'device_type': 'hardware',
-            'name': 'Terminal',
+            'device_type': 'mobile',
+            'name': 'Mobile',
             'account': account.pk,
             'bitcoin_address': '1JpY93MNoeHJ914CHLCQkdhS7TvBM68Xp6',
         }
         form = DeviceForm(data=form_data, merchant=merchant)
         self.assertTrue(form.is_valid())
-        self.assertEqual(form.device_type_verbose(), 'Terminal')
+        self.assertEqual(form.device_type_verbose(), 'Mobile app')
         device = form.save()
         self.assertEqual(device.merchant.pk, merchant.pk)
-        self.assertEqual(device.device_type, 'hardware')
+        self.assertEqual(device.device_type, 'mobile')
         self.assertEqual(device.name, form_data['name'])
         self.assertEqual(device.account.pk, account.pk)
+        self.assertEqual(device.status, 'active')
+
+    def test_update_valid(self):
+        device = DeviceFactory.create()
+        form_data = {
+            'device_type': 'hardware',
+            'name': 'New Name',
+            'account': device.account.pk,
+            'bitcoin_address': '1JpY93MNoeHJ914CHLCQkdhS7TvBM68Xp6',
+        }
+        form = DeviceForm(data=form_data,
+                          merchant=device.merchant,
+                          instance=device)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.device_type_verbose(), 'Terminal')
+        device = form.save()
+        self.assertEqual(device.device_type, 'hardware')
+        self.assertEqual(device.name, form_data['name'])
+        self.assertEqual(device.status, 'active')
 
     def test_required(self):
         merchant = MerchantAccountFactory.create()
