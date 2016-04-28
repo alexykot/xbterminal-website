@@ -7,7 +7,7 @@ from django.db import migrations, models
 def create_transactions(apps, schema_editor):
     Account = apps.get_model('website', 'Account')
     Transaction = apps.get_model('website', 'Transaction')
-    for account in Account.objects.all():
+    for account in Account.objects.filter(balance__gt=0):
         Transaction.objects.create(account=account,
                                    amount=account.balance)
 
