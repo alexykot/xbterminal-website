@@ -77,8 +77,6 @@ class PaymentOrder(models.Model):
         max_digits=18, decimal_places=8)
     extra_btc_amount = models.DecimalField(
         max_digits=18, decimal_places=8, default=0)
-    btc_amount = models.DecimalField(
-        max_digits=20, decimal_places=8)
     instantfiat_invoice_id = models.CharField(
         max_length=255, null=True)
 
@@ -166,7 +164,7 @@ class PaymentOrder(models.Model):
             kwargs={'uid': self.uid})
 
     @property
-    def btc_amount_(self):
+    def btc_amount(self):
         """
         Total BTC amount (for receipts)
         """

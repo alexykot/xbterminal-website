@@ -109,11 +109,6 @@ def prepare_payment(device, fiat_amount):
         order.merchant_btc_amount = BTC_MIN_OUTPUT
     # TX fee
     order.tx_fee_btc_amount = blockchain.get_tx_fee(1, 3)
-    # Total
-    order.btc_amount = (order.merchant_btc_amount +
-                        order.instantfiat_btc_amount +
-                        order.fee_btc_amount +
-                        order.tx_fee_btc_amount)
     # Save order
     order.save()
     # Schedule tasks

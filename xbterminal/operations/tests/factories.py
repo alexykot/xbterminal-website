@@ -32,12 +32,6 @@ class PaymentOrderFactory(factory.DjangoModelFactory):
         lambda po: (po.fiat_amount / 400).quantize(BTC_DEC_PLACES))
     fee_btc_amount = Decimal(0)
     tx_fee_btc_amount = Decimal('0.0001')
-    # TODO: remove btc_amount field
-    btc_amount = factory.LazyAttribute(
-        lambda po: (po.merchant_btc_amount +
-                    po.instantfiat_btc_amount +
-                    po.fee_btc_amount +
-                    po.tx_fee_btc_amount))
 
     @factory.post_generation
     def time_created(self, create, extracted, **kwargs):

@@ -111,7 +111,7 @@ class PaymentOrderTestCase(TestCase):
             instantfiat_btc_amount=Decimal('0.1'),
             fee_btc_amount=Decimal('0.01'),
             tx_fee_btc_amount=Decimal('0.0002'))
-        self.assertEqual(order.btc_amount_, Decimal('0.2102'))
+        self.assertEqual(order.btc_amount, Decimal('0.2102'))
         self.assertEqual(order.scaled_btc_amount, Decimal('210.2'))
 
     def test_effective_exchange_rate(self):
