@@ -11,7 +11,6 @@ from website.tests.factories import (
     MerchantAccountFactory,
     AccountFactory,
     DeviceFactory)
-from operations.models import PaymentOrder
 from operations.tests.factories import PaymentOrderFactory
 from operations import payment, exceptions
 from operations import BTC_DEC_PLACES
@@ -833,7 +832,7 @@ class ForwardTransactionTestCase(TestCase):
         self.assertIsNotNone(order.time_forwarded)
 
     @patch('operations.payment.blockchain.BlockChain')
-    def test_forward_balance(self, bc_mock):
+    def test_forward_to_btc_account(self, bc_mock):
         merchant = MerchantAccountFactory.create()
         btc_account = AccountFactory.create(merchant=merchant,
                                             balance_max=Decimal('1.0'))
@@ -872,14 +871,17 @@ class ForwardTransactionTestCase(TestCase):
         self.assertEqual(outputs[payment_order.fee_address],
                          payment_order.fee_btc_amount)
 
-        payment_order = PaymentOrder.objects.get(pk=payment_order.pk)
+        payment_order.refresh_from_db()
         self.assertEqual(payment_order.extra_btc_amount, 0)
         self.assertEqual(payment_order.outgoing_tx_id, outgoing_tx_id)
+        self.assertIsNotNone(payment_order.account_tx)
         self.assertIsNotNone(payment_order.time_forwarded)
 
         btc_account = Account.objects.get(pk=btc_account.pk)
         self.assertEqual(btc_account.bitcoin_address, account_address)
         self.assertEqual(btc_account.balance,
+                         payment_order.merchant_btc_amount)
+        self.assertEqual(btc_account.balance_dynamic,
                          payment_order.merchant_btc_amount)
 
 

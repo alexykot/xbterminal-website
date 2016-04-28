@@ -29,6 +29,7 @@ from operations.services.price import get_exchange_rate
 from operations.rq_helpers import run_periodic_task, cancel_current_task
 from operations.models import PaymentOrder
 
+from website.models import Transaction
 from website.utils import send_error_message
 
 logger = logging.getLogger(__name__)
@@ -348,7 +349,11 @@ def forward_transaction(payment_order):
         if not account.bitcoin_address:
             account.bitcoin_address = str(bc.get_new_address())
         destination_address = account.bitcoin_address
+        # TODO: only create Transaction object
         account.balance += payment_order.merchant_btc_amount
+        payment_order.account_tx = Transaction.objects.create(
+            account=account,
+            amount=payment_order.merchant_btc_amount)
     else:
         # Forward payment to merchant address (default)
         destination_address = payment_order.merchant_address
