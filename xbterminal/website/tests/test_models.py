@@ -238,6 +238,14 @@ class AccountTestCase(TestCase):
         account_3 = AccountFactory.create(currency__name='GBP')
         self.assertEqual(account_3.bitcoin_network, 'mainnet')
 
+    def test_balance_dynamic(self):
+        account = AccountFactory.create()
+        self.assertEqual(account.balance_dynamic, 0)
+        transactions = TransactionFactory.create_batch(
+            3, account=account)
+        self.assertEqual(account.balance_dynamic,
+                         sum(t.amount for t in transactions))
+
 
 class TransactionTestCase(TestCase):
 

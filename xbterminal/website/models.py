@@ -327,6 +327,11 @@ class Account(models.Model):
             # Instantfiat services work only with mainnet
             return 'mainnet'
 
+    @property
+    def balance_dynamic(self):
+        result = self.transaction_set.aggregate(models.Sum('amount'))
+        return result['amount__sum'] or 0
+
     def clean(self):
         if self.currency.name not in ['BTC', 'TBTC']:
             if not self.instantfiat_provider:
