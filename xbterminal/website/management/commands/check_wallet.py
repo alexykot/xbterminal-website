@@ -33,7 +33,8 @@ def check_wallet(network):
         name='BTC' if network == 'mainnet' else 'TBTC')
     wallet_value = Decimal(0)
     db_value = Decimal(0)
-    for account in Account.objects.filter(currency=currency):
+    for account in Account.objects.filter(currency=currency,
+                                          bitcoin_address__isnull=False):
         wallet_value += bc.get_address_balance(account.bitcoin_address)
         db_value += account.balance
     if wallet_value != db_value:
