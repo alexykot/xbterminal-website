@@ -277,10 +277,6 @@ class Account(models.Model):
     """
     merchant = models.ForeignKey(MerchantAccount)
     currency = models.ForeignKey(Currency)
-    balance = models.DecimalField(
-        max_digits=20,
-        decimal_places=8,
-        default=0)
     balance_max = models.DecimalField(
         max_digits=20,
         decimal_places=8,
@@ -328,7 +324,7 @@ class Account(models.Model):
             return 'mainnet'
 
     @property
-    def balance_dynamic(self):
+    def balance(self):
         result = self.transaction_set.aggregate(models.Sum('amount'))
         return result['amount__sum'] or 0
 

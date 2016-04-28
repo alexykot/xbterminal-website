@@ -145,6 +145,11 @@ class AccountFactory(factory.DjangoModelFactory):
         if self.currency.name not in ['BTC', 'TBTC']:
             return fake.sha256(raw_output=False)
 
+    @factory.post_generation
+    def balance(self, create, extracted, **kwargs):
+        if create and extracted:
+            self.transaction_set.create(amount=extracted)
+
 
 class TransactionFactory(factory.DjangoModelFactory):
 

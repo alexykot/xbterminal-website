@@ -6,7 +6,6 @@ from mock import patch, Mock
 
 from constance import config
 
-from website.models import Account
 from website.tests.factories import (
     MerchantAccountFactory,
     AccountFactory,
@@ -877,11 +876,9 @@ class ForwardTransactionTestCase(TestCase):
         self.assertIsNotNone(payment_order.account_tx)
         self.assertIsNotNone(payment_order.time_forwarded)
 
-        btc_account = Account.objects.get(pk=btc_account.pk)
+        btc_account.refresh_from_db()
         self.assertEqual(btc_account.bitcoin_address, account_address)
         self.assertEqual(btc_account.balance,
-                         payment_order.merchant_btc_amount)
-        self.assertEqual(btc_account.balance_dynamic,
                          payment_order.merchant_btc_amount)
 
 

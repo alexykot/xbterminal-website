@@ -17,7 +17,6 @@ from operations.blockchain import (
 from operations.rq_helpers import cancel_current_task, run_periodic_task
 from operations.models import WithdrawalOrder
 from operations.exceptions import WithdrawalError
-from website.models import Transaction
 from website.utils import send_error_message
 
 logger = logging.getLogger(__name__)
@@ -137,16 +136,8 @@ def send_transaction(order, customer_address):
     tx_signed = bc.sign_raw_transaction(tx)
     order.outgoing_tx_id = bc.send_raw_transaction(tx_signed)
     order.time_sent = timezone.now()
-    order.save()
-
-    # Update balance
-    # TODO: only create Transaction object
-    account = order.device.account
-    account.balance -= order.btc_amount
-    account.save()
-    order.account_tx = Transaction.objects.create(
-        account=order.device.account,
-        amount=-order.btc_amount)
+    order.account_tx = order.device.account.transaction_set.create(
+        amount=-order.btc_amount)  # Updates balance
     order.save()
 
     run_periodic_task(wait_for_confidence, [order.uid], interval=5)

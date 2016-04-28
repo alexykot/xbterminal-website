@@ -1,7 +1,6 @@
 from decimal import Decimal
 import logging
 from django.core.management.base import BaseCommand
-from django.db.models import Sum
 
 from website.models import Currency, Account
 from website.utils import send_balance_admin_notification
@@ -32,12 +31,11 @@ def check_wallet(network):
     bc = BlockChain(network)
     currency = Currency.objects.get(
         name='BTC' if network == 'mainnet' else 'TBTC')
-    accounts = Account.objects.filter(currency=currency)
     wallet_value = Decimal(0)
-    for address in accounts.values_list('bitcoin_address', flat=True):
-        wallet_value += bc.get_address_balance(address)
-    result = accounts.aggregate(Sum('balance'))
-    db_value = result['balance__sum'] or Decimal(0)
+    db_value = Decimal(0)
+    for account in Account.objects.filter(currency=currency):
+        wallet_value += bc.get_address_balance(account.bitcoin_address)
+        db_value += account.balance
     if wallet_value != db_value:
         send_balance_admin_notification({
             'network': network,
@@ -56,9 +54,9 @@ def check_wallet_strict(network):
     currency = Currency.objects.get(
         name='BTC' if network == 'mainnet' else 'TBTC')
     wallet_value = bc.get_balance(minconf=0)
-    result = Account.objects.filter(currency=currency).\
-        aggregate(Sum('balance'))
-    db_value = result['balance__sum'] or Decimal(0)
+    db_value = Decimal(0)
+    for account in Account.objects.filter(currency=currency):
+        db_value += account.balance
     if wallet_value != db_value:
         send_balance_admin_notification({
             'network': network,

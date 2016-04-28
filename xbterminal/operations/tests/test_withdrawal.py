@@ -7,7 +7,7 @@ from mock import patch, Mock
 
 from bitcoin.core import COutPoint
 
-from website.tests.factories import DeviceFactory, TransactionFactory
+from website.tests.factories import DeviceFactory
 from operations.tests.factories import (
     WithdrawalOrderFactory,
     outpoint_factory)
@@ -153,8 +153,6 @@ class SendTransactionTestCase(TestCase):
         device = DeviceFactory.create(
             account__balance=Decimal('0.01'),
             account__bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
-        TransactionFactory.create(account=device.account,
-                                  amount=Decimal('0.01'))
         incoming_tx_hash = b'\x01' * 32
         order = WithdrawalOrderFactory.create(
             device=device,
@@ -192,8 +190,6 @@ class SendTransactionTestCase(TestCase):
                          Decimal('0.0049'))
 
         self.assertEqual(device.account.balance, Decimal('0.0049'))
-        self.assertEqual(device.account.balance_dynamic,
-                         Decimal('0.0049'))
         self.assertEqual(device.merchant.get_account_balance('BTC'),
                          Decimal('0.0049'))
 
