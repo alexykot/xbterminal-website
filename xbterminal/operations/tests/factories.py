@@ -30,6 +30,7 @@ class PaymentOrderFactory(factory.DjangoModelFactory):
     merchant_btc_amount = Decimal('0.00476722')
     fee_btc_amount = Decimal(0)
     tx_fee_btc_amount = Decimal('0.0001')
+    # TODO: remove btc_amount field
     btc_amount = factory.LazyAttribute(
         lambda po: (po.merchant_btc_amount +
                     po.instantfiat_btc_amount +

@@ -112,10 +112,7 @@ class PaymentOrderTestCase(TestCase):
             fee_btc_amount=Decimal('0.01'),
             tx_fee_btc_amount=Decimal('0.0002'))
         self.assertEqual(order.btc_amount_, Decimal('0.2102'))
-
-    def test_scaled_btc_amount(self):
-        order = PaymentOrderFactory.create(btc_amount=Decimal('0.1003'))
-        self.assertEqual(order.scaled_btc_amount, Decimal('100.3'))
+        self.assertEqual(order.scaled_btc_amount, Decimal('210.2'))
 
     def test_effective_exchange_rate(self):
         order = PaymentOrderFactory.create(

@@ -492,7 +492,7 @@ class ValidatePaymentTestCase(TestCase):
     def test_multiple_tx(self, bc_cls_mock):
         order = PaymentOrderFactory.create(
             merchant_btc_amount=Decimal('0.1'),
-            btc_amount=Decimal('0.1001'))
+            tx_fee_btc_amount=Decimal('0.0001'))
         incoming_txs = [Mock(), Mock()]
         bc_cls_mock.return_value = bc_mock = Mock(**{
             'sign_raw_transaction.return_value': Mock(),
@@ -524,7 +524,7 @@ class ValidatePaymentTestCase(TestCase):
     def test_insufficient_funds(self, bc_cls_mock):
         order = PaymentOrderFactory.create(
             merchant_btc_amount=Decimal('0.1'),
-            btc_amount=Decimal('0.1001'))
+            tx_fee_btc_amount=Decimal('0.0001'))
         incoming_tx = Mock()
         bc_cls_mock.return_value = bc_mock = Mock(**{
             'sign_raw_transaction.return_value': Mock(),
@@ -546,7 +546,7 @@ class ReversePaymentTestCase(TestCase):
         order = PaymentOrderFactory.create(
             merchant_btc_amount=Decimal('0.1'),
             fee_btc_amount=Decimal('0.001'),
-            btc_amount=Decimal('0.1011'),
+            tx_fee_btc_amount=Decimal('0.0001'),
             refund_address='1KYwqZshnYNUNweXrDkCAdLaixxPhePRje')
         refund_tx_id = '5' * 64
         bc_cls_mock.return_value = bc_mock = Mock(**{
@@ -588,7 +588,7 @@ class ReversePaymentTestCase(TestCase):
         order = PaymentOrderFactory.create(
             merchant_btc_amount=Decimal('0.1'),
             fee_btc_amount=Decimal('0.001'),
-            btc_amount=Decimal('0.1011'),
+            tx_fee_btc_amount=Decimal('0.0001'),
             refund_address='1KYwqZshnYNUNweXrDkCAdLaixxPhePRje')
         bc_cls_mock.return_value = Mock(**{
             'get_unspent_outputs.return_value': [],
@@ -760,7 +760,7 @@ class ForwardTransactionTestCase(TestCase):
         payment_order = PaymentOrderFactory.create(
             merchant_btc_amount=Decimal('0.1'),
             fee_btc_amount=Decimal('0.001'),
-            btc_amount=Decimal('0.1011'),
+            tx_fee_btc_amount=Decimal('0.0001'),
             instantfiat_btc_amount=Decimal(0),
             incoming_tx_ids=['0' * 64],
             refund_address='18GV9EWUjSVTU1jXMb1RmaGxAonSyBgKAc')
@@ -812,7 +812,7 @@ class ForwardTransactionTestCase(TestCase):
         order = PaymentOrderFactory.create(
             merchant_btc_amount=Decimal('0.1'),
             fee_btc_amount=Decimal('0.001'),
-            btc_amount=Decimal('0.1011'),
+            tx_fee_btc_amount=Decimal('0.0001'),
             instantfiat_btc_amount=Decimal(0),
             incoming_tx_ids=['0' * 64])
         bc_cls_mock.return_value = Mock(**{
@@ -842,7 +842,7 @@ class ForwardTransactionTestCase(TestCase):
             device__account=btc_account,
             merchant_btc_amount=Decimal('0.1'),
             fee_btc_amount=Decimal('0.001'),
-            btc_amount=Decimal('0.1011'),
+            tx_fee_btc_amount=Decimal('0.0001'),
             instantfiat_btc_amount=Decimal(0),
             incoming_tx_ids=['0' * 64])
         outgoing_tx_id = '1' * 64
