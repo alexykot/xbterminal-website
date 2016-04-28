@@ -13,7 +13,7 @@ from django.conf import settings
 from django.utils.html import strip_tags
 from django.utils.text import get_valid_filename
 from django.template.loader import render_to_string
-from django.db.models import Sum
+from django.db.models import Sum, F
 from django.utils.translation import ugettext as _
 
 from constance import config
@@ -128,7 +128,11 @@ def send_reconciliation(recipient, device, rec_range):
     Send reconciliation email
     """
     payment_orders = device.get_payments_by_date(rec_range)
-    btc_sum = payment_orders.aggregate(sum=Sum('btc_amount'))['sum']
+    btc_sum = payment_orders.aggregate(sum=Sum(
+        F('merchant_btc_amount') +
+        F('instantfiat_btc_amount') +
+        F('fee_btc_amount') +
+        F('tx_fee_btc_amount')))['sum']
     fiat_sum = payment_orders.aggregate(sum=Sum('fiat_amount'))['sum']
     context = {
         'device': device,
