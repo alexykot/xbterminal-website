@@ -105,6 +105,14 @@ class PaymentOrderTestCase(TestCase):
         order.time_cancelled = timezone.now()
         self.assertEqual(order.status, 'cancelled')
 
+    def test_btc_amount(self):
+        order = PaymentOrderFactory.create(
+            merchant_btc_amount=Decimal('0.1'),
+            instantfiat_btc_amount=Decimal('0.1'),
+            fee_btc_amount=Decimal('0.01'),
+            tx_fee_btc_amount=Decimal('0.0002'))
+        self.assertEqual(order.btc_amount_, Decimal('0.2102'))
+
     def test_scaled_btc_amount(self):
         order = PaymentOrderFactory.create(btc_amount=Decimal('0.1003'))
         self.assertEqual(order.scaled_btc_amount, Decimal('100.3'))

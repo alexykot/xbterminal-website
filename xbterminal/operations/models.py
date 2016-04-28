@@ -166,6 +166,16 @@ class PaymentOrder(models.Model):
             kwargs={'uid': self.uid})
 
     @property
+    def btc_amount_(self):
+        """
+        Total BTC amount (for receipts)
+        """
+        return (self.merchant_btc_amount +
+                self.instantfiat_btc_amount +
+                self.fee_btc_amount +
+                self.tx_fee_btc_amount)
+
+    @property
     def effective_exchange_rate(self):
         return (self.fiat_amount / self.btc_amount).quantize(BTC_DEC_PLACES)
 
@@ -230,7 +240,7 @@ class WithdrawalOrder(models.Model):
     @property
     def btc_amount(self):
         """
-        Total BTC amount
+        Total BTC amount (for receipts)
         """
         return self.customer_btc_amount + self.tx_fee_btc_amount
 
