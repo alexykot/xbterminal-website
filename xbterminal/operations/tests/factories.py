@@ -5,7 +5,7 @@ from bitcoin.core import COutPoint
 import factory
 from factory import fuzzy
 
-from website.tests.factories import DeviceFactory
+from website.tests.factories import DeviceFactory, TransactionFactory
 from operations.models import PaymentOrder, WithdrawalOrder
 from operations import BTC_DEC_PLACES
 from operations.blockchain import serialize_outputs
@@ -34,6 +34,18 @@ class PaymentOrderFactory(factory.DjangoModelFactory):
     tx_fee_btc_amount = Decimal('0.0001')
 
     @factory.post_generation
+    def account_tx(self, create, extracted, **kwargs):
+        if not create:
+            return
+        if extracted is True:
+            self.account_tx = TransactionFactory.create(
+                account=self.device.account,
+                amount=self.merchant_btc_amount)
+        else:
+            self.account_tx = extracted
+        self.save()
+
+    @factory.post_generation
     def time_created(self, create, extracted, **kwargs):
         if extracted:
             self.time_created = extracted
@@ -58,6 +70,18 @@ class WithdrawalOrderFactory(factory.DjangoModelFactory):
     tx_fee_btc_amount = Decimal('0.0001')
     change_btc_amount = Decimal(0)
     exchange_rate = Decimal('220')
+
+    @factory.post_generation
+    def account_tx(self, create, extracted, **kwargs):
+        if not create:
+            return
+        if extracted is True:
+            self.account_tx = TransactionFactory.create(
+                account=self.device.account,
+                amount=-self.btc_amount)
+        else:
+            self.account_tx = extracted
+        self.save()
 
     @factory.post_generation
     def time_created(self, create, extracted, **kwargs):

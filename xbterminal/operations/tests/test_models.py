@@ -12,7 +12,7 @@ from operations.tests.factories import (
 
 class PaymentOrderTestCase(TestCase):
 
-    def test_payment_order_factory(self):
+    def test_factory(self):
         payment_order = PaymentOrderFactory.create()
         self.assertEqual(payment_order.order_type, 'payment')
         self.assertEqual(len(payment_order.uid), 6)
@@ -27,6 +27,13 @@ class PaymentOrderTestCase(TestCase):
                                payment_order.fee_btc_amount +
                                payment_order.tx_fee_btc_amount)
         self.assertEqual(payment_order.btc_amount, expected_btc_amount)
+
+    def test_factory_account_tx(self):
+        order = PaymentOrderFactory.create(account_tx=True)
+        self.assertEqual(order.account_tx.account.pk,
+                         order.device.account.pk)
+        self.assertEqual(order.account_tx.amount,
+                         order.merchant_btc_amount)
 
     def test_incoming_tx_ids(self):
         order = PaymentOrderFactory.create()
@@ -157,6 +164,13 @@ class WithdrawalOrderTestCase(TestCase):
         self.assertEqual(order.fiat_currency,
                          order.device.merchant.currency)
         self.assertIsNone(order.account_tx)
+
+    def test_factory_account_tx(self):
+        order = WithdrawalOrderFactory.create(account_tx=True)
+        self.assertEqual(order.account_tx.account.pk,
+                         order.device.account.pk)
+        self.assertEqual(order.account_tx.amount,
+                         -order.btc_amount)
 
     def test_btc_amount(self):
         order = WithdrawalOrderFactory.create(
