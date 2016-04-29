@@ -21,7 +21,7 @@
             <div class="collapse navbar-collapse">
                 <ul class="nav navbar-nav">
                     {% if cabinet_page %}
-                    <li><a href="{% url 'website:devices' %}" {% if cabinet_page == 'devices' %}class="active"{% endif %}>{% trans 'terminals' %}</a></li><!--
+                    <li><a href="{% url 'website:devices' %}" {% if cabinet_page == 'devices' %}class="active"{% endif %}>{% trans 'devices' %}</a></li><!--
                     --><li><a href="{% url 'website:accounts' %}" {% if cabinet_page == 'accounts' %}class="active"{% endif %}>{% trans 'accounts' %}</a></li><!--
                     --><li><a href="{% url 'website:profile' %}" {% if cabinet_page == 'profile' or cabinet_page == 'verification' %}class="active"{% endif %}>{% trans 'profile' %}</a></li>
                     {% else %}
