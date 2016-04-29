@@ -291,6 +291,20 @@ class TransactionTestCase(TestCase):
         self.assertIsNotNone(transaction.account)
         self.assertGreater(transaction.amount, 0)
 
+    def test_tx_hash(self):
+        transaction = TransactionFactory.create()
+        self.assertIsNone(transaction.tx_hash)
+        payment_order = PaymentOrderFactory.create(
+            outgoing_tx_id='1' * 64,
+            account_tx=True)
+        self.assertEqual(payment_order.account_tx.tx_hash,
+                         payment_order.outgoing_tx_id)
+        withdrawal_order = WithdrawalOrderFactory.create(
+            outgoing_tx_id='2' * 64,
+            account_tx=True)
+        self.assertEqual(withdrawal_order.account_tx.tx_hash,
+                         withdrawal_order.outgoing_tx_id)
+
 
 class DeviceTestCase(TestCase):
 

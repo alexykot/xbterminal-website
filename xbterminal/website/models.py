@@ -369,6 +369,13 @@ class Transaction(models.Model):
     def __unicode__(self):
         return str(self.pk)
 
+    @property
+    def tx_hash(self):
+        if hasattr(self, 'paymentorder'):
+            return self.paymentorder.outgoing_tx_id
+        elif hasattr(self, 'withdrawalorder'):
+            return self.withdrawalorder.outgoing_tx_id
+
 
 class KYCDocument(models.Model):
 

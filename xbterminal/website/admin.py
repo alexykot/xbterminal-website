@@ -131,7 +131,7 @@ class TransactionInline(admin.TabularInline):
 
     model = models.Transaction
     exclude = ['amount']
-    readonly_fields = ['amount_colored', 'created_at']
+    readonly_fields = ['amount_colored', 'tx_hash', 'created_at']
     max_num = 0
     extra = 0
     can_delete = False
