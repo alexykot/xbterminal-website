@@ -331,19 +331,9 @@ class Account(models.Model):
 
     @property
     def balance_confirmed(self):
-        # TODO: add is_confirmed field to Transaction model for accuracy
         balance = Decimal(0)
         for transaction in self.transaction_set.all():
-            if hasattr(transaction, 'paymentorder'):
-                if transaction.paymentorder.time_confirmed:
-                    balance += transaction.amount
-            elif hasattr(transaction, 'withdrawalorder'):
-                # Probably, all withdrawals should be included
-                if transaction.withdrawalorder.time_broadcasted:
-                    # Confidence reached, but not confirmed
-                    balance += transaction.amount
-            else:
-                # Transaction is not linked to operation, may be unconfirmed
+            if transaction.is_confirmed:
                 balance += transaction.amount
         return balance
 
@@ -375,6 +365,19 @@ class Transaction(models.Model):
             return self.paymentorder.outgoing_tx_id
         elif hasattr(self, 'withdrawalorder'):
             return self.withdrawalorder.outgoing_tx_id
+
+    @property
+    def is_confirmed(self):
+        # TODO: add is_confirmed field to Transaction model for accuracy
+        if hasattr(self, 'paymentorder'):
+            return self.paymentorder.time_confirmed is not None
+        elif hasattr(self, 'withdrawalorder'):
+            # Confidence reached, but not confirmed
+            # Probably, all withdrawals should be included
+            return self.withdrawalorder.time_broadcasted is not None
+        else:
+            # Transaction is not linked to operation, may be unconfirmed
+            return True
 
 
 class KYCDocument(models.Model):
