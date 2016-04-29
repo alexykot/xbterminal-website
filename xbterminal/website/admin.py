@@ -153,6 +153,7 @@ class AccountAdmin(admin.ModelAdmin):
         'merchant',
         'currency',
         'balance',
+        'balance_confirmed',
         'balance_max',
         'instantfiat_provider',
     ]

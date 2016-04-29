@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 import random
 import os
 import uuid
@@ -327,6 +328,24 @@ class Account(models.Model):
     def balance(self):
         result = self.transaction_set.aggregate(models.Sum('amount'))
         return result['amount__sum'] or 0
+
+    @property
+    def balance_confirmed(self):
+        # TODO: add is_confirmed field to Transaction model for accuracy
+        balance = Decimal(0)
+        for transaction in self.transaction_set.all():
+            if hasattr(transaction, 'paymentorder'):
+                if transaction.paymentorder.time_confirmed:
+                    balance += transaction.amount
+            elif hasattr(transaction, 'withdrawalorder'):
+                # Probably, all withdrawals should be included
+                if transaction.withdrawalorder.time_broadcasted:
+                    # Confidence reached, but not confirmed
+                    balance += transaction.amount
+            else:
+                # Transaction is not linked to operation, may be unconfirmed
+                balance += transaction.amount
+        return balance
 
     def clean(self):
         if self.currency.name not in ['BTC', 'TBTC']:

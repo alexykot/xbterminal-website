@@ -28,7 +28,9 @@ from website.tests.factories import (
     DeviceBatchFactory,
     DeviceFactory,
     ReconciliationTimeFactory)
-from operations.tests.factories import PaymentOrderFactory
+from operations.tests.factories import (
+    PaymentOrderFactory,
+    WithdrawalOrderFactory)
 
 
 class UserTestCase(TestCase):
@@ -247,6 +249,31 @@ class AccountTestCase(TestCase):
                          sum(t.amount for t in transactions))
         account_2 = AccountFactory.create(balance=Decimal('0.5'))
         self.assertEqual(account_2.balance, Decimal('0.5'))
+
+    def test_balance_confirmed(self):
+        account = AccountFactory.create()
+        PaymentOrderFactory.create(
+            account_tx=TransactionFactory.create(
+                account=account, amount=Decimal('0.2')),
+            time_forwarded=timezone.now())
+        PaymentOrderFactory.create(
+            account_tx=TransactionFactory.create(
+                account=account, amount=Decimal('0.3')),
+            time_forwarded=timezone.now(),
+            time_confirmed=timezone.now())
+        WithdrawalOrderFactory.create(
+            account_tx=TransactionFactory.create(
+                account=account, amount=Decimal('-0.15')),
+            time_sent=timezone.now())
+        WithdrawalOrderFactory.create(
+            account_tx=TransactionFactory.create(
+                account=account, amount=Decimal('-0.05')),
+            time_sent=timezone.now(),
+            time_broadcasted=timezone.now())
+        TransactionFactory.create(
+            account=account, amount=Decimal('-0.1'))
+        self.assertEqual(account.balance, Decimal('0.2'))
+        self.assertEqual(account.balance_confirmed, Decimal('0.15'))
 
 
 class TransactionTestCase(TestCase):
