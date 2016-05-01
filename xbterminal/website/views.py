@@ -66,13 +66,7 @@ class ContactView(TemplateResponseMixin, View):
         form = forms.ContactForm(self.request.POST,
                                  user_ip=get_real_ip(self.request))
         if form.is_valid():
-            email = utils.create_html_message(
-                _("Message from xbterminal.io"),
-                'email/contact.html',
-                form.cleaned_data,
-                settings.DEFAULT_FROM_EMAIL,
-                settings.CONTACT_EMAIL_RECIPIENTS)
-            email.send(fail_silently=False)
+            utils.send_contact_email(form.cleaned_data)
             return self.render_to_response({})
         else:
             return self.render_to_response({'form': form})

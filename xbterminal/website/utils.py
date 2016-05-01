@@ -229,6 +229,16 @@ def send_reset_password_email(email, password):
     message.send(fail_silently=False)
 
 
+def send_contact_email(form_data):
+    message = create_html_message(
+        _('Message from xbterminal.io'),
+        'email/contact.html',
+        form_data,
+        settings.DEFAULT_FROM_EMAIL,
+        settings.CONTACT_EMAIL_RECIPIENTS)
+    message.send(fail_silently=False)
+
+
 def send_balance_admin_notification(info):
     """
     Send email to admin if balance mismatch detected
