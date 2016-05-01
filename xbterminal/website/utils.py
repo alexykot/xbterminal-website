@@ -143,7 +143,7 @@ def send_reconciliation(recipient, device, rec_range):
         'fiat_amount': 0 if fiat_sum is None else fiat_sum,
         'rec_datetime': rec_range[1],
     }
-    attachments = []
+    files = []
     if payment_orders:
         csv = get_report_csv(payment_orders, short=True)
         csv.seek(0)
@@ -151,20 +151,25 @@ def send_reconciliation(recipient, device, rec_range):
         csv_filename = get_report_filename(device, rec_range[1])
         with open(os.path.join(settings.REPORTS_PATH, csv_filename), 'w') as f:
             f.write(csv_data)
-        attachments.append([csv_filename, csv_data, 'text/csv'])
+        files.append([csv_filename, csv_data, 'text/csv'])
         archive = get_receipts_archive(payment_orders)
         archive_data = archive.getvalue()
         archive_filename = get_receipts_archive_filename(device, rec_range[1])
-        attachments.append([archive_filename, archive_data, 'application/x-zip-compressed'])
+        files.append([archive_filename, archive_data, 'application/x-zip-compressed'])
         with open(os.path.join(settings.REPORTS_PATH, archive_filename), 'wb') as f:
             f.write(archive_data)
+    send_reconciliation_email(recipient, rec_range[1], context, files)
+
+
+def send_reconciliation_email(recipient, date, context, files):
     email = create_html_message(
-        _('XBTerminal reconciliation report, {0}').format(rec_range[1].strftime('%d %b %Y')),
+        _('XBTerminal reconciliation report, {0}').format(
+            date.strftime('%d %b %Y')),
         'email/reconciliation.html',
         context,
         settings.DEFAULT_FROM_EMAIL,
         [recipient],
-        attachments=attachments)
+        attachments=files)
     email.send(fail_silently=False)
 
 
