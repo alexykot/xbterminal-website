@@ -710,6 +710,10 @@ class SendAllToEmailViewTestCase(TestCase):
                          sum(po.btc_amount for po in orders))
         self.assertEqual(context['fiat_amount'],
                          sum(po.fiat_amount for po in orders))
+        attachments = create_mock.call_args[1]['attachments']
+        self.assertEqual(len(attachments), 2)
+        self.assertEqual(attachments[0][2], 'text/csv')
+        self.assertEqual(attachments[1][2], 'application/x-zip-compressed')
 
 
 class PaymentViewTestCase(TestCase):

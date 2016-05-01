@@ -112,12 +112,16 @@ def get_receipts_archive_filename(device, date=None):
 
 
 def create_html_message(subject, template, context,
-                        from_email, recipient_list):
+                        from_email, recipient_list,
+                        attachments=None):
     html_content = render_to_string(template, context)
     text_content = strip_tags(html_content)
     email = EmailMultiAlternatives(
         subject, text_content, from_email, recipient_list)
     email.attach_alternative(html_content, 'text/html')
+    if attachments:
+        for file_name, file_data, file_type in attachments:
+            email.attach(file_name, file_data, file_type)
     return email
 
 
@@ -139,12 +143,7 @@ def send_reconciliation(recipient, device, rec_range):
         'fiat_amount': 0 if fiat_sum is None else fiat_sum,
         'rec_datetime': rec_range[1],
     }
-    email = create_html_message(
-        _('XBTerminal reconciliation report, {0}').format(rec_range[1].strftime('%d %b %Y')),
-        'email/reconciliation.html',
-        context,
-        settings.DEFAULT_FROM_EMAIL,
-        [recipient])
+    attachments = []
     if payment_orders:
         csv = get_report_csv(payment_orders, short=True)
         csv.seek(0)
@@ -152,13 +151,20 @@ def send_reconciliation(recipient, device, rec_range):
         csv_filename = get_report_filename(device, rec_range[1])
         with open(os.path.join(settings.REPORTS_PATH, csv_filename), 'w') as f:
             f.write(csv_data)
-        email.attach(csv_filename, csv_data, "text/csv")
+        attachments.append([csv_filename, csv_data, 'text/csv'])
         archive = get_receipts_archive(payment_orders)
         archive_data = archive.getvalue()
         archive_filename = get_receipts_archive_filename(device, rec_range[1])
-        email.attach(archive_filename, archive_data, "application/x-zip-compressed")
+        attachments.append([archive_filename, archive_data, 'application/x-zip-compressed'])
         with open(os.path.join(settings.REPORTS_PATH, archive_filename), 'wb') as f:
             f.write(archive_data)
+    email = create_html_message(
+        _('XBTerminal reconciliation report, {0}').format(rec_range[1].strftime('%d %b %Y')),
+        'email/reconciliation.html',
+        context,
+        settings.DEFAULT_FROM_EMAIL,
+        [recipient],
+        attachments=attachments)
     email.send(fail_silently=False)
 
 

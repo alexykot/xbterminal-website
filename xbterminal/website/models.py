@@ -571,7 +571,7 @@ class Device(models.Model):
     def get_payments_by_date(self, date):
         """
         Accepts:
-            date_range: tuple or single date
+            date: tuple or single date
         """
         if isinstance(date, datetime.date):
             beg = timezone.make_aware(
