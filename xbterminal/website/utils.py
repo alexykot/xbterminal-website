@@ -16,8 +16,6 @@ from django.template.loader import render_to_string
 from django.db.models import Sum, F
 from django.utils.translation import ugettext as _
 
-from constance import config
-
 from api.utils.pdf import generate_pdf
 
 REPORT_FIELDS = [
@@ -192,64 +190,17 @@ def send_error_message(tb=None, order=None):
     email.send(fail_silently=False)
 
 
-def send_invoice(order):
-    message = create_html_message(
-        _("Your XBTerminal Pre-Order"),
-        "email/order.html",
-        {'order': order},
-        settings.DEFAULT_FROM_EMAIL,
-        [order.merchant.contact_email])
-    if order.payment_method == 'wire':
-        pdf = generate_pdf("pdf/invoice.html", {
-            'order': order,
-            'terminal_price': config.TERMINAL_PRICE,
-        })
-        message.attach('invoice.pdf', pdf.getvalue(), 'application/pdf')
-    message.send(fail_silently=False)
-
-
-def send_registration_info(merchant, order=None):
+def send_registration_info(merchant):
     """
     Send merchant registration info
     """
     context = {
         'merchant': merchant,
-        'order': order,
     }
     email = create_html_message(
         'XBTerminal registration info',
         'email/registration_info.html',
         context,
-        settings.DEFAULT_FROM_EMAIL,
-        settings.CONTACT_EMAIL_RECIPIENTS)
-    email.send(fail_silently=False)
-
-
-def send_kyc_notification(merchant):
-    """
-    Send verification info to merchant
-    Accepts:
-        merchant: MerchantAccount instance
-    """
-    email = create_html_message(
-        _('Verification'),
-        'email/verification.html',
-        {'merchant': merchant},
-        settings.DEFAULT_FROM_EMAIL,
-        [merchant.contact_email])
-    email.send(fail_silently=False)
-
-
-def send_kyc_admin_notification(merchant):
-    """
-    Send verification info to merchant
-    Accepts:
-        merchant: MerchantAccount instance
-    """
-    email = create_html_message(
-        _('KYC status changed'),
-        'email/admin_kyc_notification.html',
-        {'merchant': merchant},
         settings.DEFAULT_FROM_EMAIL,
         settings.CONTACT_EMAIL_RECIPIENTS)
     email.send(fail_silently=False)
