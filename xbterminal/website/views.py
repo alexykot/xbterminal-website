@@ -22,14 +22,15 @@ from ipware.ip import get_real_ip
 
 from api.utils import activation
 
-from website import forms, models, utils
+from website import forms, models
+from website.utils import reconciliation, email
 
 
 class ServerErrorMiddleware(object):
 
     def process_exception(self, request, exception):
         if not isinstance(exception, Http404):
-            utils.send_error_message(tb=traceback.format_exc())
+            email.send_error_message(tb=traceback.format_exc())
         return None
 
 
@@ -65,7 +66,7 @@ class ContactView(TemplateResponseMixin, View):
         form = forms.ContactForm(self.request.POST,
                                  user_ip=get_real_ip(self.request))
         if form.is_valid():
-            utils.send_contact_email(form.cleaned_data)
+            email.send_contact_email(form.cleaned_data)
             return self.render_to_response({})
         else:
             return self.render_to_response({'form': form})
@@ -85,7 +86,7 @@ class FeedbackView(TemplateResponseMixin, View):
         form = forms.FeedbackForm(self.request.POST,
                                   user_ip=get_real_ip(self.request))
         if form.is_valid():
-            utils.send_feedback_email(form.cleaned_data)
+            email.send_feedback_email(form.cleaned_data)
             return self.render_to_response({})
         else:
             return self.render_to_response({'form': form})
@@ -202,7 +203,7 @@ class RegistrationView(TemplateResponseMixin, View):
             return HttpResponse(json.dumps(response),
                                 content_type='application/json')
         merchant = form.save()
-        utils.send_registration_info(merchant)
+        email.send_registration_info(merchant)
         response = {
             'result': 'ok',
             'next': reverse('website:devices'),
@@ -634,14 +635,14 @@ class ReportView(DeviceMixin, CabinetView):
                 raise Http404
             payment_orders = context['device'].get_payments_by_date(date)
             content_disposition = 'attachment; filename="{0}"'.format(
-                utils.get_report_filename(context['device'], date))
+                reconciliation.get_report_filename(context['device'], date))
         else:
             payment_orders = context['device'].get_payments()
             content_disposition = 'attachment; filename="{0}"'.format(
-                utils.get_report_filename(context['device']))
+                reconciliation.get_report_filename(context['device']))
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = content_disposition
-        utils.get_report_csv(payment_orders, response)
+        reconciliation.get_report_csv(payment_orders, response)
         return response
 
 
@@ -661,14 +662,14 @@ class ReceiptsView(DeviceMixin, CabinetView):
                 raise Http404
             payment_orders = context['device'].get_payments_by_date(date)
             content_disposition = 'attachment; filename="{0}"'.format(
-                utils.get_receipts_archive_filename(context['device'], date))
+                reconciliation.get_receipts_archive_filename(context['device'], date))
         else:
             payment_orders = context['device'].get_payments()
             content_disposition = 'attachment; filename="{0}"'.format(
-                utils.get_receipts_archive_filename(context['device']))
+                reconciliation.get_receipts_archive_filename(context['device']))
         response = HttpResponse(content_type='application/x-zip-compressed')
         response['Content-Disposition'] = content_disposition
-        utils.get_receipts_archive(payment_orders, response)
+        reconciliation.get_receipts_archive(payment_orders, response)
         return response
 
 
@@ -693,7 +694,7 @@ class SendAllToEmailView(DeviceMixin, CabinetView):
                     timezone.get_current_timezone())
             else:
                 rec_range_end = now
-            utils.send_reconciliation(
+            reconciliation.send_reconciliation(
                 email, context['device'],
                 (rec_range_beg, rec_range_end))
             messages.success(self.request,

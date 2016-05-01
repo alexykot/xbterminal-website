@@ -8,7 +8,7 @@ from website.widgets import (
     BitcoinTransactionArrayWidget,
     ReadOnlyAdminWidget)
 from website.admin import url_to_object
-from website.utils import generate_qr_code
+from website.utils.qr import generate_qr_code
 from api.utils.urls import construct_absolute_url
 from operations.blockchain import construct_bitcoin_uri
 from operations import payment, exceptions

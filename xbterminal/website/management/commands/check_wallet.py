@@ -3,7 +3,7 @@ import logging
 from django.core.management.base import BaseCommand
 
 from website.models import Currency, Account
-from website.utils import send_balance_admin_notification
+from website.utils.email import send_balance_admin_notification
 from operations.blockchain import BlockChain
 
 logger = logging.getLogger(__name__)

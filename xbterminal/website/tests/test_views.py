@@ -686,7 +686,7 @@ class SendAllToEmailViewTestCase(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to[0], form_data['email'])
 
-    @patch('website.utils.create_html_message')
+    @patch('website.utils.email.create_html_message')
     def test_data(self, create_mock):
         device = DeviceFactory.create(merchant=self.merchant)
         orders = PaymentOrderFactory.create_batch(

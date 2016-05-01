@@ -25,7 +25,7 @@ from website.widgets import (
     FileWidget,
     ForeignKeyWidget)
 from website.validators import validate_bitcoin_address
-from website.utils import (
+from website.utils.email import (
     send_registration_email,
     send_reset_password_email)
 

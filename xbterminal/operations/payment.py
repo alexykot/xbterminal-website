@@ -29,7 +29,7 @@ from operations.services.price import get_exchange_rate
 from operations.rq_helpers import run_periodic_task, cancel_current_task
 from operations.models import PaymentOrder
 
-from website.utils import send_error_message
+from website.utils.email import send_error_message
 
 logger = logging.getLogger(__name__)
 

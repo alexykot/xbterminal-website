@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core import mail
 from django.test import TestCase
 
-from website.utils import send_error_message
+from website.utils.email import send_error_message
 from operations.tests.factories import (
     PaymentOrderFactory,
     WithdrawalOrderFactory)

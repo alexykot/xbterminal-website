@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from website.models import Device
-from website.utils import send_reconciliation
+from website.utils.reconciliation import send_reconciliation
 
 
 class Command(BaseCommand):

@@ -17,7 +17,7 @@ from operations.blockchain import (
 from operations.rq_helpers import cancel_current_task, run_periodic_task
 from operations.models import WithdrawalOrder
 from operations.exceptions import WithdrawalError
-from website.utils import send_error_message
+from website.utils.email import send_error_message
 
 logger = logging.getLogger(__name__)
 
