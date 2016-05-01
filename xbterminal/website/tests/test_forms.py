@@ -65,6 +65,9 @@ class ResetPasswordFormTestCase(TestCase):
         form = ResetPasswordForm(data=form_data)
         self.assertTrue(form.is_valid())
         self.assertEqual(form._user.pk, merchant.user.pk)
+        form.set_new_password()
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0], merchant.user.email)
 
     def test_invalid_email(self):
         form_data = {'email': 'invalid@example.com'}

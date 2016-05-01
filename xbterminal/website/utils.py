@@ -219,6 +219,16 @@ def send_registration_info(merchant):
     email.send(fail_silently=False)
 
 
+def send_reset_password_email(email, password):
+    message = create_html_message(
+        _('Reset password for xbterminal.io'),
+        'email/reset_password.html',
+        {'password': password},
+        settings.DEFAULT_FROM_EMAIL,
+        [email])
+    message.send(fail_silently=False)
+
+
 def send_balance_admin_notification(info):
     """
     Send email to admin if balance mismatch detected

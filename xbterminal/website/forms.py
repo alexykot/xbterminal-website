@@ -1,6 +1,5 @@
 from django import forms
 from django.core.cache import cache
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import (
     AuthenticationForm as DjangoAuthenticationForm,
@@ -26,7 +25,9 @@ from website.widgets import (
     FileWidget,
     ForeignKeyWidget)
 from website.validators import validate_bitcoin_address
-from website.utils import create_html_message, send_registration_email
+from website.utils import (
+    send_registration_email,
+    send_reset_password_email)
 
 
 class UserCreationForm(DjangoUserCreationForm):
@@ -70,13 +71,7 @@ class ResetPasswordForm(forms.Form):
     def set_new_password(self):
         password = get_user_model().objects.make_random_password()
         self._user.set_password(password)
-        email = create_html_message(
-            _("Reset password for xbterminal.io"),
-            'email/reset_password.html',
-            {'password': password},
-            settings.DEFAULT_FROM_EMAIL,
-            [self.cleaned_data['email']])
-        email.send(fail_silently=False)
+        send_reset_password_email(self.cleaned_data['email'], password)
         self._user.save()
 
 
