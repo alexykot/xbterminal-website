@@ -26,7 +26,7 @@ from website.widgets import (
     FileWidget,
     ForeignKeyWidget)
 from website.validators import validate_bitcoin_address
-from website.utils import create_html_message
+from website.utils import create_html_message, send_registration_email
 
 
 class UserCreationForm(DjangoUserCreationForm):
@@ -171,14 +171,7 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             commit=False)
         user.backend = 'django.contrib.auth.backends.ModelBackend'
         # Send email
-        message = create_html_message(
-            _("Registration for XBTerminal.io"),
-            "email/registration.html",
-            {'email': instance.contact_email,
-             'password': password},
-            settings.DEFAULT_FROM_EMAIL,
-            [instance.contact_email])
-        message.send(fail_silently=False)
+        send_registration_email(instance.contact_email, password)
         # Save objects
         user.save()
         instance.user = user

@@ -190,9 +190,22 @@ def send_error_message(tb=None, order=None):
     email.send(fail_silently=False)
 
 
+def send_registration_email(email, password):
+    """
+    Send merchant registration email
+    """
+    message = create_html_message(
+        _('Registration for XBTerminal.io'),
+        'email/registration.html',
+        {'email': email, 'password': password},
+        settings.DEFAULT_FROM_EMAIL,
+        [email])
+    message.send(fail_silently=False)
+
+
 def send_registration_info(merchant):
     """
-    Send merchant registration info
+    Send merchant registration info (for admin)
     """
     context = {
         'merchant': merchant,
