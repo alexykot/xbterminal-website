@@ -67,6 +67,43 @@ class ContactViewTestCase(TestCase):
                          settings.CONTACT_EMAIL_RECIPIENTS[0])
 
 
+class FeedbackViewTestCase(TestCase):
+
+    def setUp(self):
+        self.url = reverse('website:feedback')
+
+    @patch('website.views.get_real_ip')
+    def test_get_first(self, get_ip_mock):
+        get_ip_mock.return_value = '10.123.45.1'
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'website/feedback.html')
+        form = response.context['form']
+        self.assertNotIn('captcha', form.fields)
+
+    @patch('website.views.get_real_ip')
+    def test_get_captcha(self, get_ip_mock):
+        get_ip_mock.return_value = '10.123.45.2'
+        cache.set('form-feedback-10.123.45.2', 3, timeout=None)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        form = response.context['form']
+        self.assertIn('captcha', form.fields)
+
+    @patch('website.views.get_real_ip')
+    def test_post(self, get_ip_mock):
+        get_ip_mock.return_value = '10.123.45.3'
+        form_data = {
+            'email': 'test@example.net',
+            'message': 'Test message',
+        }
+        response = self.client.post(self.url, form_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0],
+                         settings.CONTACT_EMAIL_RECIPIENTS[0])
+
+
 class LoginViewTestCase(TestCase):
 
     def setUp(self):
