@@ -29,7 +29,7 @@ from website.validators import (
     validate_post_code,
     validate_bitcoin_address,
     validate_public_key)
-from website.files import (
+from website.utils.files import (
     get_verification_file_name,
     verification_file_path_gen,
     VerificationFileStorage)
