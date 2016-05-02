@@ -60,7 +60,7 @@ class SendReconciliationTestCase(TestCase):
 class CheckWalletTestCase(TestCase):
 
     @patch('website.management.commands.check_wallet.BlockChain')
-    @patch('website.utils.send_balance_admin_notification')
+    @patch('website.utils.email.send_balance_admin_notification')
     def test_check_ok(self, send_ntf_mock, bc_mock):
         AccountFactory.create_batch(
             2, currency__name='BTC', balance=Decimal('0.2'))

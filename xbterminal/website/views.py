@@ -9,7 +9,6 @@ from django.http import HttpResponse, Http404, HttpResponseBadRequest, Streaming
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
-from django.conf import settings
 from django.views.generic import View
 from django.views.generic.base import ContextMixin, TemplateResponseMixin
 from django.utils.decorators import method_decorator
@@ -23,14 +22,15 @@ from ipware.ip import get_real_ip
 
 from api.utils import activation
 
-from website import forms, models, utils
+from website import forms, models
+from website.utils import reconciliation, email
 
 
 class ServerErrorMiddleware(object):
 
     def process_exception(self, request, exception):
         if not isinstance(exception, Http404):
-            utils.send_error_message(tb=traceback.format_exc())
+            email.send_error_message(tb=traceback.format_exc())
         return None
 
 
@@ -66,13 +66,7 @@ class ContactView(TemplateResponseMixin, View):
         form = forms.ContactForm(self.request.POST,
                                  user_ip=get_real_ip(self.request))
         if form.is_valid():
-            email = utils.create_html_message(
-                _("Message from xbterminal.io"),
-                'email/contact.html',
-                form.cleaned_data,
-                settings.DEFAULT_FROM_EMAIL,
-                settings.CONTACT_EMAIL_RECIPIENTS)
-            email.send(fail_silently=False)
+            email.send_contact_email(form.cleaned_data)
             return self.render_to_response({})
         else:
             return self.render_to_response({'form': form})
@@ -92,13 +86,7 @@ class FeedbackView(TemplateResponseMixin, View):
         form = forms.FeedbackForm(self.request.POST,
                                   user_ip=get_real_ip(self.request))
         if form.is_valid():
-            email = utils.create_html_message(
-                _("Message from xbterminal.io"),
-                'email/feedback.html',
-                form.cleaned_data,
-                settings.DEFAULT_FROM_EMAIL,
-                settings.CONTACT_EMAIL_RECIPIENTS)
-            email.send(fail_silently=False)
+            email.send_feedback_email(form.cleaned_data)
             return self.render_to_response({})
         else:
             return self.render_to_response({'form': form})
@@ -215,7 +203,7 @@ class RegistrationView(TemplateResponseMixin, View):
             return HttpResponse(json.dumps(response),
                                 content_type='application/json')
         merchant = form.save()
-        utils.send_registration_info(merchant)
+        email.send_registration_info(merchant)
         response = {
             'result': 'ok',
             'next': reverse('website:devices'),
@@ -484,6 +472,7 @@ class VerificationView(TemplateResponseMixin, CabinetView):
                 document.save()
             merchant.verification_status = 'pending'
             merchant.save()
+            email.send_verification_info(merchant)
             data = {'next': reverse('website:verification')}
         else:
             data = {'error': _('Please, upload documents')}
@@ -647,14 +636,14 @@ class ReportView(DeviceMixin, CabinetView):
                 raise Http404
             payment_orders = context['device'].get_payments_by_date(date)
             content_disposition = 'attachment; filename="{0}"'.format(
-                utils.get_report_filename(context['device'], date))
+                reconciliation.get_report_filename(context['device'], date))
         else:
             payment_orders = context['device'].get_payments()
             content_disposition = 'attachment; filename="{0}"'.format(
-                utils.get_report_filename(context['device']))
+                reconciliation.get_report_filename(context['device']))
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = content_disposition
-        utils.get_report_csv(payment_orders, response)
+        reconciliation.get_report_csv(payment_orders, response)
         return response
 
 
@@ -674,14 +663,14 @@ class ReceiptsView(DeviceMixin, CabinetView):
                 raise Http404
             payment_orders = context['device'].get_payments_by_date(date)
             content_disposition = 'attachment; filename="{0}"'.format(
-                utils.get_receipts_archive_filename(context['device'], date))
+                reconciliation.get_receipts_archive_filename(context['device'], date))
         else:
             payment_orders = context['device'].get_payments()
             content_disposition = 'attachment; filename="{0}"'.format(
-                utils.get_receipts_archive_filename(context['device']))
+                reconciliation.get_receipts_archive_filename(context['device']))
         response = HttpResponse(content_type='application/x-zip-compressed')
         response['Content-Disposition'] = content_disposition
-        utils.get_receipts_archive(payment_orders, response)
+        reconciliation.get_receipts_archive(payment_orders, response)
         return response
 
 
@@ -706,7 +695,7 @@ class SendAllToEmailView(DeviceMixin, CabinetView):
                     timezone.get_current_timezone())
             else:
                 rec_range_end = now
-            utils.send_reconciliation(
+            reconciliation.send_reconciliation(
                 email, context['device'],
                 (rec_range_beg, rec_range_end))
             messages.success(self.request,
@@ -715,36 +704,6 @@ class SendAllToEmailView(DeviceMixin, CabinetView):
             messages.error(self.request,
                            _('Error: Invalid email. Please, try again.'))
         return redirect('website:reconciliation', context['device'].key)
-
-
-class SubscribeNewsView(View):
-    """
-    Subscribe to newsletters (Ajax)
-    """
-    def post(self, *args, **kwargs):
-        # TODO: remove this view
-        form = forms.SubscribeForm(self.request.POST)
-        if form.is_valid():
-            subscriber_email = form.cleaned_data['email']
-            email1 = utils.create_html_message(
-                _("XBTerminal newsletter confirmation"),
-                "email/subscription.html",
-                {},
-                settings.DEFAULT_FROM_EMAIL,
-                [subscriber_email])
-            email1.send(fail_silently=False)
-            email2 = utils.create_html_message(
-                _("Subscription to newsletters"),
-                "email/subscription.html",
-                {'subscriber_email': subscriber_email},
-                settings.DEFAULT_FROM_EMAIL,
-                settings.CONTACT_EMAIL_RECIPIENTS)
-            email2.send(fail_silently=False)
-            response = {}
-        else:
-            response = {'errors': form.errors}
-        return HttpResponse(json.dumps(response),
-                            content_type='application/json')
 
 
 class PaymentView(TemplateResponseMixin, View):

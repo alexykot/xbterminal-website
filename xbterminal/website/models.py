@@ -29,7 +29,7 @@ from website.validators import (
     validate_post_code,
     validate_bitcoin_address,
     validate_public_key)
-from website.files import (
+from website.utils.files import (
     get_verification_file_name,
     verification_file_path_gen,
     VerificationFileStorage)
@@ -571,7 +571,7 @@ class Device(models.Model):
     def get_payments_by_date(self, date):
         """
         Accepts:
-            date_range: tuple or single date
+            date: tuple or single date
         """
         if isinstance(date, datetime.date):
             beg = timezone.make_aware(

@@ -12,7 +12,7 @@ from rest_framework import status, viewsets
 from constance import config
 
 from website.models import Device, DeviceBatch
-from website.utils import generate_qr_code
+from website.utils.qr import generate_qr_code
 
 from api.forms import PaymentForm, WithdrawalForm
 from api.serializers import (

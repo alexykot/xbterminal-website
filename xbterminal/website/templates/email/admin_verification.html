@@ -1,0 +1,20 @@
+{% extends "email/base.html" %}
+{% load website_tags i18n %}
+
+{% block content %}
+{% with merchant|kyc_document:"1" as identity_document and merchant|kyc_document:"2" as corporate_document %}
+{% trans 'Merchant uploaded these documents' %}:
+<p>
+    1. {% trans 'Identity document' %}:<br>
+    <a href="{{ identity_document|admin_url }}" target="_blank">
+        {{ identity_document.original_name }}
+    </a>
+</p>
+<p>
+    2. {% trans 'Corporate document' %}:<br>
+    <a href="{{ corporate_document|admin_url }}" target="_blank">
+        {{ corporate_document.original_name }}
+    </a>
+</p>
+{% endwith %}
+{% endblock %}

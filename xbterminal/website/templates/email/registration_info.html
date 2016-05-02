@@ -8,9 +8,4 @@ Trading name: {{ merchant.trading_name }}<br>
 Address: {{ merchant.billing_address|join:', ' }}<br>
 Contact name: {{ merchant.contact_first_name }} {{ merchant.contact_last_name }}<br>
 Contact phone: {{ merchant.contact_phone|default:"-" }}<br>
-{% if order %}
-Quantity: {{ order.quantity }}<br>
-Payment method: {{ order.payment_method }}<br>
-Payment reference: {{ order.payment_reference }}<br>
-{% endif %}
 {% endblock %}

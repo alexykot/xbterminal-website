@@ -1,7 +1,6 @@
 from django.conf.urls import url
 
 from website import views
-from views import SubscribeNewsView
 
 urlpatterns = [
     url(r'^$', views.LandingView.as_view(), name='landing'),
@@ -17,7 +16,6 @@ urlpatterns = [
     url(r'^reset_password/$', views.ResetPasswordView.as_view(), name='reset_password'),
     url(r'^registration/$', views.RegistrationView.as_view(), name='registration'),
     url(r'^registration/validate/$', views.RegValidationView.as_view(), name='reg_validation'),
-    url(r'^subscribe/$', SubscribeNewsView.as_view(), name='subscribe'),
     url(r'^profile/$', views.UpdateProfileView.as_view(), name='profile'),
     url(r'^change_password/$', views.ChangePasswordView.as_view(), name='change_password'),
     url(r'^verification/$', views.VerificationView.as_view(), name='verification'),

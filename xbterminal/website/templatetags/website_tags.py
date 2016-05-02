@@ -6,7 +6,7 @@ from django.contrib.staticfiles import finders
 from django.utils.html import format_html
 
 from operations.services import blockcypher
-from website.utils import generate_qr_code
+from website.utils.qr import generate_qr_code
 from api.utils.urls import construct_absolute_url
 
 register = template.Library()

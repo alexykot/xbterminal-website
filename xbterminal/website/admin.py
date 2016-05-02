@@ -6,7 +6,7 @@ from django.utils.html import format_html
 from fsm_admin.mixins import FSMTransitionMixin
 
 from website import forms, models
-from website.utils import generate_qr_code
+from website.utils.qr import generate_qr_code
 from website.widgets import BitcoinAddressWidget
 
 

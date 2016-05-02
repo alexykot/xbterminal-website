@@ -67,6 +67,43 @@ class ContactViewTestCase(TestCase):
                          settings.CONTACT_EMAIL_RECIPIENTS[0])
 
 
+class FeedbackViewTestCase(TestCase):
+
+    def setUp(self):
+        self.url = reverse('website:feedback')
+
+    @patch('website.views.get_real_ip')
+    def test_get_first(self, get_ip_mock):
+        get_ip_mock.return_value = '10.123.45.1'
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'website/feedback.html')
+        form = response.context['form']
+        self.assertNotIn('captcha', form.fields)
+
+    @patch('website.views.get_real_ip')
+    def test_get_captcha(self, get_ip_mock):
+        get_ip_mock.return_value = '10.123.45.2'
+        cache.set('form-feedback-10.123.45.2', 3, timeout=None)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        form = response.context['form']
+        self.assertIn('captcha', form.fields)
+
+    @patch('website.views.get_real_ip')
+    def test_post(self, get_ip_mock):
+        get_ip_mock.return_value = '10.123.45.3'
+        form_data = {
+            'email': 'test@example.net',
+            'message': 'Test message',
+        }
+        response = self.client.post(self.url, form_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0],
+                         settings.CONTACT_EMAIL_RECIPIENTS[0])
+
+
 class LoginViewTestCase(TestCase):
 
     def setUp(self):
@@ -446,6 +483,9 @@ class VerificationViewTestCase(TestCase):
                           password='password')
         response = self.client.post(self.url)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0],
+                         settings.CONTACT_EMAIL_RECIPIENTS[0])
         data = json.loads(response.content)
         self.assertIn('next', data)
         merchant.refresh_from_db()
@@ -649,7 +689,7 @@ class SendAllToEmailViewTestCase(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to[0], form_data['email'])
 
-    @patch('website.utils.create_html_message')
+    @patch('website.utils.email.create_html_message')
     def test_data(self, create_mock):
         device = DeviceFactory.create(merchant=self.merchant)
         orders = PaymentOrderFactory.create_batch(
@@ -673,6 +713,10 @@ class SendAllToEmailViewTestCase(TestCase):
                          sum(po.btc_amount for po in orders))
         self.assertEqual(context['fiat_amount'],
                          sum(po.fiat_amount for po in orders))
+        attachments = create_mock.call_args[1]['attachments']
+        self.assertEqual(len(attachments), 2)
+        self.assertEqual(attachments[0][2], 'text/csv')
+        self.assertEqual(attachments[1][2], 'application/x-zip-compressed')
 
 
 class PaymentViewTestCase(TestCase):

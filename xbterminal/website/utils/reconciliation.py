@@ -1,24 +1,15 @@
-# TODO: move all functions to website.utils package
-import base64
 from cStringIO import StringIO
 import os
 import unicodecsv
 from zipfile import ZipFile
 from decimal import Decimal
 
-import qrcode
-
-from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
-from django.utils.html import strip_tags
 from django.utils.text import get_valid_filename
-from django.template.loader import render_to_string
 from django.db.models import Sum, F
-from django.utils.translation import ugettext as _
-
-from constance import config
 
 from api.utils.pdf import generate_pdf
+from website.utils.email import send_reconciliation_email
 
 REPORT_FIELDS = [
     ('ID', 'id'),
@@ -113,16 +104,6 @@ def get_receipts_archive_filename(device, date=None):
     return get_valid_filename(s)
 
 
-def create_html_message(subject, template, context,
-                        from_email, recipient_list):
-    html_content = render_to_string(template, context)
-    text_content = strip_tags(html_content)
-    email = EmailMultiAlternatives(
-        subject, text_content, from_email, recipient_list)
-    email.attach_alternative(html_content, 'text/html')
-    return email
-
-
 def send_reconciliation(recipient, device, rec_range):
     """
     Send reconciliation email
@@ -141,12 +122,7 @@ def send_reconciliation(recipient, device, rec_range):
         'fiat_amount': 0 if fiat_sum is None else fiat_sum,
         'rec_datetime': rec_range[1],
     }
-    email = create_html_message(
-        _('XBTerminal reconciliation report, {0}').format(rec_range[1].strftime('%d %b %Y')),
-        'email/reconciliation.html',
-        context,
-        settings.DEFAULT_FROM_EMAIL,
-        [recipient])
+    files = []
     if payment_orders:
         csv = get_report_csv(payment_orders, short=True)
         csv.seek(0)
@@ -154,117 +130,11 @@ def send_reconciliation(recipient, device, rec_range):
         csv_filename = get_report_filename(device, rec_range[1])
         with open(os.path.join(settings.REPORTS_PATH, csv_filename), 'w') as f:
             f.write(csv_data)
-        email.attach(csv_filename, csv_data, "text/csv")
+        files.append([csv_filename, csv_data, 'text/csv'])
         archive = get_receipts_archive(payment_orders)
         archive_data = archive.getvalue()
         archive_filename = get_receipts_archive_filename(device, rec_range[1])
-        email.attach(archive_filename, archive_data, "application/x-zip-compressed")
+        files.append([archive_filename, archive_data, 'application/x-zip-compressed'])
         with open(os.path.join(settings.REPORTS_PATH, archive_filename), 'wb') as f:
             f.write(archive_data)
-    email.send(fail_silently=False)
-
-
-def generate_qr_code(text, size=4):
-    """
-    Generate base64-encoded QR code
-    """
-    qr_output = StringIO()
-    qr_code = qrcode.make(text, box_size=size)
-    qr_code.save(qr_output, "PNG")
-    qr_code_src = "data:image/png;base64,{0}".format(
-        base64.b64encode(qr_output.getvalue()))
-    qr_output.close()
-    return qr_code_src
-
-
-def send_error_message(tb=None, order=None):
-    """
-    Accepts:
-        tb: traceback object
-        order: PaymentOrder or WithdrawalOrder instance
-    """
-    email = create_html_message(
-        'XBTerminal - error',
-        'email/error.html',
-        {'traceback': tb, 'order': order},
-        settings.DEFAULT_FROM_EMAIL,
-        settings.CONTACT_EMAIL_RECIPIENTS)
-    email.send(fail_silently=False)
-
-
-def send_invoice(order):
-    message = create_html_message(
-        _("Your XBTerminal Pre-Order"),
-        "email/order.html",
-        {'order': order},
-        settings.DEFAULT_FROM_EMAIL,
-        [order.merchant.contact_email])
-    if order.payment_method == 'wire':
-        pdf = generate_pdf("pdf/invoice.html", {
-            'order': order,
-            'terminal_price': config.TERMINAL_PRICE,
-        })
-        message.attach('invoice.pdf', pdf.getvalue(), 'application/pdf')
-    message.send(fail_silently=False)
-
-
-def send_registration_info(merchant, order=None):
-    """
-    Send merchant registration info
-    """
-    context = {
-        'merchant': merchant,
-        'order': order,
-    }
-    email = create_html_message(
-        'XBTerminal registration info',
-        'email/registration_info.html',
-        context,
-        settings.DEFAULT_FROM_EMAIL,
-        settings.CONTACT_EMAIL_RECIPIENTS)
-    email.send(fail_silently=False)
-
-
-def send_kyc_notification(merchant):
-    """
-    Send verification info to merchant
-    Accepts:
-        merchant: MerchantAccount instance
-    """
-    email = create_html_message(
-        _('Verification'),
-        'email/verification.html',
-        {'merchant': merchant},
-        settings.DEFAULT_FROM_EMAIL,
-        [merchant.contact_email])
-    email.send(fail_silently=False)
-
-
-def send_kyc_admin_notification(merchant):
-    """
-    Send verification info to merchant
-    Accepts:
-        merchant: MerchantAccount instance
-    """
-    email = create_html_message(
-        _('KYC status changed'),
-        'email/admin_kyc_notification.html',
-        {'merchant': merchant},
-        settings.DEFAULT_FROM_EMAIL,
-        settings.CONTACT_EMAIL_RECIPIENTS)
-    email.send(fail_silently=False)
-
-
-def send_balance_admin_notification(info):
-    """
-    Send email to admin if balance mismatch detected
-    Accepts:
-        info: dict
-    """
-    email = create_html_message(
-        _('Balance mismatch'),
-        'email/admin_balance_notification.html',
-        {'info': info},
-        settings.DEFAULT_FROM_EMAIL,
-        settings.CONTACT_EMAIL_RECIPIENTS)
-    email.send(fail_silently=False)
+    send_reconciliation_email(recipient, rec_range[1], context, files)

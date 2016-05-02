@@ -15,9 +15,8 @@ from oauth2_provider.views.generic import ProtectedResourceView
 
 from website.models import Device
 from website.forms import SimpleMerchantRegistrationForm
-from website.utils import (
-    generate_qr_code,
-    send_registration_info)
+from website.utils.qr import generate_qr_code
+from website.utils.email import send_registration_info
 
 from api.forms import PaymentForm
 from api.utils.pdf import generate_pdf
