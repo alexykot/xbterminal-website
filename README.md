@@ -20,6 +20,7 @@ Requirements:
 * VirtualBox
 * vagrant
 * vagrant-triggers plugin
+* virtualenv
 * fabric
 
 ### Run vagrant
