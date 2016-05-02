@@ -153,6 +153,10 @@ class TransactionInline(admin.TabularInline):
 @admin.register(models.Account)
 class AccountAdmin(admin.ModelAdmin):
 
+    readonly_fields = [
+        'balance',
+        'balance_confirmed',
+    ]
     list_display = [
         'id',
         'merchant',
