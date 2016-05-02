@@ -20,7 +20,7 @@ def create_html_message(subject, template, context,
 
 
 def send_reconciliation_email(recipient, date, context, files):
-    email = create_html_message(
+    message = create_html_message(
         _('XBTerminal reconciliation report, {0}').format(
             date.strftime('%d %b %Y')),
         'email/reconciliation.html',
@@ -28,7 +28,7 @@ def send_reconciliation_email(recipient, date, context, files):
         settings.DEFAULT_FROM_EMAIL,
         [recipient],
         attachments=files)
-    email.send(fail_silently=False)
+    message.send(fail_silently=False)
 
 
 def send_error_message(tb=None, order=None):
@@ -37,13 +37,13 @@ def send_error_message(tb=None, order=None):
         tb: traceback object
         order: PaymentOrder or WithdrawalOrder instance
     """
-    email = create_html_message(
+    message = create_html_message(
         'XBTerminal - error',
         'email/error.html',
         {'traceback': tb, 'order': order},
         settings.DEFAULT_FROM_EMAIL,
         settings.CONTACT_EMAIL_RECIPIENTS)
-    email.send(fail_silently=False)
+    message.send(fail_silently=False)
 
 
 def send_registration_email(email, password):
@@ -63,16 +63,13 @@ def send_registration_info(merchant):
     """
     Send merchant registration info (for admin)
     """
-    context = {
-        'merchant': merchant,
-    }
-    email = create_html_message(
+    message = create_html_message(
         'XBTerminal registration info',
         'email/registration_info.html',
-        context,
+        {'merchant': merchant},
         settings.DEFAULT_FROM_EMAIL,
         settings.CONTACT_EMAIL_RECIPIENTS)
-    email.send(fail_silently=False)
+    message.send(fail_silently=False)
 
 
 def send_reset_password_email(email, password):
@@ -82,6 +79,20 @@ def send_reset_password_email(email, password):
         {'password': password},
         settings.DEFAULT_FROM_EMAIL,
         [email])
+    message.send(fail_silently=False)
+
+
+def send_verification_info(merchant):
+    """
+    Accepts:
+        merchant: MerchantAccount instance
+    """
+    message = create_html_message(
+        _('KYC documents uploaded'),
+        'email/admin_verification.html',
+        {'merchant': merchant},
+        settings.DEFAULT_FROM_EMAIL,
+        settings.CONTACT_EMAIL_RECIPIENTS)
     message.send(fail_silently=False)
 
 
@@ -111,10 +122,10 @@ def send_balance_admin_notification(info):
     Accepts:
         info: dict
     """
-    email = create_html_message(
+    message = create_html_message(
         _('Balance mismatch'),
         'email/admin_balance_notification.html',
         {'info': info},
         settings.DEFAULT_FROM_EMAIL,
         settings.CONTACT_EMAIL_RECIPIENTS)
-    email.send(fail_silently=False)
+    message.send(fail_silently=False)

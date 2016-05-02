@@ -483,6 +483,9 @@ class VerificationViewTestCase(TestCase):
                           password='password')
         response = self.client.post(self.url)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0],
+                         settings.CONTACT_EMAIL_RECIPIENTS[0])
         data = json.loads(response.content)
         self.assertIn('next', data)
         merchant.refresh_from_db()

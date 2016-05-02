@@ -472,6 +472,7 @@ class VerificationView(TemplateResponseMixin, CabinetView):
                 document.save()
             merchant.verification_status = 'pending'
             merchant.save()
+            email.send_verification_info(merchant)
             data = {'next': reverse('website:verification')}
         else:
             data = {'error': _('Please, upload documents')}
