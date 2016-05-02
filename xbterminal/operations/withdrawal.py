@@ -1,5 +1,7 @@
 from decimal import Decimal
 import logging
+
+from constance import config
 from django.utils import timezone
 
 from operations import (
@@ -81,7 +83,9 @@ def prepare_withdrawal(device, fiat_amount):
     all_reserved_outputs = _get_all_reserved_outputs(order)
     reserved_outputs = []
     unspent_sum = Decimal(0)
-    for output in bc.get_unspent_outputs(order.merchant_address):
+    minconf = 0 if config.WITHDRAW_UNCONFIRMED else 1
+    for output in bc.get_unspent_outputs(order.merchant_address,
+                                         minconf=minconf):
         if output['outpoint'] in all_reserved_outputs:
             # Output already reserved by another order, skip
             continue
@@ -136,6 +140,7 @@ def send_transaction(order, customer_address):
     tx_signed = bc.sign_raw_transaction(tx)
     order.outgoing_tx_id = bc.send_raw_transaction(tx_signed)
     order.time_sent = timezone.now()
+    # TODO: create two Transaction objects (for withdrawal and for change)
     order.account_tx = order.device.account.transaction_set.create(
         amount=-order.btc_amount)  # Updates balance
     order.save()
