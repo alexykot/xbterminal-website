@@ -109,11 +109,6 @@ def prepare_payment(device, fiat_amount):
         order.merchant_btc_amount = BTC_MIN_OUTPUT
     # TX fee
     order.tx_fee_btc_amount = blockchain.get_tx_fee(1, 3)
-    # Total
-    order.btc_amount = (order.merchant_btc_amount +
-                        order.instantfiat_btc_amount +
-                        order.fee_btc_amount +
-                        order.tx_fee_btc_amount)
     # Save order
     order.save()
     # Schedule tasks
@@ -352,8 +347,10 @@ def forward_transaction(payment_order):
         # Store bitcoins on merchant's internal account
         if not account.bitcoin_address:
             account.bitcoin_address = str(bc.get_new_address())
+            account.save()
         destination_address = account.bitcoin_address
-        account.balance += payment_order.merchant_btc_amount
+        payment_order.account_tx = account.transaction_set.create(
+            amount=payment_order.merchant_btc_amount)  # Updates balance
     else:
         # Forward payment to merchant address (default)
         destination_address = payment_order.merchant_address
@@ -382,8 +379,6 @@ def forward_transaction(payment_order):
     payment_order.outgoing_tx_id = bc.send_raw_transaction(outgoing_tx_signed)
     payment_order.time_forwarded = timezone.now()
     payment_order.save()
-    if account:
-        account.save()
 
 
 def wait_for_confirmation(order_uid):

@@ -6,12 +6,10 @@ from mock import patch, Mock
 
 from constance import config
 
-from website.models import Account
 from website.tests.factories import (
     MerchantAccountFactory,
     AccountFactory,
     DeviceFactory)
-from operations.models import PaymentOrder
 from operations.tests.factories import PaymentOrderFactory
 from operations import payment, exceptions
 from operations import BTC_DEC_PLACES
@@ -492,7 +490,7 @@ class ValidatePaymentTestCase(TestCase):
     def test_multiple_tx(self, bc_cls_mock):
         order = PaymentOrderFactory.create(
             merchant_btc_amount=Decimal('0.1'),
-            btc_amount=Decimal('0.1001'))
+            tx_fee_btc_amount=Decimal('0.0001'))
         incoming_txs = [Mock(), Mock()]
         bc_cls_mock.return_value = bc_mock = Mock(**{
             'sign_raw_transaction.return_value': Mock(),
@@ -524,7 +522,7 @@ class ValidatePaymentTestCase(TestCase):
     def test_insufficient_funds(self, bc_cls_mock):
         order = PaymentOrderFactory.create(
             merchant_btc_amount=Decimal('0.1'),
-            btc_amount=Decimal('0.1001'))
+            tx_fee_btc_amount=Decimal('0.0001'))
         incoming_tx = Mock()
         bc_cls_mock.return_value = bc_mock = Mock(**{
             'sign_raw_transaction.return_value': Mock(),
@@ -546,7 +544,7 @@ class ReversePaymentTestCase(TestCase):
         order = PaymentOrderFactory.create(
             merchant_btc_amount=Decimal('0.1'),
             fee_btc_amount=Decimal('0.001'),
-            btc_amount=Decimal('0.1011'),
+            tx_fee_btc_amount=Decimal('0.0001'),
             refund_address='1KYwqZshnYNUNweXrDkCAdLaixxPhePRje')
         refund_tx_id = '5' * 64
         bc_cls_mock.return_value = bc_mock = Mock(**{
@@ -588,7 +586,7 @@ class ReversePaymentTestCase(TestCase):
         order = PaymentOrderFactory.create(
             merchant_btc_amount=Decimal('0.1'),
             fee_btc_amount=Decimal('0.001'),
-            btc_amount=Decimal('0.1011'),
+            tx_fee_btc_amount=Decimal('0.0001'),
             refund_address='1KYwqZshnYNUNweXrDkCAdLaixxPhePRje')
         bc_cls_mock.return_value = Mock(**{
             'get_unspent_outputs.return_value': [],
@@ -760,7 +758,7 @@ class ForwardTransactionTestCase(TestCase):
         payment_order = PaymentOrderFactory.create(
             merchant_btc_amount=Decimal('0.1'),
             fee_btc_amount=Decimal('0.001'),
-            btc_amount=Decimal('0.1011'),
+            tx_fee_btc_amount=Decimal('0.0001'),
             instantfiat_btc_amount=Decimal(0),
             incoming_tx_ids=['0' * 64],
             refund_address='18GV9EWUjSVTU1jXMb1RmaGxAonSyBgKAc')
@@ -812,7 +810,7 @@ class ForwardTransactionTestCase(TestCase):
         order = PaymentOrderFactory.create(
             merchant_btc_amount=Decimal('0.1'),
             fee_btc_amount=Decimal('0.001'),
-            btc_amount=Decimal('0.1011'),
+            tx_fee_btc_amount=Decimal('0.0001'),
             instantfiat_btc_amount=Decimal(0),
             incoming_tx_ids=['0' * 64])
         bc_cls_mock.return_value = Mock(**{
@@ -833,7 +831,7 @@ class ForwardTransactionTestCase(TestCase):
         self.assertIsNotNone(order.time_forwarded)
 
     @patch('operations.payment.blockchain.BlockChain')
-    def test_forward_balance(self, bc_mock):
+    def test_forward_to_btc_account(self, bc_mock):
         merchant = MerchantAccountFactory.create()
         btc_account = AccountFactory.create(merchant=merchant,
                                             balance_max=Decimal('1.0'))
@@ -842,7 +840,7 @@ class ForwardTransactionTestCase(TestCase):
             device__account=btc_account,
             merchant_btc_amount=Decimal('0.1'),
             fee_btc_amount=Decimal('0.001'),
-            btc_amount=Decimal('0.1011'),
+            tx_fee_btc_amount=Decimal('0.0001'),
             instantfiat_btc_amount=Decimal(0),
             incoming_tx_ids=['0' * 64])
         outgoing_tx_id = '1' * 64
@@ -872,12 +870,13 @@ class ForwardTransactionTestCase(TestCase):
         self.assertEqual(outputs[payment_order.fee_address],
                          payment_order.fee_btc_amount)
 
-        payment_order = PaymentOrder.objects.get(pk=payment_order.pk)
+        payment_order.refresh_from_db()
         self.assertEqual(payment_order.extra_btc_amount, 0)
         self.assertEqual(payment_order.outgoing_tx_id, outgoing_tx_id)
+        self.assertIsNotNone(payment_order.account_tx)
         self.assertIsNotNone(payment_order.time_forwarded)
 
-        btc_account = Account.objects.get(pk=btc_account.pk)
+        btc_account.refresh_from_db()
         self.assertEqual(btc_account.bitcoin_address, account_address)
         self.assertEqual(btc_account.balance,
                          payment_order.merchant_btc_amount)

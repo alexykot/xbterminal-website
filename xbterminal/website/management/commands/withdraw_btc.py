@@ -34,7 +34,7 @@ def withdraw_btc(account_id, address):
         amount += output['amount']
     if not amount:
         return 'nothing to withdraw'
-    account.balance -= amount
+    account.transaction_set.create(amount=-amount)
     if account.balance != 0:
         return 'invalid balance'
     amount -= blockchain.get_tx_fee(len(tx_inputs), 1)

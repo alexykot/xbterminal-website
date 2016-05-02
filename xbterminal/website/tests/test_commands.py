@@ -74,8 +74,14 @@ class CheckWalletTestCase(TestCase):
 
     @patch('website.management.commands.check_wallet.BlockChain')
     def test_check_mismatch(self, bc_mock):
-        AccountFactory.create_batch(
-            2, currency__name='BTC', balance=Decimal('0.2'))
+        AccountFactory.create(
+            currency__name='BTC',
+            balance=Decimal('0.2'),
+            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+        AccountFactory.create(
+            currency__name='BTC',
+            balance=Decimal('0.2'),
+            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa3p9vE')
         bc_mock.return_value = Mock(**{
             'get_address_balance.return_value': Decimal('0.3'),
         })

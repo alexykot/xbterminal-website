@@ -12,7 +12,7 @@ from operations.tests.factories import (
 
 class PaymentOrderTestCase(TestCase):
 
-    def test_payment_order_factory(self):
+    def test_factory(self):
         payment_order = PaymentOrderFactory.create()
         self.assertEqual(payment_order.order_type, 'payment')
         self.assertEqual(len(payment_order.uid), 6)
@@ -20,12 +20,20 @@ class PaymentOrderTestCase(TestCase):
         self.assertEqual(payment_order.bitcoin_network,
                          payment_order.device.bitcoin_network)
         self.assertEqual(len(payment_order.incoming_tx_ids), 0)
+        self.assertIsNone(payment_order.account_tx)
 
         expected_btc_amount = (payment_order.merchant_btc_amount +
                                payment_order.instantfiat_btc_amount +
                                payment_order.fee_btc_amount +
                                payment_order.tx_fee_btc_amount)
         self.assertEqual(payment_order.btc_amount, expected_btc_amount)
+
+    def test_factory_account_tx(self):
+        order = PaymentOrderFactory.create(account_tx=True)
+        self.assertEqual(order.account_tx.account.pk,
+                         order.device.account.pk)
+        self.assertEqual(order.account_tx.amount,
+                         order.merchant_btc_amount)
 
     def test_incoming_tx_ids(self):
         order = PaymentOrderFactory.create()
@@ -105,9 +113,14 @@ class PaymentOrderTestCase(TestCase):
         order.time_cancelled = timezone.now()
         self.assertEqual(order.status, 'cancelled')
 
-    def test_scaled_btc_amount(self):
-        order = PaymentOrderFactory.create(btc_amount=Decimal('0.1003'))
-        self.assertEqual(order.scaled_btc_amount, Decimal('100.3'))
+    def test_btc_amount(self):
+        order = PaymentOrderFactory.create(
+            merchant_btc_amount=Decimal('0.1'),
+            instantfiat_btc_amount=Decimal('0.1'),
+            fee_btc_amount=Decimal('0.01'),
+            tx_fee_btc_amount=Decimal('0.0002'))
+        self.assertEqual(order.btc_amount, Decimal('0.2102'))
+        self.assertEqual(order.scaled_btc_amount, Decimal('210.2'))
 
     def test_effective_exchange_rate(self):
         order = PaymentOrderFactory.create(
@@ -140,6 +153,7 @@ class WithdrawalOrderTestCase(TestCase):
         # Defaults
         self.assertEqual(order.order_type, 'withdrawal')
         self.assertEqual(len(order.uid), 6)
+        self.assertIsNone(order.account_tx)
         self.assertIsNotNone(order.time_created)
         self.assertEqual(str(order), order.uid)
 
@@ -149,6 +163,14 @@ class WithdrawalOrderTestCase(TestCase):
                          order.device.bitcoin_network)
         self.assertEqual(order.fiat_currency,
                          order.device.merchant.currency)
+        self.assertIsNone(order.account_tx)
+
+    def test_factory_account_tx(self):
+        order = WithdrawalOrderFactory.create(account_tx=True)
+        self.assertEqual(order.account_tx.account.pk,
+                         order.device.account.pk)
+        self.assertEqual(order.account_tx.amount,
+                         -order.btc_amount)
 
     def test_btc_amount(self):
         order = WithdrawalOrderFactory.create(

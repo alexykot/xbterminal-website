@@ -13,6 +13,7 @@ from website.models import (
     UITheme,
     MerchantAccount,
     Account,
+    Transaction,
     KYCDocument,
     Device,
     DeviceBatch,
@@ -23,10 +24,13 @@ from website.tests.factories import (
     MerchantAccountFactory,
     KYCDocumentFactory,
     AccountFactory,
+    TransactionFactory,
     DeviceBatchFactory,
     DeviceFactory,
     ReconciliationTimeFactory)
-from operations.tests.factories import PaymentOrderFactory
+from operations.tests.factories import (
+    PaymentOrderFactory,
+    WithdrawalOrderFactory)
 
 
 class UserTestCase(TestCase):
@@ -235,6 +239,71 @@ class AccountTestCase(TestCase):
         self.assertEqual(account_2.bitcoin_network, 'testnet')
         account_3 = AccountFactory.create(currency__name='GBP')
         self.assertEqual(account_3.bitcoin_network, 'mainnet')
+
+    def test_balance(self):
+        account_1 = AccountFactory.create()
+        self.assertEqual(account_1.balance, 0)
+        transactions = TransactionFactory.create_batch(
+            3, account=account_1)
+        self.assertEqual(account_1.balance,
+                         sum(t.amount for t in transactions))
+        account_2 = AccountFactory.create(balance=Decimal('0.5'))
+        self.assertEqual(account_2.balance, Decimal('0.5'))
+
+    def test_balance_confirmed(self):
+        account = AccountFactory.create()
+        PaymentOrderFactory.create(
+            account_tx=TransactionFactory.create(
+                account=account, amount=Decimal('0.2')),
+            time_forwarded=timezone.now())
+        PaymentOrderFactory.create(
+            account_tx=TransactionFactory.create(
+                account=account, amount=Decimal('0.3')),
+            time_forwarded=timezone.now(),
+            time_confirmed=timezone.now())
+        WithdrawalOrderFactory.create(
+            account_tx=TransactionFactory.create(
+                account=account, amount=Decimal('-0.15')),
+            time_sent=timezone.now())
+        WithdrawalOrderFactory.create(
+            account_tx=TransactionFactory.create(
+                account=account, amount=Decimal('-0.05')),
+            time_sent=timezone.now(),
+            time_broadcasted=timezone.now())
+        TransactionFactory.create(
+            account=account, amount=Decimal('-0.1'))
+        self.assertEqual(account.balance, Decimal('0.2'))
+        self.assertEqual(account.balance_confirmed, Decimal('0.15'))
+
+
+class TransactionTestCase(TestCase):
+
+    def test_create(self):
+        account = AccountFactory.create()
+        transaction = Transaction.objects.create(account=account,
+                                                 amount=Decimal('1.5'))
+        self.assertEqual(transaction.account.pk, account.pk)
+        self.assertIsNotNone(transaction.created_at)
+        self.assertEqual(str(transaction), str(transaction.pk))
+
+    def test_factory(self):
+        transaction = TransactionFactory.create()
+        self.assertIsNotNone(transaction.account)
+        self.assertGreater(transaction.amount, 0)
+
+    def test_tx_hash(self):
+        transaction = TransactionFactory.create()
+        self.assertIsNone(transaction.tx_hash)
+        payment_order = PaymentOrderFactory.create(
+            outgoing_tx_id='1' * 64,
+            account_tx=True)
+        self.assertEqual(payment_order.account_tx.tx_hash,
+                         payment_order.outgoing_tx_id)
+        withdrawal_order = WithdrawalOrderFactory.create(
+            outgoing_tx_id='2' * 64,
+            account_tx=True)
+        self.assertEqual(withdrawal_order.account_tx.tx_hash,
+                         withdrawal_order.outgoing_tx_id)
 
 
 class DeviceTestCase(TestCase):

@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 import random
 import os
 import uuid
@@ -277,10 +278,6 @@ class Account(models.Model):
     """
     merchant = models.ForeignKey(MerchantAccount)
     currency = models.ForeignKey(Currency)
-    balance = models.DecimalField(
-        max_digits=20,
-        decimal_places=8,
-        default=0)
     balance_max = models.DecimalField(
         max_digits=20,
         decimal_places=8,
@@ -327,6 +324,19 @@ class Account(models.Model):
             # Instantfiat services work only with mainnet
             return 'mainnet'
 
+    @property
+    def balance(self):
+        result = self.transaction_set.aggregate(models.Sum('amount'))
+        return result['amount__sum'] or 0
+
+    @property
+    def balance_confirmed(self):
+        balance = Decimal(0)
+        for transaction in self.transaction_set.all():
+            if transaction.is_confirmed:
+                balance += transaction.amount
+        return balance
+
     def clean(self):
         if self.currency.name not in ['BTC', 'TBTC']:
             if not self.instantfiat_provider:
@@ -335,6 +345,39 @@ class Account(models.Model):
             if not self.instantfiat_api_key:
                 raise ValidationError({
                     'instantfiat_api_key': 'This field is required.'})
+
+
+class Transaction(models.Model):
+
+    account = models.ForeignKey(Account)
+    amount = models.DecimalField(max_digits=20, decimal_places=8)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __unicode__(self):
+        return str(self.pk)
+
+    @property
+    def tx_hash(self):
+        if hasattr(self, 'paymentorder'):
+            return self.paymentorder.outgoing_tx_id
+        elif hasattr(self, 'withdrawalorder'):
+            return self.withdrawalorder.outgoing_tx_id
+
+    @property
+    def is_confirmed(self):
+        # TODO: add is_confirmed field to Transaction model for accuracy
+        if hasattr(self, 'paymentorder'):
+            return self.paymentorder.time_confirmed is not None
+        elif hasattr(self, 'withdrawalorder'):
+            # Confidence reached, but not confirmed
+            # Probably, all withdrawals should be included
+            return self.withdrawalorder.time_broadcasted is not None
+        else:
+            # Transaction is not linked to operation, may be unconfirmed
+            return True
 
 
 class KYCDocument(models.Model):

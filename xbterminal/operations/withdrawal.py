@@ -136,12 +136,9 @@ def send_transaction(order, customer_address):
     tx_signed = bc.sign_raw_transaction(tx)
     order.outgoing_tx_id = bc.send_raw_transaction(tx_signed)
     order.time_sent = timezone.now()
+    order.account_tx = order.device.account.transaction_set.create(
+        amount=-order.btc_amount)  # Updates balance
     order.save()
-
-    # Update balance
-    account = order.device.account
-    account.balance -= order.btc_amount
-    account.save()
 
     run_periodic_task(wait_for_confidence, [order.uid], interval=5)
 

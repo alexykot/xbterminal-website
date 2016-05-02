@@ -127,6 +127,29 @@ class KYCDocumentInline(admin.TabularInline):
     extra = 0
 
 
+class TransactionInline(admin.TabularInline):
+
+    model = models.Transaction
+    exclude = ['amount']
+    readonly_fields = [
+        'amount_colored',
+        'tx_hash',
+        'is_confirmed',
+        'created_at',
+    ]
+    max_num = 0
+    extra = 0
+    can_delete = False
+
+    def amount_colored(self, obj):
+        template = '<span style="color: {0}">{1}</span>'
+        return format_html(template,
+                           'red' if obj.amount < 0 else 'green',
+                           obj.amount)
+    amount_colored.allow_tags = True
+    amount_colored.short_description = 'amount'
+
+
 @admin.register(models.Account)
 class AccountAdmin(admin.ModelAdmin):
 
@@ -135,8 +158,13 @@ class AccountAdmin(admin.ModelAdmin):
         'merchant',
         'currency',
         'balance',
+        'balance_confirmed',
         'balance_max',
         'instantfiat_provider',
+    ]
+
+    inlines = [
+        TransactionInline,
     ]
 
     def get_form(self, request, obj, **kwargs):

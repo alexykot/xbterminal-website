@@ -1,10 +1,11 @@
 from decimal import Decimal
 import uuid
+
+from bitcoin.core import COutPoint
 import factory
 from factory import fuzzy
-from bitcoin.core import COutPoint
 
-from website.tests.factories import DeviceFactory
+from website.tests.factories import DeviceFactory, TransactionFactory
 from operations.models import PaymentOrder, WithdrawalOrder
 from operations import BTC_DEC_PLACES
 from operations.blockchain import serialize_outputs
@@ -24,17 +25,25 @@ class PaymentOrderFactory(factory.DjangoModelFactory):
     fiat_currency = factory.LazyAttribute(
         lambda po: po.device.merchant.currency)
 
-    fiat_amount = Decimal('1.11')
+    fiat_amount = fuzzy.FuzzyDecimal(0.1, 2.0)
     instantfiat_fiat_amount = Decimal(0)
     instantfiat_btc_amount = Decimal(0)
-    merchant_btc_amount = Decimal('0.00476722')
+    merchant_btc_amount = factory.LazyAttribute(
+        lambda po: (po.fiat_amount / 400).quantize(BTC_DEC_PLACES))
     fee_btc_amount = Decimal(0)
     tx_fee_btc_amount = Decimal('0.0001')
-    btc_amount = factory.LazyAttribute(
-        lambda po: (po.merchant_btc_amount +
-                    po.instantfiat_btc_amount +
-                    po.fee_btc_amount +
-                    po.tx_fee_btc_amount))
+
+    @factory.post_generation
+    def account_tx(self, create, extracted, **kwargs):
+        if not create:
+            return
+        if extracted is True:
+            self.account_tx = TransactionFactory.create(
+                account=self.device.account,
+                amount=self.merchant_btc_amount)
+        else:
+            self.account_tx = extracted
+        self.save()
 
     @factory.post_generation
     def time_created(self, create, extracted, **kwargs):
@@ -61,6 +70,18 @@ class WithdrawalOrderFactory(factory.DjangoModelFactory):
     tx_fee_btc_amount = Decimal('0.0001')
     change_btc_amount = Decimal(0)
     exchange_rate = Decimal('220')
+
+    @factory.post_generation
+    def account_tx(self, create, extracted, **kwargs):
+        if not create:
+            return
+        if extracted is True:
+            self.account_tx = TransactionFactory.create(
+                account=self.device.account,
+                amount=-self.btc_amount)
+        else:
+            self.account_tx = extracted
+        self.save()
 
     @factory.post_generation
     def time_created(self, create, extracted, **kwargs):

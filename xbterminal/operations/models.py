@@ -77,8 +77,6 @@ class PaymentOrder(models.Model):
         max_digits=18, decimal_places=8)
     extra_btc_amount = models.DecimalField(
         max_digits=18, decimal_places=8, default=0)
-    btc_amount = models.DecimalField(
-        max_digits=20, decimal_places=8)
     instantfiat_invoice_id = models.CharField(
         max_length=255, null=True)
 
@@ -86,11 +84,16 @@ class PaymentOrder(models.Model):
         models.CharField(max_length=64, validators=[validate_transaction]),
         default=list)
     outgoing_tx_id = models.CharField(
-        max_length=64, validators=[validate_transaction], null=True)
+        max_length=64,
+        validators=[validate_transaction],
+        null=True)
     refund_tx_id = models.CharField(
         max_length=64, validators=[validate_transaction], null=True)
     payment_type = models.CharField(
         max_length=10, choices=PAYMENT_TYPES)
+    account_tx = models.OneToOneField(
+        'website.Transaction',
+        null=True)
 
     time_created = models.DateTimeField(auto_now_add=True)
     time_recieved = models.DateTimeField(null=True)
@@ -166,6 +169,16 @@ class PaymentOrder(models.Model):
             kwargs={'uid': self.uid})
 
     @property
+    def btc_amount(self):
+        """
+        Total BTC amount (for receipts)
+        """
+        return (self.merchant_btc_amount +
+                self.instantfiat_btc_amount +
+                self.fee_btc_amount +
+                self.tx_fee_btc_amount)
+
+    @property
     def effective_exchange_rate(self):
         return (self.fiat_amount / self.btc_amount).quantize(BTC_DEC_PLACES)
 
@@ -217,6 +230,9 @@ class WithdrawalOrder(models.Model):
         max_length=64,
         validators=[validate_transaction],
         null=True)
+    account_tx = models.OneToOneField(
+        'website.Transaction',
+        null=True)
 
     time_created = models.DateTimeField(auto_now_add=True)
     time_sent = models.DateTimeField(null=True)
@@ -230,7 +246,7 @@ class WithdrawalOrder(models.Model):
     @property
     def btc_amount(self):
         """
-        Total BTC amount
+        Total BTC amount (for receipts)
         """
         return self.customer_btc_amount + self.tx_fee_btc_amount
 

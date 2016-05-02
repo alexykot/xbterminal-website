@@ -14,7 +14,7 @@ from django.views.generic import View
 from django.views.generic.base import ContextMixin, TemplateResponseMixin
 from django.utils.decorators import method_decorator
 from django.core.urlresolvers import resolve, reverse
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, F
 from django.contrib import messages
 from django.utils import timezone
 from django.utils.translation import ugettext as _
@@ -590,7 +590,11 @@ class ReconciliationView(DeviceMixin, TemplateResponseMixin, CabinetView):
             values('date', 'fiat_currency').\
             annotate(
                 count=Count('id'),
-                btc_amount=Sum('btc_amount'),
+                btc_amount=Sum(
+                    F('merchant_btc_amount') +
+                    F('instantfiat_btc_amount') +
+                    F('fee_btc_amount') +
+                    F('tx_fee_btc_amount')),
                 fiat_amount=Sum('fiat_amount'),
                 instantfiat_fiat_amount=Sum('instantfiat_fiat_amount')).\
             order_by('-date')
