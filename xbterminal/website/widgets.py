@@ -10,7 +10,7 @@ from django.utils.encoding import force_text
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from website.files import get_verification_file_name
+from website.utils.files import get_verification_file_name
 from operations.services import blockcypher
 
 

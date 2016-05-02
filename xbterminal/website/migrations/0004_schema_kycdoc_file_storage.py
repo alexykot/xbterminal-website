@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
-import website.files
+import website.utils.files
 
 
 class Migration(migrations.Migration):
@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='kycdocument',
             name='file',
-            field=models.FileField(storage=website.files.VerificationFileStorage(), upload_to=website.files.verification_file_path_gen),
+            field=models.FileField(storage=website.utils.files.VerificationFileStorage(), upload_to=website.utils.files.verification_file_path_gen),
             preserve_default=True,
         ),
     ]

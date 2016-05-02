@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.db import models, migrations
 import website.models
 import django_countries.fields
-import website.files
+import website.utils.files
 import website.validators
 from django.conf import settings
 import django.utils.timezone
@@ -90,7 +90,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('document_type', models.IntegerField(choices=[(1, b'IdentityDocument'), (2, b'CorporateDocument')])),
-                ('file', models.FileField(storage=django.core.files.storage.FileSystemStorage(base_url=b'/verification/', location=b'media/verification'), upload_to=website.files.verification_file_path_gen)),
+                ('file', models.FileField(storage=django.core.files.storage.FileSystemStorage(base_url=b'/verification/', location=b'media/verification'), upload_to=website.utils.files.verification_file_path_gen)),
                 ('uploaded', models.DateTimeField(auto_now_add=True)),
                 ('status', models.CharField(default=b'uploaded', max_length=50, choices=[(b'uploaded', 'Uploaded'), (b'unverified', 'Unverified'), (b'denied', 'Denied'), (b'verified', 'Verified')])),
                 ('gocoin_document_id', models.CharField(max_length=36, null=True, blank=True)),
