@@ -80,12 +80,13 @@ def prepare_withdrawal(device, fiat_amount):
 
     # Get unspent outputs and check balance
     bc = BlockChain(order.bitcoin_network)
+    minconf = 0 if config.WITHDRAW_UNCONFIRMED else 1
+    unspent_sum = Decimal(0)
+    unspent_outputs = bc.get_unspent_outputs(order.merchant_address,
+                                             minconf=minconf)
     all_reserved_outputs = _get_all_reserved_outputs(order)
     reserved_outputs = []
-    unspent_sum = Decimal(0)
-    minconf = 0 if config.WITHDRAW_UNCONFIRMED else 1
-    for output in bc.get_unspent_outputs(order.merchant_address,
-                                         minconf=minconf):
+    for output in unspent_outputs:
         if output['outpoint'] in all_reserved_outputs:
             # Output already reserved by another order, skip
             continue
@@ -97,6 +98,8 @@ def prepare_withdrawal(device, fiat_amount):
     else:
         raise WithdrawalError('Insufficient funds')
     order.reserved_outputs = serialize_outputs(reserved_outputs)
+    logger.info('reserved {0} of {1} unspent outputs'.format(
+        len(reserved_outputs), len(unspent_outputs)))
 
     # Calculate change amount
     order.change_btc_amount = unspent_sum - order.btc_amount
