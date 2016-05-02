@@ -42,6 +42,7 @@ class AccountAdminTestCase(TestCase):
             'balance_max': '0.00',
             'bitcoin_address': '',
             'instantfiat_provider': '',
+            'instantfiat_merchant_id': '',
             'instantfiat_api_key': '',
         }
         form = form_cls(data=data)

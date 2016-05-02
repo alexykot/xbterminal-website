@@ -150,11 +150,10 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
         cleaned_data = super(SimpleMerchantRegistrationForm, self).clean()
         return {key: val.strip() for key, val in cleaned_data.items()}
 
-    def save(self, commit=True):
+    def save(self):
         """
         Create django user and merchant account
         """
-        assert commit  # Always commit
         instance = super(SimpleMerchantRegistrationForm, self).save(commit=False)
         instance.language = get_language(instance.country.code)
         instance.currency = get_currency(instance.country.code)
