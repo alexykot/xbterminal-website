@@ -7,6 +7,7 @@ from django.utils import timezone
 from operations import (
     BTC_DEC_PLACES,
     BTC_MIN_OUTPUT,
+    WITHDRAWAL_TIMEOUT,
     WITHDRAWAL_BROADCAST_TIMEOUT)
 from operations.services import blockcypher
 from operations.services.price import get_exchange_rate
@@ -32,11 +33,12 @@ def _get_all_reserved_outputs(current_order):
     Returns:
         set of COutPoint instances
     """
+    # Active orders == withdrawal orders with status 'new'
     active_orders = WithdrawalOrder.objects.\
         exclude(pk=current_order.pk).\
         filter(
             merchant_address=current_order.merchant_address,
-            time_created__gt=timezone.now() - WITHDRAWAL_BROADCAST_TIMEOUT,
+            time_created__gt=timezone.now() - WITHDRAWAL_TIMEOUT,
             time_cancelled__isnull=True)
     all_reserved_outputs = set()  # COutPoint is hashable
     for order in active_orders:
@@ -78,7 +80,8 @@ def prepare_withdrawal(device, fiat_amount):
     if order.customer_btc_amount < BTC_MIN_OUTPUT:
         raise WithdrawalError('Customer BTC amount is below dust threshold')
 
-    # Get unspent outputs and check balance
+    # Find unspent outputs which are not reserved by other orders
+    # and check balance
     bc = BlockChain(order.bitcoin_network)
     minconf = 0 if config.WITHDRAW_UNCONFIRMED else 1
     unspent_sum = Decimal(0)
