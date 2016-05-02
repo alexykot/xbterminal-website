@@ -1,0 +1,14 @@
+#DEBHELPER#
+
+setup_xbt_user() {
+        if ! getent passwd xbt-app >/dev/null; then
+		adduser --quiet --system --group --no-create-home --home /var/www/xbterminal.com/ --shell /usr/sbin/nologin xbt-app --uid 6000 
+        fi
+}
+
+if [ "$1" = configure ]; then
+        setup_xbt_user
+
+fi
+
+
