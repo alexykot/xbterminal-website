@@ -166,13 +166,13 @@ CACHES = {
 }
 
 RQ_QUEUES = {
-    'high': {
-        # For payments and withdrawals
-        'USE_REDIS_CACHE': 'default',
-    },
     'low': {
         # For activation
-        'USE_REDIS_CACHE': 'default',
+        'URL': 'redis://127.0.0.1:6379/1',
+    },
+    'high': {
+        # For payments and withdrawals
+        'URL': 'redis://127.0.0.1:6379/1',
     },
 }
 
