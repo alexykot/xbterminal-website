@@ -202,6 +202,7 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
                                 self.request.body,
                                 signature)
 
+    @atomic
     def create(self, request):
         form = WithdrawalForm(data=self.request.data)
         if not form.is_valid():

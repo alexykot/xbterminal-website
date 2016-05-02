@@ -130,7 +130,7 @@ def send_transaction(order, customer_address):
     all_reserved_outputs = _get_all_reserved_outputs(order)
     if set(tx_inputs) & all_reserved_outputs:
         # Some of the reserved outputs are reserved by other orders
-        logger.warning('send_transaction - some outputs are reserved by other orders')
+        logger.critical('send_transaction - some outputs are reserved by other orders')
         raise WithdrawalError('Insufficient funds')
 
     # Create and send transaction
