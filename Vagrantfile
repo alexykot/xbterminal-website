@@ -41,8 +41,4 @@ Vagrant.configure("2") do |config|
     run_remote "bash /vagrant/vagrant/backup.sh"
   end
 
-  config.trigger.after :up do
-    run_remote "bash /vagrant/vagrant/restore.sh"
-  end
-
 end
