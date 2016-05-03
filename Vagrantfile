@@ -13,6 +13,7 @@ Vagrant.configure("2") do |config|
   config.vm.network "forwarded_port", guest: 5432, host: settings['vm']['ports']['postgresql']
   config.vm.network "forwarded_port", guest: 6379, host: settings['vm']['ports']['redis']
   config.vm.network "forwarded_port", guest: 18332, host: settings['vm']['ports']['bitcoind']
+  config.vm.network "forwarded_port", guest: 8083, host: settings['vm']['ports']['xbt-server']
 
   config.vm.provider "virtualbox" do |vb|
     vb.name = "XBTerminal Server"
