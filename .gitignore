@@ -3,7 +3,7 @@ local_settings.py
 venv
 .vagrant
 vagrant/settings.yml
-vagrant/backup
+vagrant/backups
 .coverage
 /static
 /media

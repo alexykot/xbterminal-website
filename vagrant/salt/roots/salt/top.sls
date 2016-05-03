@@ -3,3 +3,4 @@ base:
     - postgresql
     - redis
     - bitcoind
+    - xbt-server

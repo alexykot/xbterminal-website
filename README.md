@@ -1,17 +1,5 @@
 # README
 
-## Production
-
-Requirements:
-
-* Python 2
-* Postgresql
-* Redis
-* nginx + uwsgi
-* supervisord
-* Debian packages: `apt-get install libffi-dev libpq-dev libjpeg-dev`
-* Python packages listed in `requirements.txt`
-
 ## Development
 
 Requirements:
@@ -20,8 +8,7 @@ Requirements:
 * VirtualBox
 * vagrant
 * vagrant-triggers plugin
-* virtualenv
-* fabric
+* fabric (optional)
 
 ### Run vagrant
 
@@ -31,12 +18,6 @@ Start VM:
 
 ```
 vagrant up
-```
-
-### Prepare virtual env
-
-```
-fab build
 ```
 
 ### Local settings
@@ -57,12 +38,9 @@ These variables should be redefined in `xbterminal/xbterminal/local_settings.py`
 ### Start server
 
 ```
+vagrant ssh
 . venv/bin/activate
+cd /vagrant
+python xbterminal/manage.py migrate
 honcho start
-```
-
-### Testing
-
-```
-fab check
 ```
