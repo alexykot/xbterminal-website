@@ -5,13 +5,22 @@ from mock import patch, Mock
 from operations.services import wrappers, blockcypher, sochain
 
 
-class ExchangeRateTestCase(TestCase):
+class WrappersTestCase(TestCase):
 
     @patch('operations.services.wrappers.coindesk.get_exchange_rate')
-    def test_get_exchage_rate(self, coindesk_mock):
-        coindesk_mock.return_value = Decimal('200')
+    @patch('operations.services.wrappers.btcaverage.get_exchange_rate')
+    def test_get_exchage_rate(self, btcavg_mock, coindesk_mock):
+        coindesk_mock.side_effect = ValueError
+        btcavg_mock.return_value = Decimal('200')
         rate = wrappers.get_exchange_rate('USD')
         self.assertEqual(rate, Decimal('200'))
+
+    @patch('operations.services.wrappers.blockcypher.is_tx_reliable')
+    @patch('operations.services.wrappers.sochain.is_tx_reliable')
+    def test_is_tx_reliable(self, so_mock, bc_mock):
+        bc_mock.side_effect = ValueError
+        so_mock.return_value = True
+        self.assertTrue(wrappers.is_tx_reliable('tx_id', 'mainnet'))
 
 
 class BlockcypherTestCase(TestCase):

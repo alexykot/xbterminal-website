@@ -6,8 +6,7 @@ from operations import (
     BTC_DEC_PLACES,
     BTC_MIN_OUTPUT,
     WITHDRAWAL_BROADCAST_TIMEOUT)
-from operations.services import blockcypher
-from operations.services.wrappers import get_exchange_rate
+from operations.services.wrappers import get_exchange_rate, is_tx_reliable
 from operations.blockchain import (
     BlockChain,
     get_tx_fee,
@@ -159,15 +158,8 @@ def wait_for_confidence(order_uid):
         # Timeout, cancel job
         send_error_message(order=order)
         cancel_current_task()
-    try:
-        outgoing_tx_reliable = blockcypher.is_tx_reliable(
-            order.outgoing_tx_id,
-            order.bitcoin_network)
-    except Exception as error:
-        # Error when accessing blockcypher API, try again
-        logger.exception(error)
         return
-    if outgoing_tx_reliable:
+    if is_tx_reliable(order.outgoing_tx_id, order.bitcoin_network):
         cancel_current_task()
         if order.time_broadcasted is None:
             order.time_broadcasted = timezone.now()

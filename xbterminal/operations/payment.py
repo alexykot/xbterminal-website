@@ -24,8 +24,7 @@ from operations import (
     instantfiat,
     exceptions,
     protocol)
-from operations.services import blockcypher
-from operations.services.wrappers import get_exchange_rate
+from operations.services.wrappers import get_exchange_rate, is_tx_reliable
 from operations.rq_helpers import run_periodic_task, cancel_current_task
 from operations.models import PaymentOrder
 
@@ -293,16 +292,8 @@ def wait_for_validation(payment_order_uid):
         return
     if payment_order.time_recieved is not None:
         for incoming_tx_id in payment_order.incoming_tx_ids:
-            try:
-                incoming_tx_reliable = blockcypher.is_tx_reliable(
-                    incoming_tx_id,
-                    payment_order.bitcoin_network)
-            except Exception as error:
-                # Error when accessing blockcypher API
-                logger.exception(error)
-                cancel_current_task()
-                return
-            if not incoming_tx_reliable:
+            if not is_tx_reliable(incoming_tx_id,
+                                  payment_order.bitcoin_network):
                 # Break cycle, wait for confidence
                 break
         else:
