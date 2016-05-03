@@ -26,7 +26,9 @@ class BlockcypherTestCase(TestCase):
         })
         tx_id = '0' * 64
         self.assertFalse(blockcypher.is_tx_reliable(tx_id, 'mainnet'))
-        self.assertIn('/btc/main/', get_mock.call_args[0][0])
+        args = get_mock.call_args
+        self.assertIn('/btc/main/', args[0][0])
+        self.assertEqual(args[1]['params']['includeConfidence'], 'true')
 
     @patch('operations.services.blockcypher.requests.get')
     def test_is_tx_reliable_confirmed(self, get_mock):

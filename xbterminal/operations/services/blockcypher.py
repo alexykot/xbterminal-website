@@ -20,6 +20,8 @@ def is_tx_reliable(tx_id, network):
         chain=BLOCKCYPHER_CHAINS[network],
         tx_id=tx_id)
     payload = {'includeConfidence': 'true'}
+    if config.BLOCKCYPHER_API_TOKEN:
+        payload['token'] = config.BLOCKCYPHER_API_TOKEN
     response = requests.get(api_url, params=payload)
     response.raise_for_status()
     data = response.json()
