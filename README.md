@@ -41,5 +41,6 @@ These variables should be redefined in `xbterminal/xbterminal/local_settings.py`
 vagrant ssh
 . venv/bin/activate
 cd /vagrant
+python xbterminal/manage.py migrate
 honcho start
 ```
