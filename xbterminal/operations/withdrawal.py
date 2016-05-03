@@ -7,7 +7,7 @@ from operations import (
     BTC_MIN_OUTPUT,
     WITHDRAWAL_BROADCAST_TIMEOUT)
 from operations.services import blockcypher
-from operations.services.price import get_exchange_rate
+from operations.services.wrappers import get_exchange_rate
 from operations.blockchain import (
     BlockChain,
     get_tx_fee,

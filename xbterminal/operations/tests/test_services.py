@@ -2,15 +2,15 @@ from decimal import Decimal
 from django.test import TestCase
 from mock import patch, Mock
 
-from operations.services import price, blockcypher, sochain
+from operations.services import wrappers, blockcypher, sochain
 
 
 class ExchangeRateTestCase(TestCase):
 
-    @patch('operations.services.price.get_coindesk_rate')
-    def test_coindesk(self, coindesk_mock):
+    @patch('operations.services.wrappers.coindesk.get_exchange_rate')
+    def test_get_exchage_rate(self, coindesk_mock):
         coindesk_mock.return_value = Decimal('200')
-        rate = price.get_exchange_rate('USD')
+        rate = wrappers.get_exchange_rate('USD')
         self.assertEqual(rate, Decimal('200'))
 
 

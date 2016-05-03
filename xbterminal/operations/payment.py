@@ -25,7 +25,7 @@ from operations import (
     exceptions,
     protocol)
 from operations.services import blockcypher
-from operations.services.price import get_exchange_rate
+from operations.services.wrappers import get_exchange_rate
 from operations.rq_helpers import run_periodic_task, cancel_current_task
 from operations.models import PaymentOrder
 
