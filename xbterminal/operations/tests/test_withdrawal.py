@@ -214,7 +214,7 @@ class SendTransactionTestCase(TestCase):
 class WaitForConfidenceTestCase(TestCase):
 
     @patch('operations.withdrawal.cancel_current_task')
-    @patch('operations.withdrawal.blockcypher.is_tx_reliable')
+    @patch('operations.withdrawal.is_tx_reliable')
     def test_tx_broadcasted(self, tx_check_mock, cancel_mock):
         order = WithdrawalOrderFactory.create(
             time_sent=timezone.now())
@@ -225,7 +225,7 @@ class WaitForConfidenceTestCase(TestCase):
         self.assertTrue(cancel_mock.called)
 
     @patch('operations.withdrawal.cancel_current_task')
-    @patch('operations.withdrawal.blockcypher.is_tx_reliable')
+    @patch('operations.withdrawal.is_tx_reliable')
     def test_tx_not_broadcasted(self, tx_check_mock, cancel_mock):
         order = WithdrawalOrderFactory.create(
             time_sent=timezone.now())
@@ -236,7 +236,7 @@ class WaitForConfidenceTestCase(TestCase):
         self.assertFalse(cancel_mock.called)
 
     @patch('operations.withdrawal.cancel_current_task')
-    @patch('operations.withdrawal.blockcypher.is_tx_reliable')
+    @patch('operations.withdrawal.is_tx_reliable')
     def test_does_not_exist(self, tx_check_mock, cancel_mock):
         withdrawal.wait_for_confidence('invalid_uid')
         self.assertTrue(cancel_mock.called)
@@ -244,7 +244,8 @@ class WaitForConfidenceTestCase(TestCase):
 
     @patch('operations.withdrawal.cancel_current_task')
     @patch('operations.withdrawal.send_error_message')
-    def test_timeout(self, send_mock, cancel_mock):
+    @patch('operations.withdrawal.is_tx_reliable')
+    def test_timeout(self, tx_check_mock, send_mock, cancel_mock):
         order = WithdrawalOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=1),
             time_sent=timezone.now() - datetime.timedelta(hours=1))
@@ -254,3 +255,4 @@ class WaitForConfidenceTestCase(TestCase):
         self.assertTrue(cancel_mock.called)
         self.assertTrue(send_mock.called)
         self.assertEqual(send_mock.call_args[1]['order'].pk, order.pk)
+        self.assertFalse(tx_check_mock.called)
