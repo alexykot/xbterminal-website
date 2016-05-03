@@ -2,7 +2,7 @@ from decimal import Decimal
 from django.test import TestCase
 from mock import patch, Mock
 
-from operations.services import price, blockcypher
+from operations.services import price, blockcypher, sochain
 
 
 class ExchangeRateTestCase(TestCase):
@@ -51,3 +51,34 @@ class BlockcypherTestCase(TestCase):
         address = 'test'
         self.assertEqual(blockcypher.get_address_url(address, 'mainnet'),
                          'https://live.blockcypher.com/btc/address/test/')
+
+
+class SoChainTestCase(TestCase):
+
+    @patch('operations.services.sochain.requests.get')
+    def test_is_tx_reliable(self, get_mock):
+        get_mock.return_value = Mock(**{
+            'json.return_value': {
+                'data': {
+                    'confirmations': 0,
+                    'confidence': 0.93,
+                },
+            },
+        })
+        tx_id = '0' * 64
+        self.assertFalse(sochain.is_tx_reliable(tx_id, 'mainnet'))
+        self.assertIn('/BTC/', get_mock.call_args[0][0])
+
+    @patch('operations.services.sochain.requests.get')
+    def test_is_tx_reliable_confirmed(self, get_mock):
+        get_mock.return_value = Mock(**{
+            'json.return_value': {
+                'data': {
+                    'confirmations': 1,
+                    'confidence': 1,
+                },
+            },
+        })
+        tx_id = '0' * 64
+        self.assertTrue(sochain.is_tx_reliable(tx_id, 'mainnet'))
+        self.assertIn('/BTC/', get_mock.call_args[0][0])
