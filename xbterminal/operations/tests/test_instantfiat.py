@@ -96,3 +96,25 @@ class CryptoPayTestCase(TestCase):
         result = instantfiat.cryptopay.is_invoice_paid(
             'invoice_id', 'test')
         self.assertFalse(result)
+
+    @patch('operations.instantfiat.cryptopay.requests.post')
+    def test_create_merchant(self, post_mock):
+        post_mock.return_value = Mock(**{
+            'json.return_value': {
+                'id': '4437b1ac-d1e7-4a26-92bb-933d930d50b8',
+                'email': 'john@example.com',
+                'apikey': 'abcd1234',
+            },
+        })
+        first_name = 'John'
+        last_name = 'Doe'
+        email = 'john@example.com'
+        password = 'password'
+        api_key = 'test-api-key'
+        merchant_id, merchant_api_key = instantfiat.cryptopay.create_merchant(
+            first_name, last_name, email, password, api_key)
+        self.assertEqual(merchant_id,
+                         '4437b1ac-d1e7-4a26-92bb-933d930d50b8')
+        self.assertEqual(merchant_api_key, 'abcd1234')
+        self.assertEqual(post_mock.call_args[1]['headers']['X-Api-Key'],
+                         'test-api-key')

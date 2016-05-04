@@ -1,5 +1,5 @@
 """
-https://github.com/cryptopay-dev/cryptopay-api
+https://developers.cryptopay.me/
 """
 from decimal import Decimal
 import json
@@ -60,3 +60,32 @@ def is_invoice_paid(invoice_id, api_key):
         return True
     else:
         return False
+
+
+def create_merchant(first_name, last_name, email, password, api_key):
+    """
+    Accepts:
+        first_name, last_name, email, password: merchant info
+        api_key: CryptoPay API key with access to users API
+    Returns:
+        merchant id, merchant api key
+    """
+    api_url = 'https://cryptopay.me/api/v2/users'
+    payload = {
+        'first_name': first_name,
+        'last_name': last_name,
+        'email': email,
+        'password': password,
+        'send_welcome_email': False,
+    }
+    headers = {
+        'Content-Type': 'application/json',
+        'X-Api-Key': api_key,
+    }
+    response = requests.post(
+        api_url,
+        data=json.dumps(payload),
+        headers=headers)
+    response.raise_for_status()
+    data = response.json()
+    return data['id'], data['apikey']
