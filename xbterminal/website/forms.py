@@ -190,7 +190,6 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             merchant.contact_first_name,
             merchant.contact_last_name,
             merchant.contact_email,
-            'xFKNVgw3CFgr5nQr',
             config.CRYPTOPAY_API_KEY)
         Account.objects.create(
             merchant=merchant,

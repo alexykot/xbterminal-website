@@ -112,10 +112,9 @@ class CryptoPayTestCase(TestCase):
         first_name = 'John'
         last_name = 'Doe'
         email = 'john@example.com'
-        password = 'password'
         api_key = 'test-api-key'
         merchant_id, merchant_api_key = instantfiat.cryptopay.create_merchant(
-            first_name, last_name, email, password, api_key)
+            first_name, last_name, email, api_key)
         self.assertEqual(merchant_id,
                          '4437b1ac-d1e7-4a26-92bb-933d930d50b8')
         self.assertEqual(merchant_api_key, 'abcd1234')
@@ -132,7 +131,7 @@ class CryptoPayTestCase(TestCase):
         })
         with self.assertRaises(CryptoPayUserAlreadyExists):
             instantfiat.cryptopay.create_merchant(
-                'fname', 'lname', 'email', 'pass', 'key')
+                'fname', 'lname', 'email', 'key')
 
     @patch('operations.instantfiat.cryptopay.requests.post')
     def test_create_merchant_error(self, post_mock):
@@ -142,4 +141,4 @@ class CryptoPayTestCase(TestCase):
         })
         with self.assertRaises(Exception):
             instantfiat.cryptopay.create_merchant(
-                'fname', 'lname', 'email', 'pass', 'key')
+                'fname', 'lname', 'email', 'key')

@@ -64,10 +64,11 @@ def is_invoice_paid(invoice_id, api_key):
         return False
 
 
-def create_merchant(first_name, last_name, email, password, api_key):
+def create_merchant(first_name, last_name, email, api_key):
     """
+    Creates CryptoPay user with random password
     Accepts:
-        first_name, last_name, email, password: merchant info
+        first_name, last_name, email: merchant info
         api_key: CryptoPay API key with access to users API
     Returns:
         merchant id, merchant api key
@@ -77,7 +78,6 @@ def create_merchant(first_name, last_name, email, password, api_key):
         'first_name': first_name,
         'last_name': last_name,
         'email': email,
-        'password': password,
         'send_welcome_email': False,
     }
     headers = {
