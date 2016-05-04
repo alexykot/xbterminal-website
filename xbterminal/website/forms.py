@@ -5,6 +5,7 @@ from django.contrib.auth.forms import (
     AuthenticationForm as DjangoAuthenticationForm,
     UserCreationForm as DjangoUserCreationForm,
     UserChangeForm as DjangoUserChangeForm)
+from django.db.transaction import atomic
 from django.utils.translation import ugettext as _
 
 from captcha.fields import ReCaptchaField
@@ -150,26 +151,25 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
         cleaned_data = super(SimpleMerchantRegistrationForm, self).clean()
         return {key: val.strip() for key, val in cleaned_data.items()}
 
+    @atomic
     def save(self):
         """
         Create django user and merchant account
         """
-        instance = super(SimpleMerchantRegistrationForm, self).save(commit=False)
-        instance.language = get_language(instance.country.code)
-        instance.currency = get_currency(instance.country.code)
+        merchant = super(SimpleMerchantRegistrationForm, self).save(commit=False)
+        merchant.language = get_language(merchant.country.code)
+        merchant.currency = get_currency(merchant.country.code)
         # Create new user
         password = get_user_model().objects.make_random_password()
         user = get_user_model().objects.create_user(
-            instance.contact_email,
+            merchant.contact_email,
             password,
             commit=False)
         user.backend = 'django.contrib.auth.backends.ModelBackend'
-        # Send email
-        send_registration_email(instance.contact_email, password)
-        # Save objects
         user.save()
-        instance.user = user
-        instance.save()
+        # Create merchant
+        merchant.user = user
+        merchant.save()
         # Create oauth client
         Application.objects.create(
             user=user,
@@ -180,9 +180,11 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             client_secret='AFoUFXG8orJ2H5ztnycc5a95')
         # Create BTC account
         Account.objects.create(
-            merchant=instance,
+            merchant=merchant,
             currency=Currency.objects.get(name='BTC'))
-        return instance
+        # Send email
+        send_registration_email(merchant.contact_email, password)
+        return merchant
 
 
 class MerchantRegistrationForm(SimpleMerchantRegistrationForm):

@@ -1,7 +1,9 @@
 from django.test import TestCase
 from django.core import mail
+from mock import patch
 
 from oauth2_provider.models import Application
+from website.models import MerchantAccount
 from website.forms import (
     MerchantRegistrationForm,
     ResetPasswordForm,
@@ -55,6 +57,27 @@ class MerchantRegistrationFormTestCase(TestCase):
         self.assertIn('contact_last_name', form.errors)
         self.assertIn('contact_email', form.errors)
         self.assertIn('contact_phone', form.errors)
+
+    @patch('website.forms.send_registration_email')
+    def test_send_email_error(self, send_mock):
+        send_mock.side_effect = ValueError
+        form_data = {
+            'company_name': 'Test Company',
+            'business_address': 'Test Address',
+            'town': 'Test Town',
+            'country': 'GB',
+            'post_code': '123456',
+            'contact_first_name': 'Test',
+            'contact_last_name': 'Test',
+            'contact_email': 'test@example.net',
+            'contact_phone': '+123456789',
+        }
+        form = MerchantRegistrationForm(data=form_data)
+        self.assertTrue(form.is_valid())
+        with self.assertRaises(ValueError):
+            form.save()
+        self.assertFalse(MerchantAccount.objects.filter(
+            company_name=form_data['company_name']).exists())
 
 
 class ResetPasswordFormTestCase(TestCase):
