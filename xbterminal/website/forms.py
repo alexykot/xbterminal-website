@@ -9,6 +9,7 @@ from django.db.transaction import atomic
 from django.utils.translation import ugettext as _
 
 from captcha.fields import ReCaptchaField
+from constance import config
 from oauth2_provider.models import Application
 
 from website.models import (
@@ -20,7 +21,8 @@ from website.models import (
     ReconciliationTime,
     KYCDocument,
     get_language,
-    get_currency)
+    get_currency,
+    INSTANTFIAT_PROVIDERS)
 from website.widgets import (
     TimeWidget,
     FileWidget,
@@ -29,6 +31,7 @@ from website.validators import validate_bitcoin_address
 from website.utils.email import (
     send_registration_email,
     send_reset_password_email)
+from operations.instantfiat import cryptopay
 
 
 class UserCreationForm(DjangoUserCreationForm):
@@ -182,6 +185,19 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
         Account.objects.create(
             merchant=merchant,
             currency=Currency.objects.get(name='BTC'))
+        # Create CryptoPay account
+        cryptopay_merchant_id, cryptopay_api_key = cryptopay.create_merchant(
+            merchant.contact_first_name,
+            merchant.contact_last_name,
+            merchant.contact_email,
+            'xFKNVgw3CFgr5nQr',
+            config.CRYPTOPAY_API_KEY)
+        Account.objects.create(
+            merchant=merchant,
+            currency=merchant.currency,
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id=cryptopay_merchant_id,
+            instantfiat_api_key=cryptopay_api_key)
         # Send email
         send_registration_email(merchant.contact_email, password)
         return merchant
