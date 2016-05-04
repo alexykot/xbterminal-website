@@ -125,7 +125,7 @@ class CryptoPayTestCase(TestCase):
     def test_create_merchant_already_exists(self, post_mock):
         post_mock.return_value = Mock(**{
             'json.return_value': {
-                'email': 'has already been taken',
+                'email': ['has already been taken'],
             },
             'status_code': 422,
         })
