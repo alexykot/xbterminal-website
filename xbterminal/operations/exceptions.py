@@ -21,6 +21,11 @@ class InstantFiatError(PaymentError):
     message = "InstantFiat service error"
 
 
+class CryptoPayUserAlreadyExists(InstantFiatError):
+
+    message = 'CryptoPay user already exists'
+
+
 class InvalidTransaction(PaymentError):
 
     message = "Invalid transaction"

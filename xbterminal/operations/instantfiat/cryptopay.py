@@ -8,7 +8,9 @@ import logging
 import requests
 
 from operations import BTC_DEC_PLACES
-from operations.exceptions import InstantFiatError
+from operations.exceptions import (
+    InstantFiatError,
+    CryptoPayUserAlreadyExists)
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +88,12 @@ def create_merchant(first_name, last_name, email, password, api_key):
         api_url,
         data=json.dumps(payload),
         headers=headers)
-    response.raise_for_status()
     data = response.json()
-    return data['id'], data['apikey']
+    if response.status_code == 201:
+        return data['id'], data['apikey']
+    else:
+        if data['email'] == 'has already been taken':
+            raise CryptoPayUserAlreadyExists
+        else:
+            response.raise_for_status()
+            raise Exception

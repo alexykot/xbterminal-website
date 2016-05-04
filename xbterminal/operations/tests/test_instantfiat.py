@@ -4,7 +4,9 @@ from mock import patch, Mock
 
 from website.tests.factories import AccountFactory, INSTANTFIAT_PROVIDERS
 from operations import instantfiat
-from operations.exceptions import InstantFiatError
+from operations.exceptions import (
+    InstantFiatError,
+    CryptoPayUserAlreadyExists)
 
 
 class InstantFiatTestCase(TestCase):
@@ -105,6 +107,7 @@ class CryptoPayTestCase(TestCase):
                 'email': 'john@example.com',
                 'apikey': 'abcd1234',
             },
+            'status_code': 201,
         })
         first_name = 'John'
         last_name = 'Doe'
@@ -118,3 +121,25 @@ class CryptoPayTestCase(TestCase):
         self.assertEqual(merchant_api_key, 'abcd1234')
         self.assertEqual(post_mock.call_args[1]['headers']['X-Api-Key'],
                          'test-api-key')
+
+    @patch('operations.instantfiat.cryptopay.requests.post')
+    def test_create_merchant_already_exists(self, post_mock):
+        post_mock.return_value = Mock(**{
+            'json.return_value': {
+                'email': 'has already been taken',
+            },
+            'status_code': 422,
+        })
+        with self.assertRaises(CryptoPayUserAlreadyExists):
+            instantfiat.cryptopay.create_merchant(
+                'fname', 'lname', 'email', 'pass', 'key')
+
+    @patch('operations.instantfiat.cryptopay.requests.post')
+    def test_create_merchant_error(self, post_mock):
+        post_mock.return_value = Mock(**{
+            'json.return_value': {},
+            'status_code': 422,
+        })
+        with self.assertRaises(Exception):
+            instantfiat.cryptopay.create_merchant(
+                'fname', 'lname', 'email', 'pass', 'key')
