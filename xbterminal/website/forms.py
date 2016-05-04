@@ -31,6 +31,7 @@ from website.validators import validate_bitcoin_address
 from website.utils.email import (
     send_registration_email,
     send_reset_password_email)
+from operations.exceptions import CryptoPayUserAlreadyExists
 from operations.instantfiat import cryptopay
 
 
@@ -186,17 +187,22 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             merchant=merchant,
             currency=Currency.objects.get(name='BTC'))
         # Create CryptoPay account
-        cryptopay_merchant_id, cryptopay_api_key = cryptopay.create_merchant(
-            merchant.contact_first_name,
-            merchant.contact_last_name,
-            merchant.contact_email,
-            config.CRYPTOPAY_API_KEY)
-        Account.objects.create(
-            merchant=merchant,
-            currency=merchant.currency,
-            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-            instantfiat_merchant_id=cryptopay_merchant_id,
-            instantfiat_api_key=cryptopay_api_key)
+        try:
+            cryptopay_merchant_id, cryptopay_api_key = cryptopay.create_merchant(
+                merchant.contact_first_name,
+                merchant.contact_last_name,
+                merchant.contact_email,
+                config.CRYPTOPAY_API_KEY)
+        except CryptoPayUserAlreadyExists:
+            # TODO: ask merchant for CryptoPay API key later
+            pass
+        else:
+            Account.objects.create(
+                merchant=merchant,
+                currency=merchant.currency,
+                instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+                instantfiat_merchant_id=cryptopay_merchant_id,
+                instantfiat_api_key=cryptopay_api_key)
         # Send email
         send_registration_email(merchant.contact_email, password)
         return merchant

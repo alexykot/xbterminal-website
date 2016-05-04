@@ -14,6 +14,7 @@ from website.tests.factories import (
     MerchantAccountFactory,
     AccountFactory,
     DeviceFactory)
+from operations.exceptions import CryptoPayUserAlreadyExists
 
 
 class MerchantRegistrationFormTestCase(TestCase):
@@ -59,6 +60,26 @@ class MerchantRegistrationFormTestCase(TestCase):
         # Email
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to[0], form_data['contact_email'])
+
+    @patch('website.forms.cryptopay.create_merchant')
+    def test_cryptopay_user_alredy_exists(self, cryptopay_mock):
+        cryptopay_mock.side_effect = CryptoPayUserAlreadyExists
+        form_data = {
+            'company_name': 'Test Company',
+            'business_address': 'Test Address',
+            'town': 'Test Town',
+            'country': 'GB',
+            'post_code': '123456',
+            'contact_first_name': 'Test',
+            'contact_last_name': 'Test',
+            'contact_email': 'test@example.net',
+            'contact_phone': '+123456789',
+        }
+        form = MerchantRegistrationForm(data=form_data)
+        self.assertTrue(form.is_valid())
+        merchant = form.save()
+        self.assertEqual(merchant.account_set.count(), 1)
+        self.assertEqual(merchant.account_set.first().currency.name, 'BTC')
 
     def test_required(self):
         form = MerchantRegistrationForm(data={})
