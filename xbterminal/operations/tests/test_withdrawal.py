@@ -18,13 +18,13 @@ class PrepareWithdrawalTestCase(TestCase):
 
     @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.get_exchange_rate')
-    def test_prepare(self, get_rate_mock, bc_mock):
+    def test_prepare(self, get_rate_mock, bc_cls_mock):
         device = DeviceFactory.create(
             account__bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
         fiat_amount = Decimal('1.00')
         exchange_rate = Decimal(100)
         get_rate_mock.return_value = exchange_rate
-        bc_mock.return_value = Mock(**{
+        bc_cls_mock.return_value = bc_mock = Mock(**{
             'get_unspent_outputs.return_value': [
                 {'amount': Decimal('0.005'), 'outpoint': outpoint_factory()},
                 {'amount': Decimal('0.007'), 'outpoint': outpoint_factory()},
@@ -45,6 +45,10 @@ class PrepareWithdrawalTestCase(TestCase):
         self.assertEqual(order.change_btc_amount, Decimal('0.0019'))
         self.assertIsNotNone(order.reserved_outputs)
         self.assertEqual(order.status, 'new')
+        self.assertEqual(bc_mock.get_unspent_outputs.call_args[0][0],
+                         order.merchant_address)
+        self.assertEqual(
+            bc_mock.get_unspent_outputs.call_args[1]['minconf'], 1)
 
     def test_no_account(self):
         device = DeviceFactory.create(status='registered')

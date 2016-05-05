@@ -61,14 +61,15 @@ class BlockChain(object):
             balance += Decimal(out['amount']) / COIN
         return balance.quantize(BTC_DEC_PLACES)
 
-    def get_unspent_outputs(self, address):
+    def get_unspent_outputs(self, address, minconf=0):
         """
         Accepts:
             address: CBitcoinAddress
+            minconf: only include transactions confirmed at least this many times
         Returns:
             txouts: list of dicts
         """
-        txouts = self._proxy.listunspent(minconf=0, addrs=[address])
+        txouts = self._proxy.listunspent(minconf=minconf, addrs=[address])
         for out in txouts:
             out['amount'] = Decimal(out['amount']) / COIN
         return txouts

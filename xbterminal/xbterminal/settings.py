@@ -271,6 +271,7 @@ CONSTANCE_CONFIG = {
     'BLOCKCYPHER_API_TOKEN': ('', 'BlockCypher API token'),
     'CURRENT_BATCH_NUMBER': ('', 'Batch number'),
     'TX_CONFIDENCE_THRESHOLD': (0.95, 'Transaction confidence threshold'),
+    'WITHDRAW_UNCONFIRMED': (False, 'Allow to withdraw from unconfirmed deposits'),
 }
 
 # Misc

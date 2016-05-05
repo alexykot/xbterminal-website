@@ -1,10 +1,13 @@
 from decimal import Decimal
 import logging
+
+from constance import config
 from django.utils import timezone
 
 from operations import (
     BTC_DEC_PLACES,
     BTC_MIN_OUTPUT,
+    WITHDRAWAL_TIMEOUT,
     WITHDRAWAL_BROADCAST_TIMEOUT)
 from operations.services.wrappers import get_exchange_rate, is_tx_reliable
 from operations.blockchain import (
@@ -29,11 +32,12 @@ def _get_all_reserved_outputs(current_order):
     Returns:
         set of COutPoint instances
     """
+    # Active orders == withdrawal orders with status 'new'
     active_orders = WithdrawalOrder.objects.\
         exclude(pk=current_order.pk).\
         filter(
             merchant_address=current_order.merchant_address,
-            time_created__gt=timezone.now() - WITHDRAWAL_BROADCAST_TIMEOUT,
+            time_created__gt=timezone.now() - WITHDRAWAL_TIMEOUT,
             time_cancelled__isnull=True)
     all_reserved_outputs = set()  # COutPoint is hashable
     for order in active_orders:
@@ -75,12 +79,16 @@ def prepare_withdrawal(device, fiat_amount):
     if order.customer_btc_amount < BTC_MIN_OUTPUT:
         raise WithdrawalError('Customer BTC amount is below dust threshold')
 
-    # Get unspent outputs and check balance
+    # Find unspent outputs which are not reserved by other orders
+    # and check balance
     bc = BlockChain(order.bitcoin_network)
+    minconf = 0 if config.WITHDRAW_UNCONFIRMED else 1
+    unspent_sum = Decimal(0)
+    unspent_outputs = bc.get_unspent_outputs(order.merchant_address,
+                                             minconf=minconf)
     all_reserved_outputs = _get_all_reserved_outputs(order)
     reserved_outputs = []
-    unspent_sum = Decimal(0)
-    for output in bc.get_unspent_outputs(order.merchant_address):
+    for output in unspent_outputs:
         if output['outpoint'] in all_reserved_outputs:
             # Output already reserved by another order, skip
             continue
@@ -92,6 +100,8 @@ def prepare_withdrawal(device, fiat_amount):
     else:
         raise WithdrawalError('Insufficient funds')
     order.reserved_outputs = serialize_outputs(reserved_outputs)
+    logger.info('reserved {0} of {1} unspent outputs'.format(
+        len(reserved_outputs), len(unspent_outputs)))
 
     # Calculate change amount
     order.change_btc_amount = unspent_sum - order.btc_amount
@@ -122,7 +132,7 @@ def send_transaction(order, customer_address):
     all_reserved_outputs = _get_all_reserved_outputs(order)
     if set(tx_inputs) & all_reserved_outputs:
         # Some of the reserved outputs are reserved by other orders
-        logger.warning('send_transaction - some outputs are reserved by other orders')
+        logger.critical('send_transaction - some outputs are reserved by other orders')
         raise WithdrawalError('Insufficient funds')
 
     # Create and send transaction
@@ -135,6 +145,7 @@ def send_transaction(order, customer_address):
     tx_signed = bc.sign_raw_transaction(tx)
     order.outgoing_tx_id = bc.send_raw_transaction(tx_signed)
     order.time_sent = timezone.now()
+    # TODO: create two Transaction objects (for withdrawal and for change)
     order.account_tx = order.device.account.transaction_set.create(
         amount=-order.btc_amount)  # Updates balance
     order.save()
