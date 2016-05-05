@@ -407,6 +407,27 @@ class DeviceAdminForm(forms.ModelForm):
         return cleaned_data
 
 
+class AccountForm(forms.ModelForm):
+
+    class Meta:
+        model = Account
+        fields = [
+            'currency',
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super(AccountForm, self).__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields['currency'].widget.attrs['disabled'] = True
+            self.fields['currency'].required = False
+
+    def clean_currency(self):
+        if self.instance and self.instance.pk:
+            return self.instance.currency
+        else:
+            return self.cleaned_data['currency']
+
+
 class SendReconciliationForm(forms.Form):
     email = forms.EmailField()
     date = forms.DateField(widget=forms.HiddenInput)

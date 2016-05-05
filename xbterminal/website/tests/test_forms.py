@@ -9,7 +9,8 @@ from website.forms import (
     ResetPasswordForm,
     ProfileForm,
     DeviceForm,
-    DeviceActivationForm)
+    DeviceActivationForm,
+    AccountForm)
 from website.tests.factories import (
     MerchantAccountFactory,
     AccountFactory,
@@ -264,3 +265,16 @@ class DeviceActivationFormTestCase(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('Invalid activation code.',
                       form.errors['activation_code'])
+
+
+class AccountFormTestCase(TestCase):
+
+    def test_update(self):
+        account = AccountFactory.create()
+        form_data = {}
+        form = AccountForm(data=form_data, instance=account)
+        self.assertTrue(form.is_valid())
+        account_updated = form.save()
+        self.assertEqual(account_updated.pk, account.pk)
+        self.assertEqual(account_updated.currency.pk,
+                         account.currency.pk)
