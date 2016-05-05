@@ -587,11 +587,6 @@ class Device(models.Model):
         else:
             return True
 
-    def payment_processor_info(self):
-        if self.instantfiat:
-            return self.account.get_instantfiat_provider_display()
-        return ''
-
     def get_payments(self):
         return self.paymentorder_set.filter(time_notified__isnull=False)
 
