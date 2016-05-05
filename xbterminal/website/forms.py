@@ -413,19 +413,50 @@ class AccountForm(forms.ModelForm):
         model = Account
         fields = [
             'currency',
+            'instantfiat_provider',
+            'instantfiat_api_key',
         ]
+        widgets = {
+            'instantfiat_provider': forms.HiddenInput(),
+        }
+        labels = {
+            'instantfiat_api_key': 'CryptoPay API key',
+        }
 
     def __init__(self, *args, **kwargs):
+        self.merchant = kwargs.pop('merchant', None)
         super(AccountForm, self).__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
+            # Existing account
             self.fields['currency'].widget.attrs['disabled'] = True
             self.fields['currency'].required = False
+            if self.instance.currency.name in ['BTC', 'TBTC']:
+                del self.fields['instantfiat_api_key']
+        else:
+            # New account
+            assert self.merchant
+            self.fields['currency'].queryset = Currency.objects.filter(
+                name__in=['GBP', 'USD', 'EUR'])
 
     def clean_currency(self):
         if self.instance and self.instance.pk:
             return self.instance.currency
         else:
             return self.cleaned_data['currency']
+
+    def clean_instantfiat_provider(self):
+        if self.instance and self.instance.pk:
+            return self.instance.instantfiat_provider
+        else:
+            return INSTANTFIAT_PROVIDERS.CRYPTOPAY
+
+    def save(self, commit=True):
+        account = super(AccountForm, self).save(commit=False)
+        if not hasattr(account, 'merchant'):
+            account.merchant = self.merchant
+        if commit:
+            account.save()
+        return account
 
 
 class SendReconciliationForm(forms.Form):

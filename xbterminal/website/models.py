@@ -350,7 +350,8 @@ class Account(models.Model):
         return balance
 
     def clean(self):
-        if self.currency.name not in ['BTC', 'TBTC']:
+        if hasattr(self, 'currency') and \
+                self.currency.name not in ['BTC', 'TBTC']:
             if not self.instantfiat_provider:
                 raise ValidationError({
                     'instantfiat_provider': 'This field is required.'})

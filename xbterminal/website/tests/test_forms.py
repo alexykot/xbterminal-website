@@ -3,7 +3,9 @@ from django.core import mail
 from mock import patch
 
 from oauth2_provider.models import Application
-from website.models import MerchantAccount, INSTANTFIAT_PROVIDERS
+from website.models import (
+    MerchantAccount,
+    INSTANTFIAT_PROVIDERS)
 from website.forms import (
     MerchantRegistrationForm,
     ResetPasswordForm,
@@ -12,6 +14,7 @@ from website.forms import (
     DeviceActivationForm,
     AccountForm)
 from website.tests.factories import (
+    CurrencyFactory,
     MerchantAccountFactory,
     AccountFactory,
     DeviceFactory)
@@ -268,6 +271,57 @@ class DeviceActivationFormTestCase(TestCase):
 
 
 class AccountFormTestCase(TestCase):
+
+    def test_create_init(self):
+        with self.assertRaises(AssertionError):
+            AccountForm()
+
+        merchant = MerchantAccountFactory.create()
+        form = AccountForm(merchant=merchant)
+        self.assertIsNotNone(form.merchant)
+        choices = dict(form.fields['currency'].choices)
+        choices.pop('')
+        self.assertEqual(len(choices.keys()), 3)
+
+    def test_create(self):
+        merchant = MerchantAccountFactory.create()
+        usd = CurrencyFactory.create(name='USD')
+        form_data = {
+            'currency': usd.pk,
+            'instantfiat_api_key': 'test',
+        }
+        form = AccountForm(data=form_data, merchant=merchant)
+        self.assertTrue(form.is_valid())
+        account = form.save()
+        self.assertEqual(account.merchant.pk, merchant.pk)
+        self.assertEqual(account.currency.name, usd.name)
+        self.assertEqual(account.instantfiat_provider,
+                         INSTANTFIAT_PROVIDERS.CRYPTOPAY)
+        self.assertEqual(account.instantfiat_api_key, 'test')
+
+    def test_create_no_currency(self):
+        merchant = MerchantAccountFactory.create()
+        form = AccountForm(data={}, merchant=merchant)
+        self.assertFalse(form.is_valid())
+        self.assertIn('currency', form.errors)
+
+    def test_create_no_api_key(self):
+        merchant = MerchantAccountFactory.create()
+        usd = CurrencyFactory.create(name='USD')
+        form = AccountForm(data={'currency': usd.pk}, merchant=merchant)
+        self.assertFalse(form.is_valid())
+        self.assertIn('instantfiat_api_key', form.errors)
+
+    def test_create_btc(self):
+        merchant = MerchantAccountFactory.create()
+        btc = CurrencyFactory.create(name='BTC')
+        form_data = {
+            'currency': btc.pk,
+            'instantfiat_api_key': 'test',
+        }
+        form = AccountForm(data=form_data, merchant=merchant)
+        self.assertFalse(form.is_valid())
+        self.assertIn('currency', form.errors)
 
     def test_update(self):
         account = AccountFactory.create()
