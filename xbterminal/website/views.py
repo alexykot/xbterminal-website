@@ -564,14 +564,39 @@ class AccountListView(TemplateResponseMixin, CabinetView):
         return self.render_to_response(context)
 
 
-class AccountEditView(TemplateResponseMixin, CabinetView):
+class CreateAccountView(TemplateResponseMixin, CabinetView):
+    """
+    Create CryptoPay account
+    """
+    template_name = 'cabinet/account_form.html'
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['form'] = forms.AccountForm(
+            merchant=self.request.user.merchant)
+        return self.render_to_response(context)
+
+    def post(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        form = forms.AccountForm(
+            self.request.POST,
+            merchant=self.request.user.merchant)
+        if form.is_valid():
+            form.save()
+            return redirect(reverse('website:accounts'))
+        else:
+            context['form'] = form
+            return self.render_to_response(context)
+
+
+class EditAccountView(TemplateResponseMixin, CabinetView):
     """
     Edit account
     """
     template_name = 'cabinet/account_form.html'
 
     def get_context_data(self, **kwargs):
-        context = super(AccountEditView, self).get_context_data(**kwargs)
+        context = super(EditAccountView, self).get_context_data(**kwargs)
         try:
             context['account'] = self.request.user.merchant.account_set.\
                 get(pk=self.kwargs.get('pk'))

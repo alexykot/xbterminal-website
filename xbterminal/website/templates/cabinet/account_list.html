@@ -2,6 +2,9 @@
 {% load i18n %}
 
 {% block cabinet_content %}
+<div>
+    <a class="btn btn-default" href="{% url 'website:create_account' %}">{% trans 'Add CryptoPay account' %}</a>
+</div>
 <table id="accounts" class="table table-striped table-bordered table-responsive">
     <tr>
         <th>{% trans 'Currency' %}</th>

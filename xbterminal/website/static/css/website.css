@@ -97,6 +97,12 @@ label[for="id_county"]:after {
     vertical-align: middle;
 }
 
+/* Accounts list */
+
+#accounts {
+    margin-top: 10px;
+}
+
 /* Contact page */
 
 #contact-form {

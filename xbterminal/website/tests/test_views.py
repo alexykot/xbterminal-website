@@ -7,7 +7,11 @@ from django.core.cache import cache
 from django.utils import timezone
 from mock import Mock, patch
 
-from website.models import MerchantAccount, Device, KYCDocument
+from website.models import (
+    MerchantAccount,
+    Device,
+    KYCDocument,
+    INSTANTFIAT_PROVIDERS)
 from website.tests.factories import (
     create_image,
     MerchantAccountFactory,
@@ -561,7 +565,39 @@ class AccountListViewTestCase(TestCase):
                          account.pk)
 
 
-class AccountEditViewTestCase(TestCase):
+class CreateAccountViewTestCase(TestCase):
+
+    def test_get(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:create_account')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/account_form.html')
+        self.assertEqual(response.context['form'].merchant.pk,
+                         merchant.pk)
+
+    def test_post(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:create_account')
+        form_data = {
+            'currency': merchant.currency.pk,
+            'instantfiat_api_key': 'test',
+        }
+        response = self.client.post(url, data=form_data)
+        self.assertEqual(response.status_code, 302)
+        account = merchant.account_set.get(
+            currency__name=merchant.currency.name)
+        self.assertEqual(account.instantfiat_provider,
+                         INSTANTFIAT_PROVIDERS.CRYPTOPAY)
+        self.assertEqual(account.instantfiat_api_key,
+                         form_data['instantfiat_api_key'])
+
+
+class EditAccountViewTestCase(TestCase):
 
     def test_get(self):
         account = AccountFactory.create()
