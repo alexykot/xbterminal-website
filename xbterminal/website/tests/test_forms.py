@@ -317,7 +317,6 @@ class AccountFormTestCase(TestCase):
         btc = CurrencyFactory.create(name='BTC')
         form_data = {
             'currency': btc.pk,
-            'instantfiat_api_key': 'test',
         }
         form = AccountForm(data=form_data, merchant=merchant)
         self.assertFalse(form.is_valid())
@@ -338,13 +337,31 @@ class AccountFormTestCase(TestCase):
 
     def test_update_btc(self):
         account = AccountFactory.create()
-        form_data = {}
+        form_data = {
+            'forward_address': '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
+        }
         form = AccountForm(data=form_data, instance=account)
         self.assertTrue(form.is_valid())
         account_updated = form.save()
         self.assertEqual(account_updated.pk, account.pk)
         self.assertEqual(account_updated.currency.pk,
                          account.currency.pk)
+
+    def test_update_btc_no_forward_address(self):
+        account = AccountFactory.create()
+        form_data = {}
+        form = AccountForm(data=form_data, instance=account)
+        self.assertFalse(form.is_valid())
+        self.assertIn('forward_address', form.errors)
+
+    def test_update_btc_invalid_formward_address(self):
+        account = AccountFactory.create(currency__name='TBTC')
+        form_data = {
+            'forward_address': '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
+        }
+        form = AccountForm(data=form_data, instance=account)
+        self.assertFalse(form.is_valid())
+        self.assertIn('forward_address', form.errors)
 
     def test_update_gbp(self):
         account = AccountFactory.create(currency__name='GBP')

@@ -623,7 +623,10 @@ class EditAccountViewTestCase(TestCase):
         self.client.login(username=account.merchant.user.email,
                           password='password')
         url = reverse('website:account', kwargs={'pk': account.pk})
-        response = self.client.post(url, data={})
+        form_data = {
+            'forward_address': '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
+        }
+        response = self.client.post(url, data=form_data)
         self.assertEqual(response.status_code, 302)
 
 

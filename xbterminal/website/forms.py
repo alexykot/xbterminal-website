@@ -413,6 +413,7 @@ class AccountForm(forms.ModelForm):
         model = Account
         fields = [
             'currency',
+            'forward_address',
             'instantfiat_provider',
             'instantfiat_api_key',
         ]
@@ -430,14 +431,18 @@ class AccountForm(forms.ModelForm):
             # Existing account
             self.fields['currency'].widget.attrs['disabled'] = True
             self.fields['currency'].required = False
-            if self.instance.currency.name in ['BTC', 'TBTC'] or \
-                    self.instance.instantfiat_merchant_id:
+            if self.instance.currency.name in ['BTC', 'TBTC']:
                 del self.fields['instantfiat_api_key']
+            else:
+                del self.fields['forward_address']
+                if self.instance.instantfiat_merchant_id:
+                    del self.fields['instantfiat_api_key']
         else:
-            # New account
+            # New account (CryptoPay)
             assert self.merchant
             self.fields['currency'].queryset = Currency.objects.filter(
                 name__in=['GBP', 'USD', 'EUR'])
+            del self.fields['forward_address']
 
     def clean_currency(self):
         if self.instance and self.instance.pk:
@@ -454,6 +459,19 @@ class AccountForm(forms.ModelForm):
             return self.instance.instantfiat_provider
         else:
             return INSTANTFIAT_PROVIDERS.CRYPTOPAY
+
+    def clean(self):
+        cleaned_data = super(AccountForm, self).clean()
+        forward_address = cleaned_data.get('forward_address')
+        if forward_address:
+            try:
+                validate_bitcoin_address(
+                    forward_address,
+                    network=self.instance.bitcoin_network)
+            except forms.ValidationError as error:
+                for error_message in error.messages:
+                    self.add_error('forward_address', error_message)
+        return cleaned_data
 
     def save(self, commit=True):
         account = super(AccountForm, self).save(commit=False)
