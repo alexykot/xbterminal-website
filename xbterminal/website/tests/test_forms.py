@@ -323,6 +323,19 @@ class AccountFormTestCase(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('currency', form.errors)
 
+    def test_create_already_exists(self):
+        merchant = MerchantAccountFactory.create()
+        account = AccountFactory.create(merchant=merchant,
+                                        currency__name='GBP')
+        form_data = {
+            'currency': account.currency.pk,
+            'instantfiat_api_key': 'test',
+        }
+        form = AccountForm(data=form_data, merchant=merchant)
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['currency'][0],
+                         'Account already exists.')
+
     def test_update(self):
         account = AccountFactory.create()
         form_data = {}

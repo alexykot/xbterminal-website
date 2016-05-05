@@ -442,7 +442,11 @@ class AccountForm(forms.ModelForm):
         if self.instance and self.instance.pk:
             return self.instance.currency
         else:
-            return self.cleaned_data['currency']
+            # New account
+            currency = self.cleaned_data['currency']
+            if self.merchant.account_set.filter(currency=currency).exists():
+                raise forms.ValidationError('Account already exists.')
+            return currency
 
     def clean_instantfiat_provider(self):
         if self.instance and self.instance.pk:
