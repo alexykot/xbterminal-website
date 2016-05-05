@@ -528,7 +528,7 @@ class Device(models.Model):
         null=True,
         validators=[validate_public_key],
         help_text='API public key')
-
+    # TODO: remove bitcoin address
     bitcoin_address = models.CharField(
         _('Bitcoin address to send to'),
         max_length=100,

@@ -187,11 +187,6 @@ class DeviceFactory(factory.DjangoModelFactory):
     device_type = 'hardware'
     name = factory.Sequence(lambda n: 'Terminal #{0}'.format(n))
 
-    @factory.lazy_attribute
-    def bitcoin_address(self):
-        if self.account.currency.name in ['BTC', 'TBTC']:
-            return '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
-
     @factory.post_generation
     def status(self, create, extracted, **kwargs):
         if not extracted or extracted == 'active':
