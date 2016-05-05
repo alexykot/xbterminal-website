@@ -336,7 +336,7 @@ class AccountFormTestCase(TestCase):
         self.assertEqual(form.errors['currency'][0],
                          'Account already exists.')
 
-    def test_update(self):
+    def test_update_btc(self):
         account = AccountFactory.create()
         form_data = {}
         form = AccountForm(data=form_data, instance=account)
@@ -345,3 +345,24 @@ class AccountFormTestCase(TestCase):
         self.assertEqual(account_updated.pk, account.pk)
         self.assertEqual(account_updated.currency.pk,
                          account.currency.pk)
+
+    def test_update_gbp(self):
+        account = AccountFactory.create(currency__name='GBP')
+        form_data = {'instantfiat_api_key': 'test'}
+        form = AccountForm(data=form_data, instance=account)
+        self.assertTrue(form.is_valid())
+        account_updated = form.save()
+        self.assertEqual(account_updated.currency.pk,
+                         account.currency.pk)
+        self.assertEqual(account_updated.instantfiat_api_key,
+                         form_data['instantfiat_api_key'])
+
+    def test_updated_gbp_managed(self):
+        account = AccountFactory.create(currency__name='GBP',
+                                        instantfiat_merchant_id='testid')
+        form_data = {'instantfiat_api_key': 'test'}
+        form = AccountForm(data=form_data, instance=account)
+        self.assertTrue(form.is_valid())
+        account_updated = form.save()
+        self.assertEqual(account_updated.instantfiat_api_key,
+                         account.instantfiat_api_key)

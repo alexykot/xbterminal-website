@@ -430,7 +430,8 @@ class AccountForm(forms.ModelForm):
             # Existing account
             self.fields['currency'].widget.attrs['disabled'] = True
             self.fields['currency'].required = False
-            if self.instance.currency.name in ['BTC', 'TBTC']:
+            if self.instance.currency.name in ['BTC', 'TBTC'] or \
+                    self.instance.instantfiat_merchant_id:
                 del self.fields['instantfiat_api_key']
         else:
             # New account
