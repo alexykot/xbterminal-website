@@ -561,6 +561,36 @@ class AccountListViewTestCase(TestCase):
                          account.pk)
 
 
+class AccountEditViewTestCase(TestCase):
+
+    def test_get(self):
+        account = AccountFactory.create()
+        self.client.login(username=account.merchant.user.email,
+                          password='password')
+        url = reverse('website:account', kwargs={'pk': account.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/account_form.html')
+        self.assertEqual(response.context['account'].pk, account.pk)
+
+    def test_get_account_not_found(self):
+        merchant = MerchantAccountFactory.create()
+        account = AccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:account', kwargs={'pk': account.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_post(self):
+        account = AccountFactory.create()
+        self.client.login(username=account.merchant.user.email,
+                          password='password')
+        url = reverse('website:account', kwargs={'pk': account.pk})
+        response = self.client.post(url, data={})
+        self.assertEqual(response.status_code, 302)
+
+
 class ReconciliationViewTestCase(TestCase):
 
     def setUp(self):

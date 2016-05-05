@@ -10,7 +10,7 @@
     </tr>
     {% for account in accounts %}
     <tr>
-        <td>{{ account.currency.name }}</td>
+        <td><a href="{% url 'website:account' pk=account.pk %}">{{ account.currency.name }}</a></td>
         <td>
             {% if account.currency.name == 'BTC' or account.currency.name == 'TBTC' %}
             {{ account.balance|floatformat:8 }}
