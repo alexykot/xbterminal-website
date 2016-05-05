@@ -308,7 +308,6 @@ class DeviceForm(forms.ModelForm):
             'device_type',
             'name',
             'account',
-            'bitcoin_address',
         ]
         widgets = {
             'device_type': forms.HiddenInput,
@@ -329,23 +328,6 @@ class DeviceForm(forms.ModelForm):
         device_types = dict(Device.DEVICE_TYPES)
         device_type = self['device_type'].value()
         return str(device_types[device_type])
-
-    def clean(self):
-        cleaned_data = super(DeviceForm, self).clean()
-        account = cleaned_data.get('account')
-        if account and account.currency.name in ['BTC', 'TBTC']:
-            bitcoin_address = cleaned_data.get('bitcoin_address')
-            if not bitcoin_address:
-                self.add_error('bitcoin_address', 'This field is required.')
-            else:
-                try:
-                    validate_bitcoin_address(
-                        bitcoin_address,
-                        network=account.bitcoin_network)
-                except forms.ValidationError as error:
-                    for error_message in error.messages:
-                        self.add_error('bitcoin_address', error_message)
-        return cleaned_data
 
     def save(self, commit=True):
         device = super(DeviceForm, self).save(commit=False)

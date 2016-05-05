@@ -178,7 +178,6 @@ class DeviceFormTestCase(TestCase):
             'device_type': 'mobile',
             'name': 'Mobile',
             'account': account.pk,
-            'bitcoin_address': '1JpY93MNoeHJ914CHLCQkdhS7TvBM68Xp6',
         }
         form = DeviceForm(data=form_data, merchant=merchant)
         self.assertTrue(form.is_valid())
@@ -196,7 +195,6 @@ class DeviceFormTestCase(TestCase):
             'device_type': 'hardware',
             'name': 'New Name',
             'account': device.account.pk,
-            'bitcoin_address': '1JpY93MNoeHJ914CHLCQkdhS7TvBM68Xp6',
         }
         form = DeviceForm(data=form_data,
                           merchant=device.merchant,
@@ -215,19 +213,6 @@ class DeviceFormTestCase(TestCase):
         self.assertIn('device_type', form.errors)
         self.assertIn('name', form.errors)
         self.assertIn('account', form.errors)
-
-    def test_invalid_bitcoin_address(self):
-        merchant = MerchantAccountFactory.create()
-        account = AccountFactory.create(merchant=merchant)
-        form_data = {
-            'device_type': 'hardware',
-            'name': 'Terminal',
-            'account': account.pk,
-            'bitcoin_address': 'xxx',
-        }
-        form = DeviceForm(data=form_data, merchant=merchant)
-        self.assertFalse(form.is_valid())
-        self.assertIn('bitcoin_address', form.errors)
 
     def test_invalid_account_currency(self):
         merchant = MerchantAccountFactory.create(currency__name='USD')
