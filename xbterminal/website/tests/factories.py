@@ -136,6 +136,13 @@ class AccountFactory(factory.DjangoModelFactory):
     currency = factory.SubFactory(CurrencyFactory, name='BTC')
 
     @factory.lazy_attribute
+    def forward_address(self):
+        if self.currency.name == 'BTC':
+            return '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
+        elif self.currency.name == 'TBTC':
+            return 'n3QR7ossvN4JnUyicajcVyYf4h3Npyexqw'
+
+    @factory.lazy_attribute
     def instantfiat_provider(self):
         if self.currency.name not in ['BTC', 'TBTC']:
             return INSTANTFIAT_PROVIDERS.CRYPTOPAY

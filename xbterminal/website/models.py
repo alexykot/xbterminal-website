@@ -289,6 +289,11 @@ class Account(models.Model):
         validators=[validate_bitcoin_address],
         blank=True,
         null=True)
+    forward_address = models.CharField(
+        max_length=35,
+        validators=[validate_bitcoin_address],
+        blank=True,
+        null=True)
     instantfiat_provider = models.PositiveSmallIntegerField(
         _('InstantFiat provider'),
         choices=INSTANTFIAT_PROVIDERS,
@@ -350,8 +355,13 @@ class Account(models.Model):
         return balance
 
     def clean(self):
-        if hasattr(self, 'currency') and \
-                self.currency.name not in ['BTC', 'TBTC']:
+        if not hasattr(self, 'currency'):
+            return
+        if self.currency.name in ['BTC', 'TBTC']:
+            if not self.forward_address:
+                raise ValidationError({
+                    'forward_address': 'This field is required.'})
+        else:
             if not self.instantfiat_provider:
                 raise ValidationError({
                     'instantfiat_provider': 'This field is required.'})
