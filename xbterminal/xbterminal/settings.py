@@ -216,14 +216,18 @@ CONTACT_EMAIL_RECIPIENTS = ["info@xbterminal.io"]
 
 BITCOIND_SERVERS = {
     'mainnet': {
-        'HOST': 'node.xbterminal.io',
-        'USER': 'user',
-        'PASSWORD': 'password',
+        'HOST': 'localhost',
+        'PORT': 8332,
+        'USER': 'xbt',
+        'PASSWORD': 'xbt',
+        'USE_SSL': False,
     },
     'testnet': {
-        'HOST': 'node.xbterminal.io',
-        'USER': 'user',
-        'PASSWORD': 'password',
+        'HOST': 'localhost',
+        'PORT': 18332,
+        'USER': 'xbt',
+        'PASSWORD': 'xbt',
+        'USE_SSL': False,
     },
 }
 
