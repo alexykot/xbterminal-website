@@ -44,7 +44,7 @@ class MerchantRegistrationFormTestCase(TestCase):
         oauth_app = Application.objects.get(user=merchant.user)
         self.assertEqual(oauth_app.client_id, form_data['contact_email'])
         # Accounts
-        self.assertEqual(merchant.account_set.count(), 2)
+        self.assertEqual(merchant.account_set.count(), 4)
         account_btc = merchant.account_set.get(currency__name='BTC')
         self.assertEqual(account_btc.balance, 0)
         self.assertEqual(account_btc.balance_max, 0)
@@ -57,6 +57,10 @@ class MerchantRegistrationFormTestCase(TestCase):
                          INSTANTFIAT_PROVIDERS.CRYPTOPAY)
         self.assertEqual(account_gbp.instantfiat_merchant_id, 'merchant_id')
         self.assertEqual(account_gbp.instantfiat_api_key, 'x1y2z3')
+        self.assertTrue(merchant.account_set.filter(
+            currency__name='USD').exists())
+        self.assertTrue(merchant.account_set.filter(
+            currency__name='EUR').exists())
         # Email
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to[0], form_data['contact_email'])
