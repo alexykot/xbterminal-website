@@ -1,13 +1,15 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
 from django.core.urlresolvers import reverse
 from django.utils.html import format_html
 
+from constance import config
 from fsm_admin.mixins import FSMTransitionMixin
 
 from website import forms, models
 from website.utils.qr import generate_qr_code
 from website.widgets import BitcoinAddressWidget
+from operations.instantfiat import cryptopay
 
 
 def url_to_object(obj):
@@ -166,7 +168,6 @@ class AccountAdmin(admin.ModelAdmin):
         'balance_max',
         'instantfiat_provider',
     ]
-
     inlines = [
         TransactionInline,
     ]
@@ -218,6 +219,7 @@ class MerchantAccountAdmin(admin.ModelAdmin):
         AccountInline,
         KYCDocumentInline,
     ]
+    actions = ['reset_cryptopay_password']
 
     def date_joined(self, merchant):
         return merchant.user.date_joined.strftime('%d %b %Y %l:%M %p')
@@ -261,6 +263,38 @@ class MerchantAccountAdmin(admin.ModelAdmin):
         value = merchant.get_account_balance('TBTC')
         return '{0:.8f}'.format(value) if value is not None else 'N/A'
     tbtc_balance.short_description = 'TBTC balance'
+
+    def reset_cryptopay_password(self, request, queryset):
+        for merchant in queryset:
+            account = merchant.account_set.filter(
+                instantfiat_provider=models.INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+                instantfiat_merchant_id__isnull=False).first()
+            if not account:
+                self.message_user(
+                    request,
+                    'Merchant "{0}" doesn\'t have CryptoPay account.'.format(
+                        merchant.company_name),
+                    messages.WARNING)
+                continue
+            password = models.User.objects.make_random_password(16)
+            try:
+                cryptopay.set_password(
+                    account.instantfiat_merchant_id,
+                    password,
+                    config.CRYPTOPAY_API_KEY)
+            except cryptopay.InstantFiatError:
+                self.message_user(
+                    request,
+                    'Merchant "{0}" - error.'.format(merchant.company_name),
+                    messages.ERROR)
+            else:
+                self.message_user(
+                    request,
+                    'Merchant "{0}" - new password "{1}".'.format(
+                        merchant.company_name, password),
+                    messages.SUCCESS)
+
+    reset_cryptopay_password.short_description = 'Reset CryptoPay password'
 
 
 @admin.register(models.DeviceBatch)

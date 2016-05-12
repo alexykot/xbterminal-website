@@ -142,3 +142,33 @@ class CryptoPayTestCase(TestCase):
         with self.assertRaises(Exception):
             instantfiat.cryptopay.create_merchant(
                 'fname', 'lname', 'email', 'key')
+
+    @patch('operations.instantfiat.cryptopay.requests.post')
+    def test_set_password(self, post_mock):
+        post_mock.return_value = Mock(**{
+            'json.return_value': {
+                'status': 'success',
+            },
+        })
+        user_id = '4437b1ac-d1e7-4a26-92bb-933d930d50b8'
+        password = 'new-password'
+        api_key = 'test-api-key'
+        instantfiat.cryptopay.set_password(
+            user_id, password, api_key)
+        self.assertEqual(post_mock.call_args[1]['headers']['X-Api-Key'],
+                         'test-api-key')
+
+    @patch('operations.instantfiat.cryptopay.requests.post')
+    def test_set_password_error(self, post_mock):
+        post_mock.return_value = Mock(**{
+            'json.return_value': {
+                'status': 'success',
+            },
+            'raise_for_status.side_effect': ValueError,
+        })
+        user_id = '4437b1ac-d1e7-4a26-92bb-933d930d50b8'
+        password = 'new-password'
+        api_key = 'test-api-key'
+        with self.assertRaises(InstantFiatError):
+            instantfiat.cryptopay.set_password(
+                user_id, password, api_key)

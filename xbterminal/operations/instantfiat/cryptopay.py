@@ -98,3 +98,32 @@ def create_merchant(first_name, last_name, email, api_key):
         else:
             response.raise_for_status()
             raise Exception
+
+
+def set_password(user_id, password, api_key):
+    """
+    Set new password for CryptoPay user
+    Accepts:
+        user_id: CryptoPay user ID
+        password: new password
+        api_key: CryptoPay API key with access to users API
+    """
+    api_url = 'https://cryptopay.me/api/v2/users/{user_id}/password'
+    payload = {
+        'password': password,
+    }
+    assert api_key
+    headers = {
+        'Content-Type': 'application/json',
+        'X-Api-Key': api_key,
+    }
+    response = requests.post(
+        api_url.format(user_id=user_id),
+        data=json.dumps(payload),
+        headers=headers)
+    try:
+        response.raise_for_status()
+        data = response.json()
+        assert data['status'] == 'success'
+    except:
+        raise InstantFiatError(response.text)

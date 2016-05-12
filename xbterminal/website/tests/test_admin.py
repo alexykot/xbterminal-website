@@ -5,8 +5,32 @@ from django.test import TestCase
 from website.tests.factories import (
     MerchantAccountFactory,
     AccountFactory)
-from website.models import Account, INSTANTFIAT_PROVIDERS
-from website.admin import AccountAdmin
+from website.models import MerchantAccount, Account, INSTANTFIAT_PROVIDERS
+from website.admin import MerchantAccountAdmin, AccountAdmin
+
+
+class MerchantAccountAdminTestCase(TestCase):
+
+    @mock.patch('website.admin.cryptopay.set_password')
+    def test_reset_cryptopay_password(self, set_password_mock):
+        ma = MerchantAccountAdmin(MerchantAccount, AdminSite())
+        message_user_mock = mock.Mock()
+        ma.message_user = message_user_mock
+        merchant = MerchantAccountFactory.create()
+        AccountFactory.create(
+            merchant=merchant,
+            currency__name='GBP',
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='test-id')
+        request = mock.Mock()
+        queryset = MerchantAccount.objects.filter(pk=merchant.pk)
+        ma.reset_cryptopay_password(request, queryset)
+        self.assertTrue(message_user_mock.called)
+        self.assertTrue(set_password_mock.called)
+        self.assertEqual(set_password_mock.call_args[0][0], 'test-id')
+        password = set_password_mock.call_args[0][1]
+        self.assertEqual(len(password), 16)
+        self.assertIn(password, message_user_mock.call_args[0][1])
 
 
 class AccountAdminTestCase(TestCase):
