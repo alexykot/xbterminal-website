@@ -25,7 +25,6 @@ vagrant up
 These variables should be redefined in `xbterminal/xbterminal/local_settings.py`:
 
 * SITE_ID
-* DATABASES - database connection settings
 * CACHES - cache settings
 * RQ_QUEUES - redis queue settings
 * EMAIL_* - SMTP server settings
