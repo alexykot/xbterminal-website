@@ -20,19 +20,17 @@ Start VM:
 vagrant up
 ```
 
+### Certificates
+
+Put necessary certificates into `certs` directory.
+
 ### Local settings
 
-These variables should be redefined in `xbterminal/xbterminal/local_settings.py`:
+Create local settings file:
 
-* SITE_ID
-* CACHES - cache settings
-* RQ_QUEUES - redis queue settings
-* EMAIL_* - SMTP server settings
-* PKI_KEY_FILE, PKI_CERTIFICATES - certificates for BIP70
-* BITCOIND_SERVERS - bitcoind settings
-* RECAPTCHA_* - reCaptcha settings
-* SALT_SERVERS - Salt server settings
-* APTLY_SERVERS - Aptly server settings
+```
+cp config/settings_vagrant.py.dist xbterminal/xbterminal/local_settings.py
+```
 
 ### Start server
 
