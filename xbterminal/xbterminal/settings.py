@@ -112,7 +112,6 @@ ROOT_URLCONF = 'xbterminal.urls'
 APPEND_SLASH = False
 
 LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/terminals/'
 
 WSGI_APPLICATION = 'xbterminal.wsgi.application'
 
@@ -145,12 +144,12 @@ REST_FRAMEWORK = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'xbterminal',
-        'USER': 'user',
-        'PASSWORD': 'password',
-        'HOST': '127.0.0.1',
+        'NAME': 'xbt',
+        'USER': 'xbt',
+        'PASSWORD': 'xbt',
+        'HOST': 'localhost',
         'PORT': '5432',
-    }
+    },
 }
 
 # Cache & RQ
@@ -217,14 +216,18 @@ CONTACT_EMAIL_RECIPIENTS = ["info@xbterminal.io"]
 
 BITCOIND_SERVERS = {
     'mainnet': {
-        'HOST': 'node.xbterminal.io',
-        'USER': 'user',
-        'PASSWORD': 'password',
+        'HOST': 'localhost',
+        'PORT': 8332,
+        'USER': 'xbt',
+        'PASSWORD': 'xbt',
+        'USE_SSL': False,
     },
     'testnet': {
-        'HOST': 'node.xbterminal.io',
-        'USER': 'user',
-        'PASSWORD': 'password',
+        'HOST': 'localhost',
+        'PORT': 18332,
+        'USER': 'xbt',
+        'PASSWORD': 'xbt',
+        'USE_SSL': False,
     },
 }
 
