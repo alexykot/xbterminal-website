@@ -5,9 +5,11 @@ from django.contrib.auth.forms import (
     AuthenticationForm as DjangoAuthenticationForm,
     UserCreationForm as DjangoUserCreationForm,
     UserChangeForm as DjangoUserChangeForm)
+from django.db.transaction import atomic
 from django.utils.translation import ugettext as _
 
 from captcha.fields import ReCaptchaField
+from constance import config
 from oauth2_provider.models import Application
 
 from website.models import (
@@ -19,7 +21,8 @@ from website.models import (
     ReconciliationTime,
     KYCDocument,
     get_language,
-    get_currency)
+    get_currency,
+    INSTANTFIAT_PROVIDERS)
 from website.widgets import (
     TimeWidget,
     FileWidget,
@@ -28,6 +31,8 @@ from website.validators import validate_bitcoin_address
 from website.utils.email import (
     send_registration_email,
     send_reset_password_email)
+from operations.exceptions import CryptoPayUserAlreadyExists
+from operations.instantfiat import cryptopay
 
 
 class UserCreationForm(DjangoUserCreationForm):
@@ -150,27 +155,51 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
         cleaned_data = super(SimpleMerchantRegistrationForm, self).clean()
         return {key: val.strip() for key, val in cleaned_data.items()}
 
-    def save(self, commit=True):
+    def _create_default_accounts(self, merchant):
+        # Create BTC account
+        Account.objects.create(
+            merchant=merchant,
+            currency=Currency.objects.get(name='BTC'))
+        # Create CryptoPay accounts
+        cryptopay_currencies = Currency.objects.filter(
+            name__in=['GBP', 'USD', 'EUR'])
+        try:
+            cryptopay_merchant_id, cryptopay_api_key = cryptopay.create_merchant(
+                merchant.contact_first_name,
+                merchant.contact_last_name,
+                merchant.contact_email,
+                config.CRYPTOPAY_API_KEY)
+        except CryptoPayUserAlreadyExists:
+            # TODO: ask merchant for CryptoPay API key later
+            pass
+        else:
+            for currency in cryptopay_currencies:
+                Account.objects.create(
+                    merchant=merchant,
+                    currency=currency,
+                    instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+                    instantfiat_merchant_id=cryptopay_merchant_id,
+                    instantfiat_api_key=cryptopay_api_key)
+
+    @atomic
+    def save(self):
         """
         Create django user and merchant account
         """
-        assert commit  # Always commit
-        instance = super(SimpleMerchantRegistrationForm, self).save(commit=False)
-        instance.language = get_language(instance.country.code)
-        instance.currency = get_currency(instance.country.code)
+        merchant = super(SimpleMerchantRegistrationForm, self).save(commit=False)
+        merchant.language = get_language(merchant.country.code)
+        merchant.currency = get_currency(merchant.country.code)
         # Create new user
         password = get_user_model().objects.make_random_password()
         user = get_user_model().objects.create_user(
-            instance.contact_email,
+            merchant.contact_email,
             password,
             commit=False)
         user.backend = 'django.contrib.auth.backends.ModelBackend'
-        # Send email
-        send_registration_email(instance.contact_email, password)
-        # Save objects
         user.save()
-        instance.user = user
-        instance.save()
+        # Create merchant
+        merchant.user = user
+        merchant.save()
         # Create oauth client
         Application.objects.create(
             user=user,
@@ -179,11 +208,11 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             client_type='confidential',
             authorization_grant_type='password',
             client_secret='AFoUFXG8orJ2H5ztnycc5a95')
-        # Create BTC account
-        Account.objects.create(
-            merchant=instance,
-            currency=Currency.objects.get(name='BTC'))
-        return instance
+        # Create accounts
+        self._create_default_accounts(merchant)
+        # Send email
+        send_registration_email(merchant.contact_email, password)
+        return merchant
 
 
 class MerchantRegistrationForm(SimpleMerchantRegistrationForm):

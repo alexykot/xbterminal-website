@@ -4,7 +4,9 @@ from mock import patch, Mock
 
 from website.tests.factories import AccountFactory, INSTANTFIAT_PROVIDERS
 from operations import instantfiat
-from operations.exceptions import InstantFiatError
+from operations.exceptions import (
+    InstantFiatError,
+    CryptoPayUserAlreadyExists)
 
 
 class InstantFiatTestCase(TestCase):
@@ -96,3 +98,47 @@ class CryptoPayTestCase(TestCase):
         result = instantfiat.cryptopay.is_invoice_paid(
             'invoice_id', 'test')
         self.assertFalse(result)
+
+    @patch('operations.instantfiat.cryptopay.requests.post')
+    def test_create_merchant(self, post_mock):
+        post_mock.return_value = Mock(**{
+            'json.return_value': {
+                'id': '4437b1ac-d1e7-4a26-92bb-933d930d50b8',
+                'email': 'john@example.com',
+                'apikey': 'abcd1234',
+            },
+            'status_code': 201,
+        })
+        first_name = 'John'
+        last_name = 'Doe'
+        email = 'john@example.com'
+        api_key = 'test-api-key'
+        merchant_id, merchant_api_key = instantfiat.cryptopay.create_merchant(
+            first_name, last_name, email, api_key)
+        self.assertEqual(merchant_id,
+                         '4437b1ac-d1e7-4a26-92bb-933d930d50b8')
+        self.assertEqual(merchant_api_key, 'abcd1234')
+        self.assertEqual(post_mock.call_args[1]['headers']['X-Api-Key'],
+                         'test-api-key')
+
+    @patch('operations.instantfiat.cryptopay.requests.post')
+    def test_create_merchant_already_exists(self, post_mock):
+        post_mock.return_value = Mock(**{
+            'json.return_value': {
+                'email': ['has already been taken'],
+            },
+            'status_code': 422,
+        })
+        with self.assertRaises(CryptoPayUserAlreadyExists):
+            instantfiat.cryptopay.create_merchant(
+                'fname', 'lname', 'email', 'key')
+
+    @patch('operations.instantfiat.cryptopay.requests.post')
+    def test_create_merchant_error(self, post_mock):
+        post_mock.return_value = Mock(**{
+            'json.return_value': {},
+            'status_code': 422,
+        })
+        with self.assertRaises(Exception):
+            instantfiat.cryptopay.create_merchant(
+                'fname', 'lname', 'email', 'key')

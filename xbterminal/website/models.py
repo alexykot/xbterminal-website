@@ -269,6 +269,7 @@ BITCOIN_NETWORKS = [
 
 INSTANTFIAT_PROVIDERS = Choices(
     ('CRYPTOPAY', 1, 'CryptoPay'),
+    ('GOCOIN', 2, 'GoCoin'),
 )
 
 
@@ -291,6 +292,11 @@ class Account(models.Model):
     instantfiat_provider = models.PositiveSmallIntegerField(
         _('InstantFiat provider'),
         choices=INSTANTFIAT_PROVIDERS,
+        blank=True,
+        null=True)
+    instantfiat_merchant_id = models.CharField(
+        _('InstantFiat merchant ID'),
+        max_length=50,
         blank=True,
         null=True)
     instantfiat_api_key = models.CharField(
@@ -351,6 +357,10 @@ class Account(models.Model):
             if not self.instantfiat_api_key:
                 raise ValidationError({
                     'instantfiat_api_key': 'This field is required.'})
+            if self.instantfiat_provider == INSTANTFIAT_PROVIDERS.GOCOIN and \
+                    not self.instantfiat_merchant_id:
+                raise ValidationError({
+                    'instantfiat_merchant_id': 'This field is required.'})
 
 
 class Transaction(models.Model):

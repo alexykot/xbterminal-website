@@ -201,6 +201,7 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.balance_max, 0)
         self.assertIsNone(account.bitcoin_address)
         self.assertIsNone(account.instantfiat_provider)
+        self.assertIsNone(account.instantfiat_merchant_id)
         self.assertIsNone(account.instantfiat_api_key)
         self.assertEqual(str(account), 'BTC - 0.00000000')
 
@@ -211,6 +212,7 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.balance_max, 0)
         self.assertIsNone(account.bitcoin_address)
         self.assertIsNone(account.instantfiat_provider)
+        self.assertIsNone(account.instantfiat_merchant_id)
         self.assertIsNone(account.instantfiat_api_key)
         self.assertEqual(str(account), 'BTC - 0.00000000')
 
@@ -222,6 +224,7 @@ class AccountTestCase(TestCase):
         self.assertIsNone(account.bitcoin_address)
         self.assertEqual(account.instantfiat_provider,
                          INSTANTFIAT_PROVIDERS.CRYPTOPAY)
+        self.assertIsNone(account.instantfiat_merchant_id)
         self.assertIsNotNone(account.instantfiat_api_key)
         self.assertEqual(str(account), 'GBP - 0.00 (CryptoPay)')
 
