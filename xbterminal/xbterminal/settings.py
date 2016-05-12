@@ -112,7 +112,6 @@ ROOT_URLCONF = 'xbterminal.urls'
 APPEND_SLASH = False
 
 LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/terminals/'
 
 WSGI_APPLICATION = 'xbterminal.wsgi.application'
 
