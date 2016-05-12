@@ -80,6 +80,7 @@ def create_merchant(first_name, last_name, email, api_key):
         'email': email,
         'send_welcome_email': False,
     }
+    assert api_key
     headers = {
         'Content-Type': 'application/json',
         'X-Api-Key': api_key,
