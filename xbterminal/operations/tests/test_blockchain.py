@@ -21,7 +21,7 @@ class BlockChainTestCase(TestCase):
         self.assertEqual(select_params_mock.call_args[0][0], 'mainnet')
         self.assertTrue(proxy_mock.called)
         service_url = proxy_mock.call_args[0][0]
-        self.assertTrue(service_url.startswith('https'))
+        self.assertTrue(service_url.startswith('http'))
 
     @patch('operations.blockchain.bitcoin.rpc.Proxy')
     def test_get_balance(self, proxy_mock):

@@ -1,6 +1,4 @@
 # Send reconciliation emails every 5 minutes
 */5 * * * * root cd /repo_root && . venv/bin/activate && python xbterminal/manage.py send_reconciliation
-# Check KYC documents every 2 hours
-0 */2 * * * root cd /repo_root && . venv/bin/activate && python xbterminal/manage.py check_kyc
 # Check wallet every 30 minutes
 */30 * * * * root cd /repo_root && . venv/bin/activate && python xbterminal/manage.py check_wallet

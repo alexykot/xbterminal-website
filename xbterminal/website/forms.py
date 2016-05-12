@@ -155,6 +155,32 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
         cleaned_data = super(SimpleMerchantRegistrationForm, self).clean()
         return {key: val.strip() for key, val in cleaned_data.items()}
 
+    def _create_default_accounts(self, merchant):
+        # Create BTC account
+        Account.objects.create(
+            merchant=merchant,
+            currency=Currency.objects.get(name='BTC'))
+        # Create CryptoPay accounts
+        cryptopay_currencies = Currency.objects.filter(
+            name__in=['GBP', 'USD', 'EUR'])
+        try:
+            cryptopay_merchant_id, cryptopay_api_key = cryptopay.create_merchant(
+                merchant.contact_first_name,
+                merchant.contact_last_name,
+                merchant.contact_email,
+                config.CRYPTOPAY_API_KEY)
+        except CryptoPayUserAlreadyExists:
+            # TODO: ask merchant for CryptoPay API key later
+            pass
+        else:
+            for currency in cryptopay_currencies:
+                Account.objects.create(
+                    merchant=merchant,
+                    currency=currency,
+                    instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+                    instantfiat_merchant_id=cryptopay_merchant_id,
+                    instantfiat_api_key=cryptopay_api_key)
+
     @atomic
     def save(self):
         """
@@ -182,27 +208,8 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             client_type='confidential',
             authorization_grant_type='password',
             client_secret='AFoUFXG8orJ2H5ztnycc5a95')
-        # Create BTC account
-        Account.objects.create(
-            merchant=merchant,
-            currency=Currency.objects.get(name='BTC'))
-        # Create CryptoPay account
-        try:
-            cryptopay_merchant_id, cryptopay_api_key = cryptopay.create_merchant(
-                merchant.contact_first_name,
-                merchant.contact_last_name,
-                merchant.contact_email,
-                config.CRYPTOPAY_API_KEY)
-        except CryptoPayUserAlreadyExists:
-            # TODO: ask merchant for CryptoPay API key later
-            pass
-        else:
-            Account.objects.create(
-                merchant=merchant,
-                currency=merchant.currency,
-                instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-                instantfiat_merchant_id=cryptopay_merchant_id,
-                instantfiat_api_key=cryptopay_api_key)
+        # Create accounts
+        self._create_default_accounts(merchant)
         # Send email
         send_registration_email(merchant.contact_email, password)
         return merchant
