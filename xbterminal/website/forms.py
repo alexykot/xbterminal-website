@@ -162,7 +162,7 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             currency=Currency.objects.get(name='BTC'))
         # Create CryptoPay accounts
         cryptopay_currencies = Currency.objects.filter(
-            name__in=['GBP', 'USD', 'EUR'])
+            name__in=cryptopay.DEFAULT_CURRENCIES)
         try:
             cryptopay_merchant_id, cryptopay_api_key = cryptopay.create_merchant(
                 merchant.contact_first_name,
