@@ -18,6 +18,7 @@ from website.tests.factories import (
     MerchantAccountFactory,
     AccountFactory,
     DeviceFactory)
+from website.utils.accounts import check_managed_accounts
 from operations.exceptions import CryptoPayUserAlreadyExists
 
 
@@ -61,10 +62,8 @@ class MerchantRegistrationFormTestCase(TestCase):
                          INSTANTFIAT_PROVIDERS.CRYPTOPAY)
         self.assertEqual(account_gbp.instantfiat_merchant_id, 'merchant_id')
         self.assertEqual(account_gbp.instantfiat_api_key, 'x1y2z3')
-        self.assertTrue(merchant.account_set.filter(
-            currency__name='USD').exists())
-        self.assertTrue(merchant.account_set.filter(
-            currency__name='EUR').exists())
+        # Check with utility function
+        self.assertTrue(check_managed_accounts(merchant))
         # Email
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to[0], form_data['contact_email'])

@@ -563,6 +563,7 @@ class AccountListViewTestCase(TestCase):
         self.assertTemplateUsed(response, 'cabinet/account_list.html')
         self.assertEqual(response.context['accounts'].first().pk,
                          account.pk)
+        self.assertTrue(response.context['can_add_account'])
 
 
 class CreateAccountViewTestCase(TestCase):

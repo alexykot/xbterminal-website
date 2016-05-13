@@ -23,7 +23,7 @@ from ipware.ip import get_real_ip
 from api.utils import activation
 
 from website import forms, models
-from website.utils import reconciliation, email
+from website.utils import reconciliation, email, accounts
 
 
 class ServerErrorMiddleware(object):
@@ -561,6 +561,8 @@ class AccountListView(TemplateResponseMixin, CabinetView):
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         context['accounts'] = self.request.user.merchant.account_set.all()
+        context['can_add_account'] = not accounts.check_managed_accounts(
+            self.request.user.merchant)
         return self.render_to_response(context)
 
 
