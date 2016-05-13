@@ -166,7 +166,7 @@ class AccountAdmin(admin.ModelAdmin):
         'balance',
         'balance_confirmed',
         'balance_max',
-        'instantfiat_provider',
+        'payment_processor',
     ]
     inlines = [
         TransactionInline,
@@ -187,6 +187,12 @@ class AccountAdmin(admin.ModelAdmin):
                 # Workaround for address field with blank=True
                 field.clean = lambda *args: obj.bitcoin_address
         return form
+
+    def payment_processor(self, obj):
+        if obj.instantfiat:
+            return obj.merchant.get_instantfiat_provider_display()
+        else:
+            return '-'
 
 
 class AccountInline(admin.TabularInline):

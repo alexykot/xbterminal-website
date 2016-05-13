@@ -367,24 +367,16 @@ class Account(models.Model):
         return balance
 
     def clean(self):
-        if not hasattr(self, 'currency'):
+        if not hasattr(self, 'instantfiat'):
             return
-        if self.currency.name in ['BTC', 'TBTC']:
+        if self.instantfiat:
+            if not self.instantfiat_account_id:
+                raise ValidationError({
+                    'instantfiat_account_id': 'This field is required.'})
+        else:
             if not self.forward_address:
                 raise ValidationError({
                     'forward_address': 'This field is required.'})
-        else:
-            # TODO: remove
-            if not self.instantfiat_provider:
-                raise ValidationError({
-                    'instantfiat_provider': 'This field is required.'})
-            if not self.instantfiat_api_key:
-                raise ValidationError({
-                    'instantfiat_api_key': 'This field is required.'})
-            if self.instantfiat_provider == INSTANTFIAT_PROVIDERS.GOCOIN and \
-                    not self.instantfiat_merchant_id:
-                raise ValidationError({
-                    'instantfiat_merchant_id': 'This field is required.'})
 
 
 class Transaction(models.Model):
