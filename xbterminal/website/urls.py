@@ -26,7 +26,6 @@ urlpatterns = [
 
     url(r'^accounts/$', views.AccountListView.as_view(), name='accounts'),
     url(r'^accounts/(?P<pk>\d+)/$', views.EditAccountView.as_view(), name='account'),
-    url(r'^accounts/add/$', views.CreateAccountView.as_view(), name='create_account'),
 
     url(r'^devices/$', views.DeviceList.as_view(), name='devices'),
     url(r'^devices/add/$', views.CreateDeviceView.as_view(), name='create_device'),
