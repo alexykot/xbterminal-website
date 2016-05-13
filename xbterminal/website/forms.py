@@ -430,7 +430,7 @@ class AccountForm(forms.ModelForm):
             # New account (CryptoPay)
             assert self.merchant
             self.fields['currency'].queryset = Currency.objects.filter(
-                name__in=['GBP', 'USD', 'EUR'])
+                name__in=cryptopay.DEFAULT_CURRENCIES)
             del self.fields['forward_address']
 
     def clean_currency(self):
