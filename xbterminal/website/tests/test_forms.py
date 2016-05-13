@@ -290,65 +290,6 @@ class AccountFormTestCase(TestCase):
         with self.assertRaises(AssertionError):
             AccountForm()
 
-        merchant = MerchantAccountFactory.create()
-        form = AccountForm(merchant=merchant)
-        self.assertIsNotNone(form.merchant)
-        choices = dict(form.fields['currency'].choices)
-        choices.pop('')
-        self.assertEqual(len(choices.keys()), 3)
-
-    def test_create(self):
-        merchant = MerchantAccountFactory.create()
-        usd = CurrencyFactory.create(name='USD')
-        form_data = {
-            'currency': usd.pk,
-            'instantfiat_api_key': 'test',
-        }
-        form = AccountForm(data=form_data, merchant=merchant)
-        self.assertTrue(form.is_valid())
-        account = form.save()
-        self.assertEqual(account.merchant.pk, merchant.pk)
-        self.assertEqual(account.currency.name, usd.name)
-        self.assertEqual(account.instantfiat_provider,
-                         INSTANTFIAT_PROVIDERS.CRYPTOPAY)
-        self.assertEqual(account.instantfiat_api_key, 'test')
-
-    def test_create_no_currency(self):
-        merchant = MerchantAccountFactory.create()
-        form = AccountForm(data={}, merchant=merchant)
-        self.assertFalse(form.is_valid())
-        self.assertIn('currency', form.errors)
-
-    def test_create_no_api_key(self):
-        merchant = MerchantAccountFactory.create()
-        usd = CurrencyFactory.create(name='USD')
-        form = AccountForm(data={'currency': usd.pk}, merchant=merchant)
-        self.assertFalse(form.is_valid())
-        self.assertIn('instantfiat_api_key', form.errors)
-
-    def test_create_btc(self):
-        merchant = MerchantAccountFactory.create()
-        btc = CurrencyFactory.create(name='BTC')
-        form_data = {
-            'currency': btc.pk,
-        }
-        form = AccountForm(data=form_data, merchant=merchant)
-        self.assertFalse(form.is_valid())
-        self.assertIn('currency', form.errors)
-
-    def test_create_already_exists(self):
-        merchant = MerchantAccountFactory.create()
-        account = AccountFactory.create(merchant=merchant,
-                                        currency__name='GBP')
-        form_data = {
-            'currency': account.currency.pk,
-            'instantfiat_api_key': 'test',
-        }
-        form = AccountForm(data=form_data, merchant=merchant)
-        self.assertFalse(form.is_valid())
-        self.assertEqual(form.errors['currency'][0],
-                         'Account already exists.')
-
     def test_update_btc(self):
         account = AccountFactory.create()
         form_data = {
@@ -379,21 +320,10 @@ class AccountFormTestCase(TestCase):
 
     def test_update_gbp(self):
         account = AccountFactory.create(currency__name='GBP')
-        form_data = {'instantfiat_api_key': 'test'}
+        btc = CurrencyFactory.create(name='BTC')
+        form_data = {'currency': btc.pk}
         form = AccountForm(data=form_data, instance=account)
         self.assertTrue(form.is_valid())
         account_updated = form.save()
         self.assertEqual(account_updated.currency.pk,
                          account.currency.pk)
-        self.assertEqual(account_updated.instantfiat_api_key,
-                         form_data['instantfiat_api_key'])
-
-    def test_updated_gbp_managed(self):
-        account = AccountFactory.create(currency__name='GBP',
-                                        instantfiat_merchant_id='testid')
-        form_data = {'instantfiat_api_key': 'test'}
-        form = AccountForm(data=form_data, instance=account)
-        self.assertTrue(form.is_valid())
-        account_updated = form.save()
-        self.assertEqual(account_updated.instantfiat_api_key,
-                         account.instantfiat_api_key)
