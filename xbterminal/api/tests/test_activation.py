@@ -4,15 +4,58 @@ from django.test import TestCase
 from django.utils import timezone
 
 from api.utils.activation import (
+    start,
     prepare_device,
     get_status,
     set_status,
     wait_for_activation)
 from website.models import Device
-from website.tests.factories import DeviceFactory
+from website.tests.factories import (
+    MerchantAccountFactory,
+    AccountFactory,
+    DeviceFactory)
 
 
 class ActivationTestCase(TestCase):
+
+    @patch('api.utils.activation.rq_helpers.run_task')
+    @patch('api.utils.activation.rq_helpers.run_periodic_task')
+    def test_start(self, run_periodic_mock, run_mock):
+        merchant = MerchantAccountFactory.create(currency__name='USD')
+        AccountFactory.create(merchant=merchant, currency__name='BTC')
+        AccountFactory.create(merchant=merchant, currency__name='GBP')
+        account_usd = AccountFactory.create(merchant=merchant,
+                                            currency__name='USD')
+        device = DeviceFactory.create(status='registered')
+        start(device, merchant)
+        self.assertTrue(run_mock.called)
+        self.assertTrue(run_periodic_mock.called)
+        device_updated = Device.objects.get(pk=device.pk)
+        self.assertEqual(device_updated.status, 'activation')
+        self.assertEqual(device_updated.merchant.pk, merchant.pk)
+        self.assertEqual(device_updated.account.pk, account_usd.pk)
+
+    @patch('api.utils.activation.rq_helpers.run_task')
+    @patch('api.utils.activation.rq_helpers.run_periodic_task')
+    def test_start_with_activation(self, run_periodic_mock, run_mock):
+
+        def activate(fun, args, queue=None, timeout=None):
+            device = Device.objects.get(key=args[0])
+            device.activate()
+            device.save()
+            return Mock()
+        run_mock.side_effect = activate
+
+        merchant = MerchantAccountFactory.create(currency__name='USD')
+        account = AccountFactory.create(merchant=merchant,
+                                        currency__name='BTC')
+        device = DeviceFactory.create(status='registered')
+
+        start(device, merchant)
+        device_updated = Device.objects.get(pk=device.pk)
+        self.assertEqual(device_updated.status, 'active')
+        self.assertEqual(device_updated.merchant.pk, merchant.pk)
+        self.assertEqual(device_updated.account.pk, account.pk)
 
     @patch('api.utils.activation.Salt')
     @patch('api.utils.activation.get_latest_version')

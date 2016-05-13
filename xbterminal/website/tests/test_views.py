@@ -5,11 +5,10 @@ from django.test import TestCase
 from django.core import mail
 from django.core.cache import cache
 from django.utils import timezone
-from mock import Mock, patch
+from mock import patch
 
 from website.models import (
     MerchantAccount,
-    Device,
     KYCDocument,
     INSTANTFIAT_PROVIDERS)
 from website.tests.factories import (
@@ -314,37 +313,6 @@ class ActivateDeviceViewTestCase(TestCase):
         self.assertEqual(merchant.device_set.count(), 1)
         active_device = merchant.device_set.first()
         self.assertEqual(active_device.status, 'activation')
-        self.assertEqual(active_device.account.pk, account.pk)
-
-    @patch('api.utils.activation.rq_helpers.run_task')
-    @patch('api.utils.activation.rq_helpers.run_periodic_task')
-    def test_post_with_activation(self, run_periodic_mock, run_mock):
-
-        def activate(fun, args, queue=None, timeout=None):
-            device = Device.objects.get(key=args[0])
-            device.activate()
-            device.save()
-            return Mock()
-        run_mock.side_effect = activate
-
-        merchant = MerchantAccountFactory.create()
-        account = AccountFactory.create(merchant=merchant)
-        self.assertEqual(merchant.device_set.count(), 0)
-        self.client.login(username=merchant.user.email,
-                          password='password')
-
-        device = DeviceFactory.create(status='registered')
-        form_data = {
-            'activation_code': device.activation_code,
-        }
-        response = self.client.post(self.url, form_data, follow=True)
-        self.assertTrue(run_mock.called)
-        self.assertTrue(run_periodic_mock.called)
-        expected_url = reverse('website:device',
-                               kwargs={'device_key': device.key})
-        self.assertRedirects(response, expected_url)
-        active_device = merchant.device_set.first()
-        self.assertEqual(active_device.status, 'active')
         self.assertEqual(active_device.account.pk, account.pk)
 
     def test_post_error(self):

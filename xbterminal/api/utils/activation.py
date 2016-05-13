@@ -6,7 +6,7 @@ from django.core.cache import cache
 from django.utils import timezone
 from rq.job import Job
 
-from website.models import Device
+from website.models import Account, Device
 from api.utils.salt import Salt
 from api.utils.aptly import get_latest_version
 from operations import rq_helpers
@@ -19,7 +19,10 @@ logger = logging.getLogger(__name__)
 
 def start(device, merchant):
     device.merchant = merchant
-    device.account = merchant.account_set.get(currency__name='BTC')
+    try:
+        device.account = merchant.account_set.get(currency=merchant.currency)
+    except Account.DoesNotExist:
+        device.account = merchant.account_set.get(currency__name='BTC')
     device.start_activation()
     device.save()
     job = rq_helpers.run_task(
