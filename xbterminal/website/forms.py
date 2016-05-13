@@ -173,6 +173,9 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             # TODO: ask merchant for CryptoPay API key later
             pass
         else:
+            merchant.instantfiat_provider = INSTANTFIAT_PROVIDERS.CRYPTOPAY
+            merchant.instantfiat_merchant_id = cryptopay_merchant_id
+            merchant.instantfiat_api_key = cryptopay_api_key
             for currency in cryptopay_currencies:
                 Account.objects.create(
                     merchant=merchant,

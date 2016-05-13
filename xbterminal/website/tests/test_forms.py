@@ -45,6 +45,10 @@ class MerchantRegistrationFormTestCase(TestCase):
         self.assertEqual(merchant.user.email, form_data['contact_email'])
         self.assertEqual(merchant.language.code, 'en')
         self.assertEqual(merchant.currency.name, 'GBP')
+        self.assertEqual(merchant.instantfiat_provider,
+                         INSTANTFIAT_PROVIDERS.CRYPTOPAY)
+        self.assertEqual(merchant.instantfiat_merchant_id, 'merchant_id')
+        self.assertEqual(merchant.instantfiat_api_key, 'x1y2z3')
         # Oauth
         oauth_app = Application.objects.get(user=merchant.user)
         self.assertEqual(oauth_app.client_id, form_data['contact_email'])
