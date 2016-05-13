@@ -413,6 +413,35 @@ class UpdateProfileView(TemplateResponseMixin, CabinetView):
             return self.render_to_response(context)
 
 
+class InstantFiatSettingsView(TemplateResponseMixin, CabinetView):
+
+    template_name = 'cabinet/instantfiat_form.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(InstantFiatSettingsView, self).get_context_data(**kwargs)
+        if self.request.user.merchant.instantfiat_merchant_id:
+            raise Http404
+        return context
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['form'] = forms.InstantFiatSettingsForm(
+            instance=self.request.user.merchant)
+        return self.render_to_response(context)
+
+    def post(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        form = forms.InstantFiatSettingsForm(
+            self.request.POST,
+            instance=self.request.user.merchant)
+        if form.is_valid():
+            form.save()
+            return redirect(reverse('website:accounts'))
+        else:
+            context['form'] = form
+            return self.render_to_response(context)
+
+
 class ChangePasswordView(TemplateResponseMixin, CabinetView):
     """
     Change password
@@ -563,6 +592,8 @@ class AccountListView(TemplateResponseMixin, CabinetView):
         context['accounts'] = self.request.user.merchant.account_set.all()
         context['can_add_account'] = not accounts.check_managed_accounts(
             self.request.user.merchant)
+        context['can_edit_ift_settings'] = \
+            not self.request.user.merchant.instantfiat_merchant_id
         return self.render_to_response(context)
 
 
