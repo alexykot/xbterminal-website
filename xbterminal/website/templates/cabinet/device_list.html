@@ -10,8 +10,7 @@
     <tr>
         <th>{% trans 'Name' %}</th>
         <th>{% trans 'Status' %}</th>
-        <th>{% trans 'Receiving address' %}</th>
-        <th>{% trans 'Payment processor' %}</th>
+        <th>{% trans 'Account' %}</th>
         <th>{% trans 'Actions' %}</th>
     </tr>
     {% for device in devices %}
@@ -27,14 +26,7 @@
             {{ device.get_status_display }}
             {% if device.is_online %}<div class="device-online" title="device online">•</div>{% endif %}
         </td>
-        <td>
-            {% if device.bitcoin_address %}
-                {{ device.bitcoin_address|slice:":6" }}...{{ device.bitcoin_address|slice:"-6:" }}
-            {% else %}
-                --
-            {% endif %}
-        </td>
-        <td>{{ device.payment_processor_info|default:"--" }}</td>
+        <td>{{ device.account }}</td>
         <td>
             {% if device.status == 'active' or device.status == 'suspended' %}
             <div><a href="{% url 'website:reconciliation' device.key %}">{% trans 'reconciliation' %}</a></div>

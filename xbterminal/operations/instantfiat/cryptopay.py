@@ -14,6 +14,8 @@ from operations.exceptions import (
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_CURRENCIES = ['GBP', 'USD', 'EUR']
+
 
 def create_invoice(fiat_amount, currency_code, api_key, description):
     invoice_url = "https://cryptopay.me/api/v1/invoices"

@@ -21,9 +21,7 @@ class PreparePaymentTestCase(TestCase):
     @patch('operations.payment.get_exchange_rate')
     @patch('operations.payment.run_periodic_task')
     def test_keep_btc(self, run_task_mock, get_rate_mock, bc_mock):
-        device = DeviceFactory.create(
-            account__currency__name='BTC',
-            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+        device = DeviceFactory.create(account__currency__name='BTC')
         fiat_amount = Decimal('10')
         exchange_rate = Decimal('235.64')
         local_address = '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje'
@@ -46,7 +44,7 @@ class PreparePaymentTestCase(TestCase):
         self.assertEqual(payment_order.local_address,
                          local_address)
         self.assertEqual(payment_order.merchant_address,
-                         device.bitcoin_address)
+                         device.account.forward_address)
         self.assertEqual(payment_order.fee_address,
                          config.OUR_FEE_MAINNET_ADDRESS)
         self.assertIsNone(payment_order.instantfiat_address)
@@ -77,9 +75,7 @@ class PreparePaymentTestCase(TestCase):
     @patch('operations.payment.get_exchange_rate')
     @patch('operations.payment.run_periodic_task')
     def test_keep_btc_without_fee(self, run_task_mock, get_rate_mock, bc_mock):
-        device = DeviceFactory.create(
-            account__currency__name='BTC',
-            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+        device = DeviceFactory.create(account__currency__name='BTC')
         fiat_amount = Decimal('1')
         exchange_rate = Decimal('235.64')
         local_address = '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje'
@@ -151,9 +147,7 @@ class PreparePaymentTestCase(TestCase):
                          instantfiat_invoice_id)
 
     def test_no_btc_account(self):
-        device = DeviceFactory.create(
-            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
-            status='registered')
+        device = DeviceFactory.create(status='registered')
         fiat_amount = Decimal('10')
         with self.assertRaises(exceptions.PaymentError) as context:
             payment.prepare_payment(device, fiat_amount)
@@ -161,12 +155,12 @@ class PreparePaymentTestCase(TestCase):
                          'Account is not set for device.')
 
     def test_no_bitcoin_address(self):
-        device = DeviceFactory.create(bitcoin_address=None)
+        device = DeviceFactory.create(account__forward_address=None)
         fiat_amount = Decimal('10')
         with self.assertRaises(exceptions.PaymentError) as context:
             payment.prepare_payment(device, fiat_amount)
         self.assertEqual(context.exception.message,
-                         'Payout address is not set for device.')
+                         'Payout address is not set for account.')
 
     def test_currency_mismatch(self):
         device = DeviceFactory.create(

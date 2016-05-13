@@ -162,7 +162,7 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             currency=Currency.objects.get(name='BTC'))
         # Create CryptoPay accounts
         cryptopay_currencies = Currency.objects.filter(
-            name__in=['GBP', 'USD', 'EUR'])
+            name__in=cryptopay.DEFAULT_CURRENCIES)
         try:
             cryptopay_merchant_id, cryptopay_api_key = cryptopay.create_merchant(
                 merchant.contact_first_name,
@@ -315,7 +315,6 @@ class DeviceForm(forms.ModelForm):
             'device_type',
             'name',
             'account',
-            'bitcoin_address',
         ]
         widgets = {
             'device_type': forms.HiddenInput,
@@ -336,23 +335,6 @@ class DeviceForm(forms.ModelForm):
         device_types = dict(Device.DEVICE_TYPES)
         device_type = self['device_type'].value()
         return str(device_types[device_type])
-
-    def clean(self):
-        cleaned_data = super(DeviceForm, self).clean()
-        account = cleaned_data.get('account')
-        if account and account.currency.name in ['BTC', 'TBTC']:
-            bitcoin_address = cleaned_data.get('bitcoin_address')
-            if not bitcoin_address:
-                self.add_error('bitcoin_address', 'This field is required.')
-            else:
-                try:
-                    validate_bitcoin_address(
-                        bitcoin_address,
-                        network=account.bitcoin_network)
-                except forms.ValidationError as error:
-                    for error_message in error.messages:
-                        self.add_error('bitcoin_address', error_message)
-        return cleaned_data
 
     def save(self, commit=True):
         device = super(DeviceForm, self).save(commit=False)
@@ -412,6 +394,81 @@ class DeviceAdminForm(forms.ModelForm):
                     for error_message in error.messages:
                         self.add_error(address, error_message)
         return cleaned_data
+
+
+class AccountForm(forms.ModelForm):
+
+    class Meta:
+        model = Account
+        fields = [
+            'currency',
+            'forward_address',
+            'instantfiat_provider',
+            'instantfiat_api_key',
+        ]
+        widgets = {
+            'instantfiat_provider': forms.HiddenInput(),
+        }
+        labels = {
+            'instantfiat_api_key': 'CryptoPay API key',
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.merchant = kwargs.pop('merchant', None)
+        super(AccountForm, self).__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            # Existing account
+            self.fields['currency'].widget.attrs['disabled'] = True
+            self.fields['currency'].required = False
+            if self.instance.currency.name in ['BTC', 'TBTC']:
+                del self.fields['instantfiat_api_key']
+            else:
+                del self.fields['forward_address']
+                if self.instance.instantfiat_merchant_id:
+                    del self.fields['instantfiat_api_key']
+        else:
+            # New account (CryptoPay)
+            assert self.merchant
+            self.fields['currency'].queryset = Currency.objects.filter(
+                name__in=cryptopay.DEFAULT_CURRENCIES)
+            del self.fields['forward_address']
+
+    def clean_currency(self):
+        if self.instance and self.instance.pk:
+            return self.instance.currency
+        else:
+            # New account
+            currency = self.cleaned_data['currency']
+            if self.merchant.account_set.filter(currency=currency).exists():
+                raise forms.ValidationError('Account already exists.')
+            return currency
+
+    def clean_instantfiat_provider(self):
+        if self.instance and self.instance.pk:
+            return self.instance.instantfiat_provider
+        else:
+            return INSTANTFIAT_PROVIDERS.CRYPTOPAY
+
+    def clean(self):
+        cleaned_data = super(AccountForm, self).clean()
+        forward_address = cleaned_data.get('forward_address')
+        if forward_address:
+            try:
+                validate_bitcoin_address(
+                    forward_address,
+                    network=self.instance.bitcoin_network)
+            except forms.ValidationError as error:
+                for error_message in error.messages:
+                    self.add_error('forward_address', error_message)
+        return cleaned_data
+
+    def save(self, commit=True):
+        account = super(AccountForm, self).save(commit=False)
+        if not hasattr(account, 'merchant'):
+            account.merchant = self.merchant
+        if commit:
+            account.save()
+        return account
 
 
 class SendReconciliationForm(forms.Form):

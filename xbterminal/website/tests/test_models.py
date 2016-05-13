@@ -211,6 +211,7 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.balance, 0)
         self.assertEqual(account.balance_max, 0)
         self.assertIsNone(account.bitcoin_address)
+        self.assertIsNotNone(account.forward_address)
         self.assertIsNone(account.instantfiat_provider)
         self.assertIsNone(account.instantfiat_merchant_id)
         self.assertIsNone(account.instantfiat_api_key)
@@ -222,6 +223,7 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.balance, 0)
         self.assertEqual(account.balance_max, 0)
         self.assertIsNone(account.bitcoin_address)
+        self.assertIsNone(account.forward_address)
         self.assertEqual(account.instantfiat_provider,
                          INSTANTFIAT_PROVIDERS.CRYPTOPAY)
         self.assertIsNone(account.instantfiat_merchant_id)
@@ -395,10 +397,10 @@ class DeviceTestCase(TestCase):
     def test_instantfiat(self):
         device_1 = DeviceFactory.create(status='registered')
         self.assertIsNone(device_1.instantfiat)
-        self.assertIsNotNone(device_1.bitcoin_address)
+        self.assertIsNone(device_1.bitcoin_address)
         device_2 = DeviceFactory.create(status='active')
         self.assertFalse(device_2.instantfiat)
-        self.assertIsNotNone(device_2.bitcoin_address)
+        self.assertIsNone(device_2.bitcoin_address)
         device_3 = DeviceFactory.create(
             status='active',
             account__currency__name='USD')

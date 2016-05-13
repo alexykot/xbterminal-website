@@ -3,6 +3,7 @@ from django.contrib.admin.sites import AdminSite
 from django.test import TestCase
 
 from website.tests.factories import (
+    CurrencyFactory,
     MerchantAccountFactory,
     AccountFactory)
 from website.models import MerchantAccount, Account, INSTANTFIAT_PROVIDERS
@@ -47,6 +48,7 @@ class AccountAdminTestCase(TestCase):
             'balance': '0.00',
             'balance_max': '0.00',
             'bitcoin_address': '',
+            'forward_address': '',
             'instantfiat_provider': INSTANTFIAT_PROVIDERS.CRYPTOPAY,
             'instantfiat_api_key': 'test',
         }
@@ -65,6 +67,7 @@ class AccountAdminTestCase(TestCase):
             'balance': '0.00',
             'balance_max': '0.00',
             'bitcoin_address': '',
+            'forward_address': '',
             'instantfiat_provider': '',
             'instantfiat_merchant_id': '',
             'instantfiat_api_key': '',
@@ -72,6 +75,23 @@ class AccountAdminTestCase(TestCase):
         form = form_cls(data=data)
         self.assertFalse(form.is_valid())
         self.assertEqual(form.errors['instantfiat_provider'][0],
+                         'This field is required.')
+
+    def test_create_btc_error(self):
+        merchant = MerchantAccountFactory.create()
+        form_cls = self.ma.get_form(mock.Mock(), None)
+        btc = CurrencyFactory.create(name='BTC')
+        data = {
+            'merchant': merchant.pk,
+            'currency': btc.pk,
+            'balance': '0.00',
+            'balance_max': '0.00',
+            'bitcoin_address': '',
+            'forward_address': '',
+        }
+        form = form_cls(data=data)
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['forward_address'][0],
                          'This field is required.')
 
     def test_update_btc(self):
@@ -83,6 +103,7 @@ class AccountAdminTestCase(TestCase):
             'balance': '0.00',
             'balance_max': '1.00',
             'bitcoin_address': '',
+            'forward_address': '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
         }
         form_cls = self.ma.get_form(mock.Mock(), account)
         form = form_cls(data=data, instance=account)

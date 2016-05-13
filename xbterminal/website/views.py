@@ -23,7 +23,7 @@ from ipware.ip import get_real_ip
 from api.utils import activation
 
 from website import forms, models
-from website.utils import reconciliation, email
+from website.utils import reconciliation, email, accounts
 
 
 class ServerErrorMiddleware(object):
@@ -561,7 +561,66 @@ class AccountListView(TemplateResponseMixin, CabinetView):
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         context['accounts'] = self.request.user.merchant.account_set.all()
+        context['can_add_account'] = not accounts.check_managed_accounts(
+            self.request.user.merchant)
         return self.render_to_response(context)
+
+
+class CreateAccountView(TemplateResponseMixin, CabinetView):
+    """
+    Create CryptoPay account
+    """
+    template_name = 'cabinet/account_form.html'
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['form'] = forms.AccountForm(
+            merchant=self.request.user.merchant)
+        return self.render_to_response(context)
+
+    def post(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        form = forms.AccountForm(
+            self.request.POST,
+            merchant=self.request.user.merchant)
+        if form.is_valid():
+            form.save()
+            return redirect(reverse('website:accounts'))
+        else:
+            context['form'] = form
+            return self.render_to_response(context)
+
+
+class EditAccountView(TemplateResponseMixin, CabinetView):
+    """
+    Edit account
+    """
+    template_name = 'cabinet/account_form.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(EditAccountView, self).get_context_data(**kwargs)
+        try:
+            context['account'] = self.request.user.merchant.account_set.\
+                get(pk=self.kwargs.get('pk'))
+        except models.Account.DoesNotExist:
+            raise Http404
+        return context
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['form'] = forms.AccountForm(instance=context['account'])
+        return self.render_to_response(context)
+
+    def post(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        form = forms.AccountForm(self.request.POST,
+                                 instance=context['account'])
+        if form.is_valid():
+            form.save()
+            return redirect(reverse('website:accounts'))
+        else:
+            context['form'] = form
+            return self.render_to_response(context)
 
 
 class ReconciliationView(DeviceMixin, TemplateResponseMixin, CabinetView):

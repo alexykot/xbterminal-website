@@ -289,6 +289,11 @@ class Account(models.Model):
         validators=[validate_bitcoin_address],
         blank=True,
         null=True)
+    forward_address = models.CharField(
+        max_length=35,
+        validators=[validate_bitcoin_address],
+        blank=True,
+        null=True)
     instantfiat_provider = models.PositiveSmallIntegerField(
         _('InstantFiat provider'),
         choices=INSTANTFIAT_PROVIDERS,
@@ -350,7 +355,13 @@ class Account(models.Model):
         return balance
 
     def clean(self):
-        if self.currency.name not in ['BTC', 'TBTC']:
+        if not hasattr(self, 'currency'):
+            return
+        if self.currency.name in ['BTC', 'TBTC']:
+            if not self.forward_address:
+                raise ValidationError({
+                    'forward_address': 'This field is required.'})
+        else:
             if not self.instantfiat_provider:
                 raise ValidationError({
                     'instantfiat_provider': 'This field is required.'})
@@ -517,7 +528,7 @@ class Device(models.Model):
         null=True,
         validators=[validate_public_key],
         help_text='API public key')
-
+    # TODO: remove bitcoin address
     bitcoin_address = models.CharField(
         _('Bitcoin address to send to'),
         max_length=100,
@@ -575,11 +586,6 @@ class Device(models.Model):
             return False
         else:
             return True
-
-    def payment_processor_info(self):
-        if self.instantfiat:
-            return self.account.get_instantfiat_provider_display()
-        return ''
 
     def get_payments(self):
         return self.paymentorder_set.filter(time_notified__isnull=False)

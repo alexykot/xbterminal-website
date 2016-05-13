@@ -89,6 +89,14 @@ var Registration = (function () {
             $('#step span').text('1');
         });
 
+        $('#registration-step-1:visible').keypress(function (event) {
+            var ENTER_KEY = 13;
+            if (event.which === ENTER_KEY) {
+                event.preventDefault();
+                $('#continue-step-2').click();
+            }
+        });
+
         $('#merchant-form').on('submit', function (event) {
             event.preventDefault();
             if (!validator.form()) {

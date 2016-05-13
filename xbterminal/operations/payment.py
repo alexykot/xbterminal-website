@@ -46,9 +46,9 @@ def prepare_payment(device, fiat_amount):
     if not device.account:
         raise exceptions.PaymentError(
             'Account is not set for device.')
-    if not device.instantfiat and not device.bitcoin_address:
+    if not device.instantfiat and not device.account.forward_address:
         raise exceptions.PaymentError(
-            'Payout address is not set for device.')
+            'Payout address is not set for account.')
     if device.instantfiat and \
             device.merchant.currency != device.account.currency:
         raise exceptions.PaymentError(
@@ -58,7 +58,7 @@ def prepare_payment(device, fiat_amount):
     order = PaymentOrder(
         device=device,
         bitcoin_network=device.bitcoin_network,
-        merchant_address=device.bitcoin_address,
+        merchant_address=device.account.forward_address,
         fee_address=device.our_fee_address,
         fiat_currency=device.merchant.currency,
         fiat_amount=fiat_amount.quantize(FIAT_DEC_PLACES))

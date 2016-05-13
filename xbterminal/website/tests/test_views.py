@@ -5,9 +5,12 @@ from django.test import TestCase
 from django.core import mail
 from django.core.cache import cache
 from django.utils import timezone
-from mock import Mock, patch
+from mock import patch
 
-from website.models import MerchantAccount, Device, KYCDocument
+from website.models import (
+    MerchantAccount,
+    KYCDocument,
+    INSTANTFIAT_PROVIDERS)
 from website.tests.factories import (
     create_image,
     MerchantAccountFactory,
@@ -312,37 +315,6 @@ class ActivateDeviceViewTestCase(TestCase):
         self.assertEqual(active_device.status, 'activation')
         self.assertEqual(active_device.account.pk, account.pk)
 
-    @patch('api.utils.activation.rq_helpers.run_task')
-    @patch('api.utils.activation.rq_helpers.run_periodic_task')
-    def test_post_with_activation(self, run_periodic_mock, run_mock):
-
-        def activate(fun, args, queue=None, timeout=None):
-            device = Device.objects.get(key=args[0])
-            device.activate()
-            device.save()
-            return Mock()
-        run_mock.side_effect = activate
-
-        merchant = MerchantAccountFactory.create()
-        account = AccountFactory.create(merchant=merchant)
-        self.assertEqual(merchant.device_set.count(), 0)
-        self.client.login(username=merchant.user.email,
-                          password='password')
-
-        device = DeviceFactory.create(status='registered')
-        form_data = {
-            'activation_code': device.activation_code,
-        }
-        response = self.client.post(self.url, form_data, follow=True)
-        self.assertTrue(run_mock.called)
-        self.assertTrue(run_periodic_mock.called)
-        expected_url = reverse('website:device',
-                               kwargs={'device_key': device.key})
-        self.assertRedirects(response, expected_url)
-        active_device = merchant.device_set.first()
-        self.assertEqual(active_device.status, 'active')
-        self.assertEqual(active_device.account.pk, account.pk)
-
     def test_post_error(self):
         merchant = MerchantAccountFactory.create()
         self.client.login(username=merchant.user.email,
@@ -559,6 +531,72 @@ class AccountListViewTestCase(TestCase):
         self.assertTemplateUsed(response, 'cabinet/account_list.html')
         self.assertEqual(response.context['accounts'].first().pk,
                          account.pk)
+        self.assertTrue(response.context['can_add_account'])
+
+
+class CreateAccountViewTestCase(TestCase):
+
+    def test_get(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:create_account')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/account_form.html')
+        self.assertEqual(response.context['form'].merchant.pk,
+                         merchant.pk)
+
+    def test_post(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:create_account')
+        form_data = {
+            'currency': merchant.currency.pk,
+            'instantfiat_api_key': 'test',
+        }
+        response = self.client.post(url, data=form_data)
+        self.assertEqual(response.status_code, 302)
+        account = merchant.account_set.get(
+            currency__name=merchant.currency.name)
+        self.assertEqual(account.instantfiat_provider,
+                         INSTANTFIAT_PROVIDERS.CRYPTOPAY)
+        self.assertEqual(account.instantfiat_api_key,
+                         form_data['instantfiat_api_key'])
+
+
+class EditAccountViewTestCase(TestCase):
+
+    def test_get(self):
+        account = AccountFactory.create()
+        self.client.login(username=account.merchant.user.email,
+                          password='password')
+        url = reverse('website:account', kwargs={'pk': account.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/account_form.html')
+        self.assertEqual(response.context['account'].pk, account.pk)
+
+    def test_get_account_not_found(self):
+        merchant = MerchantAccountFactory.create()
+        account = AccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:account', kwargs={'pk': account.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_post(self):
+        account = AccountFactory.create()
+        self.client.login(username=account.merchant.user.email,
+                          password='password')
+        url = reverse('website:account', kwargs={'pk': account.pk})
+        form_data = {
+            'forward_address': '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
+        }
+        response = self.client.post(url, data=form_data)
+        self.assertEqual(response.status_code, 302)
 
 
 class ReconciliationViewTestCase(TestCase):

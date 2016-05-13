@@ -136,6 +136,13 @@ class AccountFactory(factory.DjangoModelFactory):
     currency = factory.SubFactory(CurrencyFactory, name='BTC')
 
     @factory.lazy_attribute
+    def forward_address(self):
+        if self.currency.name == 'BTC':
+            return '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
+        elif self.currency.name == 'TBTC':
+            return 'n3QR7ossvN4JnUyicajcVyYf4h3Npyexqw'
+
+    @factory.lazy_attribute
     def instantfiat_provider(self):
         if self.currency.name not in ['BTC', 'TBTC']:
             return INSTANTFIAT_PROVIDERS.CRYPTOPAY
@@ -179,11 +186,6 @@ class DeviceFactory(factory.DjangoModelFactory):
         merchant=factory.SelfAttribute('..merchant'))
     device_type = 'hardware'
     name = factory.Sequence(lambda n: 'Terminal #{0}'.format(n))
-
-    @factory.lazy_attribute
-    def bitcoin_address(self):
-        if self.account.currency.name in ['BTC', 'TBTC']:
-            return '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
 
     @factory.post_generation
     def status(self, create, extracted, **kwargs):

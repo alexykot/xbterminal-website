@@ -2,6 +2,11 @@
 {% load i18n %}
 
 {% block cabinet_content %}
+<div>
+    {% if can_add_account %}
+    <a class="btn btn-default" href="{% url 'website:create_account' %}">{% trans 'Add CryptoPay account' %}</a>
+    {% endif %}
+</div>
 <table id="accounts" class="table table-striped table-bordered table-responsive">
     <tr>
         <th>{% trans 'Currency' %}</th>
@@ -10,7 +15,7 @@
     </tr>
     {% for account in accounts %}
     <tr>
-        <td>{{ account.currency.name }}</td>
+        <td><a href="{% url 'website:account' pk=account.pk %}">{{ account.currency.name }}</a></td>
         <td>
             {% if account.currency.name == 'BTC' or account.currency.name == 'TBTC' %}
             {{ account.balance|floatformat:8 }}
