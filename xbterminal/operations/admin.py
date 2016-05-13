@@ -50,7 +50,7 @@ class PaymentOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
         'status',
     ]
     readonly_fields = ['status', 'payment_request_qr_code']
-    actions = ['refund']
+    actions = ['refund', 'check_confirmation']
 
     def has_add_permission(self, request):
         return False
@@ -101,6 +101,21 @@ class PaymentOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
                     messages.SUCCESS)
 
     refund.short_description = 'Refund selected payment orders'
+
+    def check_confirmation(self, request, queryset):
+        for order in queryset.filter(time_forwarded__isnull=False):
+            if payment.check_confirmation(order):
+                self.message_user(
+                    request,
+                    'Payment order "{0}" is confirmed.'.format(order.pk),
+                    messages.SUCCESS)
+            else:
+                self.message_user(
+                    request,
+                    'Payment order "{0}" is not confirmed yet.'.format(order.pk),
+                    messages.WARNING)
+
+    check_confirmation.short_description = 'Check confirmation status'
 
 
 @admin.register(models.WithdrawalOrder)
