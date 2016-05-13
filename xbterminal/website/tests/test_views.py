@@ -358,6 +358,39 @@ class ActivationViewTestCase(TestCase):
         self.assertRedirects(response, expected_url)
 
 
+class UpdateProfileViewTestCase(TestCase):
+
+    def test_get(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:profile')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/profile_form.html')
+        self.assertEqual(response.context['form'].instance.pk,
+                         merchant.pk)
+
+    def test_post(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:profile')
+        form_data = {
+            'company_name': 'Test Company',
+            'business_address': 'Test Address',
+            'town': 'Test Town',
+            'country': 'GB',
+            'post_code': '123456',
+            'contact_first_name': 'Test',
+            'contact_last_name': 'Test',
+            'contact_email': 'test@example.net',
+            'contact_phone': '+123456789',
+        }
+        response = self.client.post(url, data=form_data)
+        self.assertEqual(response.status_code, 302)
+
+
 class ResetPasswordViewTestCase(TestCase):
 
     def setUp(self):
