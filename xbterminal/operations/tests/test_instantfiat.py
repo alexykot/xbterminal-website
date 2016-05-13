@@ -172,3 +172,17 @@ class CryptoPayTestCase(TestCase):
         with self.assertRaises(InstantFiatError):
             instantfiat.cryptopay.set_password(
                 user_id, password, api_key)
+
+    @patch('operations.instantfiat.cryptopay.requests.get')
+    def test_list_accounts(self, get_mock):
+        get_mock.return_value = Mock(**{
+            'json.return_value': [
+                {'id': 1, 'currency': 'BTC'},
+                {'id': 2, 'currency': 'GBP'},
+            ],
+        })
+        api_key = 'test-api-key'
+        results = instantfiat.cryptopay.list_accounts(api_key)
+        self.assertEqual(get_mock.call_args[1]['headers']['X-Api-Key'],
+                         'test-api-key')
+        self.assertEqual(len(results), 2)

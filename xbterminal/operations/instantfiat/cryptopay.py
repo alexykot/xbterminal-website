@@ -129,3 +129,20 @@ def set_password(user_id, password, api_key):
         assert data['status'] == 'success'
     except:
         raise InstantFiatError(response.text)
+
+
+def list_accounts(api_key):
+    """
+    Accepts:
+        api_key: merchant's API key
+    """
+    api_url = 'https://cryptopay.me/api/v2/accounts'
+    assert api_key
+    headers = {
+        'Content-Type': 'application/json',
+        'X-Api-Key': api_key,
+    }
+    response = requests.get(api_url, headers=headers)
+    response.raise_for_status()
+    data = response.json()
+    return data
