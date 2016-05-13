@@ -294,6 +294,22 @@ class ProfileForm(forms.ModelForm):
         return instance
 
 
+class InstantFiatSettingsForm(forms.ModelForm):
+
+    class Meta:
+        model = MerchantAccount
+        fields = [
+            'instantfiat_api_key',
+        ]
+        labels = {
+            'instantfiat_api_key': 'CryptoPay API key',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(InstantFiatSettingsForm, self).__init__(*args, **kwargs)
+        self.fields['instantfiat_api_key'].required = True
+
+
 class KYCDocumentUploadForm(forms.ModelForm):
 
     class Meta:
