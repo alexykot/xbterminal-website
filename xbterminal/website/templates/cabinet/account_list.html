@@ -3,9 +3,6 @@
 
 {% block cabinet_content %}
 <div>
-    {% if can_add_account %}
-    <a class="btn btn-default" href="{% url 'website:create_account' %}">{% trans 'Add CryptoPay account' %}</a>
-    {% endif %}
     {% if can_edit_ift_settings %}
     <a class="btn btn-default" href="{% url 'website:instantfiat' %}">{% trans 'Edit CryptoPay settings' %}</a>
     {% endif %}

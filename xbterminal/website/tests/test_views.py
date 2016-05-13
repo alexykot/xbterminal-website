@@ -598,7 +598,6 @@ class AccountListViewTestCase(TestCase):
         self.assertTemplateUsed(response, 'cabinet/account_list.html')
         self.assertEqual(response.context['accounts'].first().pk,
                          account.pk)
-        self.assertTrue(response.context['can_add_account'])
         self.assertTrue(response.context['can_edit_ift_settings'])
 
     def test_get_managed_profile(self):
@@ -610,7 +609,6 @@ class AccountListViewTestCase(TestCase):
                           password='password')
         url = reverse('website:accounts')
         response = self.client.get(url)
-        self.assertTrue(response.context['can_add_account'])
         self.assertFalse(response.context['can_edit_ift_settings'])
 
 

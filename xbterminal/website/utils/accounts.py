@@ -2,6 +2,7 @@ from operations.instantfiat.cryptopay import DEFAULT_CURRENCIES
 from website.models import INSTANTFIAT_PROVIDERS
 
 
+# TODO: remove function
 def check_managed_accounts(merchant):
     """
     Accepts:
