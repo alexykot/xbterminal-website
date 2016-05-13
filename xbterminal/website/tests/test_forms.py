@@ -58,6 +58,7 @@ class MerchantRegistrationFormTestCase(TestCase):
         account_btc = merchant.account_set.get(currency__name='BTC')
         self.assertEqual(account_btc.balance, 0)
         self.assertEqual(account_btc.balance_max, 0)
+        self.assertFalse(account_btc.instantfiat)
         self.assertEqual(merchant.get_account_balance('BTC'), 0)
         self.assertIsNone(merchant.get_account_balance('TBTC'))
         account_gbp = merchant.account_set.get(currency__name='GBP')
@@ -67,6 +68,7 @@ class MerchantRegistrationFormTestCase(TestCase):
                          INSTANTFIAT_PROVIDERS.CRYPTOPAY)
         self.assertEqual(account_gbp.instantfiat_merchant_id, 'merchant_id')
         self.assertEqual(account_gbp.instantfiat_api_key, 'x1y2z3')
+        self.assertTrue(account_gbp.instantfiat)
         # Check with utility function
         self.assertTrue(check_managed_accounts(merchant))
         # Email

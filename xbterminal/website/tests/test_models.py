@@ -196,7 +196,8 @@ class AccountTestCase(TestCase):
         merchant = MerchantAccountFactory.create(company_name='mtest')
         currency = CurrencyFactory.create(name='BTC')
         account = Account.objects.create(merchant=merchant,
-                                         currency=currency)
+                                         currency=currency,
+                                         instantfiat=False)
         # Check defaults
         self.assertEqual(account.currency.name, 'BTC')
         self.assertEqual(account.balance, 0)
@@ -205,6 +206,8 @@ class AccountTestCase(TestCase):
         self.assertIsNone(account.instantfiat_provider)
         self.assertIsNone(account.instantfiat_merchant_id)
         self.assertIsNone(account.instantfiat_api_key)
+        self.assertFalse(account.instantfiat)
+        self.assertIsNone(account.instantfiat_account_id)
         self.assertEqual(str(account), 'BTC - 0.00000000')
 
     def test_factory_btc(self):
@@ -217,6 +220,8 @@ class AccountTestCase(TestCase):
         self.assertIsNone(account.instantfiat_provider)
         self.assertIsNone(account.instantfiat_merchant_id)
         self.assertIsNone(account.instantfiat_api_key)
+        self.assertFalse(account.instantfiat)
+        self.assertIsNone(account.instantfiat_account_id)
         self.assertEqual(str(account), 'BTC - 0.00000000')
 
     def test_factory_gbp(self):
@@ -230,7 +235,14 @@ class AccountTestCase(TestCase):
                          INSTANTFIAT_PROVIDERS.CRYPTOPAY)
         self.assertIsNone(account.instantfiat_merchant_id)
         self.assertIsNotNone(account.instantfiat_api_key)
+        self.assertTrue(account.instantfiat)
+        self.assertIsNotNone(account.instantfiat_account_id)
         self.assertEqual(str(account), 'GBP - 0.00 (CryptoPay)')
+
+    def test_unique_instantfiat_account_id(self):
+        AccountFactory.create(instantfiat_account_id='test')
+        with self.assertRaises(IntegrityError):
+            AccountFactory.create(instantfiat_account_id='test')
 
     def test_unique_together(self):
         merchant = MerchantAccountFactory.create()

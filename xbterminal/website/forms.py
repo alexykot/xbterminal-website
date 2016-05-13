@@ -159,7 +159,8 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
         # Create BTC account
         Account.objects.create(
             merchant=merchant,
-            currency=Currency.objects.get(name='BTC'))
+            currency=Currency.objects.get(name='BTC'),
+            instantfiat=False)
         # Create CryptoPay accounts
         cryptopay_currencies = Currency.objects.filter(
             name__in=cryptopay.DEFAULT_CURRENCIES)
@@ -182,7 +183,8 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
                     currency=currency,
                     instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
                     instantfiat_merchant_id=cryptopay_merchant_id,
-                    instantfiat_api_key=cryptopay_api_key)
+                    instantfiat_api_key=cryptopay_api_key,
+                    instantfiat=True)
 
     @atomic
     def save(self):

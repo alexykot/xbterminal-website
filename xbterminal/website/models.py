@@ -320,10 +320,17 @@ class Account(models.Model):
         max_length=200,
         blank=True,
         null=True)
+    instantfiat = models.BooleanField()
+    instantfiat_account_id = models.CharField(
+        _('InstantFiat account ID'),
+        max_length=50,
+        unique=True,
+        blank=True,
+        null=True)
 
     class Meta:
-        ordering = ('merchant', 'currency')
-        unique_together = ('merchant', 'currency')
+        ordering = ('merchant', 'instantfiat', 'currency')
+        unique_together = ('merchant', 'instantfiat', 'currency')
 
     def __unicode__(self):
         if self.currency.name in ['BTC', 'TBTC']:
@@ -373,6 +380,7 @@ class Account(models.Model):
                 raise ValidationError({
                     'forward_address': 'This field is required.'})
         else:
+            # TODO: remove
             if not self.instantfiat_provider:
                 raise ValidationError({
                     'instantfiat_provider': 'This field is required.'})

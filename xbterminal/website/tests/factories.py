@@ -152,6 +152,18 @@ class AccountFactory(factory.DjangoModelFactory):
         if self.currency.name not in ['BTC', 'TBTC']:
             return fake.sha256(raw_output=False)
 
+    @factory.lazy_attribute
+    def instantfiat(self):
+        if self.currency.name not in ['BTC', 'TBTC']:
+            return True
+        else:
+            return False
+
+    @factory.lazy_attribute
+    def instantfiat_account_id(self):
+        if self.currency.name not in ['BTC', 'TBTC']:
+            return fake.uuid4()
+
     @factory.post_generation
     def balance(self, create, extracted, **kwargs):
         if create and extracted:
