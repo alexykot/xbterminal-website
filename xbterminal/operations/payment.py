@@ -46,10 +46,10 @@ def prepare_payment(device, fiat_amount):
     if not device.account:
         raise exceptions.PaymentError(
             'Account is not set for device.')
-    if not device.instantfiat and not device.account.forward_address:
+    if not device.account.instantfiat and not device.account.forward_address:
         raise exceptions.PaymentError(
             'Payout address is not set for account.')
-    if device.instantfiat and \
+    if device.account.instantfiat and \
             device.merchant.currency != device.account.currency:
         raise exceptions.PaymentError(
             'Account currency should match merchant currency.')
@@ -71,7 +71,7 @@ def prepare_payment(device, fiat_amount):
         logger.exception(error)
         raise exceptions.NetworkError
     # Exchange service
-    if not device.instantfiat:
+    if not device.account.instantfiat:
         order.instantfiat_fiat_amount = FIAT_DEC_PLACES
         order.instantfiat_btc_amount = BTC_DEC_PLACES
         exchange_rate = get_exchange_rate(order.fiat_currency.name)

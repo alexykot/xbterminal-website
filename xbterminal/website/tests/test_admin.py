@@ -17,10 +17,7 @@ class MerchantAccountAdminTestCase(TestCase):
         ma = MerchantAccountAdmin(MerchantAccount, AdminSite())
         message_user_mock = mock.Mock()
         ma.message_user = message_user_mock
-        merchant = MerchantAccountFactory.create()
-        AccountFactory.create(
-            merchant=merchant,
-            currency__name='GBP',
+        merchant = MerchantAccountFactory.create(
             instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
             instantfiat_merchant_id='test-id')
         request = mock.Mock()

@@ -22,8 +22,7 @@ from website.models import (
     Transaction,
     DeviceBatch,
     Device,
-    ReconciliationTime,
-    INSTANTFIAT_PROVIDERS)
+    ReconciliationTime)
 
 fake = Faker()
 
@@ -136,32 +135,23 @@ class AccountFactory(factory.DjangoModelFactory):
     currency = factory.SubFactory(CurrencyFactory, name='BTC')
 
     @factory.lazy_attribute
-    def forward_address(self):
-        if self.currency.name == 'BTC':
-            return '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
-        elif self.currency.name == 'TBTC':
-            return 'n3QR7ossvN4JnUyicajcVyYf4h3Npyexqw'
-
-    @factory.lazy_attribute
-    def instantfiat_provider(self):
-        if self.currency.name not in ['BTC', 'TBTC']:
-            return INSTANTFIAT_PROVIDERS.CRYPTOPAY
-
-    @factory.lazy_attribute
-    def instantfiat_api_key(self):
-        if self.currency.name not in ['BTC', 'TBTC']:
-            return fake.sha256(raw_output=False)
-
-    @factory.lazy_attribute
     def instantfiat(self):
-        if self.currency.name not in ['BTC', 'TBTC']:
-            return True
-        else:
+        if self.currency.name in ['BTC', 'TBTC']:
             return False
+        else:
+            return True
+
+    @factory.lazy_attribute
+    def forward_address(self):
+        if not self.instantfiat:
+            if self.currency.name == 'BTC':
+                return '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
+            elif self.currency.name == 'TBTC':
+                return 'n3QR7ossvN4JnUyicajcVyYf4h3Npyexqw'
 
     @factory.lazy_attribute
     def instantfiat_account_id(self):
-        if self.currency.name not in ['BTC', 'TBTC']:
+        if self.instantfiat:
             return fake.uuid4()
 
     @factory.post_generation

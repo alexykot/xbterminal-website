@@ -105,7 +105,7 @@ class PreparePaymentTestCase(TestCase):
     @patch('operations.payment.run_periodic_task')
     def test_convert_full(self, run_task_mock, invoice_mock, bc_mock):
         device = DeviceFactory.create(account__currency__name='GBP')
-        self.assertTrue(device.instantfiat)
+        self.assertTrue(device.account.instantfiat)
         fiat_amount = Decimal('10')
         local_address = '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje'
         instantfiat_invoice_id = 'test_invoice_123'

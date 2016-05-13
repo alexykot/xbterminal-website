@@ -194,9 +194,6 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.balance, 0)
         self.assertEqual(account.balance_max, 0)
         self.assertIsNone(account.bitcoin_address)
-        self.assertIsNone(account.instantfiat_provider)
-        self.assertIsNone(account.instantfiat_merchant_id)
-        self.assertIsNone(account.instantfiat_api_key)
         self.assertFalse(account.instantfiat)
         self.assertIsNone(account.instantfiat_account_id)
         self.assertEqual(str(account), 'BTC - 0.00000000')
@@ -208,24 +205,19 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.balance_max, 0)
         self.assertIsNone(account.bitcoin_address)
         self.assertIsNotNone(account.forward_address)
-        self.assertIsNone(account.instantfiat_provider)
-        self.assertIsNone(account.instantfiat_merchant_id)
-        self.assertIsNone(account.instantfiat_api_key)
         self.assertFalse(account.instantfiat)
         self.assertIsNone(account.instantfiat_account_id)
         self.assertEqual(str(account), 'BTC - 0.00000000')
 
     def test_factory_gbp(self):
-        account = AccountFactory.create(currency__name='GBP')
+        account = AccountFactory.create(
+            currency__name='GBP',
+            merchant__instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY)
         self.assertEqual(account.currency.name, 'GBP')
         self.assertEqual(account.balance, 0)
         self.assertEqual(account.balance_max, 0)
         self.assertIsNone(account.bitcoin_address)
         self.assertIsNone(account.forward_address)
-        self.assertEqual(account.instantfiat_provider,
-                         INSTANTFIAT_PROVIDERS.CRYPTOPAY)
-        self.assertIsNone(account.instantfiat_merchant_id)
-        self.assertIsNotNone(account.instantfiat_api_key)
         self.assertTrue(account.instantfiat)
         self.assertIsNotNone(account.instantfiat_account_id)
         self.assertEqual(str(account), 'GBP - 0.00 (CryptoPay)')
@@ -398,19 +390,6 @@ class DeviceTestCase(TestCase):
             status='active',
             account__currency__name='TBTC')
         self.assertEqual(device_3.bitcoin_network, 'testnet')
-
-    def test_instantfiat(self):
-        device_1 = DeviceFactory.create(status='registered')
-        self.assertIsNone(device_1.instantfiat)
-        self.assertIsNone(device_1.bitcoin_address)
-        device_2 = DeviceFactory.create(status='active')
-        self.assertFalse(device_2.instantfiat)
-        self.assertIsNone(device_2.bitcoin_address)
-        device_3 = DeviceFactory.create(
-            status='active',
-            account__currency__name='USD')
-        self.assertTrue(device_3.instantfiat)
-        self.assertIsNone(device_3.bitcoin_address)
 
 
 class DeviceBatchTestCase(TestCase):

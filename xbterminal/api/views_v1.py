@@ -83,7 +83,7 @@ class DevicesView(ProtectedResourceView):
             data.append({
                 'name': device.name,
                 'key': device.key,
-                'percent': float(100 if device.instantfiat else 0),
+                'percent': 0,
                 'type': device.device_type,
                 'online': device.is_online(),
             })
@@ -108,7 +108,7 @@ class DevicesView(ProtectedResourceView):
         data = {
             'name': device.name,
             'key': device.key,
-            'percent': float(100 if device.instantfiat else 0),
+            'percent': 0,
             'type': device.device_type,
             'online': device.is_online(),
         }

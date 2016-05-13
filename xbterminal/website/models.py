@@ -328,14 +328,18 @@ class Account(models.Model):
 
     def __unicode__(self):
         if self.currency.name in ['BTC', 'TBTC']:
-            return u'{name} - {amount:.8f}'.format(
-                name=self.currency.name,
-                amount=self.balance)
+            balance_str = '{0:.8f}'.format(self.balance)
         else:
-            return u'{name} - {amount:.2f} ({provider})'.format(
+            balance_str = '{0:.2f}'.format(self.balance)
+        if self.instantfiat:
+            return u'{name} - {balance} ({provider})'.format(
                 name=self.currency.name,
-                amount=self.balance,
-                provider=self.get_instantfiat_provider_display())
+                balance=balance_str,
+                provider=self.merchant.get_instantfiat_provider_display())
+        else:
+            return u'{name} - {balance}'.format(
+                name=self.currency.name,
+                balance=balance_str)
 
     @property
     def bitcoin_network(self):
@@ -582,15 +586,6 @@ class Device(models.Model):
             return self.account.bitcoin_network
         else:
             return 'mainnet'
-
-    @property
-    def instantfiat(self):
-        if not self.account:
-            return None
-        if self.account.currency.name in ['BTC', 'TBTC']:
-            return False
-        else:
-            return True
 
     def get_payments(self):
         return self.paymentorder_set.filter(time_notified__isnull=False)

@@ -2,7 +2,8 @@ from decimal import Decimal
 from django.test import TestCase
 from mock import patch, Mock
 
-from website.tests.factories import AccountFactory, INSTANTFIAT_PROVIDERS
+from website.models import INSTANTFIAT_PROVIDERS
+from website.tests.factories import AccountFactory
 from operations import instantfiat
 from operations.exceptions import (
     InstantFiatError,
@@ -15,8 +16,8 @@ class InstantFiatTestCase(TestCase):
     def test_create_invoice(self, create_invoice_mock):
         account = AccountFactory.create(
             currency__name='GBP',
-            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-            instantfiat_api_key='test')
+            merchant__instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            merchant__instantfiat_api_key='test')
         create_invoice_mock.return_value = ('invoice_id',
                                             Decimal(0.1), 'address')
         result = instantfiat.create_invoice(account, Decimal(1.0))
@@ -33,8 +34,8 @@ class InstantFiatTestCase(TestCase):
     def test_is_invoice_paid(self, is_paid_mock):
         account = AccountFactory.create(
             currency__name='GBP',
-            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-            instantfiat_api_key='test')
+            merchant__instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            merchant__instantfiat_api_key='test')
         is_paid_mock.return_value = True
         result = instantfiat.is_invoice_paid(account, 'invoice_id')
         self.assertEqual(is_paid_mock.call_args[0][0], 'invoice_id')

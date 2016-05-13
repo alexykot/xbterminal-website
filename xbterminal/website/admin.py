@@ -260,20 +260,19 @@ class MerchantAccountAdmin(admin.ModelAdmin):
 
     def reset_cryptopay_password(self, request, queryset):
         for merchant in queryset:
-            account = merchant.account_set.filter(
-                instantfiat_provider=models.INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-                instantfiat_merchant_id__isnull=False).first()
-            if not account:
+            if merchant.instantfiat_provider != \
+                    models.INSTANTFIAT_PROVIDERS.CRYPTOPAY or \
+                    not merchant.instantfiat_merchant_id:
                 self.message_user(
                     request,
-                    'Merchant "{0}" doesn\'t have CryptoPay account.'.format(
+                    'Merchant "{0}" doesn\'t have managed CryptoPay profile.'.format(
                         merchant.company_name),
                     messages.WARNING)
                 continue
             password = models.User.objects.make_random_password(16)
             try:
                 cryptopay.set_password(
-                    account.instantfiat_merchant_id,
+                    merchant.instantfiat_merchant_id,
                     password,
                     config.CRYPTOPAY_API_KEY)
             except cryptopay.InstantFiatError:
