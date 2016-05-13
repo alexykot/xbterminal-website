@@ -148,8 +148,7 @@ class ResetPasswordFormTestCase(TestCase):
 class ProfileFormTestCase(TestCase):
 
     def test_valid_data(self):
-        merchant = MerchantAccountFactory.create(
-            gocoin_merchant_id='test')
+        merchant = MerchantAccountFactory.create()
         form_data = {
             'company_name': 'Test Company',
             'business_address': 'Test Address',
