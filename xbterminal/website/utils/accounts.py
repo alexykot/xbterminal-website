@@ -2,23 +2,6 @@ from operations.instantfiat import cryptopay
 from website.models import Currency, INSTANTFIAT_PROVIDERS
 
 
-# TODO: remove function
-def check_managed_accounts(merchant):
-    """
-    Accepts:
-        merchant: MerchantAccount instance
-    Returns:
-        True if all default CryptoPay accounts exist
-            (and were created during registration)
-        False otherwise
-    """
-    managed_accounts = merchant.account_set.filter(
-        currency__name__in=cryptopay.DEFAULT_CURRENCIES,
-        instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-        instantfiat_merchant_id__isnull=False)
-    return managed_accounts.count() == len(cryptopay.DEFAULT_CURRENCIES)
-
-
 def create_managed_accounts(merchant):
     """
     Create CryptoPay accounts
