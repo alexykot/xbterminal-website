@@ -145,7 +145,8 @@ class RegistrationViewTestCase(TestCase):
         self.assertTemplateUsed(response, 'website/registration.html')
 
     @patch('website.forms.cryptopay.create_merchant')
-    def test_post_default(self, cryptopay_mock):
+    @patch('website.forms.create_managed_accounts')
+    def test_post_default(self, create_acc_mock, cryptopay_mock):
         cryptopay_mock.return_value = ('merchant_id', 'g3h4j5')
         form_data = {
             'company_name': 'Test Company 1',

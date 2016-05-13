@@ -28,6 +28,7 @@ from website.widgets import (
     FileWidget,
     ForeignKeyWidget)
 from website.validators import validate_bitcoin_address
+from website.utils.accounts import create_managed_accounts
 from website.utils.email import (
     send_registration_email,
     send_reset_password_email)
@@ -162,8 +163,6 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             currency=Currency.objects.get(name='BTC'),
             instantfiat=False)
         # Create CryptoPay accounts
-        cryptopay_currencies = Currency.objects.filter(
-            name__in=cryptopay.DEFAULT_CURRENCIES)
         try:
             cryptopay_merchant_id, cryptopay_api_key = cryptopay.create_merchant(
                 merchant.contact_first_name,
@@ -177,14 +176,7 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             merchant.instantfiat_provider = INSTANTFIAT_PROVIDERS.CRYPTOPAY
             merchant.instantfiat_merchant_id = cryptopay_merchant_id
             merchant.instantfiat_api_key = cryptopay_api_key
-            for currency in cryptopay_currencies:
-                Account.objects.create(
-                    merchant=merchant,
-                    currency=currency,
-                    instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-                    instantfiat_merchant_id=cryptopay_merchant_id,
-                    instantfiat_api_key=cryptopay_api_key,
-                    instantfiat=True)
+            create_managed_accounts(merchant)
 
     @atomic
     def save(self):

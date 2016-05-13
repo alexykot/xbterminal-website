@@ -19,15 +19,21 @@ from website.tests.factories import (
     MerchantAccountFactory,
     AccountFactory,
     DeviceFactory)
-from website.utils.accounts import check_managed_accounts
 from operations.exceptions import CryptoPayUserAlreadyExists
 
 
 class MerchantRegistrationFormTestCase(TestCase):
 
     @patch('website.forms.cryptopay.create_merchant')
-    def test_valid_data(self, cryptopay_mock):
-        cryptopay_mock.return_value = ('merchant_id', 'x1y2z3')
+    @patch('website.utils.accounts.cryptopay.list_accounts')
+    def test_valid_data(self, cp_list_mock, cp_create_mock):
+        cp_create_mock.return_value = ('merchant_id', 'x1y2z3')
+        cp_list_mock.return_value = [
+            {'id': 'a1', 'currency': 'BTC'},
+            {'id': 'a2', 'currency': 'GBP'},
+            {'id': 'a3', 'currency': 'USD'},
+            {'id': 'a4', 'currency': 'EUR'},
+        ]
         form_data = {
             'company_name': 'Test Company',
             'business_address': 'Test Address',
@@ -54,23 +60,17 @@ class MerchantRegistrationFormTestCase(TestCase):
         oauth_app = Application.objects.get(user=merchant.user)
         self.assertEqual(oauth_app.client_id, form_data['contact_email'])
         # Accounts
-        self.assertEqual(merchant.account_set.count(), 4)
-        account_btc = merchant.account_set.get(currency__name='BTC')
-        self.assertEqual(account_btc.balance, 0)
-        self.assertEqual(account_btc.balance_max, 0)
-        self.assertFalse(account_btc.instantfiat)
-        self.assertEqual(merchant.get_account_balance('BTC'), 0)
-        self.assertIsNone(merchant.get_account_balance('TBTC'))
-        account_gbp = merchant.account_set.get(currency__name='GBP')
-        self.assertEqual(account_gbp.balance, 0)
-        self.assertEqual(account_gbp.balance_max, 0)
-        self.assertEqual(account_gbp.instantfiat_provider,
-                         INSTANTFIAT_PROVIDERS.CRYPTOPAY)
-        self.assertEqual(account_gbp.instantfiat_merchant_id, 'merchant_id')
-        self.assertEqual(account_gbp.instantfiat_api_key, 'x1y2z3')
-        self.assertTrue(account_gbp.instantfiat)
-        # Check with utility function
-        self.assertTrue(check_managed_accounts(merchant))
+        self.assertEqual(merchant.account_set.count(), 5)
+        account_btc_internal = merchant.account_set.get(
+            currency__name='BTC', instantfiat=False)
+        self.assertEqual(account_btc_internal.balance, 0)
+        self.assertEqual(account_btc_internal.balance_max, 0)
+        self.assertIsNone(account_btc_internal.instantfiat_account_id)
+        account_btc_external = merchant.account_set.get(
+            currency__name='BTC', instantfiat=True)
+        self.assertEqual(account_btc_external.balance, 0)
+        self.assertEqual(account_btc_external.balance_max, 0)
+        self.assertEqual(account_btc_external.instantfiat_account_id, 'a1')
         # Email
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to[0], form_data['contact_email'])
@@ -109,10 +109,11 @@ class MerchantRegistrationFormTestCase(TestCase):
         self.assertIn('contact_phone', form.errors)
 
     @patch('website.forms.cryptopay.create_merchant')
+    @patch('website.forms.create_managed_accounts')
     @patch('website.forms.send_registration_email')
-    def test_send_email_error(self, send_mock, cryptopay_mock):
+    def test_send_email_error(self, send_mock, create_acc_mock, cp_create_mock):
         send_mock.side_effect = ValueError
-        cryptopay_mock.return_value = ('merchant_id', 'a1b2c3')
+        cp_create_mock.return_value = ('merchant_id', 'a1b2c3')
         form_data = {
             'company_name': 'Test Company',
             'business_address': 'Test Address',
