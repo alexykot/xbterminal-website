@@ -249,12 +249,6 @@ class MerchantAccount(models.Model):
             exclude(status='uploaded').\
             latest('uploaded')
 
-    def get_account_balance(self, currency_name):
-        account = self.account_set.\
-            filter(currency__name=currency_name).first()
-        if account:
-            return account.balance
-
     @property
     def info(self):
         if self.verification_status == 'verified':

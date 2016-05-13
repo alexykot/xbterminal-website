@@ -133,15 +133,6 @@ class MerchantAccountTestCase(TestCase):
             'uploaded')
         self.assertIsNotNone(document)
 
-    def test_get_account_balance(self):
-        merchant = MerchantAccountFactory.create()
-        self.assertIsNone(merchant.get_account_balance('BTC'))
-        AccountFactory.create(merchant=merchant,
-                              currency__name='BTC',
-                              balance=Decimal('0.5'))
-        self.assertEqual(merchant.get_account_balance('BTC'),
-                         Decimal('0.5'))
-
     def test_info_new_merchant(self):
         merchant = MerchantAccountFactory.create()
         info = merchant.info

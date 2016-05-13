@@ -208,8 +208,6 @@ class MerchantAccountAdmin(admin.ModelAdmin):
         'contact_name',
         'contact_phone_',
         'verification_status',
-        'btc_balance',
-        'tbtc_balance',
         'date_joined_l',
     ]
     readonly_fields = ['date_joined', 'last_login']
@@ -253,16 +251,6 @@ class MerchantAccountAdmin(admin.ModelAdmin):
         return merchant.contact_phone
 
     contact_phone_.short_description = 'phone'
-
-    def btc_balance(self, merchant):
-        value = merchant.get_account_balance('BTC')
-        return '{0:.8f}'.format(value) if value is not None else 'N/A'
-    btc_balance.short_description = 'BTC balance'
-
-    def tbtc_balance(self, merchant):
-        value = merchant.get_account_balance('TBTC')
-        return '{0:.8f}'.format(value) if value is not None else 'N/A'
-    tbtc_balance.short_description = 'TBTC balance'
 
     def reset_cryptopay_password(self, request, queryset):
         for merchant in queryset:
