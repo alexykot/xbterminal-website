@@ -187,3 +187,19 @@ class CryptoPayTestCase(TestCase):
         self.assertEqual(get_mock.call_args[1]['headers']['X-Api-Key'],
                          'test-api-key')
         self.assertEqual(len(results), 2)
+
+    @patch('operations.instantfiat.cryptopay.requests.get')
+    def test_list_transactions(self, get_mock):
+        get_mock.return_value = Mock(**{
+            'json.return_value': [
+                {'id': 1991, 'amount': 0.33},
+                {'id': 1994, 'amount': -0.25},
+            ],
+        })
+        account_id = '6bc3f1b4-a690-463a-8240-d47bcccba2a2'
+        api_key = 'test-api-key'
+        results = instantfiat.cryptopay.list_transactions(
+            account_id, api_key)
+        self.assertEqual(get_mock.call_args[1]['headers']['X-Api-Key'],
+                         'test-api-key')
+        self.assertEqual(len(results), 2)
