@@ -23,7 +23,13 @@
             {{ account.balance|floatformat:2 }}
             {% endif %}
         </td>
-        <td>{{ account.get_instantfiat_provider_display|default:'-' }}</td>
+        <td>
+            {% if account.instantfiat %}
+            {{ account.merchant.get_instantfiat_provider_display }}
+            {% else %}
+            -
+            {% endif %}
+        </td>
     </tr>
     {% endfor %}
 </table>

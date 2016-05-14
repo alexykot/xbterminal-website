@@ -299,6 +299,8 @@ class Account(models.Model):
         validators=[validate_bitcoin_address],
         blank=True,
         null=True)
+
+    # TODO: remove fields
     instantfiat_provider = models.PositiveSmallIntegerField(
         _('InstantFiat provider'),
         choices=INSTANTFIAT_PROVIDERS,
@@ -314,6 +316,7 @@ class Account(models.Model):
         max_length=200,
         blank=True,
         null=True)
+
     instantfiat = models.BooleanField()
     instantfiat_account_id = models.CharField(
         _('InstantFiat account ID'),
