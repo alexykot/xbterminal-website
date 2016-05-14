@@ -132,7 +132,7 @@ class KYCDocumentInline(admin.TabularInline):
 class TransactionInline(admin.TabularInline):
 
     model = models.Transaction
-    exclude = ['amount']
+    exclude = ['amount', 'instantfiat_tx_id']
     readonly_fields = [
         'amount_colored',
         'tx_hash',

@@ -367,14 +367,14 @@ class Account(models.Model):
         Total balance on account, including unconfirmed deposits
         """
         result = self.transaction_set.aggregate(models.Sum('amount'))
-        return result['amount__sum'] or 0
+        return result['amount__sum'] or Decimal('0.00000000')
 
     @property
     def balance_confirmed(self):
         """
         Amount available for withdrawal (inaccurate)
         """
-        balance = Decimal(0)
+        balance = Decimal('0.00000000')
         for transaction in self.transaction_set.all():
             if transaction.is_confirmed:
                 balance += transaction.amount
