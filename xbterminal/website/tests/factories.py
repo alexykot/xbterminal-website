@@ -107,6 +107,13 @@ class MerchantAccountFactory(factory.DjangoModelFactory):
 
     currency = factory.SubFactory(CurrencyFactory)
 
+    instantfiat_provider = None
+
+    @factory.lazy_attribute
+    def instantfiat_api_key(self):
+        if self.instantfiat_provider:
+            return fake.sha256(raw_output=False)
+
 
 class KYCDocumentFactory(factory.DjangoModelFactory):
 

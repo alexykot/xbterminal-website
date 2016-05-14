@@ -109,6 +109,9 @@ class MerchantAccountTestCase(TestCase):
         self.assertTrue(merchant.is_profile_complete)
         self.assertIsNotNone(merchant.info)
         self.assertEqual(merchant.currency.name, 'GBP')
+        self.assertIsNone(merchant.instantfiat_provider)
+        self.assertIsNone(merchant.instantfiat_merchant_id)
+        self.assertIsNone(merchant.instantfiat_api_key)
 
     def test_is_profile_complete(self):
         merchant = MerchantAccountFactory.create(
