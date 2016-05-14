@@ -390,10 +390,16 @@ class Transaction(models.Model):
 
     account = models.ForeignKey(Account)
     amount = models.DecimalField(max_digits=20, decimal_places=8)
+    instantfiat_tx_id = models.CharField(
+        _('InstantFiat transaction ID'),
+        max_length=64,
+        blank=True,
+        null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-created_at']
+        unique_together = ['account', 'instantfiat_tx_id']
 
     def __unicode__(self):
         return str(self.pk)

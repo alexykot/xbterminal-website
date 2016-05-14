@@ -285,6 +285,7 @@ class TransactionTestCase(TestCase):
         transaction = Transaction.objects.create(account=account,
                                                  amount=Decimal('1.5'))
         self.assertEqual(transaction.account.pk, account.pk)
+        self.assertIsNone(transaction.instantfiat_tx_id)
         self.assertIsNotNone(transaction.created_at)
         self.assertEqual(str(transaction), str(transaction.pk))
 
@@ -292,6 +293,16 @@ class TransactionTestCase(TestCase):
         transaction = TransactionFactory.create()
         self.assertIsNotNone(transaction.account)
         self.assertGreater(transaction.amount, 0)
+        self.assertIsNone(transaction.instantfiat_tx_id)
+
+    def test_unique_together(self):
+        account = AccountFactory.create()
+        TransactionFactory.create_batch(3, account=account)
+        TransactionFactory.create(account=account,
+                                  instantfiat_tx_id=1000)
+        with self.assertRaises(IntegrityError):
+            TransactionFactory.create(account=account,
+                                      instantfiat_tx_id=1000)
 
     def test_tx_hash(self):
         transaction = TransactionFactory.create()
