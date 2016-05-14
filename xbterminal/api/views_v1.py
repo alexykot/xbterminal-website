@@ -130,7 +130,7 @@ def device(request, key):
         "OUTPUT_DEC_FRACTIONAL_SPLIT": device.merchant.language.fractional_split,
         "OUTPUT_DEC_THOUSANDS_SPLIT": device.merchant.language.thousands_split,
         "BITCOIN_NETWORK": device.bitcoin_network,
-        "SERIAL_NUMBER": device.serial_number,
+        "SERIAL_NUMBER": '0000',
     }
     device.last_activity = timezone.now()
     device.save()

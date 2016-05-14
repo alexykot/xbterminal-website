@@ -85,6 +85,7 @@ class DeviceSettingsViewTestCase(TestCase):
         self.assertEqual(data['OUTPUT_DEC_FRACTIONAL_SPLIT'], '.')
         self.assertEqual(data['OUTPUT_DEC_THOUSANDS_SPLIT'], ',')
         self.assertEqual(data['BITCOIN_NETWORK'], 'mainnet')
+        self.assertEqual(data['SERIAL_NUMBER'], '0000')
 
     def test_not_active(self):
         device = DeviceFactory.create(status='registered')

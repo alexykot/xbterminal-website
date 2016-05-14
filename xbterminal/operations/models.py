@@ -1,19 +1,15 @@
-import datetime
-from decimal import Decimal
 import uuid
 
 from bitcoin import base58
 
 from django.db import models
 from django.conf import settings
-from django_countries.fields import CountryField
 from django.contrib.postgres.fields import ArrayField
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from website.models import BITCOIN_NETWORKS
 from website.validators import (
-    validate_post_code,
     validate_bitcoin_address,
     validate_transaction)
 
@@ -305,65 +301,7 @@ class WithdrawalOrder(models.Model):
                 return 'new'
 
 
+# TODO: remove this function
 def gen_payment_reference():
     bts = uuid.uuid4().bytes
     return base58.encode(bts)[:10].upper()
-
-
-# TODO: remove model
-
-class Order(models.Model):
-
-    PAYMENT_METHODS = [
-        ('bitcoin', _('Bitcoin')),
-        ('wire', _('Bank wire transfer')),
-    ]
-    PAYMENT_STATUSES = [
-        ('unpaid', 'unpaid'),
-        ('paid', 'paid'),
-    ]
-
-    merchant = models.ForeignKey('website.MerchantAccount')
-    created = models.DateTimeField(auto_now_add=True)
-    quantity = models.IntegerField()
-    payment_method = models.CharField(max_length=50, choices=PAYMENT_METHODS, default='bitcoin')
-    fiat_total_amount = models.DecimalField(max_digits=20, decimal_places=8)
-
-    delivery_address = models.CharField(max_length=255, blank=True)
-    delivery_address1 = models.CharField('', max_length=255, blank=True)
-    delivery_address2 = models.CharField('', max_length=255, blank=True)
-    delivery_town = models.CharField(max_length=64, blank=True)
-    delivery_county = models.CharField(max_length=128, blank=True)
-    delivery_post_code = models.CharField(max_length=32, blank=True, validators=[validate_post_code])
-    delivery_country = CountryField(default='GB', blank=True)
-    delivery_contact_phone = models.CharField(max_length=32, blank=True)
-
-    instantfiat_invoice_id = models.CharField(max_length=255, null=True)
-    instantfiat_btc_total_amount = models.DecimalField(max_digits=18, decimal_places=8, null=True)
-    instantfiat_address = models.CharField(max_length=35, validators=[validate_bitcoin_address], null=True)
-
-    payment_reference = models.CharField(max_length=10, unique=True, editable=False, default=gen_payment_reference)
-    payment_status = models.CharField(max_length=50, choices=PAYMENT_STATUSES, default='unpaid')
-
-    def __unicode__(self):
-        return "order #{0}".format(self.id)
-
-    @property
-    def fiat_amount(self):
-        return self.fiat_total_amount / Decimal(1.2)
-
-    @property
-    def fiat_vat_amount(self):
-        return self.fiat_amount * Decimal(0.2)
-
-    @property
-    def instantfiat_btc_amount(self):
-        return self.instantfiat_btc_total_amount / Decimal(1.2)
-
-    @property
-    def instantfiat_btc_vat_amount(self):
-        return self.instantfiat_btc_amount * Decimal(0.2)
-
-    @property
-    def invoice_due_date(self):
-        return self.created + datetime.timedelta(days=14)
