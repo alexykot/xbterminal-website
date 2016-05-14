@@ -168,6 +168,7 @@ class AccountAdmin(admin.ModelAdmin):
         'balance_max',
         'payment_processor',
     ]
+    list_filter = ['instantfiat']
     inlines = [
         TransactionInline,
     ]
