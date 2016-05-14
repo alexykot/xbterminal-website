@@ -187,6 +187,8 @@ class InstantFiatSettingsFormTestCase(TestCase):
         self.assertTrue(form.is_valid())
         merchant_updated = form.save()
         self.assertEqual(merchant_updated.pk, merchant.pk)
+        self.assertEqual(merchant_updated.instantfiat_provider,
+                         INSTANTFIAT_PROVIDERS.CRYPTOPAY)
         self.assertEqual(merchant_updated.instantfiat_api_key,
                          form_data['instantfiat_api_key'])
 
@@ -194,6 +196,7 @@ class InstantFiatSettingsFormTestCase(TestCase):
         merchant = MerchantAccountFactory.create()
         form = InstantFiatSettingsForm(data={}, instance=merchant)
         self.assertFalse(form.is_valid())
+        self.assertNotIn('instantfiat_provider', form.errors)
         self.assertIn('instantfiat_api_key', form.errors)
 
 

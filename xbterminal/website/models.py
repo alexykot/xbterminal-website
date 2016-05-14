@@ -271,6 +271,13 @@ class MerchantAccount(models.Model):
                 'tx_count': tx_count,
                 'tx_sum': 0 if tx_sum is None else tx_sum}
 
+    def clean(self):
+        if not hasattr(self, 'instantfiat_provider'):
+            return
+        if self.instantfiat_provider and not self.instantfiat_api_key:
+            raise ValidationError({
+                'instantfiat_api_key': 'This field is required.'})
+
 
 BITCOIN_NETWORKS = [
     ('mainnet', 'Main'),
