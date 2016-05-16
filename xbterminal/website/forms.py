@@ -5,6 +5,7 @@ from django.contrib.auth.forms import (
     AuthenticationForm as DjangoAuthenticationForm,
     UserCreationForm as DjangoUserCreationForm,
     UserChangeForm as DjangoUserChangeForm)
+from django.db.models import Q
 from django.db.transaction import atomic
 from django.utils.translation import ugettext as _
 
@@ -342,9 +343,10 @@ class DeviceForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.merchant = kwargs.pop('merchant')
         super(DeviceForm, self).__init__(*args, **kwargs)
-        allowed_currencies = ['BTC', 'TBTC', self.merchant.currency.name]
         self.fields['account'].queryset = self.merchant.account_set.\
-            filter(currency__name__in=allowed_currencies)
+            filter(
+                Q(instantfiat=True, currency=self.merchant.currency) |
+                Q(instantfiat=False))
         self.fields['account'].required = True
 
     def device_type_verbose(self):
