@@ -1,6 +1,7 @@
 """
 https://developers.cryptopay.me/
 """
+import base64
 from decimal import Decimal
 import json
 import logging
@@ -129,6 +130,34 @@ def set_password(user_id, password, api_key):
         assert data['status'] == 'success'
     except:
         raise InstantFiatError(response.text)
+
+
+def upload_documents(user_id, documents, api_key):
+    """
+    Accepts:
+        user_id: CryptoPay user ID
+        documents: list of file-like objects
+        api_key: CryptoPay API key with access to users API
+    Returns:
+        id: upload ID
+    """
+    api_url = 'https://cryptopay.me/api/v2/users/{user_id}/documents'
+    payload = {
+        'id_document_frontside': base64.b64encode(documents[0].read()),
+        'residence_document': base64.b64encode(documents[1].read()),
+    }
+    assert api_key
+    headers = {
+        'Content-Type': 'application/json',
+        'X-Api-Key': api_key,
+    }
+    response = requests.post(
+        api_url.format(user_id=user_id),
+        data=json.dumps(payload),
+        headers=headers)
+    response.raise_for_status()
+    data = response.json()
+    return data['id']
 
 
 def list_accounts(api_key):

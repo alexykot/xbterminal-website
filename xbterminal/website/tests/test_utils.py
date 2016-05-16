@@ -1,18 +1,21 @@
 from decimal import Decimal
 
-from mock import patch
+from mock import patch, Mock
 from django.conf import settings
 from django.core import mail
 from django.test import TestCase
+from constance.test import override_config
 
-from website.models import INSTANTFIAT_PROVIDERS
+from website.models import INSTANTFIAT_PROVIDERS, KYC_DOCUMENT_TYPES
 from website.utils.accounts import (
     create_managed_accounts,
     update_managed_accounts,
     update_balances)
 from website.utils.email import send_error_message
+from website.utils.kyc import upload_documents
 from website.tests.factories import (
     MerchantAccountFactory,
+    KYCDocumentFactory,
     AccountFactory,
     TransactionFactory)
 from operations.tests.factories import (
@@ -106,3 +109,41 @@ class EmailUtilsTestCase(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to,
                          settings.CONTACT_EMAIL_RECIPIENTS)
+
+
+class KYCUtilsTestCase(TestCase):
+
+    @override_config(CRYPTOPAY_API_KEY='testkey')
+    @patch('operations.instantfiat.cryptopay.requests.post')
+    def test_upload_documents(self, post_mock):
+        post_mock.return_value = Mock(**{
+            'json.return_value': {
+                'status': 'in_review',
+                'id': '36e2a91e-18d1-4e3c-9e82-8c63e01797be',
+            },
+        })
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='xxx')
+        document_1 = KYCDocumentFactory.create(
+            merchant=merchant,
+            document_type=KYC_DOCUMENT_TYPES.ID_FRONT,
+            status='uploaded')
+        document_2 = KYCDocumentFactory.create(
+            merchant=merchant,
+            document_type=KYC_DOCUMENT_TYPES.ADDRESS,
+            status='uploaded')
+        upload_documents(merchant, [document_1, document_2])
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0],
+                         settings.CONTACT_EMAIL_RECIPIENTS[0])
+        merchant.refresh_from_db()
+        self.assertEqual(merchant.verification_status, 'pending')
+        document_1.refresh_from_db()
+        document_2.refresh_from_db()
+        self.assertEqual(document_1.status, 'unverified')
+        self.assertEqual(document_1.instantfiat_document_id,
+                         '36e2a91e-18d1-4e3c-9e82-8c63e01797be')
+        self.assertEqual(document_2.status, 'unverified')
+        self.assertEqual(document_2.instantfiat_document_id,
+                         '36e2a91e-18d1-4e3c-9e82-8c63e01797be')

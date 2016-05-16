@@ -533,9 +533,12 @@ class VerificationViewTestCase(TestCase):
         self.assertEqual(response.context['documents'][1].pk,
                          document_2.pk)
 
-    def test_post(self):
+    @patch('website.utils.kyc.cryptopay.upload_documents')
+    def test_post(self, upload_mock):
         merchant = MerchantAccountFactory.create(
-            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY)
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='xxx')
+        upload_mock.return_value = 'x1z2b4'
         document_1 = KYCDocumentFactory.create(
             merchant=merchant,
             document_type=KYC_DOCUMENT_TYPES.ID_FRONT)
@@ -558,7 +561,9 @@ class VerificationViewTestCase(TestCase):
         document_1.refresh_from_db()
         document_2.refresh_from_db()
         self.assertEqual(document_1.status, 'unverified')
+        self.assertEqual(document_1.instantfiat_document_id, 'x1z2b4')
         self.assertEqual(document_2.status, 'unverified')
+        self.assertEqual(document_2.instantfiat_document_id, 'x1z2b4')
 
     def test_post_not_uploaded(self):
         merchant = MerchantAccountFactory.create()
