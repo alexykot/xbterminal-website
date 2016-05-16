@@ -145,7 +145,8 @@ class RegistrationViewTestCase(TestCase):
         self.assertTemplateUsed(response, 'website/registration.html')
 
     @patch('website.forms.cryptopay.create_merchant')
-    def test_post_default(self, cryptopay_mock):
+    @patch('website.forms.create_managed_accounts')
+    def test_post_default(self, create_acc_mock, cryptopay_mock):
         cryptopay_mock.return_value = ('merchant_id', 'g3h4j5')
         form_data = {
             'company_name': 'Test Company 1',
@@ -358,6 +359,73 @@ class ActivationViewTestCase(TestCase):
         self.assertRedirects(response, expected_url)
 
 
+class UpdateProfileViewTestCase(TestCase):
+
+    def test_get(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:profile')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/profile_form.html')
+        self.assertEqual(response.context['form'].instance.pk,
+                         merchant.pk)
+
+    def test_post(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:profile')
+        form_data = {
+            'company_name': 'Test Company',
+            'business_address': 'Test Address',
+            'town': 'Test Town',
+            'country': 'GB',
+            'post_code': '123456',
+            'contact_first_name': 'Test',
+            'contact_last_name': 'Test',
+            'contact_email': 'test@example.net',
+            'contact_phone': '+123456789',
+        }
+        response = self.client.post(url, data=form_data)
+        self.assertEqual(response.status_code, 302)
+
+
+class InstantFiatSettingsViewTestCase(TestCase):
+
+    def test_get(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:instantfiat')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/instantfiat_form.html')
+        self.assertEqual(response.context['form'].instance.pk,
+                         merchant.pk)
+
+    def test_get_managed_profile(self):
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='test-id',
+            instantfiat_api_key='xxxyyyzzz')
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:instantfiat')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_post(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:instantfiat')
+        form_data = {'instantfiat_api_key': 'xxx'}
+        response = self.client.post(url, data=form_data)
+        self.assertEqual(response.status_code, 302)
+
+
 class ResetPasswordViewTestCase(TestCase):
 
     def setUp(self):
@@ -531,39 +599,18 @@ class AccountListViewTestCase(TestCase):
         self.assertTemplateUsed(response, 'cabinet/account_list.html')
         self.assertEqual(response.context['accounts'].first().pk,
                          account.pk)
-        self.assertTrue(response.context['can_add_account'])
+        self.assertTrue(response.context['can_edit_ift_settings'])
 
-
-class CreateAccountViewTestCase(TestCase):
-
-    def test_get(self):
-        merchant = MerchantAccountFactory.create()
+    def test_get_managed_profile(self):
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='test-id',
+            instantfiat_api_key='xxxyyyzzz')
         self.client.login(username=merchant.user.email,
                           password='password')
-        url = reverse('website:create_account')
+        url = reverse('website:accounts')
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/account_form.html')
-        self.assertEqual(response.context['form'].merchant.pk,
-                         merchant.pk)
-
-    def test_post(self):
-        merchant = MerchantAccountFactory.create()
-        self.client.login(username=merchant.user.email,
-                          password='password')
-        url = reverse('website:create_account')
-        form_data = {
-            'currency': merchant.currency.pk,
-            'instantfiat_api_key': 'test',
-        }
-        response = self.client.post(url, data=form_data)
-        self.assertEqual(response.status_code, 302)
-        account = merchant.account_set.get(
-            currency__name=merchant.currency.name)
-        self.assertEqual(account.instantfiat_provider,
-                         INSTANTFIAT_PROVIDERS.CRYPTOPAY)
-        self.assertEqual(account.instantfiat_api_key,
-                         form_data['instantfiat_api_key'])
+        self.assertFalse(response.context['can_edit_ift_settings'])
 
 
 class EditAccountViewTestCase(TestCase):

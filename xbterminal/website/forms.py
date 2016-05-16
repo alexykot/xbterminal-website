@@ -28,6 +28,7 @@ from website.widgets import (
     FileWidget,
     ForeignKeyWidget)
 from website.validators import validate_bitcoin_address
+from website.utils.accounts import create_managed_accounts
 from website.utils.email import (
     send_registration_email,
     send_reset_password_email)
@@ -159,10 +160,9 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
         # Create BTC account
         Account.objects.create(
             merchant=merchant,
-            currency=Currency.objects.get(name='BTC'))
+            currency=Currency.objects.get(name='BTC'),
+            instantfiat=False)
         # Create CryptoPay accounts
-        cryptopay_currencies = Currency.objects.filter(
-            name__in=cryptopay.DEFAULT_CURRENCIES)
         try:
             cryptopay_merchant_id, cryptopay_api_key = cryptopay.create_merchant(
                 merchant.contact_first_name,
@@ -173,13 +173,10 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             # TODO: ask merchant for CryptoPay API key later
             pass
         else:
-            for currency in cryptopay_currencies:
-                Account.objects.create(
-                    merchant=merchant,
-                    currency=currency,
-                    instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-                    instantfiat_merchant_id=cryptopay_merchant_id,
-                    instantfiat_api_key=cryptopay_api_key)
+            merchant.instantfiat_provider = INSTANTFIAT_PROVIDERS.CRYPTOPAY
+            merchant.instantfiat_merchant_id = cryptopay_merchant_id
+            merchant.instantfiat_api_key = cryptopay_api_key
+            create_managed_accounts(merchant)
 
     @atomic
     def save(self):
@@ -289,6 +286,25 @@ class ProfileForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+class InstantFiatSettingsForm(forms.ModelForm):
+
+    class Meta:
+        model = MerchantAccount
+        fields = [
+            'instantfiat_provider',
+            'instantfiat_api_key',
+        ]
+        widgets = {
+            'instantfiat_provider': forms.HiddenInput,
+        }
+        labels = {
+            'instantfiat_api_key': 'CryptoPay API key',
+        }
+
+    def clean_instantfiat_provider(self):
+        return INSTANTFIAT_PROVIDERS.CRYPTOPAY
 
 
 class KYCDocumentUploadForm(forms.ModelForm):
@@ -403,51 +419,18 @@ class AccountForm(forms.ModelForm):
         fields = [
             'currency',
             'forward_address',
-            'instantfiat_provider',
-            'instantfiat_api_key',
         ]
-        widgets = {
-            'instantfiat_provider': forms.HiddenInput(),
-        }
-        labels = {
-            'instantfiat_api_key': 'CryptoPay API key',
-        }
 
     def __init__(self, *args, **kwargs):
-        self.merchant = kwargs.pop('merchant', None)
         super(AccountForm, self).__init__(*args, **kwargs)
-        if self.instance and self.instance.pk:
-            # Existing account
-            self.fields['currency'].widget.attrs['disabled'] = True
-            self.fields['currency'].required = False
-            if self.instance.currency.name in ['BTC', 'TBTC']:
-                del self.fields['instantfiat_api_key']
-            else:
-                del self.fields['forward_address']
-                if self.instance.instantfiat_merchant_id:
-                    del self.fields['instantfiat_api_key']
-        else:
-            # New account (CryptoPay)
-            assert self.merchant
-            self.fields['currency'].queryset = Currency.objects.filter(
-                name__in=cryptopay.DEFAULT_CURRENCIES)
+        assert self.instance and self.instance.pk
+        self.fields['currency'].widget.attrs['disabled'] = True
+        self.fields['currency'].required = False
+        if self.instance.currency.name not in ['BTC', 'TBTC']:
             del self.fields['forward_address']
 
     def clean_currency(self):
-        if self.instance and self.instance.pk:
-            return self.instance.currency
-        else:
-            # New account
-            currency = self.cleaned_data['currency']
-            if self.merchant.account_set.filter(currency=currency).exists():
-                raise forms.ValidationError('Account already exists.')
-            return currency
-
-    def clean_instantfiat_provider(self):
-        if self.instance and self.instance.pk:
-            return self.instance.instantfiat_provider
-        else:
-            return INSTANTFIAT_PROVIDERS.CRYPTOPAY
+        return self.instance.currency
 
     def clean(self):
         cleaned_data = super(AccountForm, self).clean()
@@ -461,14 +444,6 @@ class AccountForm(forms.ModelForm):
                 for error_message in error.messages:
                     self.add_error('forward_address', error_message)
         return cleaned_data
-
-    def save(self, commit=True):
-        account = super(AccountForm, self).save(commit=False)
-        if not hasattr(account, 'merchant'):
-            account.merchant = self.merchant
-        if commit:
-            account.save()
-        return account
 
 
 class SendReconciliationForm(forms.Form):

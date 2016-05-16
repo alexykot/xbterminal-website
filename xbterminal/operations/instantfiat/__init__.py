@@ -12,11 +12,11 @@ def create_invoice(account, fiat_amount):
         account: Account instance
         fiat_amount: Decimal
     """
-    if account.instantfiat_provider == INSTANTFIAT_PROVIDERS.CRYPTOPAY:
+    if account.merchant.instantfiat_provider == INSTANTFIAT_PROVIDERS.CRYPTOPAY:
         invoice_id, btc_amount, address = cryptopay.create_invoice(
             fiat_amount,
             account.currency.name,
-            account.instantfiat_api_key,
+            account.merchant.instantfiat_api_key,
             'Payment to {0}'.format(account.merchant.company_name))
     else:
         raise AssertionError
@@ -30,10 +30,10 @@ def is_invoice_paid(account, invoice_id):
         account: Account instance
         invoice_id: string
     """
-    if account.instantfiat_provider == INSTANTFIAT_PROVIDERS.CRYPTOPAY:
+    if account.merchant.instantfiat_provider == INSTANTFIAT_PROVIDERS.CRYPTOPAY:
         result = cryptopay.is_invoice_paid(
             invoice_id,
-            account.instantfiat_api_key)
+            account.merchant.instantfiat_api_key)
     else:
         raise AssertionError
     return result

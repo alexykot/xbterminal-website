@@ -8,14 +8,16 @@ from django.conf import settings
 from django.utils import timezone
 from mock import patch, Mock
 
-from website.models import Device
+from website.models import Device, INSTANTFIAT_PROVIDERS
 from website.tests.factories import (
+    MerchantAccountFactory,
     AccountFactory,
     DeviceFactory,
     ReconciliationTimeFactory)
 from website.management.commands.check_wallet import \
     check_wallet, check_wallet_strict
 from website.management.commands.withdraw_btc import withdraw_btc
+from website.management.commands.cryptopay_sync import cryptopay_sync
 from operations.tests.factories import outpoint_factory
 
 
@@ -131,3 +133,15 @@ class WithdrawBTCTestCase(TestCase):
             'tx id 0000')
         self.assertEqual(bc_cls_mock.call_args[0][0], 'mainnet')
         self.assertTrue(bc_mock.send_raw_transaction.called)
+
+
+class CryptoPaySyncTestCase(TestCase):
+
+    @patch('website.management.commands.cryptopay_sync.update_managed_accounts')
+    @patch('website.management.commands.cryptopay_sync.update_balances')
+    def test_command(self, b_mock, a_mock):
+        MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY)
+        cryptopay_sync()
+        self.assertEqual(a_mock.call_count, 1)
+        self.assertEqual(b_mock.call_count, 1)

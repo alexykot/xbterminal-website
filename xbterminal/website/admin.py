@@ -132,7 +132,7 @@ class KYCDocumentInline(admin.TabularInline):
 class TransactionInline(admin.TabularInline):
 
     model = models.Transaction
-    exclude = ['amount']
+    exclude = ['amount', 'instantfiat_tx_id']
     readonly_fields = [
         'amount_colored',
         'tx_hash',
@@ -166,8 +166,9 @@ class AccountAdmin(admin.ModelAdmin):
         'balance',
         'balance_confirmed',
         'balance_max',
-        'instantfiat_provider',
+        'payment_processor',
     ]
+    list_filter = ['instantfiat']
     inlines = [
         TransactionInline,
     ]
@@ -188,10 +189,17 @@ class AccountAdmin(admin.ModelAdmin):
                 field.clean = lambda *args: obj.bitcoin_address
         return form
 
+    def payment_processor(self, obj):
+        if obj.instantfiat:
+            return obj.merchant.get_instantfiat_provider_display()
+        else:
+            return '-'
+
 
 class AccountInline(admin.TabularInline):
 
     model = models.Account
+    exclude = ['instantfiat_account_id']
     readonly_fields = ['bitcoin_address']
     extra = 1
 
@@ -208,9 +216,8 @@ class MerchantAccountAdmin(admin.ModelAdmin):
         'contact_name',
         'contact_phone_',
         'verification_status',
-        'btc_balance',
-        'tbtc_balance',
         'date_joined_l',
+        'can_activate_device',
     ]
     readonly_fields = ['date_joined', 'last_login']
     ordering = ['id']
@@ -254,32 +261,21 @@ class MerchantAccountAdmin(admin.ModelAdmin):
 
     contact_phone_.short_description = 'phone'
 
-    def btc_balance(self, merchant):
-        value = merchant.get_account_balance('BTC')
-        return '{0:.8f}'.format(value) if value is not None else 'N/A'
-    btc_balance.short_description = 'BTC balance'
-
-    def tbtc_balance(self, merchant):
-        value = merchant.get_account_balance('TBTC')
-        return '{0:.8f}'.format(value) if value is not None else 'N/A'
-    tbtc_balance.short_description = 'TBTC balance'
-
     def reset_cryptopay_password(self, request, queryset):
         for merchant in queryset:
-            account = merchant.account_set.filter(
-                instantfiat_provider=models.INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-                instantfiat_merchant_id__isnull=False).first()
-            if not account:
+            if merchant.instantfiat_provider != \
+                    models.INSTANTFIAT_PROVIDERS.CRYPTOPAY or \
+                    not merchant.instantfiat_merchant_id:
                 self.message_user(
                     request,
-                    'Merchant "{0}" doesn\'t have CryptoPay account.'.format(
+                    'Merchant "{0}" doesn\'t have managed CryptoPay profile.'.format(
                         merchant.company_name),
                     messages.WARNING)
                 continue
             password = models.User.objects.make_random_password(16)
             try:
                 cryptopay.set_password(
-                    account.instantfiat_merchant_id,
+                    merchant.instantfiat_merchant_id,
                     password,
                     config.CRYPTOPAY_API_KEY)
             except cryptopay.InstantFiatError:

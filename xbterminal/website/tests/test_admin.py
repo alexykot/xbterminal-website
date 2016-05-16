@@ -17,10 +17,7 @@ class MerchantAccountAdminTestCase(TestCase):
         ma = MerchantAccountAdmin(MerchantAccount, AdminSite())
         message_user_mock = mock.Mock()
         ma.message_user = message_user_mock
-        merchant = MerchantAccountFactory.create()
-        AccountFactory.create(
-            merchant=merchant,
-            currency__name='GBP',
+        merchant = MerchantAccountFactory.create(
             instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
             instantfiat_merchant_id='test-id')
         request = mock.Mock()
@@ -39,42 +36,38 @@ class AccountAdminTestCase(TestCase):
     def setUp(self):
         self.ma = AccountAdmin(Account, AdminSite())
 
-    def test_create_gbp(self):
+    def test_create_instantfiat(self):
         merchant = MerchantAccountFactory.create()
         form_cls = self.ma.get_form(mock.Mock(), None)
         data = {
             'merchant': merchant.pk,
             'currency': merchant.currency.pk,
-            'balance': '0.00',
             'balance_max': '0.00',
             'bitcoin_address': '',
             'forward_address': '',
-            'instantfiat_provider': INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-            'instantfiat_api_key': 'test',
+            'instantfiat': True,
+            'instantfiat_account_id': 'test',
         }
         form = form_cls(data=data)
         self.assertTrue(form.is_valid())
         account = form.save()
-        self.assertEqual(account.instantfiat_provider,
-                         INSTANTFIAT_PROVIDERS.CRYPTOPAY)
+        self.assertEqual(account.instantfiat_account_id,
+                         data['instantfiat_account_id'])
 
-    def test_create_gbp_error(self):
+    def test_create_instantfiat_error(self):
         merchant = MerchantAccountFactory.create()
         form_cls = self.ma.get_form(mock.Mock(), None)
         data = {
             'merchant': merchant.pk,
             'currency': merchant.currency.pk,
-            'balance': '0.00',
             'balance_max': '0.00',
             'bitcoin_address': '',
             'forward_address': '',
-            'instantfiat_provider': '',
-            'instantfiat_merchant_id': '',
-            'instantfiat_api_key': '',
+            'instantfiat': True,
         }
         form = form_cls(data=data)
         self.assertFalse(form.is_valid())
-        self.assertEqual(form.errors['instantfiat_provider'][0],
+        self.assertEqual(form.errors['instantfiat_account_id'][0],
                          'This field is required.')
 
     def test_create_btc_error(self):
@@ -84,10 +77,10 @@ class AccountAdminTestCase(TestCase):
         data = {
             'merchant': merchant.pk,
             'currency': btc.pk,
-            'balance': '0.00',
             'balance_max': '0.00',
             'bitcoin_address': '',
             'forward_address': '',
+            'instantfiat': False,
         }
         form = form_cls(data=data)
         self.assertFalse(form.is_valid())
@@ -100,10 +93,10 @@ class AccountAdminTestCase(TestCase):
         data = {
             'merchant': account.merchant.pk,
             'currency': account.currency.pk,
-            'balance': '0.00',
             'balance_max': '1.00',
             'bitcoin_address': '',
             'forward_address': '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
+            'instantfiat': False,
         }
         form_cls = self.ma.get_form(mock.Mock(), account)
         form = form_cls(data=data, instance=account)

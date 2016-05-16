@@ -140,6 +140,12 @@ class UITheme(models.Model):
         return self.name
 
 
+INSTANTFIAT_PROVIDERS = Choices(
+    ('CRYPTOPAY', 1, 'CryptoPay'),
+    ('GOCOIN', 2, 'GoCoin'),
+)
+
+
 class MerchantAccount(models.Model):
 
     PAYMENT_PROCESSOR_CHOICES = [
@@ -176,11 +182,23 @@ class MerchantAccount(models.Model):
     # Display currency
     currency = models.ForeignKey(Currency, default=1)  # by default, GBP, see fixtures
     ui_theme = models.ForeignKey(UITheme, default=1)  # 'default' theme, see fixtures
+    can_activate_device = models.BooleanField(default=False)
 
-    # TODO: deprecated fields, remove later
-    payment_processor = models.CharField(_('Payment processor'), max_length=50, choices=PAYMENT_PROCESSOR_CHOICES, default='gocoin')
-    api_key = models.CharField(_('API key'), max_length=255, blank=True)
-    gocoin_merchant_id = models.CharField(max_length=36, blank=True, null=True)
+    instantfiat_provider = models.PositiveSmallIntegerField(
+        _('InstantFiat provider'),
+        choices=INSTANTFIAT_PROVIDERS,
+        blank=True,
+        null=True)
+    instantfiat_merchant_id = models.CharField(
+        _('InstantFiat merchant ID'),
+        max_length=50,
+        blank=True,
+        null=True)
+    instantfiat_api_key = models.CharField(
+        _('InstantFiat API key'),
+        max_length=200,
+        blank=True,
+        null=True)
 
     verification_status = models.CharField(_('KYC'), max_length=50, choices=VERIFICATION_STATUSES, default='unverified')
 
@@ -232,12 +250,6 @@ class MerchantAccount(models.Model):
             exclude(status='uploaded').\
             latest('uploaded')
 
-    def get_account_balance(self, currency_name):
-        account = self.account_set.\
-            filter(currency__name=currency_name).first()
-        if account:
-            return account.balance
-
     @property
     def info(self):
         if self.verification_status == 'verified':
@@ -260,17 +272,18 @@ class MerchantAccount(models.Model):
                 'tx_count': tx_count,
                 'tx_sum': 0 if tx_sum is None else tx_sum}
 
+    def clean(self):
+        if not hasattr(self, 'instantfiat_provider'):
+            return
+        if self.instantfiat_provider and not self.instantfiat_api_key:
+            raise ValidationError({
+                'instantfiat_api_key': 'This field is required.'})
+
 
 BITCOIN_NETWORKS = [
     ('mainnet', 'Main'),
     ('testnet', 'Testnet'),
 ]
-
-
-INSTANTFIAT_PROVIDERS = Choices(
-    ('CRYPTOPAY', 1, 'CryptoPay'),
-    ('GOCOIN', 2, 'GoCoin'),
-)
 
 
 class Account(models.Model):
@@ -294,6 +307,8 @@ class Account(models.Model):
         validators=[validate_bitcoin_address],
         blank=True,
         null=True)
+
+    # TODO: remove fields
     instantfiat_provider = models.PositiveSmallIntegerField(
         _('InstantFiat provider'),
         choices=INSTANTFIAT_PROVIDERS,
@@ -310,20 +325,32 @@ class Account(models.Model):
         blank=True,
         null=True)
 
+    instantfiat = models.BooleanField()
+    instantfiat_account_id = models.CharField(
+        _('InstantFiat account ID'),
+        max_length=50,
+        unique=True,
+        blank=True,
+        null=True)
+
     class Meta:
-        ordering = ('merchant', 'currency')
-        unique_together = ('merchant', 'currency')
+        ordering = ('merchant', 'instantfiat', 'currency')
+        unique_together = ('merchant', 'instantfiat', 'currency')
 
     def __unicode__(self):
         if self.currency.name in ['BTC', 'TBTC']:
-            return u'{name} - {amount:.8f}'.format(
-                name=self.currency.name,
-                amount=self.balance)
+            balance_str = '{0:.8f}'.format(self.balance)
         else:
-            return u'{name} - {amount:.2f} ({provider})'.format(
+            balance_str = '{0:.2f}'.format(self.balance)
+        if self.instantfiat:
+            return u'{name} - {balance} ({provider})'.format(
                 name=self.currency.name,
-                amount=self.balance,
-                provider=self.get_instantfiat_provider_display())
+                balance=balance_str,
+                provider=self.merchant.get_instantfiat_provider_display())
+        else:
+            return u'{name} - {balance}'.format(
+                name=self.currency.name,
+                balance=balance_str)
 
     @property
     def bitcoin_network(self):
@@ -341,47 +368,46 @@ class Account(models.Model):
         Total balance on account, including unconfirmed deposits
         """
         result = self.transaction_set.aggregate(models.Sum('amount'))
-        return result['amount__sum'] or 0
+        return result['amount__sum'] or Decimal('0.00000000')
 
     @property
     def balance_confirmed(self):
         """
         Amount available for withdrawal (inaccurate)
         """
-        balance = Decimal(0)
+        balance = Decimal('0.00000000')
         for transaction in self.transaction_set.all():
             if transaction.is_confirmed:
                 balance += transaction.amount
         return balance
 
     def clean(self):
-        if not hasattr(self, 'currency'):
+        if not hasattr(self, 'instantfiat'):
             return
-        if self.currency.name in ['BTC', 'TBTC']:
+        if self.instantfiat:
+            if not self.instantfiat_account_id:
+                raise ValidationError({
+                    'instantfiat_account_id': 'This field is required.'})
+        else:
             if not self.forward_address:
                 raise ValidationError({
                     'forward_address': 'This field is required.'})
-        else:
-            if not self.instantfiat_provider:
-                raise ValidationError({
-                    'instantfiat_provider': 'This field is required.'})
-            if not self.instantfiat_api_key:
-                raise ValidationError({
-                    'instantfiat_api_key': 'This field is required.'})
-            if self.instantfiat_provider == INSTANTFIAT_PROVIDERS.GOCOIN and \
-                    not self.instantfiat_merchant_id:
-                raise ValidationError({
-                    'instantfiat_merchant_id': 'This field is required.'})
 
 
 class Transaction(models.Model):
 
     account = models.ForeignKey(Account)
     amount = models.DecimalField(max_digits=20, decimal_places=8)
+    instantfiat_tx_id = models.CharField(
+        _('InstantFiat transaction ID'),
+        max_length=64,
+        blank=True,
+        null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-created_at']
+        unique_together = ['account', 'instantfiat_tx_id']
 
     def __unicode__(self):
         return str(self.pk)
@@ -577,15 +603,6 @@ class Device(models.Model):
             return self.account.bitcoin_network
         else:
             return 'mainnet'
-
-    @property
-    def instantfiat(self):
-        if not self.account:
-            return None
-        if self.account.currency.name in ['BTC', 'TBTC']:
-            return False
-        else:
-            return True
 
     def get_payments(self):
         return self.paymentorder_set.filter(time_notified__isnull=False)

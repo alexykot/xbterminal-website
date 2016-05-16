@@ -4,7 +4,9 @@
 {% block cabinet_content %}
 <div>
     <a class="btn btn-default" href="{% url 'website:create_device' %}?device_type=mobile">{% trans 'Add mobile app' %}</a>
+    {% if user.merchant.can_activate_device %}
     <a class="btn btn-default" href="{% url 'website:activate_device' %}">{% trans 'Activate payment module' %}</a>
+    {% endif %}
 </div>
 <table id="devices" class="table table-striped table-bordered table-responsive">
     <tr>

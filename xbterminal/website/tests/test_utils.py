@@ -1,12 +1,20 @@
+from decimal import Decimal
+
+from mock import patch
 from django.conf import settings
 from django.core import mail
 from django.test import TestCase
 
-from website.utils.accounts import check_managed_accounts
+from website.models import INSTANTFIAT_PROVIDERS
+from website.utils.accounts import (
+    create_managed_accounts,
+    update_managed_accounts,
+    update_balances)
 from website.utils.email import send_error_message
 from website.tests.factories import (
     MerchantAccountFactory,
-    AccountFactory)
+    AccountFactory,
+    TransactionFactory)
 from operations.tests.factories import (
     PaymentOrderFactory,
     WithdrawalOrderFactory)
@@ -14,24 +22,73 @@ from operations.tests.factories import (
 
 class AccountsUtilsTestCase(TestCase):
 
-    def test_check_managed_accounts(self):
-        merchant = MerchantAccountFactory.create()
-        self.assertFalse(check_managed_accounts(merchant))
-        AccountFactory.create(
-            merchant=merchant,
-            currency__name='GBP',
-            instantfiat_merchant_id='test')
-        self.assertFalse(check_managed_accounts(merchant))
-        AccountFactory.create(
-            merchant=merchant,
-            currency__name='USD',
-            instantfiat_merchant_id='test')
-        self.assertFalse(check_managed_accounts(merchant))
-        AccountFactory.create(
-            merchant=merchant,
-            currency__name='EUR',
-            instantfiat_merchant_id='test')
-        self.assertTrue(check_managed_accounts(merchant))
+    @patch('website.utils.accounts.cryptopay.list_accounts')
+    def test_create_managed_accounts(self, list_mock):
+        list_mock.return_value = [
+            {'id': 'a1', 'currency': 'BTC'},
+            {'id': 'a2', 'currency': 'GBP'},
+            {'id': 'a3', 'currency': 'USD'},
+            {'id': 'a4', 'currency': 'EUR'},
+        ]
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_api_key='test-key')
+        create_managed_accounts(merchant)
+        self.assertEqual(merchant.account_set.count(), 4)
+        account_btc = merchant.account_set.get(currency__name='BTC',
+                                               instantfiat=True)
+        self.assertEqual(account_btc.instantfiat_account_id, 'a1')
+        account_eur = merchant.account_set.get(currency__name='EUR',
+                                               instantfiat=True)
+        self.assertEqual(account_eur.instantfiat_account_id, 'a4')
+
+    @patch('website.utils.accounts.cryptopay.list_accounts')
+    def test_update_managed_accounts(self, list_mock):
+        list_mock.return_value = [
+            {'id': 'a1', 'currency': 'BTC'},
+            {'id': 'a2', 'currency': 'GBP'},
+            {'id': 'a3', 'currency': 'USD'},
+            {'id': 'a4', 'currency': 'EUR'},
+        ]
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_api_key='test-key')
+        AccountFactory.create(merchant=merchant,
+                              currency__name='EUR',
+                              instantfiat=True,
+                              instantfiat_account_id='test')
+        update_managed_accounts(merchant)
+        self.assertEqual(merchant.account_set.count(), 4)
+        account_btc = merchant.account_set.get(currency__name='BTC',
+                                               instantfiat=True)
+        self.assertEqual(account_btc.instantfiat_account_id, 'a1')
+        account_eur = merchant.account_set.get(currency__name='EUR',
+                                               instantfiat=True)
+        self.assertEqual(account_eur.instantfiat_account_id, 'a4')
+
+    @patch('website.utils.accounts.cryptopay.list_transactions')
+    def test_update_balances(self, list_mock):
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_api_key='test-key')
+        account = AccountFactory.create(merchant=merchant,
+                                        currency=merchant.currency,
+                                        instantfiat=True,
+                                        instantfiat_account_id='test-id')
+        TransactionFactory.create(account=account,
+                                  instantfiat_tx_id=115,
+                                  amount=Decimal('1.25'))
+        self.assertEqual(account.balance, Decimal('1.25'))
+        list_mock.return_value = [
+            {'id': 115, 'amount': '1.25'},
+            {'id': 117, 'amount': '0.65'},
+            {'id': 120, 'amount': '-0.85'},
+        ]
+        update_balances(merchant)
+        self.assertEqual(account.transaction_set.count(), 3)
+        self.assertEqual(account.balance, Decimal('1.05'))
+        self.assertEqual(list_mock.call_args[0][0], 'test-id')
+        self.assertEqual(list_mock.call_args[0][1], 'test-key')
 
 
 class EmailUtilsTestCase(TestCase):

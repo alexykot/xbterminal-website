@@ -57,7 +57,7 @@ def prepare_withdrawal(device, fiat_amount):
     """
     if not device.account:
         raise WithdrawalError('Account is not set for device.')
-    if device.instantfiat:
+    if device.account.instantfiat:
         raise WithdrawalError(
             'Withdrawal from instantfiat accounts is not supported.')
     else:

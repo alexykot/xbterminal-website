@@ -194,8 +194,6 @@ class SendTransactionTestCase(TestCase):
                          Decimal('0.0049'))
 
         self.assertEqual(device.account.balance, Decimal('0.0049'))
-        self.assertEqual(device.merchant.get_account_balance('BTC'),
-                         Decimal('0.0049'))
 
     def test_invalid_address(self):
         order = WithdrawalOrderFactory.create()

@@ -3,8 +3,8 @@
 
 {% block cabinet_content %}
 <div>
-    {% if can_add_account %}
-    <a class="btn btn-default" href="{% url 'website:create_account' %}">{% trans 'Add CryptoPay account' %}</a>
+    {% if can_edit_ift_settings %}
+    <a class="btn btn-default" href="{% url 'website:instantfiat' %}">{% trans 'Edit CryptoPay settings' %}</a>
     {% endif %}
 </div>
 <table id="accounts" class="table table-striped table-bordered table-responsive">
@@ -23,7 +23,13 @@
             {{ account.balance|floatformat:2 }}
             {% endif %}
         </td>
-        <td>{{ account.get_instantfiat_provider_display|default:'-' }}</td>
+        <td>
+            {% if account.instantfiat %}
+            {{ account.merchant.get_instantfiat_provider_display }}
+            {% else %}
+            -
+            {% endif %}
+        </td>
     </tr>
     {% endfor %}
 </table>
