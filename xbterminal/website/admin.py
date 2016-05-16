@@ -199,9 +199,20 @@ class AccountAdmin(admin.ModelAdmin):
 class AccountInline(admin.TabularInline):
 
     model = models.Account
-    exclude = ['instantfiat_account_id']
-    readonly_fields = ['bitcoin_address']
-    extra = 1
+    exclude = [
+        'bitcoin_address',
+        'forward_address',
+        'instantfiat_account_id',
+    ]
+    readonly_fields = [
+        'currency',
+        'instantfiat',
+        'balance',
+        'balance_max',
+    ]
+    extra = 0
+    max_num = 0
+    can_delete = False
 
 
 @admin.register(models.MerchantAccount)
