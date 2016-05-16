@@ -395,6 +395,18 @@ def wait_for_confirmation(order_uid):
             order.save()
 
 
+def check_confirmation(order):
+    if order.time_confirmed is not None:
+        return True
+    bc = blockchain.BlockChain(order.bitcoin_network)
+    if bc.is_tx_confirmed(order.outgoing_tx_id):
+        order.time_confirmed = timezone.now()
+        order.save()
+        return True
+    else:
+        return False
+
+
 def wait_for_exchange(payment_order_uid):
     """
     Asynchronous task
