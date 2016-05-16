@@ -14,7 +14,7 @@ from django.contrib.auth.models import (
     PermissionsMixin)
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_delete
 from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
@@ -467,6 +467,11 @@ class KYCDocument(models.Model):
     @property
     def original_name(self):
         return get_verification_file_name(self.file)
+
+
+@receiver(post_delete, sender=KYCDocument)
+def kyc_document_delete(sender, instance, **kwargs):
+    instance.file.delete(save=False)
 
 
 def gen_batch_number():

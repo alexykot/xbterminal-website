@@ -1,4 +1,6 @@
 from decimal import Decimal
+import os
+
 from django.conf import settings
 from django.db import IntegrityError
 from django.test import TestCase
@@ -183,6 +185,14 @@ class KYCDocumentTestCase(TestCase):
         self.assertIsNone(document.comment)
         self.assertEqual(document.base_name, '1__test.png')
         self.assertEqual(document.original_name, 'test.png')
+
+    def test_delete(self):
+        document = KYCDocumentFactory.create(file__name='del.pdf')
+        file_path = document.file.path
+        self.assertTrue(file_path.endswith('del.pdf'))
+        self.assertTrue(os.path.exists(file_path))
+        document.delete()
+        self.assertFalse(os.path.exists(file_path))
 
 
 class AccountTestCase(TestCase):
