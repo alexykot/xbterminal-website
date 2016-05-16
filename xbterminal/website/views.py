@@ -473,13 +473,13 @@ class VerificationView(TemplateResponseMixin, CabinetView):
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         merchant = self.request.user.merchant
+        required = [
+            models.KYC_DOCUMENT_TYPES.ID_FRONT,
+            models.KYC_DOCUMENT_TYPES.ADDRESS,
+        ]
         if merchant.verification_status == 'unverified':
             # Prepare upload forms
             context['forms'] = []
-            required = [
-                models.KYC_DOCUMENT_TYPES.ID_FRONT,
-                models.KYC_DOCUMENT_TYPES.ADDRESS,
-            ]
             for document_type in required:
                 # Show upload forms only for unverified documents
                 if not merchant.get_kyc_document(document_type, 'verified'):
@@ -488,6 +488,12 @@ class VerificationView(TemplateResponseMixin, CabinetView):
                         instance=merchant.get_kyc_document(
                             document_type, 'uploaded'))
                     context['forms'].append(form)
+        else:
+            # Prepare documents
+            context['documents'] = []
+            for document_type in required:
+                context['documents'].append(
+                    merchant.get_latest_kyc_document(document_type))
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):

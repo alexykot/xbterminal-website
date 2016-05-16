@@ -517,11 +517,11 @@ class VerificationViewTestCase(TestCase):
     def test_get_verification_pending(self):
         merchant = MerchantAccountFactory.create(
             verification_status='pending')
-        KYCDocumentFactory.create(
+        document_1 = KYCDocumentFactory.create(
             merchant=merchant,
             document_type=KYC_DOCUMENT_TYPES.ID_FRONT,
             status='unverified')
-        KYCDocumentFactory.create(
+        document_2 = KYCDocumentFactory.create(
             merchant=merchant,
             document_type=KYC_DOCUMENT_TYPES.ADDRESS,
             status='unverified')
@@ -531,6 +531,11 @@ class VerificationViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'cabinet/verification.html')
         self.assertNotIn('forms', response.context)
+        self.assertEqual(len(response.context['documents']), 2)
+        self.assertEqual(response.context['documents'][0].pk,
+                         document_1.pk)
+        self.assertEqual(response.context['documents'][1].pk,
+                         document_2.pk)
 
     def test_post(self):
         merchant = MerchantAccountFactory.create()
