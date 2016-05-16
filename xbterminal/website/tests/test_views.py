@@ -563,6 +563,22 @@ class VerificationViewTestCase(TestCase):
         self.assertEqual(document_1.status, 'unverified')
         self.assertEqual(document_2.status, 'unverified')
 
+    def test_post_not_uploaded(self):
+        merchant = MerchantAccountFactory.create()
+        doc_id = KYCDocumentFactory.create(
+            merchant=merchant,
+            document_type=KYC_DOCUMENT_TYPES.ID_FRONT)
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertIn('error', data)
+        merchant.refresh_from_db()
+        self.assertEqual(merchant.verification_status, 'unverified')
+        doc_id.refresh_from_db()
+        self.assertEqual(doc_id.status, 'uploaded')
+
 
 class VerificationFileViewTestCase(TestCase):
 
