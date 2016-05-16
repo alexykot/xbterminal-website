@@ -523,7 +523,7 @@ class VerificationFileView(View):
             models.MerchantAccount,
             pk=self.kwargs.get('merchant_pk'))
         # Parse file name
-        match = re.match(r"^(?P<type>[12])(__.+$|$)",
+        match = re.match(r"^(?P<type>[0-9])(__.+$|$)",
                          self.kwargs.get('name'))
         if not match:
             raise Http404

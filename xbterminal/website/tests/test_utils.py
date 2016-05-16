@@ -131,9 +131,13 @@ class KYCUtilsTestCase(TestCase):
             status='uploaded')
         document_2 = KYCDocumentFactory.create(
             merchant=merchant,
+            document_type=KYC_DOCUMENT_TYPES.ID_BACK,
+            status='uploaded')
+        document_3 = KYCDocumentFactory.create(
+            merchant=merchant,
             document_type=KYC_DOCUMENT_TYPES.ADDRESS,
             status='uploaded')
-        upload_documents(merchant, [document_1, document_2])
+        upload_documents(merchant, [document_1, document_2, document_3])
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to[0],
                          settings.CONTACT_EMAIL_RECIPIENTS[0])
@@ -141,9 +145,13 @@ class KYCUtilsTestCase(TestCase):
         self.assertEqual(merchant.verification_status, 'pending')
         document_1.refresh_from_db()
         document_2.refresh_from_db()
+        document_3.refresh_from_db()
         self.assertEqual(document_1.status, 'unverified')
         self.assertEqual(document_1.instantfiat_document_id,
                          '36e2a91e-18d1-4e3c-9e82-8c63e01797be')
         self.assertEqual(document_2.status, 'unverified')
         self.assertEqual(document_2.instantfiat_document_id,
+                         '36e2a91e-18d1-4e3c-9e82-8c63e01797be')
+        self.assertEqual(document_3.status, 'unverified')
+        self.assertEqual(document_3.instantfiat_document_id,
                          '36e2a91e-18d1-4e3c-9e82-8c63e01797be')

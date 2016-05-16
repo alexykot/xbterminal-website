@@ -320,7 +320,9 @@ class KYCDocumentUploadForm(forms.ModelForm):
         self.document_type = kwargs.pop('document_type', None)
         super(KYCDocumentUploadForm, self).__init__(*args, **kwargs)
         if self.document_type == KYC_DOCUMENT_TYPES.ID_FRONT:
-            self.fields['file'].label = _('Photo ID')
+            self.fields['file'].label = _('Photo ID (front side)')
+        elif self.document_type == KYC_DOCUMENT_TYPES.ID_BACK:
+            self.fields['file'].label = _('Photo ID (back side)')
         elif self.document_type == KYC_DOCUMENT_TYPES.ADDRESS:
             self.fields['file'].label = _('Corporate or residence proof document')
 

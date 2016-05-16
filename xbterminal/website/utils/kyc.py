@@ -6,6 +6,7 @@ from website.utils.email import send_verification_info
 
 REQUIRED_DOCUMENTS = [
     KYC_DOCUMENT_TYPES.ID_FRONT,
+    KYC_DOCUMENT_TYPES.ID_BACK,
     KYC_DOCUMENT_TYPES.ADDRESS,
 ]
 

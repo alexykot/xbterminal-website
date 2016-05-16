@@ -21,7 +21,7 @@ def verification_file_path_gen(instance, filename):
 
 
 def get_verification_file_name(file):
-    match = re.match('^[12]__(.*)$', os.path.basename(file.name))
+    match = re.match('^[0-9]__(.*)$', os.path.basename(file.name))
     return match.group(1)
 
 

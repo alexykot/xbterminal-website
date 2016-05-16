@@ -144,7 +144,8 @@ def upload_documents(user_id, documents, api_key):
     api_url = 'https://cryptopay.me/api/v2/users/{user_id}/documents'
     payload = {
         'id_document_frontside': base64.b64encode(documents[0].read()),
-        'residence_document': base64.b64encode(documents[1].read()),
+        'id_document_backside': base64.b64encode(documents[1].read()),
+        'residence_document': base64.b64encode(documents[2].read()),
     }
     assert api_key
     headers = {
