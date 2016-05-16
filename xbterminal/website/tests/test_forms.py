@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.core import mail
+from django.utils.datastructures import MultiValueDict
 from mock import patch
 
 from oauth2_provider.models import Application
@@ -11,10 +12,12 @@ from website.forms import (
     ResetPasswordForm,
     ProfileForm,
     InstantFiatSettingsForm,
+    KYCDocumentUploadForm,
     DeviceForm,
     DeviceActivationForm,
     AccountForm)
 from website.tests.factories import (
+    create_uploaded_image,
     CurrencyFactory,
     MerchantAccountFactory,
     AccountFactory,
@@ -198,6 +201,17 @@ class InstantFiatSettingsFormTestCase(TestCase):
         self.assertFalse(form.is_valid())
         self.assertNotIn('instantfiat_provider', form.errors)
         self.assertIn('instantfiat_api_key', form.errors)
+
+
+class KYCDocumentUploadFormTestCase(TestCase):
+
+    def test_upload(self):
+        files = MultiValueDict({'file': [create_uploaded_image(100)]})
+        form = KYCDocumentUploadForm(data={}, files=files)
+        self.assertIsNone(form.document_type)
+        self.assertTrue(form.is_valid())
+        document = form.save(commit=False)
+        self.assertIsNotNone(document.file)
 
 
 class DeviceFormTestCase(TestCase):
