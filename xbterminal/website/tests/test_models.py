@@ -99,6 +99,7 @@ class MerchantAccountTestCase(TestCase):
         self.assertEqual(merchant.language.code, 'en')
         self.assertEqual(merchant.currency.name, 'GBP')
         self.assertEqual(merchant.ui_theme.name, 'default')
+        self.assertFalse(merchant.can_activate_device)
         self.assertIsNone(merchant.instantfiat_provider)
         self.assertIsNone(merchant.instantfiat_merchant_id)
         self.assertIsNone(merchant.instantfiat_api_key)

@@ -199,6 +199,7 @@ class AccountAdmin(admin.ModelAdmin):
 class AccountInline(admin.TabularInline):
 
     model = models.Account
+    exclude = ['instantfiat_account_id']
     readonly_fields = ['bitcoin_address']
     extra = 1
 
@@ -216,6 +217,7 @@ class MerchantAccountAdmin(admin.ModelAdmin):
         'contact_phone_',
         'verification_status',
         'date_joined_l',
+        'can_activate_device',
     ]
     readonly_fields = ['date_joined', 'last_login']
     ordering = ['id']

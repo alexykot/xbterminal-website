@@ -182,6 +182,7 @@ class MerchantAccount(models.Model):
     # Display currency
     currency = models.ForeignKey(Currency, default=1)  # by default, GBP, see fixtures
     ui_theme = models.ForeignKey(UITheme, default=1)  # 'default' theme, see fixtures
+    can_activate_device = models.BooleanField(default=False)
 
     instantfiat_provider = models.PositiveSmallIntegerField(
         _('InstantFiat provider'),
