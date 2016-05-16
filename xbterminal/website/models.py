@@ -240,6 +240,9 @@ class MerchantAccount(models.Model):
                 bool(self.contact_phone))
 
     def get_kyc_document(self, document_type, status):
+        """
+        Get latest KYC document for given status
+        """
         try:
             return self.kycdocument_set.\
                 filter(document_type=document_type, status=status).\
@@ -247,9 +250,9 @@ class MerchantAccount(models.Model):
         except KYCDocument.DoesNotExist:
             return None
 
-    def get_latest_kyc_document(self, document_type):
+    def get_current_kyc_document(self, document_type):
         """
-        Search for latest uploaded document
+        Get currently active KYC document
         """
         return self.kycdocument_set.\
             filter(document_type=document_type).\

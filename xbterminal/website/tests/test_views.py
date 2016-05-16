@@ -502,17 +502,13 @@ class VerificationViewTestCase(TestCase):
             merchant=merchant,
             document_type=KYC_DOCUMENT_TYPES.ID_FRONT,
             status='uploaded')
-        KYCDocumentFactory.create(
-            merchant=merchant,
-            document_type=KYC_DOCUMENT_TYPES.ADDRESS,
-            status='verified')
         self.client.login(username=merchant.user.email,
                           password='password')
         response = self.client.get(self.url)
-        self.assertEqual(len(response.context['forms']), 1)
-        form = response.context['forms'][0]
-        self.assertEqual(form.document_type, KYC_DOCUMENT_TYPES.ID_FRONT)
-        self.assertEqual(form.instance.pk, doc_id.pk)
+        self.assertEqual(len(response.context['forms']), 2)
+        (form_1, form_2) = response.context['forms']
+        self.assertEqual(form_1.document_type, KYC_DOCUMENT_TYPES.ID_FRONT)
+        self.assertEqual(form_1.instance.pk, doc_id.pk)
 
     def test_get_verification_pending(self):
         merchant = MerchantAccountFactory.create(
@@ -538,7 +534,8 @@ class VerificationViewTestCase(TestCase):
                          document_2.pk)
 
     def test_post(self):
-        merchant = MerchantAccountFactory.create()
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY)
         document_1 = KYCDocumentFactory.create(
             merchant=merchant,
             document_type=KYC_DOCUMENT_TYPES.ID_FRONT)

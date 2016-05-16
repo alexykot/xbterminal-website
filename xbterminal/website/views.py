@@ -14,6 +14,7 @@ from django.views.generic.base import ContextMixin, TemplateResponseMixin
 from django.utils.decorators import method_decorator
 from django.core.urlresolvers import resolve, reverse
 from django.db.models import Count, Sum, F
+from django.db.transaction import atomic
 from django.contrib import messages
 from django.utils import timezone
 from django.utils.translation import ugettext as _
@@ -24,6 +25,7 @@ from api.utils import activation
 
 from website import forms, models
 from website.utils import reconciliation, email
+from website.utils import kyc
 
 
 class ServerErrorMiddleware(object):
@@ -468,54 +470,44 @@ class VerificationView(TemplateResponseMixin, CabinetView):
     """
     Verification page
     """
-    template_name = "cabinet/verification.html"
+    template_name = 'cabinet/verification.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         merchant = self.request.user.merchant
-        required = [
-            models.KYC_DOCUMENT_TYPES.ID_FRONT,
-            models.KYC_DOCUMENT_TYPES.ADDRESS,
-        ]
         if merchant.verification_status == 'unverified':
             # Prepare upload forms
             context['forms'] = []
-            for document_type in required:
-                # Show upload forms only for unverified documents
-                if not merchant.get_kyc_document(document_type, 'verified'):
-                    form = forms.KYCDocumentUploadForm(
-                        document_type=document_type,
-                        instance=merchant.get_kyc_document(
-                            document_type, 'uploaded'))
-                    context['forms'].append(form)
+            for document_type in kyc.REQUIRED_DOCUMENTS:
+                form = forms.KYCDocumentUploadForm(
+                    document_type=document_type,
+                    instance=merchant.get_kyc_document(
+                        document_type, 'uploaded'))
+                context['forms'].append(form)
         else:
             # Prepare documents
             context['documents'] = []
-            for document_type in required:
+            for document_type in kyc.REQUIRED_DOCUMENTS:
                 context['documents'].append(
-                    merchant.get_latest_kyc_document(document_type))
+                    merchant.get_current_kyc_document(document_type))
         return self.render_to_response(context)
 
+    @atomic
     def post(self, *args, **kwargs):
         merchant = self.request.user.merchant
         if merchant.verification_status != 'unverified':
             raise Http404
-        # All unverified documents must be uploaded
-        kyc_documents = []
-        if not merchant.get_kyc_document(1, 'verified'):
-            kyc_documents.append(merchant.get_kyc_document(1, 'uploaded'))
-        if not merchant.get_kyc_document(2, 'verified'):
-            kyc_documents.append(merchant.get_kyc_document(2, 'uploaded'))
-        if all(kyc_documents):
-            for document in kyc_documents:
-                document.status = 'unverified'
-                document.save()
-            merchant.verification_status = 'pending'
-            merchant.save()
-            email.send_verification_info(merchant, kyc_documents)
-            data = {'next': reverse('website:verification')}
-        else:
-            data = {'error': _('Please, upload documents')}
+        uploaded = []
+        for document_type in kyc.REQUIRED_DOCUMENTS:
+            document = merchant.get_kyc_document(document_type, 'uploaded')
+            if not document:
+                # Not all required documents are uploaded
+                data = {'error': _('Please, upload documents')}
+                return HttpResponse(json.dumps(data),
+                                    content_type='application/json')
+            uploaded.append(document)
+        kyc.upload_documents(merchant, uploaded)
+        data = {'next': reverse('website:verification')}
         return HttpResponse(json.dumps(data),
                             content_type='application/json')
 
