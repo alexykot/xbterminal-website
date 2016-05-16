@@ -283,6 +283,9 @@ CERT_PATH = os.path.join(BASE_DIR, '..', 'certs')
 PKI_KEY_FILE = None
 PKI_CERTIFICATES = []
 
+RECAPTCHA_PRIVATE_KEY = ''
+RECAPTCHA_PUBLIC_KEY = ''
+
 REPORTS_PATH = os.path.join(BASE_DIR, '..', 'reports')
 
 BITCOIN_SCALE_DIVIZER = 1000
