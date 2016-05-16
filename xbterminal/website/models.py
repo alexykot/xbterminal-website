@@ -437,10 +437,20 @@ class KYCDocument(models.Model):
     file = models.FileField(
         storage=VerificationFileStorage(),
         upload_to=verification_file_path_gen)
+    status = models.CharField(
+        max_length=50,
+        choices=VERIFICATION_STATUSES,
+        default='uploaded')
+    gocoin_document_id = models.CharField(
+        max_length=36,
+        blank=True,
+        null=True)
+    comment = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True)
+
     uploaded = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=50, choices=VERIFICATION_STATUSES, default='uploaded')
-    gocoin_document_id = models.CharField(max_length=36, blank=True, null=True)
-    comment = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         verbose_name = 'KYC document'
