@@ -142,6 +142,7 @@ class CryptoPaySyncTestCase(TestCase):
     def test_command(self, b_mock, a_mock):
         MerchantAccountFactory.create(
             instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY)
-        cryptopay_sync()
+        messages = list(cryptopay_sync())
         self.assertEqual(a_mock.call_count, 1)
         self.assertEqual(b_mock.call_count, 1)
+        self.assertEqual(len(messages), 1)

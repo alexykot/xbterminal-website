@@ -1,3 +1,5 @@
+import logging
+
 from django.core.management.base import BaseCommand
 
 from website.models import MerchantAccount, INSTANTFIAT_PROVIDERS
@@ -5,18 +7,27 @@ from website.utils.accounts import (
     update_managed_accounts,
     update_balances)
 
+logger = logging.getLogger(__name__)
+
 
 class Command(BaseCommand):
 
     help = 'Imports accounts and transactions from CryptoPay'
 
     def handle(self, *args, **options):
-        cryptopay_sync()
+        for line in cryptopay_sync():
+            self.stdout.write(line)
 
 
 def cryptopay_sync():
     merchants = MerchantAccount.objects.filter(
         instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY)
     for merchant in merchants:
-        update_managed_accounts(merchant)
-        update_balances(merchant)
+        try:
+            update_managed_accounts(merchant)
+            update_balances(merchant)
+        except Exception as error:
+            logger.exception(error)
+            yield '{0} - ERROR'.format(merchant.company_name)
+        else:
+            yield '{0} - SUCCESS'.format(merchant.company_name)
