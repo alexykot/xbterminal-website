@@ -49,18 +49,12 @@
                 Corporate documents must be a scanned image of an original paper document.<br>
                 Address document must be no more than three months old.</p>
             {% endblocktrans %}
-            {% if form_identity_doc %}
-            <form class="upload-form" action="{% url 'website:verification_file' merchant_pk=user.merchant.pk name=1 %}" method="POST">
-                {% csrf_token %}
-                {% bootstrap_form form_identity_doc %}
-            </form>
-            {% endif %}
-            {% if form_corporate_doc %}
-            <form class="upload-form" action="{% url 'website:verification_file' merchant_pk=user.merchant.pk name=2 %}" method="POST">
-                {% csrf_token %}
-                {% bootstrap_form form_corporate_doc %}
-            </form>
-            {% endif %}
+            {% for form in forms %}
+                <form class="upload-form" action="{% url 'website:verification_file' merchant_pk=user.merchant.pk name=form.document_type %}" method="POST">
+                    {% csrf_token %}
+                    {% bootstrap_form form %}
+                </form>
+            {% endfor %}
             <form id="verification-form" action="{% url 'website:verification' %}" method="POST">
                 {% csrf_token %}
                 <div class="row">

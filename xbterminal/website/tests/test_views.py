@@ -489,8 +489,30 @@ class VerificationViewTestCase(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'cabinet/verification.html')
-        self.assertIn('form_identity_doc', response.context)
-        self.assertIn('form_corporate_doc', response.context)
+        self.assertEqual(len(response.context['forms']), 2)
+        (form_1, form_2) = response.context['forms']
+        self.assertEqual(form_1.document_type, KYC_DOCUMENT_TYPES.ID_FRONT)
+        self.assertIsNone(form_1.instance.pk)
+        self.assertEqual(form_2.document_type, KYC_DOCUMENT_TYPES.ADDRESS)
+        self.assertIsNone(form_2.instance.pk)
+
+    def test_get_unverified_already_uploaded(self):
+        merchant = MerchantAccountFactory.create()
+        doc_id = KYCDocumentFactory.create(
+            merchant=merchant,
+            document_type=KYC_DOCUMENT_TYPES.ID_FRONT,
+            status='uploaded')
+        KYCDocumentFactory.create(
+            merchant=merchant,
+            document_type=KYC_DOCUMENT_TYPES.ADDRESS,
+            status='verified')
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        response = self.client.get(self.url)
+        self.assertEqual(len(response.context['forms']), 1)
+        form = response.context['forms'][0]
+        self.assertEqual(form.document_type, KYC_DOCUMENT_TYPES.ID_FRONT)
+        self.assertEqual(form.instance.pk, doc_id.pk)
 
     def test_get_verification_pending(self):
         merchant = MerchantAccountFactory.create(
@@ -508,8 +530,7 @@ class VerificationViewTestCase(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'cabinet/verification.html')
-        self.assertNotIn('form_identity_doc', response.context)
-        self.assertNotIn('form_corporate_doc', response.context)
+        self.assertNotIn('forms', response.context)
 
     def test_post(self):
         merchant = MerchantAccountFactory.create()
