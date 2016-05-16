@@ -22,7 +22,8 @@ from website.models import (
     Transaction,
     DeviceBatch,
     Device,
-    ReconciliationTime)
+    ReconciliationTime,
+    KYC_DOCUMENT_TYPES)
 
 fake = Faker()
 
@@ -121,7 +122,7 @@ class KYCDocumentFactory(factory.DjangoModelFactory):
         model = KYCDocument
 
     merchant = factory.SubFactory(MerchantAccountFactory)
-    document_type = KYCDocument.IDENTITY_DOCUMENT
+    document_type = KYC_DOCUMENT_TYPES.ID_FRONT
 
     @factory.post_generation
     def file(self, create, extracted, **kwargs):

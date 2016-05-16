@@ -471,6 +471,7 @@ class VerificationView(TemplateResponseMixin, CabinetView):
     template_name = "cabinet/verification.html"
 
     def get(self, *args, **kwargs):
+        # TODO: use constants
         context = self.get_context_data(**kwargs)
         merchant = self.request.user.merchant
         if merchant.verification_status == 'unverified':

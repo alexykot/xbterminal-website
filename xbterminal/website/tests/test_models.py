@@ -16,10 +16,10 @@ from website.models import (
     MerchantAccount,
     Account,
     Transaction,
-    KYCDocument,
     Device,
     DeviceBatch,
-    INSTANTFIAT_PROVIDERS)
+    INSTANTFIAT_PROVIDERS,
+    KYC_DOCUMENT_TYPES)
 from website.tests.factories import (
     CurrencyFactory,
     UserFactory,
@@ -130,12 +130,12 @@ class MerchantAccountTestCase(TestCase):
     def test_get_kyc_document(self):
         merchant = MerchantAccountFactory.create()
         document = merchant.get_kyc_document(
-            KYCDocument.IDENTITY_DOCUMENT,
+            KYC_DOCUMENT_TYPES.ID_FRONT,
             'uploaded')
         self.assertIsNone(document)
         KYCDocumentFactory.create(merchant=merchant)
         document = merchant.get_kyc_document(
-            KYCDocument.IDENTITY_DOCUMENT,
+            KYC_DOCUMENT_TYPES.ID_FRONT,
             'uploaded')
         self.assertIsNotNone(document)
 
@@ -177,11 +177,11 @@ class KYCDocumentTestCase(TestCase):
         document = KYCDocumentFactory.create()
         self.assertIsNotNone(document.merchant)
         self.assertEqual(document.document_type,
-                         KYCDocument.IDENTITY_DOCUMENT)
+                         KYC_DOCUMENT_TYPES.ID_FRONT)
         self.assertIsNotNone(document.file)
-        self.assertIsNotNone(document.uploaded)
+        self.assertIsNotNone(document.uploaded_at)
         self.assertEqual(document.status, 'uploaded')
-        self.assertIsNone(document.gocoin_document_id)
+        self.assertIsNone(document.instantfiat_document_id)
         self.assertIsNone(document.comment)
         self.assertEqual(document.base_name, '1__test.png')
         self.assertEqual(document.original_name, 'test.png')

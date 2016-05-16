@@ -145,6 +145,12 @@ INSTANTFIAT_PROVIDERS = Choices(
     ('GOCOIN', 2, 'GoCoin'),
 )
 
+KYC_DOCUMENT_TYPES = Choices(
+    ('ID_FRONT', 1, 'ID document - frontside'),
+    ('ADDRESS', 2, 'Address document'),
+    ('ID_BACK', 3, 'ID document - backside'),
+)
+
 
 class MerchantAccount(models.Model):
 
@@ -237,7 +243,7 @@ class MerchantAccount(models.Model):
         try:
             return self.kycdocument_set.\
                 filter(document_type=document_type, status=status).\
-                latest('uploaded')
+                latest('uploaded_at')
         except KYCDocument.DoesNotExist:
             return None
 
@@ -248,7 +254,7 @@ class MerchantAccount(models.Model):
         return self.kycdocument_set.\
             filter(document_type=document_type).\
             exclude(status='uploaded').\
-            latest('uploaded')
+            latest('uploaded_at')
 
     @property
     def info(self):
@@ -417,14 +423,6 @@ class Transaction(models.Model):
 
 class KYCDocument(models.Model):
 
-    IDENTITY_DOCUMENT = 1
-    CORPORATE_DOCUMENT = 2
-
-    DOCUMENT_TYPES = [
-        (IDENTITY_DOCUMENT, 'IdentityDocument'),
-        (CORPORATE_DOCUMENT, 'CorporateDocument'),
-    ]
-
     VERIFICATION_STATUSES = [
         ('uploaded', _('Uploaded')),
         ('unverified', _('Unverified')),
@@ -433,7 +431,8 @@ class KYCDocument(models.Model):
     ]
 
     merchant = models.ForeignKey(MerchantAccount)
-    document_type = models.IntegerField(choices=DOCUMENT_TYPES)
+    document_type = models.PositiveSmallIntegerField(
+        choices=KYC_DOCUMENT_TYPES)
     file = models.FileField(
         storage=VerificationFileStorage(),
         upload_to=verification_file_path_gen)
@@ -441,7 +440,7 @@ class KYCDocument(models.Model):
         max_length=50,
         choices=VERIFICATION_STATUSES,
         default='uploaded')
-    gocoin_document_id = models.CharField(
+    instantfiat_document_id = models.CharField(
         max_length=36,
         blank=True,
         null=True)
@@ -450,7 +449,7 @@ class KYCDocument(models.Model):
         blank=True,
         null=True)
 
-    uploaded = models.DateTimeField(auto_now_add=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = 'KYC document'

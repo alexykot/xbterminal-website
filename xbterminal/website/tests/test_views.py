@@ -9,8 +9,8 @@ from mock import patch
 
 from website.models import (
     MerchantAccount,
-    KYCDocument,
-    INSTANTFIAT_PROVIDERS)
+    INSTANTFIAT_PROVIDERS,
+    KYC_DOCUMENT_TYPES)
 from website.tests.factories import (
     create_image,
     MerchantAccountFactory,
@@ -497,11 +497,11 @@ class VerificationViewTestCase(TestCase):
             verification_status='pending')
         KYCDocumentFactory.create(
             merchant=merchant,
-            document_type=KYCDocument.IDENTITY_DOCUMENT,
+            document_type=KYC_DOCUMENT_TYPES.ID_FRONT,
             status='unverified')
         KYCDocumentFactory.create(
             merchant=merchant,
-            document_type=KYCDocument.CORPORATE_DOCUMENT,
+            document_type=KYC_DOCUMENT_TYPES.ADDRESS,
             status='unverified')
         self.client.login(username=merchant.user.email,
                           password='password')
@@ -515,10 +515,10 @@ class VerificationViewTestCase(TestCase):
         merchant = MerchantAccountFactory.create()
         document_1 = KYCDocumentFactory.create(
             merchant=merchant,
-            document_type=KYCDocument.IDENTITY_DOCUMENT)
+            document_type=KYC_DOCUMENT_TYPES.ID_FRONT)
         document_2 = KYCDocumentFactory.create(
             merchant=merchant,
-            document_type=KYCDocument.CORPORATE_DOCUMENT)
+            document_type=KYC_DOCUMENT_TYPES.ADDRESS)
         self.assertEqual(document_1.status, 'uploaded')
         self.assertEqual(document_2.status, 'uploaded')
         self.client.login(username=merchant.user.email,
@@ -569,7 +569,7 @@ class VerificationFileViewTestCase(TestCase):
         self.assertEqual(merchant.kycdocument_set.count(), 1)
         doc = merchant.kycdocument_set.first()
         self.assertEqual(doc.status, 'uploaded')
-        self.assertEqual(doc.document_type, KYCDocument.IDENTITY_DOCUMENT)
+        self.assertEqual(doc.document_type, KYC_DOCUMENT_TYPES.ID_FRONT)
 
     def test_delete_identity_doc(self):
         merchant = MerchantAccountFactory.create()

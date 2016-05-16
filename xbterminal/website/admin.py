@@ -120,7 +120,7 @@ class UserAdmin(UserAdmin):
 class KYCDocumentAdmin(admin.ModelAdmin):
 
     list_display = ['__unicode__', 'merchant', 'status']
-    readonly_fields = ['uploaded']
+    readonly_fields = ['uploaded_at']
 
 
 class KYCDocumentInline(admin.TabularInline):
