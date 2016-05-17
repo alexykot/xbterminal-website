@@ -32,3 +32,27 @@ def upload_documents(merchant, documents):
     merchant.verification_status = 'pending'
     merchant.save()
     send_verification_info(merchant, documents)
+
+
+def check_documents(merchant):
+    assert merchant.instantfiat_provider == INSTANTFIAT_PROVIDERS.CRYPTOPAY
+    assert merchant.instantfiat_merchant_id
+    assert merchant.verification_status == 'pending'
+    user_data = cryptopay.get_merchant(merchant.instantfiat_merchant_id,
+                                       config.CRYPTOPAY_API_KEY)
+    for kyc_info in user_data['kyc']:
+        # Get current document set
+        documents = merchant.kycdocument_set.filter(
+            instantfiat_document_id=kyc_info['id'],
+            status='unverified')
+        if not documents:
+            # Skip
+            continue
+        if kyc_info['status'] == 'declined':
+            documents.update(status='denied')
+            merchant.verification_status = 'unverified'
+            merchant.save()
+        elif kyc_info['status'] == 'accepted':
+            documents.update(status='verified')
+            merchant.verification_status = 'verified'
+            merchant.save()

@@ -12,7 +12,7 @@ from website.utils.accounts import (
     update_managed_accounts,
     update_balances)
 from website.utils.email import send_error_message
-from website.utils.kyc import upload_documents
+from website.utils.kyc import upload_documents, check_documents
 from website.tests.factories import (
     MerchantAccountFactory,
     KYCDocumentFactory,
@@ -155,3 +155,87 @@ class KYCUtilsTestCase(TestCase):
         self.assertEqual(document_3.status, 'unverified')
         self.assertEqual(document_3.instantfiat_document_id,
                          '36e2a91e-18d1-4e3c-9e82-8c63e01797be')
+
+    @override_config(CRYPTOPAY_API_KEY='testkey')
+    @patch('operations.instantfiat.cryptopay.requests.get')
+    def test_check_documents_denied(self, get_mock):
+        upload_id = '22be57f5-e605-483e-8a01-d6708b020774'
+        get_mock.return_value = Mock(**{
+            'json.return_value': {
+                'verified': False,
+                'kyc': [{
+                    'status': 'declined',
+                    'id': upload_id,
+                }],
+            },
+        })
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='xxx',
+            verification_status='pending')
+        document_1 = KYCDocumentFactory.create(
+            merchant=merchant,
+            document_type=KYC_DOCUMENT_TYPES.ID_FRONT,
+            instantfiat_document_id=upload_id,
+            status='unverified')
+        document_2 = KYCDocumentFactory.create(
+            merchant=merchant,
+            document_type=KYC_DOCUMENT_TYPES.ID_BACK,
+            instantfiat_document_id=upload_id,
+            status='unverified')
+        document_3 = KYCDocumentFactory.create(
+            merchant=merchant,
+            document_type=KYC_DOCUMENT_TYPES.ADDRESS,
+            instantfiat_document_id=upload_id,
+            status='unverified')
+        check_documents(merchant)
+        merchant.refresh_from_db()
+        self.assertEqual(merchant.verification_status, 'unverified')
+        document_1.refresh_from_db()
+        document_2.refresh_from_db()
+        document_3.refresh_from_db()
+        self.assertEqual(document_1.status, 'denied')
+        self.assertEqual(document_2.status, 'denied')
+        self.assertEqual(document_3.status, 'denied')
+
+    @override_config(CRYPTOPAY_API_KEY='testkey')
+    @patch('operations.instantfiat.cryptopay.requests.get')
+    def test_check_documents_accepted(self, get_mock):
+        upload_id = '22be57f5-e605-483e-8a01-d6708b020774'
+        get_mock.return_value = Mock(**{
+            'json.return_value': {
+                'verified': True,
+                'kyc': [{
+                    'status': 'accepted',
+                    'id': upload_id,
+                }],
+            },
+        })
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='xxx',
+            verification_status='pending')
+        document_1 = KYCDocumentFactory.create(
+            merchant=merchant,
+            document_type=KYC_DOCUMENT_TYPES.ID_FRONT,
+            instantfiat_document_id=upload_id,
+            status='unverified')
+        document_2 = KYCDocumentFactory.create(
+            merchant=merchant,
+            document_type=KYC_DOCUMENT_TYPES.ID_BACK,
+            instantfiat_document_id=upload_id,
+            status='unverified')
+        document_3 = KYCDocumentFactory.create(
+            merchant=merchant,
+            document_type=KYC_DOCUMENT_TYPES.ADDRESS,
+            instantfiat_document_id=upload_id,
+            status='unverified')
+        check_documents(merchant)
+        merchant.refresh_from_db()
+        self.assertEqual(merchant.verification_status, 'verified')
+        document_1.refresh_from_db()
+        document_2.refresh_from_db()
+        document_3.refresh_from_db()
+        self.assertEqual(document_1.status, 'verified')
+        self.assertEqual(document_2.status, 'verified')
+        self.assertEqual(document_3.status, 'verified')

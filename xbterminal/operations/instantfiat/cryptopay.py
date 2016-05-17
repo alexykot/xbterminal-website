@@ -104,6 +104,26 @@ def create_merchant(first_name, last_name, email, api_key):
             raise Exception
 
 
+def get_merchant(user_id, api_key):
+    """
+    Accepts:
+        user_id: CryptoPay user ID
+        api_key: CryptoPay API key with access to users API
+    """
+    api_url = 'https://cryptopay.me/api/v2/users/{user_id}'
+    assert api_key
+    headers = {
+        'Content-Type': 'application/json',
+        'X-Api-Key': api_key,
+    }
+    response = requests.get(
+        api_url.format(user_id=user_id),
+        headers=headers)
+    response.raise_for_status()
+    data = response.json()
+    return data
+
+
 def set_password(user_id, password, api_key):
     """
     Set new password for CryptoPay user

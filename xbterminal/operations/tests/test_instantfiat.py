@@ -145,6 +145,20 @@ class CryptoPayTestCase(TestCase):
             instantfiat.cryptopay.create_merchant(
                 'fname', 'lname', 'email', 'key')
 
+    @patch('operations.instantfiat.cryptopay.requests.get')
+    def test_get_merchant(self, get_mock):
+        get_mock.return_value = Mock(**{
+            'json.return_value': {
+                'id': '4437b1ac-d1e7-4a26-92bb-933d930d50b8',
+            },
+        })
+        user_id = '4437b1ac-d1e7-4a26-92bb-933d930d50b8'
+        api_key = 'test-api-key'
+        user_data = instantfiat.cryptopay.get_merchant(user_id, api_key)
+        self.assertEqual(user_data['id'], user_id)
+        self.assertEqual(get_mock.call_args[1]['headers']['X-Api-Key'],
+                         'test-api-key')
+
     @patch('operations.instantfiat.cryptopay.requests.post')
     def test_set_password(self, post_mock):
         post_mock.return_value = Mock(**{
