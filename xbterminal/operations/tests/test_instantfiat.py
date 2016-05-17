@@ -184,19 +184,22 @@ class CryptoPayTestCase(TestCase):
             },
         })
         user_id = '4437b1ac-d1e7-4a26-92bb-933d930d50b8'
-        documents = [
-            Mock(**{'read.return_value': 'aaa'}),
-            Mock(**{'read.return_value': 'bbb'}),
-            Mock(**{'read.return_value': 'ccc'}),
-        ]
+        documents = []
+        for content in ['aaa', 'bbb', 'ccc']:
+            document = Mock(**{'read.return_value': content})
+            document.name = 'test.jpg'
+            documents.append(document)
         api_key = 'test-api-key'
         upload_id = instantfiat.cryptopay.upload_documents(
             user_id, documents, api_key)
         self.assertEqual(upload_id, '36e2a91e-18d1-4e3c-9e82-8c63e01797be')
         data = json.loads(post_mock.call_args[1]['data'])
-        self.assertEqual(data['id_document_frontside'], 'YWFh')
-        self.assertEqual(data['id_document_backside'], 'YmJi')
-        self.assertEqual(data['residence_document'], 'Y2Nj')
+        self.assertEqual(data['id_document_frontside'],
+                         'data:image/jpeg;base64,YWFh')
+        self.assertEqual(data['id_document_backside'],
+                         'data:image/jpeg;base64,YmJi')
+        self.assertEqual(data['residence_document'],
+                         'data:image/jpeg;base64,Y2Nj')
         self.assertEqual(post_mock.call_args[1]['headers']['X-Api-Key'],
                          'test-api-key')
 

@@ -5,6 +5,7 @@ import base64
 from decimal import Decimal
 import json
 import logging
+import mimetypes
 
 import requests
 
@@ -132,6 +133,19 @@ def set_password(user_id, password, api_key):
         raise InstantFiatError(response.text)
 
 
+def _encode_base64(file):
+    """
+    Accepts:
+        file: file-like object
+    """
+    mimetype, encoding = mimetypes.guess_type(file.name)
+    assert mimetype
+    data = 'data:{mimetype};base64,{content}'.format(
+        mimetype=mimetype,
+        content=base64.b64encode(file.read()))
+    return data
+
+
 def upload_documents(user_id, documents, api_key):
     """
     Accepts:
@@ -143,9 +157,9 @@ def upload_documents(user_id, documents, api_key):
     """
     api_url = 'https://cryptopay.me/api/v2/users/{user_id}/documents'
     payload = {
-        'id_document_frontside': base64.b64encode(documents[0].read()),
-        'id_document_backside': base64.b64encode(documents[1].read()),
-        'residence_document': base64.b64encode(documents[2].read()),
+        'id_document_frontside': _encode_base64(documents[0]),
+        'id_document_backside': _encode_base64(documents[1]),
+        'residence_document': _encode_base64(documents[2]),
     }
     assert api_key
     headers = {
