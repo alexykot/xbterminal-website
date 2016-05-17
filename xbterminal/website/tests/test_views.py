@@ -482,8 +482,17 @@ class VerificationViewTestCase(TestCase):
     def setUp(self):
         self.url = reverse('website:verification')
 
-    def test_get_unverified(self):
+    def test_get_no_managed_cryptopay_profile(self):
         merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_unverified(self):
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='test')
         self.client.login(username=merchant.user.email,
                           password='password')
         response = self.client.get(self.url)
@@ -499,7 +508,9 @@ class VerificationViewTestCase(TestCase):
         self.assertIsNone(form_3.instance.pk)
 
     def test_get_unverified_already_uploaded(self):
-        merchant = MerchantAccountFactory.create()
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='test')
         doc_id = KYCDocumentFactory.create(
             merchant=merchant,
             document_type=KYC_DOCUMENT_TYPES.ID_FRONT,
@@ -514,6 +525,8 @@ class VerificationViewTestCase(TestCase):
 
     def test_get_verification_pending(self):
         merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='test',
             verification_status='pending')
         document_1 = KYCDocumentFactory.create(
             merchant=merchant,
@@ -578,7 +591,9 @@ class VerificationViewTestCase(TestCase):
         self.assertEqual(document_3.instantfiat_document_id, 'x1z2b4')
 
     def test_post_not_uploaded(self):
-        merchant = MerchantAccountFactory.create()
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='test')
         doc_id = KYCDocumentFactory.create(
             merchant=merchant,
             document_type=KYC_DOCUMENT_TYPES.ID_FRONT)

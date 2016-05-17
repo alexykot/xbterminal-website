@@ -472,16 +472,21 @@ class VerificationView(TemplateResponseMixin, CabinetView):
     """
     template_name = 'cabinet/verification.html'
 
+    def dispatch(self, *args, **kwargs):
+        self.merchant = self.request.user.merchant
+        if not self.merchant.has_managed_cryptopay_profile:
+            raise Http404
+        return super(VerificationView, self).dispatch(*args, **kwargs)
+
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        merchant = self.request.user.merchant
-        if merchant.verification_status == 'unverified':
+        if self.merchant.verification_status == 'unverified':
             # Prepare upload forms
             context['forms'] = []
             for document_type in kyc.REQUIRED_DOCUMENTS:
                 form = forms.KYCDocumentUploadForm(
                     document_type=document_type,
-                    instance=merchant.get_kyc_document(
+                    instance=self.merchant.get_kyc_document(
                         document_type, 'uploaded'))
                 context['forms'].append(form)
         else:
@@ -489,24 +494,23 @@ class VerificationView(TemplateResponseMixin, CabinetView):
             context['documents'] = []
             for document_type in kyc.REQUIRED_DOCUMENTS:
                 context['documents'].append(
-                    merchant.get_current_kyc_document(document_type))
+                    self.merchant.get_current_kyc_document(document_type))
         return self.render_to_response(context)
 
     @atomic
     def post(self, *args, **kwargs):
-        merchant = self.request.user.merchant
-        if merchant.verification_status != 'unverified':
+        if self.merchant.verification_status != 'unverified':
             raise Http404
         uploaded = []
         for document_type in kyc.REQUIRED_DOCUMENTS:
-            document = merchant.get_kyc_document(document_type, 'uploaded')
+            document = self.merchant.get_kyc_document(document_type, 'uploaded')
             if not document:
                 # Not all required documents are uploaded
                 data = {'error': _('Please, upload documents')}
                 return HttpResponse(json.dumps(data),
                                     content_type='application/json')
             uploaded.append(document)
-        kyc.upload_documents(merchant, uploaded)
+        kyc.upload_documents(self.merchant, uploaded)
         data = {'next': reverse('website:verification')}
         return HttpResponse(json.dumps(data),
                             content_type='application/json')

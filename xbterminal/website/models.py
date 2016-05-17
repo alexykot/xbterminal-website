@@ -239,6 +239,12 @@ class MerchantAccount(models.Model):
                 bool(self.post_code) and
                 bool(self.contact_phone))
 
+    @property
+    def has_managed_cryptopay_profile(self):
+        return (self.instantfiat_provider ==
+                INSTANTFIAT_PROVIDERS.CRYPTOPAY and
+                self.instantfiat_merchant_id)
+
     def get_kyc_document(self, document_type, status):
         """
         Get latest KYC document for given status
@@ -261,7 +267,8 @@ class MerchantAccount(models.Model):
 
     @property
     def info(self):
-        if self.verification_status == 'verified':
+        if not self.has_managed_cryptopay_profile or \
+                self.verification_status == 'verified':
             status = None
         else:
             status = self.get_verification_status_display()

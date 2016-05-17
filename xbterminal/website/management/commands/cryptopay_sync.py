@@ -27,7 +27,7 @@ def cryptopay_sync():
         try:
             update_managed_accounts(merchant)
             update_balances(merchant)
-            if merchant.instantfiat_merchant_id and \
+            if merchant.has_managed_cryptopay_profile and \
                     merchant.verification_status == 'pending':
                 check_documents(merchant)
         except Exception as error:
