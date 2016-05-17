@@ -2,7 +2,9 @@ from constance import config
 
 from operations.instantfiat import cryptopay
 from website.models import INSTANTFIAT_PROVIDERS, KYC_DOCUMENT_TYPES
-from website.utils.email import send_verification_info
+from website.utils.email import (
+    send_verification_info,
+    send_verification_notification)
 
 REQUIRED_DOCUMENTS = [
     KYC_DOCUMENT_TYPES.ID_FRONT,
@@ -48,11 +50,19 @@ def check_documents(merchant):
         if not documents:
             # Skip
             continue
-        if kyc_info['status'] == 'declined':
+        if kyc_info['status'] == 'in_review':
+            continue
+        elif kyc_info['status'] == 'declined':
             documents.update(status='denied')
-            merchant.verification_status = 'unverified'
-            merchant.save()
+            if not user_data['verified']:
+                merchant.verification_status = 'unverified'
+                merchant.save()
+                send_verification_notification(merchant)
         elif kyc_info['status'] == 'accepted':
             documents.update(status='verified')
-            merchant.verification_status = 'verified'
-            merchant.save()
+            if user_data['verified']:
+                merchant.verification_status = 'verified'
+                merchant.save()
+                send_verification_notification(merchant)
+        else:
+            raise AssertionError

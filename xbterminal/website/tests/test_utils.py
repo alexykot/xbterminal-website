@@ -158,7 +158,50 @@ class KYCUtilsTestCase(TestCase):
 
     @override_config(CRYPTOPAY_API_KEY='testkey')
     @patch('operations.instantfiat.cryptopay.requests.get')
-    def test_check_documents_denied(self, get_mock):
+    def test_check_documents_in_review(self, get_mock):
+        upload_id = '22be57f5-e605-483e-8a01-d6708b020774'
+        get_mock.return_value = Mock(**{
+            'json.return_value': {
+                'verified': False,
+                'kyc': [{
+                    'status': 'in_review',
+                    'id': upload_id,
+                }],
+            },
+        })
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='xxx',
+            verification_status='pending')
+        document_1 = KYCDocumentFactory.create(
+            merchant=merchant,
+            document_type=KYC_DOCUMENT_TYPES.ID_FRONT,
+            instantfiat_document_id=upload_id,
+            status='unverified')
+        document_2 = KYCDocumentFactory.create(
+            merchant=merchant,
+            document_type=KYC_DOCUMENT_TYPES.ID_BACK,
+            instantfiat_document_id=upload_id,
+            status='unverified')
+        document_3 = KYCDocumentFactory.create(
+            merchant=merchant,
+            document_type=KYC_DOCUMENT_TYPES.ADDRESS,
+            instantfiat_document_id=upload_id,
+            status='unverified')
+        check_documents(merchant)
+        self.assertEqual(len(mail.outbox), 0)
+        merchant.refresh_from_db()
+        self.assertEqual(merchant.verification_status, 'pending')
+        document_1.refresh_from_db()
+        document_2.refresh_from_db()
+        document_3.refresh_from_db()
+        self.assertEqual(document_1.status, 'unverified')
+        self.assertEqual(document_2.status, 'unverified')
+        self.assertEqual(document_3.status, 'unverified')
+
+    @override_config(CRYPTOPAY_API_KEY='testkey')
+    @patch('operations.instantfiat.cryptopay.requests.get')
+    def test_check_documents_declined(self, get_mock):
         upload_id = '22be57f5-e605-483e-8a01-d6708b020774'
         get_mock.return_value = Mock(**{
             'json.return_value': {
@@ -189,6 +232,8 @@ class KYCUtilsTestCase(TestCase):
             instantfiat_document_id=upload_id,
             status='unverified')
         check_documents(merchant)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0], merchant.user.email)
         merchant.refresh_from_db()
         self.assertEqual(merchant.verification_status, 'unverified')
         document_1.refresh_from_db()
@@ -231,6 +276,8 @@ class KYCUtilsTestCase(TestCase):
             instantfiat_document_id=upload_id,
             status='unverified')
         check_documents(merchant)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0], merchant.user.email)
         merchant.refresh_from_db()
         self.assertEqual(merchant.verification_status, 'verified')
         document_1.refresh_from_db()

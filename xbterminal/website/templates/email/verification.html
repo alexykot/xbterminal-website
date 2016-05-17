@@ -1,0 +1,10 @@
+{% extends "email/base.html" %}
+{% load i18n %}
+
+{% block content %}
+{% if merchant.verification_status == 'verified' %}
+<p>{% trans 'Your account has been successfully verified.' %}</p>
+{% else %}
+<p>{% trans 'Please upload your documents again.' %}</p>
+{% endif %}
+{% endblock %}
