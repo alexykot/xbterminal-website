@@ -307,24 +307,6 @@ class Account(models.Model):
         validators=[validate_bitcoin_address],
         blank=True,
         null=True)
-
-    # TODO: remove fields
-    instantfiat_provider = models.PositiveSmallIntegerField(
-        _('InstantFiat provider'),
-        choices=INSTANTFIAT_PROVIDERS,
-        blank=True,
-        null=True)
-    instantfiat_merchant_id = models.CharField(
-        _('InstantFiat merchant ID'),
-        max_length=50,
-        blank=True,
-        null=True)
-    instantfiat_api_key = models.CharField(
-        _('InstantFiat API key'),
-        max_length=200,
-        blank=True,
-        null=True)
-
     instantfiat = models.BooleanField()
     instantfiat_account_id = models.CharField(
         _('InstantFiat account ID'),
@@ -546,20 +528,12 @@ class Device(models.Model):
     activation_code = models.CharField(max_length=6,
                                        editable=False,
                                        unique=True)
-    # TODO: remove serial number
-    serial_number = models.CharField(max_length=50, blank=True, null=True)
 
     api_key = models.TextField(
         blank=True,
         null=True,
         validators=[validate_public_key],
         help_text='API public key')
-    # TODO: remove bitcoin address
-    bitcoin_address = models.CharField(
-        _('Bitcoin address to send to'),
-        max_length=100,
-        blank=True,
-        null=True)
     our_fee_override = models.CharField(
         max_length=50,
         blank=True,

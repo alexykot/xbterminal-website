@@ -90,7 +90,6 @@ class DeviceRegistrationSerializerTestCase(TestCase):
         self.assertEqual(device.key, device_key)
         self.assertEqual(device.api_key, api_key)
         self.assertEqual(device.batch.pk, batch.pk)
-        self.assertIsNone(device.bitcoin_address)
 
     @patch('api.serializers.Salt')
     def test_batch_size(self, salt_cls_mock):

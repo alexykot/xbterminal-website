@@ -334,7 +334,6 @@ class DeviceTestCase(TestCase):
         self.assertEqual(device.status, 'registered')
         self.assertEqual(len(device.key), 8)
         self.assertEqual(len(device.activation_code), 6)
-        self.assertIsNone(device.bitcoin_address)
         self.assertEqual(device.batch.batch_number,
                          settings.DEFAULT_BATCH_NUMBER)
         self.assertIsNotNone(device.created_at)
