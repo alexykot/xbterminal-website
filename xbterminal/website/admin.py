@@ -214,6 +214,12 @@ class AccountInline(admin.TabularInline):
     max_num = 0
     can_delete = False
 
+    def get_formset(self, *args, **kwargs):
+        # Disable form validation
+        formset = super(AccountInline, self).get_formset(*args, **kwargs)
+        formset.clean = lambda *args: None
+        return formset
+
 
 @admin.register(models.MerchantAccount)
 class MerchantAccountAdmin(admin.ModelAdmin):
