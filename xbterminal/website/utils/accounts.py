@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from operations.instantfiat import cryptopay
-from website.models import Currency, INSTANTFIAT_PROVIDERS
+from website.models import Currency, Transaction, INSTANTFIAT_PROVIDERS
 
 
 def create_managed_accounts(merchant):
@@ -47,6 +47,30 @@ def update_balances(merchant):
             account.instantfiat_account_id,
             merchant.instantfiat_api_key)
         for item in results:
-            account.transaction_set.get_or_create(
-                instantfiat_tx_id=item['id'],
-                defaults={'amount': Decimal(item['amount'])})
+            amount_decimal = Decimal(format(item['amount'], '.15g'))
+            try:
+                transaction = account.transaction_set.get(
+                    instantfiat_tx_id=item['id'])
+            except Transaction.DoesNotExist:
+                if item['type'] == 'Invoice':
+                    # Try to find transaction by payment order
+                    invoice_id = item['description'].split()[1].strip()
+                    try:
+                        transaction = account.transaction_set.get(
+                            paymentorder__instantfiat_invoice_id=invoice_id)
+                    except Transaction.DoesNotExist:
+                        # Create new transaction
+                        transaction = account.transaction_set.create(
+                            instantfiat_tx_id=item['id'],
+                            amount=amount_decimal)
+                    else:
+                        # Transaction found, set ID
+                        transaction.instantfiat_tx_id = item['id']
+                        transaction.save()
+                else:
+                    # Create new transaction
+                    transaction = account.transaction_set.create(
+                        instantfiat_tx_id=item['id'],
+                        amount=amount_decimal)
+            # Check amount
+            assert transaction.amount == amount_decimal
