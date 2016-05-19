@@ -137,6 +137,7 @@ class TransactionInline(admin.TabularInline):
         'amount_colored',
         'tx_hash',
         'is_confirmed',
+        'order',
         'created_at',
     ]
     max_num = 0
@@ -150,6 +151,15 @@ class TransactionInline(admin.TabularInline):
                            obj.amount)
     amount_colored.allow_tags = True
     amount_colored.short_description = 'amount'
+
+    def order(self, obj):
+        if hasattr(obj, 'paymentorder'):
+            return url_to_object(obj.paymentorder)
+        elif hasattr(obj, 'withdrawalorder'):
+            return url_to_object(obj.withdrawalorder)
+        else:
+            return '-'
+    order.allow_tags = True
 
 
 @admin.register(models.Account)
