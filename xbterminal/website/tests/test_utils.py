@@ -78,14 +78,15 @@ class AccountsUtilsTestCase(TestCase):
                                         currency=merchant.currency,
                                         instantfiat=True,
                                         instantfiat_account_id='test-id')
-        payment = PaymentOrderFactory.create(
-            instantfiat_invoice_id='00bb555b-3ebc-4476-8aa8-214e28aa6c03',
-            account_tx=TransactionFactory.create(
-                account=account,
-                amount=Decimal('0.55')))
-        TransactionFactory.create(account=account,
-                                  instantfiat_tx_id=115,
-                                  amount=Decimal('1.15'))
+        payment_tx = TransactionFactory.create(
+            payment=PaymentOrderFactory.create(
+                instantfiat_invoice_id='00bb555b-3ebc-4476-8aa8-214e28aa6c03'),
+            account=account,
+            amount=Decimal('0.55'))
+        TransactionFactory.create(
+            account=account,
+            instantfiat_tx_id=115,
+            amount=Decimal('1.15'))
         self.assertEqual(account.balance, Decimal('1.70'))
         list_mock.return_value = [
             {'id': 110, 'amount': 0.55, 'type': 'Invoice',
@@ -99,8 +100,8 @@ class AccountsUtilsTestCase(TestCase):
         self.assertEqual(list_mock.call_args[0][1], 'test-key')
         self.assertEqual(account.transaction_set.count(), 4)
         self.assertEqual(account.balance, Decimal('1.50'))
-        payment.account_tx.refresh_from_db()
-        self.assertEqual(payment.account_tx.instantfiat_tx_id, '110')
+        payment_tx.refresh_from_db()
+        self.assertEqual(payment_tx.instantfiat_tx_id, '110')
 
 
 class EmailUtilsTestCase(TestCase):

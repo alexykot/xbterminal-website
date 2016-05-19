@@ -279,24 +279,33 @@ class AccountTestCase(TestCase):
 
     def test_balance_confirmed(self):
         account = AccountFactory.create()
-        PaymentOrderFactory.create(
-            account_tx=TransactionFactory.create(
-                account=account, amount=Decimal('0.2')),
-            time_forwarded=timezone.now())
-        PaymentOrderFactory.create(
-            account_tx=TransactionFactory.create(
-                account=account, amount=Decimal('0.3')),
-            time_forwarded=timezone.now(),
-            time_confirmed=timezone.now())
-        WithdrawalOrderFactory.create(
-            account_tx=TransactionFactory.create(
-                account=account, amount=Decimal('-0.15')),
-            time_sent=timezone.now())
-        WithdrawalOrderFactory.create(
-            account_tx=TransactionFactory.create(
-                account=account, amount=Decimal('-0.05')),
-            time_sent=timezone.now(),
-            time_broadcasted=timezone.now())
+        # Payment - forwarded
+        TransactionFactory.create(
+            payment=PaymentOrderFactory.create(
+                time_forwarded=timezone.now()),
+            account=account,
+            amount=Decimal('0.2'))
+        # Payment - confirmed
+        TransactionFactory.create(
+            payment=PaymentOrderFactory.create(
+                time_forwarded=timezone.now(),
+                time_confirmed=timezone.now()),
+            account=account,
+            amount=Decimal('0.3'))
+        # Withdrawal - sent
+        TransactionFactory.create(
+            withdrawal=WithdrawalOrderFactory.create(
+                time_sent=timezone.now()),
+            account=account,
+            amount=Decimal('-0.15'))
+        # Withdrawal - broadcasted
+        TransactionFactory.create(
+            withdrawal=WithdrawalOrderFactory.create(
+                time_sent=timezone.now(),
+                time_broadcasted=timezone.now()),
+            account=account,
+            amount=Decimal('-0.05'))
+        # Without order
         TransactionFactory.create(
             account=account, amount=Decimal('-0.1'))
         self.assertEqual(account.balance, Decimal('0.2'))
@@ -334,17 +343,17 @@ class TransactionTestCase(TestCase):
                                       instantfiat_tx_id=1000)
 
     def test_tx_hash(self):
-        transaction = TransactionFactory.create()
-        self.assertIsNone(transaction.tx_hash)
+        transaction_1 = TransactionFactory.create()
+        self.assertIsNone(transaction_1.tx_hash)
         payment_order = PaymentOrderFactory.create(
-            outgoing_tx_id='1' * 64,
-            account_tx=True)
-        self.assertEqual(payment_order.account_tx.tx_hash,
+            outgoing_tx_id='1' * 64)
+        transaction_2 = TransactionFactory.create(payment=payment_order)
+        self.assertEqual(transaction_2.tx_hash,
                          payment_order.outgoing_tx_id)
         withdrawal_order = WithdrawalOrderFactory.create(
-            outgoing_tx_id='2' * 64,
-            account_tx=True)
-        self.assertEqual(withdrawal_order.account_tx.tx_hash,
+            outgoing_tx_id='2' * 64)
+        transaction_3 = TransactionFactory.create(withdrawal=withdrawal_order)
+        self.assertEqual(transaction_3.tx_hash,
                          withdrawal_order.outgoing_tx_id)
 
 

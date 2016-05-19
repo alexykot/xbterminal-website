@@ -153,7 +153,7 @@ class SendTransactionTestCase(TestCase):
 
     @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.run_periodic_task')
-    def test_send_tx(self, run_task_mock, bc_mock):
+    def test_send_btc(self, run_task_mock, bc_mock):
         device = DeviceFactory.create(
             account__balance=Decimal('0.01'),
             account__bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
@@ -178,9 +178,9 @@ class SendTransactionTestCase(TestCase):
         order.refresh_from_db()
         self.assertEqual(order.customer_address, customer_address)
         self.assertEqual(order.btc_amount, Decimal('0.0051'))
+        self.assertEqual(order.change_btc_amount, Decimal('0.0049'))
         self.assertEqual(order.outgoing_tx_id, outgoing_tx_id)
         self.assertEqual(order.status, 'sent')
-        self.assertIsNotNone(order.account_tx)
 
         self.assertTrue(run_task_mock.called)
 
@@ -191,7 +191,15 @@ class SendTransactionTestCase(TestCase):
         self.assertEqual(outputs[order.customer_address],
                          order.customer_btc_amount)
         self.assertEqual(outputs[order.merchant_address],
-                         Decimal('0.0049'))
+                         order.change_btc_amount)
+
+        self.assertEqual(order.transaction_set.count(), 2)
+        account_tx_1 = order.transaction_set.get(amount__lt=0)
+        self.assertEqual(account_tx_1.amount,
+                         -(order.btc_amount + order.change_btc_amount))
+        account_tx_2 = order.transaction_set.get(amount__gt=0)
+        self.assertEqual(account_tx_2.amount,
+                         order.change_btc_amount)
 
         self.assertEqual(device.account.balance, Decimal('0.0049'))
 

@@ -14,16 +14,23 @@ def create_account_txs(order):
     if order.order_type == 'payment':
         if account.instantfiat:
             assert account.merchant.instantfiat_provider == INSTANTFIAT_PROVIDERS.CRYPTOPAY
-            order.account_tx = account.transaction_set.create(
+            account.transaction_set.create(
+                payment=order,
                 amount=cryptopay.get_final_amount(order.instantfiat_fiat_amount))
         else:
-            order.account_tx = account.transaction_set.create(
+            account.transaction_set.create(
+                payment=order,
                 amount=order.merchant_btc_amount)
     elif order.order_type == 'withdrawal':
-        # TODO: create two Transaction objects (for withdrawal and for change)
-        order.account_tx = account.transaction_set.create(
-            amount=-order.btc_amount)
-    order.save()
+        if account.instantfiat:
+            raise AssertionError
+        else:
+            account.transaction_set.create(
+                withdrawal=order,
+                amount=-(order.btc_amount + order.change_btc_amount))
+            account.transaction_set.create(
+                withdrawal=order,
+                amount=order.change_btc_amount)
 
 
 def create_managed_accounts(merchant):
@@ -79,7 +86,7 @@ def update_balances(merchant):
                     invoice_id = item['description'].split()[1].strip()
                     try:
                         transaction = account.transaction_set.get(
-                            paymentorder__instantfiat_invoice_id=invoice_id)
+                            payment__instantfiat_invoice_id=invoice_id)
                     except Transaction.DoesNotExist:
                         # Create new transaction
                         transaction = account.transaction_set.create(
