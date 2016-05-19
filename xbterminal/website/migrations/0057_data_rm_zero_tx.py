@@ -9,11 +9,13 @@ def remove_zero_tx(apps, schema_editor):
     for transaction in Transaction.objects.all():
         if not transaction.amount:
             if hasattr(transaction, 'paymentorder'):
-                transaction.paymentorder.account_tx = None
-                transaction.paymentorder.save()
+                payment = transaction.paymentorder
+                payment.account_tx = None
+                payment.save()
             elif hasattr(transaction, 'withdrawalorder'):
-                transaction.withdrawalorder.account_tx = None
-                transaction.withdrawalorder.save()
+                withdrawal = transaction.withdrawalorder
+                withdrawal.account_tx = None
+                withdrawal.save()
             transaction.delete()
 
 
