@@ -28,6 +28,7 @@ from operations.services.wrappers import get_exchange_rate, is_tx_reliable
 from operations.rq_helpers import run_periodic_task, cancel_current_task
 from operations.models import PaymentOrder
 
+from website.utils.accounts import create_account_txs
 from website.utils.email import send_error_message
 
 logger = logging.getLogger(__name__)
@@ -341,10 +342,7 @@ def forward_transaction(payment_order):
         assert not payment_order.merchant_btc_amount
         outputs.append((payment_order.instantfiat_address,
                         payment_order.instantfiat_btc_amount))
-        payment_order.account_tx = account.transaction_set.create(
-            amount=instantfiat.get_final_amount(
-                payment_order.device.account,
-                payment_order.instantfiat_fiat_amount))
+        create_account_txs(payment_order)
     else:
         assert not payment_order.instantfiat_btc_amount
         if account.balance + payment_order.merchant_btc_amount <= \
@@ -355,8 +353,7 @@ def forward_transaction(payment_order):
                 account.save()
             outputs.append((account.bitcoin_address,
                             payment_order.merchant_btc_amount))
-            payment_order.account_tx = account.transaction_set.create(
-                amount=payment_order.merchant_btc_amount)
+            create_account_txs(payment_order)
         else:
             # Forward payment to merchant address
             outputs.append((payment_order.merchant_address,

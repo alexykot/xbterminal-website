@@ -4,6 +4,28 @@ from operations.instantfiat import cryptopay
 from website.models import Currency, Transaction, INSTANTFIAT_PROVIDERS
 
 
+def create_account_txs(order):
+    """
+    Create Transaction objects from order, update account balance
+    Accepts:
+        order: PaymentOrder or WithdrawalOrder instance
+    """
+    account = order.device.account
+    if order.order_type == 'payment':
+        if account.instantfiat:
+            assert account.merchant.instantfiat_provider == INSTANTFIAT_PROVIDERS.CRYPTOPAY
+            order.account_tx = account.transaction_set.create(
+                amount=cryptopay.get_final_amount(order.instantfiat_fiat_amount))
+        else:
+            order.account_tx = account.transaction_set.create(
+                amount=order.merchant_btc_amount)
+    elif order.order_type == 'withdrawal':
+        # TODO: create two Transaction objects (for withdrawal and for change)
+        order.account_tx = account.transaction_set.create(
+            amount=-order.btc_amount)
+    order.save()
+
+
 def create_managed_accounts(merchant):
     """
     Create CryptoPay accounts
