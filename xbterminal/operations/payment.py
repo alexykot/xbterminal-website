@@ -342,7 +342,9 @@ def forward_transaction(payment_order):
         outputs.append((payment_order.instantfiat_address,
                         payment_order.instantfiat_btc_amount))
         payment_order.account_tx = account.transaction_set.create(
-            amount=payment_order.instantfiat_fiat_amount)
+            amount=instantfiat.get_final_amount(
+                payment_order.device.account,
+                payment_order.instantfiat_fiat_amount))
     else:
         assert not payment_order.instantfiat_btc_amount
         if account.balance + payment_order.merchant_btc_amount <= \

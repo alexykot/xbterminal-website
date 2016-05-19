@@ -6,6 +6,7 @@ from mock import patch, Mock
 
 from constance import config
 
+from website.models import INSTANTFIAT_PROVIDERS
 from website.tests.factories import (
     MerchantAccountFactory,
     AccountFactory,
@@ -790,11 +791,13 @@ class ForwardTransactionTestCase(TestCase):
     @patch('operations.payment.blockchain.BlockChain')
     def test_forward_instantfiat(self, bc_cls_mock):
         order = PaymentOrderFactory.create(
+            device__merchant__instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
             device__account__currency__name='GBP',
             merchant_btc_amount=Decimal(0),
             fee_btc_amount=Decimal('0.001'),
             tx_fee_btc_amount=Decimal('0.0001'),
             instantfiat_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
+            instantfiat_fiat_amount=Decimal('12.00'),
             instantfiat_btc_amount=Decimal('0.1'),
             incoming_tx_ids=['0' * 64],
             refund_address='18GV9EWUjSVTU1jXMb1RmaGxAonSyBgKAc')
@@ -827,9 +830,11 @@ class ForwardTransactionTestCase(TestCase):
         order.refresh_from_db()
         self.assertEqual(order.outgoing_tx_id, outgoing_tx_id)
         self.assertIsNotNone(order.account_tx)
+        expected_final_amount = Decimal('11.88')
+        self.assertEqual(order.account_tx.amount, expected_final_amount)
         self.assertIsNotNone(order.time_forwarded)
         self.assertEqual(order.device.account.balance,
-                         order.instantfiat_fiat_amount)
+                         expected_final_amount)
 
     @patch('operations.payment.blockchain.BlockChain')
     def test_forward_dust_extra(self, bc_cls_mock):
@@ -903,6 +908,8 @@ class ForwardTransactionTestCase(TestCase):
         self.assertEqual(payment_order.extra_btc_amount, 0)
         self.assertEqual(payment_order.outgoing_tx_id, outgoing_tx_id)
         self.assertIsNotNone(payment_order.account_tx)
+        self.assertEqual(payment_order.account_tx.amount,
+                         payment_order.merchant_btc_amount)
         self.assertIsNotNone(payment_order.time_forwarded)
 
         btc_account.refresh_from_db()

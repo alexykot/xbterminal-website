@@ -37,3 +37,10 @@ def is_invoice_paid(account, invoice_id):
     else:
         raise AssertionError
     return result
+
+
+def get_final_amount(account, instantfiat_fiat_amount):
+    if account.merchant.instantfiat_provider == INSTANTFIAT_PROVIDERS.CRYPTOPAY:
+        return cryptopay.get_final_amount(instantfiat_fiat_amount)
+    else:
+        raise AssertionError

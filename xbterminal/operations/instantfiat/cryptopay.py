@@ -68,6 +68,15 @@ def is_invoice_paid(invoice_id, api_key):
         return False
 
 
+def get_final_amount(amount):
+    """
+    Calculate invoice fee
+    """
+    fee_percent = Decimal('0.01')
+    quanta = Decimal('0.00')
+    return (amount * (1 - fee_percent)).quantize(quanta)
+
+
 def create_merchant(first_name, last_name, email, api_key):
     """
     Creates CryptoPay user with random password
