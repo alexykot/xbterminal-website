@@ -28,9 +28,10 @@ def create_account_txs(order):
             account.transaction_set.create(
                 withdrawal=order,
                 amount=-(order.btc_amount + order.change_btc_amount))
-            account.transaction_set.create(
-                withdrawal=order,
-                amount=order.change_btc_amount)
+            if order.change_btc_amount > 0:
+                account.transaction_set.create(
+                    withdrawal=order,
+                    amount=order.change_btc_amount)
 
 
 def create_managed_accounts(merchant):
