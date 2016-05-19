@@ -8,6 +8,12 @@ def remove_zero_tx(apps, schema_editor):
     Transaction = apps.get_model('website', 'Transaction')
     for transaction in Transaction.objects.all():
         if not transaction.amount:
+            if hasattr(transaction, 'paymentorder'):
+                transaction.paymentorder.account_tx = None
+                transaction.paymentorder.save()
+            elif hasattr(transaction, 'withdrawalorder'):
+                transaction.withdrawalorder.account_tx = None
+                transaction.withdrawalorder.save()
             transaction.delete()
 
 
