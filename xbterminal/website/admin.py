@@ -135,7 +135,7 @@ class TransactionInline(admin.TabularInline):
     exclude = [
         'payment',
         'withdrawal',
-        'amount',
+        # 'amount',
         'instantfiat_tx_id',
     ]
     readonly_fields = [

@@ -2,7 +2,7 @@
 https://developers.cryptopay.me/
 """
 import base64
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_DOWN
 import json
 import logging
 import mimetypes
@@ -74,7 +74,9 @@ def get_final_amount(amount):
     """
     fee_percent = Decimal('0.01')
     quanta = Decimal('0.00')
-    return (amount * (1 - fee_percent)).quantize(quanta)
+    return (amount * (1 - fee_percent)).quantize(
+        quanta,
+        rounding=ROUND_HALF_DOWN)
 
 
 def create_merchant(first_name, last_name, email, api_key):

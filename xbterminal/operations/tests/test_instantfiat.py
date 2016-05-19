@@ -108,6 +108,9 @@ class CryptoPayTestCase(TestCase):
         amount_2 = Decimal('1.00')
         self.assertEqual(instantfiat.cryptopay.get_final_amount(amount_2),
                          Decimal('0.99'))
+        amount_3 = Decimal('2.50')
+        self.assertEqual(instantfiat.cryptopay.get_final_amount(amount_3),
+                         Decimal('2.47'))
 
     @patch('operations.instantfiat.cryptopay.requests.post')
     def test_create_merchant(self, post_mock):
