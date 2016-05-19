@@ -7,7 +7,7 @@ from website.widgets import (
     BitcoinTransactionWidget,
     BitcoinTransactionArrayWidget,
     ReadOnlyAdminWidget)
-from website.admin import url_to_object
+from website.admin import url_to_object, TransactionInline
 from website.utils.qr import generate_qr_code
 from api.utils.urls import construct_absolute_url
 from operations.blockchain import construct_bitcoin_uri
@@ -38,6 +38,12 @@ class OrderAdminFormMixin(object):
         return form
 
 
+class PaymentOrderTransactionInline(TransactionInline):
+
+    exclude = ['withdrawal', 'amount', 'instantfiat_tx_id']
+    readonly_fields = ['account', 'amount_colored']
+
+
 @admin.register(models.PaymentOrder)
 class PaymentOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
 
@@ -50,6 +56,7 @@ class PaymentOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
     ]
     readonly_fields = ['status', 'payment_request_qr_code']
     actions = ['refund', 'check_confirmation']
+    inlines = [PaymentOrderTransactionInline]
 
     def has_add_permission(self, request):
         return False
@@ -117,6 +124,12 @@ class PaymentOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
     check_confirmation.short_description = 'Check confirmation status'
 
 
+class WithdrawalOrderTransactionInline(TransactionInline):
+
+    exclude = ['payment', 'amount', 'instantfiat_tx_id']
+    readonly_fields = ['account', 'amount_colored']
+
+
 @admin.register(models.WithdrawalOrder)
 class WithdrawalOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
 
@@ -127,6 +140,7 @@ class WithdrawalOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
         'time_created',
         'status',
     ]
+    inlines = [WithdrawalOrderTransactionInline]
 
     def has_add_permission(self, request):
         return False
