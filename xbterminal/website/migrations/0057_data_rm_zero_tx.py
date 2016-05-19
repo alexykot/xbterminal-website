@@ -21,6 +21,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('website', '0056_schema_document_types'),
+        ('operations', '0025_schema_rm_order'),
     ]
 
     operations = [
