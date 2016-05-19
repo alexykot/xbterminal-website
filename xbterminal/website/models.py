@@ -394,6 +394,15 @@ class Account(models.Model):
 
 class Transaction(models.Model):
 
+    payment = models.ForeignKey(
+        'operations.PaymentOrder',
+        blank=True,
+        null=True)
+    withdrawal = models.ForeignKey(
+        'operations.WithdrawalOrder',
+        blank=True,
+        null=True)
+
     account = models.ForeignKey(Account)
     amount = models.DecimalField(max_digits=20, decimal_places=8)
     instantfiat_tx_id = models.CharField(

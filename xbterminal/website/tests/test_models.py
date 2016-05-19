@@ -309,6 +309,8 @@ class TransactionTestCase(TestCase):
         account = AccountFactory.create()
         transaction = Transaction.objects.create(account=account,
                                                  amount=Decimal('1.5'))
+        self.assertIsNone(transaction.payment)
+        self.assertIsNone(transaction.withdrawal)
         self.assertEqual(transaction.account.pk, account.pk)
         self.assertIsNone(transaction.instantfiat_tx_id)
         self.assertIsNotNone(transaction.created_at)
@@ -316,6 +318,8 @@ class TransactionTestCase(TestCase):
 
     def test_factory(self):
         transaction = TransactionFactory.create()
+        self.assertIsNone(transaction.payment)
+        self.assertIsNone(transaction.withdrawal)
         self.assertIsNotNone(transaction.account)
         self.assertGreater(transaction.amount, 0)
         self.assertIsNone(transaction.instantfiat_tx_id)
