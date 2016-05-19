@@ -333,7 +333,8 @@ def forward_transaction(payment_order):
         payment_order.tx_fee_btc_amount += extra_btc_amount
     # Select destination address
     account = payment_order.device.account
-    if account.balance + payment_order.merchant_btc_amount <= \
+    if not account.instantfiat and \
+            account.balance + payment_order.merchant_btc_amount <= \
             account.balance_max:
         # Store bitcoins on merchant's internal account
         if not account.bitcoin_address:
