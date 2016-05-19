@@ -319,8 +319,6 @@ def forward_transaction(payment_order):
     """
     # Connect to bitcoind
     bc = blockchain.BlockChain(payment_order.bitcoin_network)
-    # Wait for transaction
-    bc.get_raw_transaction(payment_order.incoming_tx_ids[0])
     # Get outputs
     unspent_outputs = bc.get_unspent_outputs(
         CBitcoinAddress(payment_order.local_address))

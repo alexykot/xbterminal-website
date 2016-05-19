@@ -750,7 +750,6 @@ class ForwardTransactionTestCase(TestCase):
         extra_btc_amount = Decimal('0.001')
 
         bc_mock.return_value = bc_instance_mock = Mock(**{
-            'get_raw_transaction.return_value': 'test_incoming_tx',
             'get_unspent_outputs.return_value': [{
                 'outpoint': 'test_outpoint',
                 'amount': payment_order.btc_amount + extra_btc_amount,
@@ -762,7 +761,6 @@ class ForwardTransactionTestCase(TestCase):
 
         payment.forward_transaction(payment_order)
 
-        self.assertTrue(bc_instance_mock.get_raw_transaction.called)
         self.assertTrue(bc_instance_mock.get_unspent_outputs.called)
         args = bc_instance_mock.get_unspent_outputs.call_args[0]
         self.assertEqual(str(args[0]), payment_order.local_address)
@@ -843,7 +841,6 @@ class ForwardTransactionTestCase(TestCase):
             incoming_tx_ids=['0' * 64],
             refund_address='18GV9EWUjSVTU1jXMb1RmaGxAonSyBgKAc')
         bc_cls_mock.return_value = Mock(**{
-            'get_raw_transaction.return_value': 'test_incoming_tx',
             'get_unspent_outputs.return_value': [{
                 'outpoint': 'test_outpoint',
                 'amount': order.btc_amount + Decimal('0.00005'),
@@ -878,7 +875,6 @@ class ForwardTransactionTestCase(TestCase):
         account_address = '13tmm98hpFexSa3gi15DdD1p4kN2WsEBXX'
 
         bc_instance_mock = Mock(**{
-            'get_raw_transaction.return_value': 'test_incoming_tx',
             'get_unspent_outputs.return_value': [{
                 'outpoint': 'test_outpoint',
                 'amount': payment_order.btc_amount,
