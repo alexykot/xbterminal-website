@@ -98,7 +98,7 @@ class PaymentOrder(models.Model):
     time_cancelled = models.DateTimeField(null=True)
 
     def __unicode__(self):
-        return str(self.pk)
+        return self.uid
 
     @property
     def expires_at(self):

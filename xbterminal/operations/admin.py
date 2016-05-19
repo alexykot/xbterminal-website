@@ -42,8 +42,7 @@ class OrderAdminFormMixin(object):
 class PaymentOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
 
     list_display = [
-        '__unicode__',
-        'uid',
+        '__str__',
         'device_link',
         'merchant_link',
         'time_created',
