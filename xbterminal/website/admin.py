@@ -132,7 +132,12 @@ class KYCDocumentInline(admin.TabularInline):
 class TransactionInline(admin.TabularInline):
 
     model = models.Transaction
-    exclude = ['instantfiat_tx_id']
+    exclude = [
+        'payment',
+        'withdrawal',
+        'amount',
+        'instantfiat_tx_id',
+    ]
     readonly_fields = [
         'amount_colored',
         'tx_hash',
@@ -153,10 +158,10 @@ class TransactionInline(admin.TabularInline):
     amount_colored.short_description = 'amount'
 
     def order(self, obj):
-        if hasattr(obj, 'paymentorder'):
-            return url_to_object(obj.paymentorder)
-        elif hasattr(obj, 'withdrawalorder'):
-            return url_to_object(obj.withdrawalorder)
+        if obj.payment:
+            return url_to_object(obj.payment)
+        elif obj.withdrawal:
+            return url_to_object(obj.withdrawal)
         else:
             return '-'
     order.allow_tags = True
