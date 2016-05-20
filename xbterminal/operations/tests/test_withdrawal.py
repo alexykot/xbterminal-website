@@ -298,7 +298,6 @@ class SendTransactionTestCase(TestCase):
             fiat_amount=Decimal('1.00'),
             tx_fee_btc_amount=0,
             change_btc_amount=0,
-            reserved_outputs=None,
             exchange_rate=Decimal(200))
         customer_address = '1NdS5JCXzbhNv4STQAaknq56iGstfgRCXg'
         send_mock.return_value = ('test-id', 'test-ref')
@@ -330,7 +329,6 @@ class SendTransactionTestCase(TestCase):
             fiat_amount=Decimal('1.00'),
             tx_fee_btc_amount=0,
             change_btc_amount=0,
-            reserved_outputs=None,
             exchange_rate=Decimal(200))
         customer_address = '1NdS5JCXzbhNv4STQAaknq56iGstfgRCXg'
         send_mock.side_effect = ValueError
