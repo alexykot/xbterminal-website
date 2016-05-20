@@ -8,7 +8,8 @@ from operations import (
     BTC_DEC_PLACES,
     BTC_MIN_OUTPUT,
     WITHDRAWAL_TIMEOUT,
-    WITHDRAWAL_BROADCAST_TIMEOUT)
+    WITHDRAWAL_BROADCAST_TIMEOUT,
+    instantfiat)
 from operations.services.wrappers import get_exchange_rate, is_tx_reliable
 from operations.blockchain import (
     BlockChain,
@@ -58,12 +59,12 @@ def prepare_withdrawal(device, fiat_amount):
     """
     if not device.account:
         raise WithdrawalError('Account is not set for device.')
-    if device.account.instantfiat:
+    if device.account.instantfiat and \
+            device.merchant.currency != device.account.currency:
         raise WithdrawalError(
-            'Withdrawal from instantfiat accounts is not supported.')
-    else:
-        if not device.account.bitcoin_address:
-            raise WithdrawalError('Nothing to withdraw.')
+            'Account currency should match merchant currency.')
+    if not device.account.instantfiat and not device.account.bitcoin_address:
+        raise WithdrawalError('Nothing to withdraw.')
 
     # TODO: fiat currency -> currency
     order = WithdrawalOrder(
@@ -72,6 +73,8 @@ def prepare_withdrawal(device, fiat_amount):
         fiat_currency=device.merchant.currency,
         fiat_amount=fiat_amount)
     # Calculate BTC amount
+    # WARNING: exchange rate and BTC amount will change
+    # for instantfiat withdrawals after confirmation
     order.exchange_rate = get_exchange_rate(order.fiat_currency.name).\
         quantize(BTC_DEC_PLACES)
     order.customer_btc_amount = (order.fiat_amount / order.exchange_rate).\
@@ -111,7 +114,12 @@ def prepare_withdrawal(device, fiat_amount):
             order.customer_btc_amount += order.change_btc_amount
             order.change_btc_amount = BTC_DEC_PLACES
     else:
-        raise AssertionError
+        # Check confirmed balance of instantfiat account
+        # TODO: improve calculation of balance_confirmed
+        if order.device.account.balance_confirmed < order.fiat_amount:
+            raise WithdrawalError('Insufficient funds.')
+        order.tx_fee_btc_amount = BTC_DEC_PLACES
+        order.change_btc_amount = BTC_DEC_PLACES
 
     order.save()
     return order
@@ -148,19 +156,29 @@ def send_transaction(order, customer_address):
         tx = bc.create_raw_transaction(tx_inputs, tx_outputs)
         tx_signed = bc.sign_raw_transaction(tx)
         order.outgoing_tx_id = bc.send_raw_transaction(tx_signed)
+        order.time_sent = timezone.now()
     else:
-        raise AssertionError
+        try:
+            # TODO: find transaction ID and save to outgoing_tx_id field
+            # TODO: only one identifier is needed
+            (order.instantfiat_transfer_id,
+             order.instantfiat_reference) = instantfiat.send_transaction(
+                order.device.account,
+                order.fiat_amount,
+                order.customer_address)
+        except:
+            # TODO: better error handling
+            raise WithdrawalError('Instantfiat error.')
+        # Don't set time_sent at this moment
 
-    order.time_sent = timezone.now()
     order.save()
-
     # Update account balance
     create_account_txs(order)
 
     if not order.device.account.instantfiat:
         run_periodic_task(wait_for_confidence, [order.uid], interval=5)
     else:
-        raise AssertionError
+        run_periodic_task(wait_for_processor, [order.uid], interval=5)
 
 
 def wait_for_confidence(order_uid):
@@ -185,3 +203,32 @@ def wait_for_confidence(order_uid):
         if order.time_broadcasted is None:
             order.time_broadcasted = timezone.now()
             order.save()
+
+
+def wait_for_processor(order_uid):
+    """
+    Asynchronous task
+    Accepts:
+        order_uid: WithdrawalOrder unique identifier
+    """
+    try:
+        order = WithdrawalOrder.objects.get(uid=order_uid)
+    except WithdrawalOrder.DoesNotExist:
+        # WithdrawalOrder deleted, cancel job
+        cancel_current_task()
+        return
+    if order.time_created + WITHDRAWAL_BROADCAST_TIMEOUT < timezone.now():
+        # Timeout, cancel job
+        # WARNING: order status is 'timeout', not 'failed'
+        send_error_message(order=order)
+        cancel_current_task()
+        return
+    if instantfiat.is_transfer_completed(
+            order.instantfiat_transfer_id,
+            order.device.merchant.instantfiat_api_key):
+        cancel_current_task()
+        # TODO: update customer BTC amount and exchange rate
+        order.time_sent = timezone.now()
+        # TODO: check for confidence in another task?
+        order.time_broadcasted = timezone.now()
+        order.save()

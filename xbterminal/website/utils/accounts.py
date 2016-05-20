@@ -23,7 +23,9 @@ def create_account_txs(order):
                 amount=order.merchant_btc_amount)
     elif order.order_type == 'withdrawal':
         if account.instantfiat:
-            raise AssertionError
+            account.transaction_set.create(
+                withdrawal=order,
+                amount=-order.fiat_amount)
         else:
             account.transaction_set.create(
                 withdrawal=order,
