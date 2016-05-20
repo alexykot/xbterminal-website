@@ -243,12 +243,12 @@ def list_transactions(account_id, api_key):
     return data
 
 
-def send_transaction(account_id, amount, destination, api_key):
+def send_transaction(account_id, btc_amount, destination, api_key):
     """
     Send bitcoins from CryptoPay account
     Accepts:
         account_id: CryptoPay account ID
-        amount: BTC amount, Decimal
+        btc_amount: BTC amount, Decimal
         destination: bitcoin address
         api_key: merchant's API key
     Returns:
@@ -258,7 +258,7 @@ def send_transaction(account_id, amount, destination, api_key):
     api_url = 'https://cryptopay.me/api/v2/bitcoin_transfers'
     payload = {
         'amount_currency': 'BTC',
-        'amount': float(amount),
+        'amount': float(btc_amount),
         'account': account_id,
         'address': destination,
     }
@@ -295,3 +295,24 @@ def get_transfer(transfer_id, api_key):
     response.raise_for_status()
     data = response.json()
     return data
+
+
+def is_transfer_completed(transfer_id, api_key):
+    """
+    Check transfer status
+    Accepts:
+        transfer_id: CryptoPay transfer ID
+        api_key: merchant's API key
+    Returns:
+        True if transfer is completed, False otherwise
+    """
+    try:
+        result = get_transfer(transfer_id, api_key)
+        assert 'status' in result
+    except Exception as error:
+        logger.exception(error)
+        return False
+    if result['status'] == 'completed':
+        return True
+    else:
+        return False

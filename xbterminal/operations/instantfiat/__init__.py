@@ -37,3 +37,37 @@ def is_invoice_paid(account, invoice_id):
     else:
         raise AssertionError
     return result
+
+
+def send_transaction(account, btc_amount, destination):
+    """
+    Send bitcoin transaction from instantfiat account
+    Accepts:
+        account: Account instance
+        btc_amount: Decimal
+        destination: bitcoin address, string
+    """
+    if account.merchant.instantfiat_provider == INSTANTFIAT_PROVIDERS.CRYPTOPAY:
+        transfer_id, reference = cryptopay.send_transaction(
+            account.instantfiat_account_id,
+            btc_amount,
+            destination,
+            account.merchant.instantfiat_api_key)
+        return transfer_id, reference
+    else:
+        raise AssertionError
+
+
+def is_transfer_completed(account, transfer_id):
+    """
+    Check transfer status
+    Accepts:
+        account: Account instance
+        transfer_id: string
+    """
+    if account.merchant.instantfiat_provider == INSTANTFIAT_PROVIDERS.CRYPTOPAY:
+        return cryptopay.is_transfer_completed(
+            transfer_id,
+            account.merchant.instantfiat_api_key)
+    else:
+        raise AssertionError
