@@ -232,7 +232,7 @@ class AccountInline(admin.TabularInline):
     def get_formset(self, *args, **kwargs):
         # Disable form validation
         formset = super(AccountInline, self).get_formset(*args, **kwargs)
-        formset.clean = lambda *args: None
+        formset.form._post_clean = lambda *args: None
         return formset
 
 
