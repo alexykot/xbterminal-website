@@ -69,7 +69,6 @@ def prepare_withdrawal(device, fiat_amount):
     order = WithdrawalOrder(
         device=device,
         bitcoin_network=device.bitcoin_network,
-        merchant_address=device.account.bitcoin_address,
         fiat_currency=device.merchant.currency,
         fiat_amount=fiat_amount)
     # Calculate BTC amount
@@ -79,6 +78,9 @@ def prepare_withdrawal(device, fiat_amount):
         quantize(BTC_DEC_PLACES)
     if order.customer_btc_amount < BTC_MIN_OUTPUT:
         raise WithdrawalError('Customer BTC amount is below dust threshold')
+
+    # Set merchant address
+    order.merchant_address = device.account.bitcoin_address
 
     # Find unspent outputs which are not reserved by other orders
     # and check balance
