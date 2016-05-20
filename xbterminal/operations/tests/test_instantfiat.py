@@ -257,3 +257,43 @@ class CryptoPayTestCase(TestCase):
         self.assertEqual(get_mock.call_args[1]['headers']['X-Api-Key'],
                          'test-api-key')
         self.assertEqual(len(results), 2)
+
+    @patch('operations.instantfiat.cryptopay.requests.post')
+    def test_send_transaction(self, post_mock):
+        post_mock.return_value = Mock(**{
+            'json.return_value': {
+                'id': '36e2a91e-18d1-4e3c-9e82-8c63e01797be',
+                'cryptopay_reference': 'BT120200116',
+            },
+        })
+        account_id = '6bc3f1b4-a690-463a-8240-d47bcccba2a2'
+        amount = Decimal('0.01')
+        destination = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
+        api_key = 'test-api-key'
+        transfer_id, reference = instantfiat.cryptopay.send_transaction(
+            account_id, amount, destination, api_key)
+        self.assertEqual(transfer_id, '36e2a91e-18d1-4e3c-9e82-8c63e01797be')
+        self.assertEqual(reference, 'BT120200116')
+        data = json.loads(post_mock.call_args[1]['data'])
+        self.assertEqual(data['amount_currency'], 'BTC')
+        self.assertEqual(data['amount'], 0.01)
+        self.assertEqual(data['address'], destination)
+        self.assertEqual(data['account'], account_id)
+        self.assertEqual(post_mock.call_args[1]['headers']['X-Api-Key'],
+                         api_key)
+
+    @patch('operations.instantfiat.cryptopay.requests.get')
+    def test_get_transfer(self, get_mock):
+        get_mock.return_value = Mock(**{
+            'json.return_value': {
+                'id': '36e2a91e-18d1-4e3c-9e82-8c63e01797be',
+                'cryptopay_reference': 'BT120200116',
+                'status': 'new',
+            },
+        })
+        transfer_id = '36e2a91e-18d1-4e3c-9e82-8c63e01797be'
+        api_key = 'test-api-key'
+        result = instantfiat.cryptopay.get_transfer(transfer_id, api_key)
+        self.assertEqual(get_mock.call_args[1]['headers']['X-Api-Key'],
+                         api_key)
+        self.assertEqual(result['status'], 'new')

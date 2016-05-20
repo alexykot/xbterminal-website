@@ -241,3 +241,57 @@ def list_transactions(account_id, api_key):
     response.raise_for_status()
     data = response.json()
     return data
+
+
+def send_transaction(account_id, amount, destination, api_key):
+    """
+    Send bitcoins from CryptoPay account
+    Accepts:
+        account_id: CryptoPay account ID
+        amount: BTC amount, Decimal
+        destination: bitcoin address
+        api_key: merchant's API key
+    Returns:
+        transfer_id: transfer ID
+        reference: transfer reference
+    """
+    api_url = 'https://cryptopay.me/api/v2/bitcoin_transfers'
+    payload = {
+        'amount_currency': 'BTC',
+        'amount': float(amount),
+        'account': account_id,
+        'address': destination,
+    }
+    assert api_key
+    headers = {
+        'Content-Type': 'application/json',
+        'X-Api-Key': api_key,
+    }
+    response = requests.post(
+        api_url,
+        data=json.dumps(payload),
+        headers=headers)
+    response.raise_for_status()
+    data = response.json()
+    return data['id'], data['cryptopay_reference']
+
+
+def get_transfer(transfer_id, api_key):
+    """
+    Get details of bitcoin transfer
+    Accepts:
+        transfer_id: CryptoPay transfer ID
+        api_key: merchant's API key
+    """
+    api_url = 'https://cryptopay.me/api/v2/bitcoin_transfers/{transfer_id}'
+    assert api_key
+    headers = {
+        'Content-Type': 'application/json',
+        'X-Api-Key': api_key,
+    }
+    response = requests.get(
+        api_url.format(transfer_id=transfer_id),
+        headers=headers)
+    response.raise_for_status()
+    data = response.json()
+    return data
