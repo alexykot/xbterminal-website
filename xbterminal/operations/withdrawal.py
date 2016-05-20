@@ -79,38 +79,39 @@ def prepare_withdrawal(device, fiat_amount):
     if order.customer_btc_amount < BTC_MIN_OUTPUT:
         raise WithdrawalError('Customer BTC amount is below dust threshold')
 
-    # Set merchant address
-    order.merchant_address = device.account.bitcoin_address
+    if not order.device.account.instantfiat:
+        order.merchant_address = device.account.bitcoin_address
+        # Find unspent outputs which are not reserved by other orders
+        # and check balance
+        bc = BlockChain(order.bitcoin_network)
+        minconf = 0 if config.WITHDRAW_UNCONFIRMED else 1
+        unspent_sum = Decimal(0)
+        unspent_outputs = bc.get_unspent_outputs(order.merchant_address,
+                                                 minconf=minconf)
+        all_reserved_outputs = _get_all_reserved_outputs(order)
+        reserved_outputs = []
+        for output in unspent_outputs:
+            if output['outpoint'] in all_reserved_outputs:
+                # Output already reserved by another order, skip
+                continue
+            unspent_sum += output['amount']
+            reserved_outputs.append(output['outpoint'])
+            order.tx_fee_btc_amount = get_tx_fee(len(reserved_outputs), 2)
+            if unspent_sum >= order.btc_amount:
+                break
+        else:
+            raise WithdrawalError('Insufficient funds')
+        order.reserved_outputs = serialize_outputs(reserved_outputs)
+        logger.info('reserved {0} of {1} unspent outputs'.format(
+            len(reserved_outputs), len(unspent_outputs)))
 
-    # Find unspent outputs which are not reserved by other orders
-    # and check balance
-    bc = BlockChain(order.bitcoin_network)
-    minconf = 0 if config.WITHDRAW_UNCONFIRMED else 1
-    unspent_sum = Decimal(0)
-    unspent_outputs = bc.get_unspent_outputs(order.merchant_address,
-                                             minconf=minconf)
-    all_reserved_outputs = _get_all_reserved_outputs(order)
-    reserved_outputs = []
-    for output in unspent_outputs:
-        if output['outpoint'] in all_reserved_outputs:
-            # Output already reserved by another order, skip
-            continue
-        unspent_sum += output['amount']
-        reserved_outputs.append(output['outpoint'])
-        order.tx_fee_btc_amount = get_tx_fee(len(reserved_outputs), 2)
-        if unspent_sum >= order.btc_amount:
-            break
+        # Calculate change amount
+        order.change_btc_amount = unspent_sum - order.btc_amount
+        if order.change_btc_amount < BTC_MIN_OUTPUT:
+            order.customer_btc_amount += order.change_btc_amount
+            order.change_btc_amount = BTC_DEC_PLACES
     else:
-        raise WithdrawalError('Insufficient funds')
-    order.reserved_outputs = serialize_outputs(reserved_outputs)
-    logger.info('reserved {0} of {1} unspent outputs'.format(
-        len(reserved_outputs), len(unspent_outputs)))
-
-    # Calculate change amount
-    order.change_btc_amount = unspent_sum - order.btc_amount
-    if order.change_btc_amount < BTC_MIN_OUTPUT:
-        order.customer_btc_amount += order.change_btc_amount
-        order.change_btc_amount = BTC_DEC_PLACES
+        raise AssertionError
 
     order.save()
     return order
@@ -130,29 +131,36 @@ def send_transaction(order, customer_address):
     else:
         order.customer_address = customer_address
 
-    # Get reserved outputs and check them again
-    tx_inputs = deserialize_outputs(order.reserved_outputs)
-    all_reserved_outputs = _get_all_reserved_outputs(order)
-    if set(tx_inputs) & all_reserved_outputs:
-        # Some of the reserved outputs are reserved by other orders
-        logger.critical('send_transaction - some outputs are reserved by other orders')
-        raise WithdrawalError('Insufficient funds')
+    if not order.device.account.instantfiat:
+        # Get reserved outputs and check them again
+        tx_inputs = deserialize_outputs(order.reserved_outputs)
+        all_reserved_outputs = _get_all_reserved_outputs(order)
+        if set(tx_inputs) & all_reserved_outputs:
+            # Some of the reserved outputs are reserved by other orders
+            logger.critical('send_transaction - some outputs are reserved by other orders')
+            raise WithdrawalError('Insufficient funds')
+        # Create and send transaction
+        tx_outputs = {
+            order.customer_address: order.customer_btc_amount,
+            order.merchant_address: order.change_btc_amount,
+        }
+        bc = BlockChain(order.bitcoin_network)
+        tx = bc.create_raw_transaction(tx_inputs, tx_outputs)
+        tx_signed = bc.sign_raw_transaction(tx)
+        order.outgoing_tx_id = bc.send_raw_transaction(tx_signed)
+    else:
+        raise AssertionError
 
-    # Create and send transaction
-    tx_outputs = {
-        order.customer_address: order.customer_btc_amount,
-        order.merchant_address: order.change_btc_amount,
-    }
-    bc = BlockChain(order.bitcoin_network)
-    tx = bc.create_raw_transaction(tx_inputs, tx_outputs)
-    tx_signed = bc.sign_raw_transaction(tx)
-    order.outgoing_tx_id = bc.send_raw_transaction(tx_signed)
     order.time_sent = timezone.now()
     order.save()
+
     # Update account balance
     create_account_txs(order)
 
-    run_periodic_task(wait_for_confidence, [order.uid], interval=5)
+    if not order.device.account.instantfiat:
+        run_periodic_task(wait_for_confidence, [order.uid], interval=5)
+    else:
+        raise AssertionError
 
 
 def wait_for_confidence(order_uid):
