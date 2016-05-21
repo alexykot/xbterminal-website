@@ -142,6 +142,7 @@ class TransactionInline(admin.TabularInline):
         'amount_colored',
         'tx_hash',
         'is_confirmed',
+        'instantfiat_tx_id',
         'order',
         'created_at',
     ]

@@ -375,7 +375,7 @@ class Account(models.Model):
         """
         balance = Decimal('0.00000000')
         for transaction in self.transaction_set.all():
-            if transaction.is_confirmed:
+            if transaction.is_confirmed():
                 balance += transaction.amount
         return balance
 
@@ -426,7 +426,6 @@ class Transaction(models.Model):
         elif self.withdrawal:
             return self.withdrawal.outgoing_tx_id
 
-    @property
     def is_confirmed(self):
         """
         If true, transaction will be included in calculation of
@@ -443,6 +442,7 @@ class Transaction(models.Model):
         else:
             # Transaction is not linked to operation, may be unconfirmed
             return True
+    is_confirmed.boolean = True
 
 
 class KYCDocument(models.Model):
