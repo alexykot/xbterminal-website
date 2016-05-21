@@ -225,6 +225,7 @@ def wait_for_processor(order_uid):
         cancel_current_task()
         return
     if instantfiat.is_transfer_completed(
+            order.device.account,
             order.instantfiat_transfer_id,
             order.device.merchant.instantfiat_api_key):
         cancel_current_task()
