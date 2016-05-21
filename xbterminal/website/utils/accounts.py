@@ -99,6 +99,21 @@ def update_balances(merchant):
                         # Transaction found, set ID
                         transaction.instantfiat_tx_id = item['id']
                         transaction.save()
+                elif item['type'] == 'Bitcoin payment':
+                    # Try to find transaction by withdrawal order
+                    reference = item['reference']
+                    try:
+                        transaction = account.transaction_set.get(
+                            withdrawal__instantfiat_reference=reference)
+                    except Transaction.DoesNotExist:
+                        # Create new transaction
+                        transaction = account.transaction_set.create(
+                            instantfiat_tx_id=item['id'],
+                            amount=amount_decimal)
+                    else:
+                        # Transaction found, set ID
+                        transaction.instantfiat_tx_id = item['id']
+                        transaction.save()
                 else:
                     # Create new transaction
                     transaction = account.transaction_set.create(

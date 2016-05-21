@@ -83,25 +83,36 @@ class AccountsUtilsTestCase(TestCase):
                 instantfiat_invoice_id='00bb555b-3ebc-4476-8aa8-214e28aa6c03'),
             account=account,
             amount=Decimal('0.55'))
+        withdrawal_tx = TransactionFactory.create(
+            withdrawal=WithdrawalOrderFactory.create(
+                instantfiat_reference='BT95281015'),
+            account=account,
+            amount=Decimal('-0.35'))
         TransactionFactory.create(
             account=account,
-            instantfiat_tx_id=115,
+            instantfiat_tx_id='115',
             amount=Decimal('1.15'))
-        self.assertEqual(account.balance, Decimal('1.70'))
+        self.assertEqual(account.balance, Decimal('1.35'))
         list_mock.return_value = [
             {'id': 110, 'amount': 0.55, 'type': 'Invoice',
              'description': 'Order 00bb555b-3ebc-4476-8aa8-214e28aa6c03'},
-            {'id': 115, 'amount': 1.15, 'type': 'Bitcoin payment'},
-            {'id': 117, 'amount': 0.65, 'type': 'Bitcoin payment'},
-            {'id': 120, 'amount': -0.85, 'type': 'Bitcoin payment'},
+            {'id': 112, 'amount': -0.35, 'type': 'Bitcoin payment',
+             'reference': 'BT95281015'},
+            {'id': 115, 'amount': 1.15, 'type': 'Card reload'},
+            {'id': 117, 'amount': 0.65, 'type': 'Invoice',
+             'description': 'Order 140a2e0d-07ce-4bdf-9ea3-91a774261355'},
+            {'id': 120, 'amount': -0.85, 'type': 'Bitcoin payment',
+             'reference': 'BT120200116'},
         ]
         update_balances(merchant)
         self.assertEqual(list_mock.call_args[0][0], 'test-id')
         self.assertEqual(list_mock.call_args[0][1], 'test-key')
-        self.assertEqual(account.transaction_set.count(), 4)
-        self.assertEqual(account.balance, Decimal('1.50'))
+        self.assertEqual(account.transaction_set.count(), 5)
+        self.assertEqual(account.balance, Decimal('1.15'))
         payment_tx.refresh_from_db()
         self.assertEqual(payment_tx.instantfiat_tx_id, '110')
+        withdrawal_tx.refresh_from_db()
+        self.assertEqual(withdrawal_tx.instantfiat_tx_id, '112')
 
 
 class EmailUtilsTestCase(TestCase):
