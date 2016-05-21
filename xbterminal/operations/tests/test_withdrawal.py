@@ -403,8 +403,6 @@ class WaitForProcessorTestCase(TestCase):
                          order.device.account)
         self.assertEqual(is_completed_mock.call_args[0][1],
                          order.instantfiat_transfer_id)
-        self.assertEqual(is_completed_mock.call_args[0][2],
-                         order.device.merchant.instantfiat_api_key)
         order.refresh_from_db()
         self.assertEqual(order.status, 'broadcasted')
         self.assertTrue(cancel_mock.called)

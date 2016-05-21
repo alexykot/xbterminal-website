@@ -226,8 +226,7 @@ def wait_for_processor(order_uid):
         return
     if instantfiat.is_transfer_completed(
             order.device.account,
-            order.instantfiat_transfer_id,
-            order.device.merchant.instantfiat_api_key):
+            order.instantfiat_transfer_id):
         cancel_current_task()
         order.time_sent = timezone.now()
         # TODO: check for confidence in another task?
