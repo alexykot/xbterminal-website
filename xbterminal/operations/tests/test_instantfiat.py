@@ -49,15 +49,18 @@ class InstantFiatTestCase(TestCase):
             currency__name='GBP',
             merchant__instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
             merchant__instantfiat_api_key='test')
-        send_mock.return_value = ('test-id', 'test-ref')
+        send_mock.return_value = ('test-id', 'test-ref', Decimal('0.1'))
         result = instantfiat.send_transaction(
             account, Decimal('0.1'), 'bitcoin-address')
         self.assertEqual(send_mock.call_args[0][0],
                          account.instantfiat_account_id)
-        self.assertEqual(send_mock.call_args[0][3],
+        self.assertEqual(send_mock.call_args[0][1],
+                         account.currency.name)
+        self.assertEqual(send_mock.call_args[0][4],
                          account.merchant.instantfiat_api_key)
         self.assertEqual(result[0], 'test-id')
         self.assertEqual(result[1], 'test-ref')
+        self.assertEqual(result[2], Decimal('0.1'))
 
     @patch('operations.instantfiat.cryptopay.is_transfer_completed')
     def test_is_transfer_completed(self, is_completed_mock):
@@ -293,18 +296,21 @@ class CryptoPayTestCase(TestCase):
             'json.return_value': {
                 'id': '36e2a91e-18d1-4e3c-9e82-8c63e01797be',
                 'cryptopay_reference': 'BT120200116',
+                'amount': '0.01',
             },
         })
         account_id = '6bc3f1b4-a690-463a-8240-d47bcccba2a2'
+        currency_name = 'USD'
         amount = Decimal('0.01')
         destination = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
         api_key = 'test-api-key'
-        transfer_id, reference = instantfiat.cryptopay.send_transaction(
-            account_id, amount, destination, api_key)
+        transfer_id, reference, btc_amount = instantfiat.cryptopay.send_transaction(
+            account_id, currency_name, amount, destination, api_key)
         self.assertEqual(transfer_id, '36e2a91e-18d1-4e3c-9e82-8c63e01797be')
         self.assertEqual(reference, 'BT120200116')
+        self.assertEqual(btc_amount, Decimal('0.01'))
         data = json.loads(post_mock.call_args[1]['data'])
-        self.assertEqual(data['amount_currency'], 'BTC')
+        self.assertEqual(data['amount_currency'], 'USD')
         self.assertEqual(data['amount'], 0.01)
         self.assertEqual(data['address'], destination)
         self.assertEqual(data['account'], account_id)
@@ -317,6 +323,7 @@ class CryptoPayTestCase(TestCase):
             'json.return_value': {
                 'id': '36e2a91e-18d1-4e3c-9e82-8c63e01797be',
                 'cryptopay_reference': 'BT120200116',
+                'amount': '0.01',
                 'status': 'new',
             },
         })

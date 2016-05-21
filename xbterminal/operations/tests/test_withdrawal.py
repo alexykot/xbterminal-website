@@ -301,14 +301,15 @@ class SendTransactionTestCase(TestCase):
             change_btc_amount=0,
             exchange_rate=Decimal(200))
         customer_address = '1NdS5JCXzbhNv4STQAaknq56iGstfgRCXg'
-        send_mock.return_value = ('test-id', 'test-ref')
+        send_mock.return_value = ('test-id', 'test-ref', Decimal('0.006'))
 
         withdrawal.send_transaction(order, customer_address)
         order.refresh_from_db()
         self.assertTrue(send_mock.called)
-        self.assertEqual(send_mock.call_args[0][1], order.btc_amount)
+        self.assertEqual(send_mock.call_args[0][1], order.fiat_amount)
         self.assertEqual(send_mock.call_args[0][2], customer_address)
         self.assertEqual(order.customer_address, customer_address)
+        self.assertEqual(order.customer_btc_amount, Decimal('0.006'))
         self.assertIsNone(order.outgoing_tx_id)
         self.assertEqual(order.instantfiat_transfer_id, 'test-id')
         self.assertEqual(order.instantfiat_reference, 'test-ref')

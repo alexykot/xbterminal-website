@@ -162,9 +162,10 @@ def send_transaction(order, customer_address):
             # TODO: find transaction ID and save to outgoing_tx_id field
             # TODO: only one identifier is needed
             (order.instantfiat_transfer_id,
-             order.instantfiat_reference) = instantfiat.send_transaction(
+             order.instantfiat_reference,
+             order.customer_btc_amount) = instantfiat.send_transaction(
                 order.device.account,
-                order.btc_amount,
+                order.fiat_amount,
                 order.customer_address)
         except:
             # TODO: better error handling
@@ -227,7 +228,6 @@ def wait_for_processor(order_uid):
             order.instantfiat_transfer_id,
             order.device.merchant.instantfiat_api_key):
         cancel_current_task()
-        # TODO: update customer BTC amount and exchange rate
         order.time_sent = timezone.now()
         # TODO: check for confidence in another task?
         order.time_broadcasted = timezone.now()
