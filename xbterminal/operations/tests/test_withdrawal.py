@@ -171,6 +171,7 @@ class PrepareWithdrawalTestCase(TestCase):
         self.assertEqual(order.customer_btc_amount, Decimal('0.01'))
         self.assertEqual(order.tx_fee_btc_amount, 0)
         self.assertEqual(order.change_btc_amount, 0)
+        self.assertEqual(order.btc_amount, Decimal('0.01'))
         self.assertEqual(order.reserved_outputs, '')
         self.assertEqual(order.status, 'new')
 
@@ -304,6 +305,9 @@ class SendTransactionTestCase(TestCase):
 
         withdrawal.send_transaction(order, customer_address)
         order.refresh_from_db()
+        self.assertTrue(send_mock.called)
+        self.assertEqual(send_mock.call_args[0][1], order.btc_amount)
+        self.assertEqual(send_mock.call_args[0][2], customer_address)
         self.assertEqual(order.customer_address, customer_address)
         self.assertIsNone(order.outgoing_tx_id)
         self.assertEqual(order.instantfiat_transfer_id, 'test-id')

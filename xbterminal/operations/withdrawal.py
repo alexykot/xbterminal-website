@@ -164,7 +164,7 @@ def send_transaction(order, customer_address):
             (order.instantfiat_transfer_id,
              order.instantfiat_reference) = instantfiat.send_transaction(
                 order.device.account,
-                order.fiat_amount,
+                order.btc_amount,
                 order.customer_address)
         except:
             # TODO: better error handling
