@@ -589,6 +589,13 @@ class ReversePaymentTestCase(TestCase):
         with self.assertRaises(exceptions.RefundError):
             payment.reverse_payment(order)
 
+    def test_cancelled_without_refund_address(self):
+        order = PaymentOrderFactory.create(
+            refund_address=None,
+            time_cancelled=timezone.now())
+        with self.assertRaises(exceptions.RefundError):
+            payment.reverse_payment(order)
+
 
 class WaitForValidationTestCase(TestCase):
 
