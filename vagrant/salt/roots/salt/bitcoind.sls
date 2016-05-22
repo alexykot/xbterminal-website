@@ -10,6 +10,7 @@ bitcoind:
       - pkgrepo: bitcoin_ppa
   service:
     - running
+    - enable: true
     - require:
       - pkg: bitcoind
       - file: /lib/systemd/system/bitcoind.service

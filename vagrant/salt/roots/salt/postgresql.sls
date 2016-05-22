@@ -12,6 +12,7 @@ postgresql:
     - require:
       - pkgrepo: postgresql-repo
   service.running:
+    - enable: true
     - watch:
       - file: /etc/postgresql/9.4/main/postgresql.conf
       - file: /etc/postgresql/9.4/main/pg_hba.conf

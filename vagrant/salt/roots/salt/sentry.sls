@@ -97,18 +97,21 @@ sentry_db_init:
 sentry_worker_service:
   service.running:
     - name: sentry-worker
+    - enable: true
     - require:
       - file: /lib/systemd/system/sentry-worker.service
 
 sentry_scheduler_service:
   service.running:
     - name: sentry-scheduler
+    - enable: true
     - require:
       - file: /lib/systemd/system/sentry-scheduler.service
 
 sentry_web_service:
   service.running:
     - name: sentry-web
+    - enable: true
     - require:
       - file: /lib/systemd/system/sentry-web.service
       - cmd: sentry_db_init
