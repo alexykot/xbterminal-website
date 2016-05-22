@@ -7,7 +7,7 @@ Vagrant.configure("2") do |config|
   rescue Errno::ENOENT
   end
 
-  config.vm.box = "ubuntu/trusty64"
+  config.vm.box = "ubuntu/wily64"
   config.vm.hostname = "xbt-server-dev"
 
   config.vm.network "forwarded_port", guest: 5432, host: settings['vm']['ports']['postgresql']
