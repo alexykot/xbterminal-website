@@ -5,6 +5,7 @@ vm:
     postgresql: 5432
     redis: 6379
     bitcoind: 18332
+    sentry: 9000
     xbt-server: 8083
 
 pillar:

@@ -1,0 +1,114 @@
+sentry_required_pkgs:
+  pkg.installed:
+    - names:
+      - python-virtualenv
+      - python-dev
+      - libpq-dev
+      - libxml2-dev
+      - libxslt1-dev
+      - libffi-dev
+
+sentry_group:
+  group.present:
+    - name: sentry
+
+sentry_user:
+  user.present:
+    - name: sentry
+    - shell: /bin/bash
+    - home: /var/lib/sentry
+    - groups:
+      - sentry
+    - require:
+      - group: sentry_group
+
+sentry_pg_user:
+  postgres_user.present:
+    - name: sentry
+    - password: sentry
+    - require:
+      - service: postgresql
+
+sentry_pg_database:
+  postgres_database.present:
+    - name: sentry
+    - owner: sentry
+    - require:
+      - postgres_user: sentry_pg_user
+
+/var/lib/sentry/venv:
+  virtualenv.managed:
+    - requirements: salt://sentry/requirements.txt
+    - user: sentry
+    - python: /usr/bin/python2
+    - require:
+      - pkg: sentry_required_pkgs
+      - user: sentry_user
+
+/etc/sentry:
+  file.directory:
+    - name: /etc/sentry
+    - user: sentry
+    - group: sentry
+    - require:
+      - user: sentry_user
+      - group: sentry_group
+
+/etc/sentry/sentry.conf.py:
+  file.managed:
+    - source: salt://sentry/sentry.conf.py
+    - user: sentry
+    - group: sentry
+    - require:
+      - file: /etc/sentry
+
+/etc/sentry/config.yml:
+  file.managed:
+    - source: salt://sentry/config.yml
+    - user: sentry
+    - group: sentry
+    - require:
+      - file: /etc/sentry
+
+sentry_db_upgrade:
+   cmd.script:
+    - source: salt://sentry/sentry_upgrade.sh
+    - user: sentry
+    - env:
+      - SENTRY_CONF: /etc/sentry
+    - require:
+      - virtualenv: /var/lib/sentry/venv
+      - file: /etc/sentry/sentry.conf.py
+      - file: /etc/sentry/config.yml
+      - postgres_database: sentry_pg_database
+
+/lib/systemd/system/sentry-worker.service:
+  file.managed:
+    - source: salt://sentry/sentry-worker.service
+
+/lib/systemd/system/sentry-scheduler.service:
+  file.managed:
+    - source: salt://sentry/sentry-scheduler.service
+
+/lib/systemd/system/sentry-web.service:
+  file.managed:
+    - source: salt://sentry/sentry-web.service
+
+sentry_worker_service:
+  service.running:
+    - name: sentry-worker
+    - require:
+      - file: /lib/systemd/system/sentry-worker.service
+
+sentry_scheduler_service:
+  service.running:
+    - name: sentry-scheduler
+    - require:
+      - file: /lib/systemd/system/sentry-scheduler.service
+
+sentry_web_service:
+  service.running:
+    - name: sentry-web
+    - require:
+      - file: /lib/systemd/system/sentry-web.service
+      - cmd: sentry_db_upgrade

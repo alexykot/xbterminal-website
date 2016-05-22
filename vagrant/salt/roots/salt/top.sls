@@ -3,4 +3,5 @@ base:
     - postgresql
     - redis
     - bitcoind
+    - sentry
     - xbt-server
