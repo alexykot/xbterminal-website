@@ -70,9 +70,9 @@ sentry_pg_database:
     - require:
       - file: /etc/sentry
 
-sentry_db_upgrade:
+sentry_db_init:
    cmd.script:
-    - source: salt://sentry/sentry_upgrade.sh
+    - source: salt://sentry/sentry_init.sh
     - user: sentry
     - env:
       - SENTRY_CONF: /etc/sentry
@@ -111,4 +111,4 @@ sentry_web_service:
     - name: sentry-web
     - require:
       - file: /lib/systemd/system/sentry-web.service
-      - cmd: sentry_db_upgrade
+      - cmd: sentry_db_init
