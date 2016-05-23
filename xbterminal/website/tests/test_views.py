@@ -9,8 +9,8 @@ from mock import patch
 
 from website.models import (
     MerchantAccount,
-    KYCDocument,
-    INSTANTFIAT_PROVIDERS)
+    INSTANTFIAT_PROVIDERS,
+    KYC_DOCUMENT_TYPES)
 from website.tests.factories import (
     create_image,
     MerchantAccountFactory,
@@ -482,45 +482,93 @@ class VerificationViewTestCase(TestCase):
     def setUp(self):
         self.url = reverse('website:verification')
 
-    def test_get_unverified(self):
+    def test_get_no_managed_cryptopay_profile(self):
         merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_unverified(self):
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='test')
         self.client.login(username=merchant.user.email,
                           password='password')
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'cabinet/verification.html')
-        self.assertIn('form_identity_doc', response.context)
-        self.assertIn('form_corporate_doc', response.context)
+        self.assertEqual(len(response.context['forms']), 3)
+        (form_1, form_2, form_3) = response.context['forms']
+        self.assertEqual(form_1.document_type, KYC_DOCUMENT_TYPES.ID_FRONT)
+        self.assertIsNone(form_1.instance.pk)
+        self.assertEqual(form_2.document_type, KYC_DOCUMENT_TYPES.ID_BACK)
+        self.assertIsNone(form_2.instance.pk)
+        self.assertEqual(form_3.document_type, KYC_DOCUMENT_TYPES.ADDRESS)
+        self.assertIsNone(form_3.instance.pk)
+
+    def test_get_unverified_already_uploaded(self):
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='test')
+        doc_id = KYCDocumentFactory.create(
+            merchant=merchant,
+            document_type=KYC_DOCUMENT_TYPES.ID_FRONT,
+            status='uploaded')
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        response = self.client.get(self.url)
+        self.assertEqual(len(response.context['forms']), 3)
+        form = response.context['forms'][0]
+        self.assertEqual(form.document_type, KYC_DOCUMENT_TYPES.ID_FRONT)
+        self.assertEqual(form.instance.pk, doc_id.pk)
 
     def test_get_verification_pending(self):
         merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='test',
             verification_status='pending')
-        KYCDocumentFactory.create(
+        document_1 = KYCDocumentFactory.create(
             merchant=merchant,
-            document_type=KYCDocument.IDENTITY_DOCUMENT,
+            document_type=KYC_DOCUMENT_TYPES.ID_FRONT,
             status='unverified')
-        KYCDocumentFactory.create(
+        document_2 = KYCDocumentFactory.create(
             merchant=merchant,
-            document_type=KYCDocument.CORPORATE_DOCUMENT,
+            document_type=KYC_DOCUMENT_TYPES.ID_BACK,
+            status='unverified')
+        document_3 = KYCDocumentFactory.create(
+            merchant=merchant,
+            document_type=KYC_DOCUMENT_TYPES.ADDRESS,
             status='unverified')
         self.client.login(username=merchant.user.email,
                           password='password')
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'cabinet/verification.html')
-        self.assertNotIn('form_identity_doc', response.context)
-        self.assertNotIn('form_corporate_doc', response.context)
+        self.assertNotIn('forms', response.context)
+        self.assertEqual(len(response.context['documents']), 3)
+        self.assertEqual(response.context['documents'][0].pk,
+                         document_1.pk)
+        self.assertEqual(response.context['documents'][1].pk,
+                         document_2.pk)
+        self.assertEqual(response.context['documents'][2].pk,
+                         document_3.pk)
 
-    def test_post(self):
-        merchant = MerchantAccountFactory.create()
+    @patch('website.utils.kyc.cryptopay.upload_documents')
+    def test_post(self, upload_mock):
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='xxx')
+        upload_mock.return_value = 'x1z2b4'
         document_1 = KYCDocumentFactory.create(
             merchant=merchant,
-            document_type=KYCDocument.IDENTITY_DOCUMENT)
+            document_type=KYC_DOCUMENT_TYPES.ID_FRONT)
         document_2 = KYCDocumentFactory.create(
             merchant=merchant,
-            document_type=KYCDocument.CORPORATE_DOCUMENT)
-        self.assertEqual(document_1.status, 'uploaded')
-        self.assertEqual(document_2.status, 'uploaded')
+            document_type=KYC_DOCUMENT_TYPES.ID_BACK)
+        document_3 = KYCDocumentFactory.create(
+            merchant=merchant,
+            document_type=KYC_DOCUMENT_TYPES.ADDRESS)
         self.client.login(username=merchant.user.email,
                           password='password')
         response = self.client.post(self.url)
@@ -534,8 +582,31 @@ class VerificationViewTestCase(TestCase):
         self.assertEqual(merchant.verification_status, 'pending')
         document_1.refresh_from_db()
         document_2.refresh_from_db()
+        document_3.refresh_from_db()
         self.assertEqual(document_1.status, 'unverified')
+        self.assertEqual(document_1.instantfiat_document_id, 'x1z2b4')
         self.assertEqual(document_2.status, 'unverified')
+        self.assertEqual(document_2.instantfiat_document_id, 'x1z2b4')
+        self.assertEqual(document_3.status, 'unverified')
+        self.assertEqual(document_3.instantfiat_document_id, 'x1z2b4')
+
+    def test_post_not_uploaded(self):
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='test')
+        doc_id = KYCDocumentFactory.create(
+            merchant=merchant,
+            document_type=KYC_DOCUMENT_TYPES.ID_FRONT)
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertIn('error', data)
+        merchant.refresh_from_db()
+        self.assertEqual(merchant.verification_status, 'unverified')
+        doc_id.refresh_from_db()
+        self.assertEqual(doc_id.status, 'uploaded')
 
 
 class VerificationFileViewTestCase(TestCase):
@@ -569,7 +640,7 @@ class VerificationFileViewTestCase(TestCase):
         self.assertEqual(merchant.kycdocument_set.count(), 1)
         doc = merchant.kycdocument_set.first()
         self.assertEqual(doc.status, 'uploaded')
-        self.assertEqual(doc.document_type, KYCDocument.IDENTITY_DOCUMENT)
+        self.assertEqual(doc.document_type, KYC_DOCUMENT_TYPES.ID_FRONT)
 
     def test_delete_identity_doc(self):
         merchant = MerchantAccountFactory.create()

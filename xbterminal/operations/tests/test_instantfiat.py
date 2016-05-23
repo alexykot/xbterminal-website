@@ -1,4 +1,5 @@
 from decimal import Decimal
+import json
 from django.test import TestCase
 from mock import patch, Mock
 
@@ -144,6 +145,20 @@ class CryptoPayTestCase(TestCase):
             instantfiat.cryptopay.create_merchant(
                 'fname', 'lname', 'email', 'key')
 
+    @patch('operations.instantfiat.cryptopay.requests.get')
+    def test_get_merchant(self, get_mock):
+        get_mock.return_value = Mock(**{
+            'json.return_value': {
+                'id': '4437b1ac-d1e7-4a26-92bb-933d930d50b8',
+            },
+        })
+        user_id = '4437b1ac-d1e7-4a26-92bb-933d930d50b8'
+        api_key = 'test-api-key'
+        user_data = instantfiat.cryptopay.get_merchant(user_id, api_key)
+        self.assertEqual(user_data['id'], user_id)
+        self.assertEqual(get_mock.call_args[1]['headers']['X-Api-Key'],
+                         'test-api-key')
+
     @patch('operations.instantfiat.cryptopay.requests.post')
     def test_set_password(self, post_mock):
         post_mock.return_value = Mock(**{
@@ -173,6 +188,34 @@ class CryptoPayTestCase(TestCase):
         with self.assertRaises(InstantFiatError):
             instantfiat.cryptopay.set_password(
                 user_id, password, api_key)
+
+    @patch('operations.instantfiat.cryptopay.requests.post')
+    def test_upload_documents(self, post_mock):
+        post_mock.return_value = Mock(**{
+            'json.return_value': {
+                'status': 'in_review',
+                'id': '36e2a91e-18d1-4e3c-9e82-8c63e01797be',
+            },
+        })
+        user_id = '4437b1ac-d1e7-4a26-92bb-933d930d50b8'
+        documents = []
+        for content in ['aaa', 'bbb', 'ccc']:
+            document = Mock(**{'read.return_value': content})
+            document.name = 'test.jpg'
+            documents.append(document)
+        api_key = 'test-api-key'
+        upload_id = instantfiat.cryptopay.upload_documents(
+            user_id, documents, api_key)
+        self.assertEqual(upload_id, '36e2a91e-18d1-4e3c-9e82-8c63e01797be')
+        data = json.loads(post_mock.call_args[1]['data'])
+        self.assertEqual(data['id_document_frontside'],
+                         'data:image/jpeg;base64,YWFh')
+        self.assertEqual(data['id_document_backside'],
+                         'data:image/jpeg;base64,YmJi')
+        self.assertEqual(data['residence_document'],
+                         'data:image/jpeg;base64,Y2Nj')
+        self.assertEqual(post_mock.call_args[1]['headers']['X-Api-Key'],
+                         'test-api-key')
 
     @patch('operations.instantfiat.cryptopay.requests.get')
     def test_list_accounts(self, get_mock):

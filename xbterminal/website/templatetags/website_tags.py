@@ -23,11 +23,6 @@ def amount(value):
 
 
 @register.filter
-def kyc_document(merchant, document_type):
-    return merchant.get_latest_kyc_document(int(document_type))
-
-
-@register.filter
 def admin_url(obj):
     url_name = u'admin:{0}_{1}_change'.format(
         obj._meta.app_label,

@@ -23,7 +23,8 @@ from website.models import (
     KYCDocument,
     get_language,
     get_currency,
-    INSTANTFIAT_PROVIDERS)
+    INSTANTFIAT_PROVIDERS,
+    KYC_DOCUMENT_TYPES)
 from website.widgets import (
     TimeWidget,
     FileWidget,
@@ -316,11 +317,13 @@ class KYCDocumentUploadForm(forms.ModelForm):
         widgets = {'file': FileWidget}
 
     def __init__(self, *args, **kwargs):
-        document_type = kwargs.pop('document_type', None)
+        self.document_type = kwargs.pop('document_type', None)
         super(KYCDocumentUploadForm, self).__init__(*args, **kwargs)
-        if document_type == 1:
-            self.fields['file'].label = _('Photo ID')
-        elif document_type == 2:
+        if self.document_type == KYC_DOCUMENT_TYPES.ID_FRONT:
+            self.fields['file'].label = _('Photo ID (front side)')
+        elif self.document_type == KYC_DOCUMENT_TYPES.ID_BACK:
+            self.fields['file'].label = _('Photo ID (back side)')
+        elif self.document_type == KYC_DOCUMENT_TYPES.ADDRESS:
             self.fields['file'].label = _('Corporate or residence proof document')
 
 

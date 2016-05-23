@@ -82,17 +82,34 @@ def send_reset_password_email(email, password):
     message.send(fail_silently=False)
 
 
-def send_verification_info(merchant):
+def send_verification_info(merchant, documents):
     """
+    Send notification about uploaded KYC documents (for admin)
     Accepts:
         merchant: MerchantAccount instance
+        documents: list of KYCDocument instances (uploaded documents)
     """
     message = create_html_message(
         _('KYC documents uploaded'),
         'email/admin_verification.html',
-        {'merchant': merchant},
+        {'merchant': merchant, 'documents': documents},
         settings.DEFAULT_FROM_EMAIL,
         settings.CONTACT_EMAIL_RECIPIENTS)
+    message.send(fail_silently=False)
+
+
+def send_verification_notification(merchant):
+    """
+    Send KYC notification to merchant
+    Accepts:
+        merchant: MerchantAccount instance
+    """
+    message = create_html_message(
+        _('KYC documents notification'),
+        'email/verification.html',
+        {'merchant': merchant},
+        settings.DEFAULT_FROM_EMAIL,
+        [merchant.user.email])
     message.send(fail_silently=False)
 
 

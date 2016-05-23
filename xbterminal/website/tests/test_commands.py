@@ -139,10 +139,18 @@ class CryptoPaySyncTestCase(TestCase):
 
     @patch('website.management.commands.cryptopay_sync.update_managed_accounts')
     @patch('website.management.commands.cryptopay_sync.update_balances')
-    def test_command(self, b_mock, a_mock):
+    @patch('website.management.commands.cryptopay_sync.check_documents')
+    def test_command(self, c_mock, b_mock, a_mock):
+        MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.GOCOIN)
         MerchantAccountFactory.create(
             instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY)
+        MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='xxx',
+            verification_status='pending')
         messages = list(cryptopay_sync())
-        self.assertEqual(a_mock.call_count, 1)
-        self.assertEqual(b_mock.call_count, 1)
-        self.assertEqual(len(messages), 1)
+        self.assertEqual(a_mock.call_count, 2)
+        self.assertEqual(b_mock.call_count, 2)
+        self.assertEqual(c_mock.call_count, 1)
+        self.assertEqual(len(messages), 2)

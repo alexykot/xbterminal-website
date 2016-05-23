@@ -6,6 +6,7 @@ from website.models import MerchantAccount, INSTANTFIAT_PROVIDERS
 from website.utils.accounts import (
     update_managed_accounts,
     update_balances)
+from website.utils.kyc import check_documents
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,9 @@ def cryptopay_sync():
         try:
             update_managed_accounts(merchant)
             update_balances(merchant)
+            if merchant.has_managed_cryptopay_profile and \
+                    merchant.verification_status == 'pending':
+                check_documents(merchant)
         except Exception as error:
             logger.exception(error)
             yield '{0} - ERROR'.format(merchant.company_name)

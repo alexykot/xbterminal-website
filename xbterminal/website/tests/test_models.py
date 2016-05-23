@@ -1,4 +1,6 @@
 from decimal import Decimal
+import os
+
 from django.conf import settings
 from django.db import IntegrityError
 from django.test import TestCase
@@ -14,10 +16,10 @@ from website.models import (
     MerchantAccount,
     Account,
     Transaction,
-    KYCDocument,
     Device,
     DeviceBatch,
-    INSTANTFIAT_PROVIDERS)
+    INSTANTFIAT_PROVIDERS,
+    KYC_DOCUMENT_TYPES)
 from website.tests.factories import (
     CurrencyFactory,
     UserFactory,
@@ -125,15 +127,23 @@ class MerchantAccountTestCase(TestCase):
         merchant.save()
         self.assertTrue(merchant.is_profile_complete)
 
+    def test_has_managed_cryptopay_profile(self):
+        merchant = MerchantAccountFactory.create()
+        self.assertFalse(merchant.has_managed_cryptopay_profile)
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='test')
+        self.assertTrue(merchant.has_managed_cryptopay_profile)
+
     def test_get_kyc_document(self):
         merchant = MerchantAccountFactory.create()
         document = merchant.get_kyc_document(
-            KYCDocument.IDENTITY_DOCUMENT,
+            KYC_DOCUMENT_TYPES.ID_FRONT,
             'uploaded')
         self.assertIsNone(document)
         KYCDocumentFactory.create(merchant=merchant)
         document = merchant.get_kyc_document(
-            KYCDocument.IDENTITY_DOCUMENT,
+            KYC_DOCUMENT_TYPES.ID_FRONT,
             'uploaded')
         self.assertIsNotNone(document)
 
@@ -141,14 +151,16 @@ class MerchantAccountTestCase(TestCase):
         merchant = MerchantAccountFactory.create()
         info = merchant.info
         self.assertEqual(info['name'], merchant.company_name)
-        self.assertEqual(info['status'], 'unverified')
+        self.assertEqual(info['status'], None)
         self.assertEqual(info['active'], 0)
         self.assertEqual(info['total'], 0)
         self.assertEqual(info['tx_count'], 0)
         self.assertEqual(info['tx_sum'], 0)
 
-    def test_info_with_payments(self):
-        merchant = MerchantAccountFactory.create()
+    def test_info_with_payments_and_managed_profile(self):
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='test')
         account = AccountFactory.create(merchant=merchant)
         DeviceFactory.create(merchant=merchant,
                              account=account,
@@ -162,6 +174,7 @@ class MerchantAccountTestCase(TestCase):
             3, device=active_device, time_notified=timezone.now())
 
         info = merchant.info
+        self.assertEqual(info['status'], 'unverified')
         self.assertEqual(info['active'], 1)
         self.assertEqual(info['total'], 2)
         self.assertEqual(info['tx_count'], len(payments))
@@ -175,14 +188,22 @@ class KYCDocumentTestCase(TestCase):
         document = KYCDocumentFactory.create()
         self.assertIsNotNone(document.merchant)
         self.assertEqual(document.document_type,
-                         KYCDocument.IDENTITY_DOCUMENT)
+                         KYC_DOCUMENT_TYPES.ID_FRONT)
         self.assertIsNotNone(document.file)
-        self.assertIsNotNone(document.uploaded)
+        self.assertIsNotNone(document.uploaded_at)
         self.assertEqual(document.status, 'uploaded')
-        self.assertIsNone(document.gocoin_document_id)
+        self.assertIsNone(document.instantfiat_document_id)
         self.assertIsNone(document.comment)
         self.assertEqual(document.base_name, '1__test.png')
         self.assertEqual(document.original_name, 'test.png')
+
+    def test_delete(self):
+        document = KYCDocumentFactory.create(file__name='del.pdf')
+        file_path = document.file.path
+        self.assertTrue(file_path.endswith('del.pdf'))
+        self.assertTrue(os.path.exists(file_path))
+        document.delete()
+        self.assertFalse(os.path.exists(file_path))
 
 
 class AccountTestCase(TestCase):

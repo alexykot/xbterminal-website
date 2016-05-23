@@ -14,7 +14,7 @@ from django.contrib.auth.models import (
     PermissionsMixin)
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_delete
 from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
@@ -145,6 +145,12 @@ INSTANTFIAT_PROVIDERS = Choices(
     ('GOCOIN', 2, 'GoCoin'),
 )
 
+KYC_DOCUMENT_TYPES = Choices(
+    ('ID_FRONT', 1, 'ID document - frontside'),
+    ('ADDRESS', 2, 'Address document'),
+    ('ID_BACK', 3, 'ID document - backside'),
+)
+
 
 class MerchantAccount(models.Model):
 
@@ -233,26 +239,36 @@ class MerchantAccount(models.Model):
                 bool(self.post_code) and
                 bool(self.contact_phone))
 
+    @property
+    def has_managed_cryptopay_profile(self):
+        return (self.instantfiat_provider ==
+                INSTANTFIAT_PROVIDERS.CRYPTOPAY and
+                self.instantfiat_merchant_id)
+
     def get_kyc_document(self, document_type, status):
+        """
+        Get latest KYC document for given status
+        """
         try:
             return self.kycdocument_set.\
                 filter(document_type=document_type, status=status).\
-                latest('uploaded')
+                latest('uploaded_at')
         except KYCDocument.DoesNotExist:
             return None
 
-    def get_latest_kyc_document(self, document_type):
+    def get_current_kyc_document(self, document_type):
         """
-        Search for latest uploaded document
+        Get currently active KYC document
         """
         return self.kycdocument_set.\
             filter(document_type=document_type).\
             exclude(status='uploaded').\
-            latest('uploaded')
+            latest('uploaded_at')
 
     @property
     def info(self):
-        if self.verification_status == 'verified':
+        if not self.has_managed_cryptopay_profile or \
+                self.verification_status == 'verified':
             status = None
         else:
             status = self.get_verification_status_display()
@@ -417,14 +433,6 @@ class Transaction(models.Model):
 
 class KYCDocument(models.Model):
 
-    IDENTITY_DOCUMENT = 1
-    CORPORATE_DOCUMENT = 2
-
-    DOCUMENT_TYPES = [
-        (IDENTITY_DOCUMENT, 'IdentityDocument'),
-        (CORPORATE_DOCUMENT, 'CorporateDocument'),
-    ]
-
     VERIFICATION_STATUSES = [
         ('uploaded', _('Uploaded')),
         ('unverified', _('Unverified')),
@@ -433,14 +441,25 @@ class KYCDocument(models.Model):
     ]
 
     merchant = models.ForeignKey(MerchantAccount)
-    document_type = models.IntegerField(choices=DOCUMENT_TYPES)
+    document_type = models.PositiveSmallIntegerField(
+        choices=KYC_DOCUMENT_TYPES)
     file = models.FileField(
         storage=VerificationFileStorage(),
         upload_to=verification_file_path_gen)
-    uploaded = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=50, choices=VERIFICATION_STATUSES, default='uploaded')
-    gocoin_document_id = models.CharField(max_length=36, blank=True, null=True)
-    comment = models.CharField(max_length=255, blank=True, null=True)
+    status = models.CharField(
+        max_length=50,
+        choices=VERIFICATION_STATUSES,
+        default='uploaded')
+    instantfiat_document_id = models.CharField(
+        max_length=36,
+        blank=True,
+        null=True)
+    comment = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True)
+
+    uploaded_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = 'KYC document'
@@ -457,6 +476,11 @@ class KYCDocument(models.Model):
     @property
     def original_name(self):
         return get_verification_file_name(self.file)
+
+
+@receiver(post_delete, sender=KYCDocument)
+def kyc_document_delete(sender, instance, **kwargs):
+    instance.file.delete(save=False)
 
 
 def gen_batch_number():
