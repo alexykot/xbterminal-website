@@ -43,9 +43,9 @@ class PaymentOrder(models.Model):
                            unique=True,
                            default=gen_payment_uid)
     device = models.ForeignKey('website.Device')
-    request = models.BinaryField(editable=False)
+    # TODO: this field should be mandatory
+    account = models.ForeignKey('website.Account', null=True)
 
-    # Payment details
     bitcoin_network = models.CharField(
         max_length=10, choices=BITCOIN_NETWORKS)
     local_address = models.CharField(
@@ -76,6 +76,7 @@ class PaymentOrder(models.Model):
     instantfiat_invoice_id = models.CharField(
         max_length=255, null=True)
 
+    request = models.BinaryField(editable=False)
     incoming_tx_ids = ArrayField(
         models.CharField(max_length=64, validators=[validate_transaction]),
         default=list)
@@ -199,6 +200,8 @@ class WithdrawalOrder(models.Model):
                            unique=True,
                            default=gen_withdrawal_uid)
     device = models.ForeignKey('website.Device')
+    # TODO: this field should be mandatory
+    account = models.ForeignKey('website.Account', null=True)
 
     bitcoin_network = models.CharField(
         max_length=10, choices=BITCOIN_NETWORKS)

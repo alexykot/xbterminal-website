@@ -34,6 +34,7 @@ class PrepareWithdrawalTestCase(TestCase):
 
         order = withdrawal.prepare_withdrawal(device, fiat_amount)
         self.assertEqual(order.device.pk, device.pk)
+        self.assertEqual(order.account.pk, device.account.pk)
         self.assertEqual(order.bitcoin_network, device.bitcoin_network)
         self.assertEqual(order.merchant_address,
                          device.account.bitcoin_address)

@@ -42,6 +42,8 @@ class PreparePaymentTestCase(TestCase):
                                expected_fee_btc_amount +
                                Decimal('0.0001'))
 
+        self.assertEqual(payment_order.device.pk, device.pk)
+        self.assertEqual(payment_order.account.pk, device.account.pk)
         self.assertEqual(payment_order.local_address,
                          local_address)
         self.assertEqual(payment_order.merchant_address,

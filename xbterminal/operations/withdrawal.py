@@ -69,6 +69,7 @@ def prepare_withdrawal(device, fiat_amount):
     # TODO: fiat currency -> currency
     order = WithdrawalOrder(
         device=device,
+        account=device.account,
         bitcoin_network=device.bitcoin_network,
         fiat_currency=device.merchant.currency,
         fiat_amount=fiat_amount)

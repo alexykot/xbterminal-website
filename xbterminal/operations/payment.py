@@ -58,6 +58,7 @@ def prepare_payment(device, fiat_amount):
     # TODO: fiat currency -> currency
     order = PaymentOrder(
         device=device,
+        account=device.account,
         bitcoin_network=device.bitcoin_network,
         merchant_address=device.account.forward_address,
         fiat_currency=device.merchant.currency,

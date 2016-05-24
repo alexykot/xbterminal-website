@@ -17,13 +17,15 @@ class PaymentOrderFactory(factory.DjangoModelFactory):
         model = PaymentOrder
 
     device = factory.SubFactory(DeviceFactory)
+    account = factory.LazyAttribute(
+        lambda po: po.device.account)
     bitcoin_network = factory.LazyAttribute(
-        lambda po: po.device.bitcoin_network)
+        lambda po: po.account.bitcoin_network)
     local_address = '1PZoCJdbQdYsBur25F6cZLejM1bkSSUktL'
     merchant_address = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
     fee_address = '1NdS5JCXzbhNv4STQAaknq56iGstfgRCXg'
     fiat_currency = factory.LazyAttribute(
-        lambda po: po.device.merchant.currency)
+        lambda po: po.account.merchant.currency)
 
     fiat_amount = fuzzy.FuzzyDecimal(0.1, 2.0)
     instantfiat_fiat_amount = Decimal(0)
@@ -47,11 +49,13 @@ class WithdrawalOrderFactory(factory.DjangoModelFactory):
         model = WithdrawalOrder
 
     device = factory.SubFactory(DeviceFactory)
+    account = factory.LazyAttribute(
+        lambda wo: wo.device.account)
     bitcoin_network = factory.LazyAttribute(
-        lambda wo: wo.device.bitcoin_network)
+        lambda wo: wo.account.bitcoin_network)
     merchant_address = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
     fiat_currency = factory.LazyAttribute(
-        lambda wo: wo.device.merchant.currency)
+        lambda wo: wo.account.merchant.currency)
     fiat_amount = fuzzy.FuzzyDecimal(0.1, 2.0)
     customer_btc_amount = factory.LazyAttribute(
         lambda wo: (wo.fiat_amount / wo.exchange_rate).quantize(BTC_DEC_PLACES))
@@ -68,7 +72,7 @@ class WithdrawalOrderFactory(factory.DjangoModelFactory):
 
     @factory.post_generation
     def reserved_outputs(self, create, extracted, **kwargs):
-        if not self.device.account.instantfiat:
+        if not self.account.instantfiat:
             self.reserved_outputs = serialize_outputs(extracted or [])
 
 
