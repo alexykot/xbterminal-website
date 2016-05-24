@@ -19,7 +19,6 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
-from constance import config
 from django_countries.fields import CountryField
 from django_fsm import FSMField, transition
 from extended_choices import Choices
@@ -572,6 +571,7 @@ class Device(models.Model):
         null=True,
         validators=[validate_public_key],
         help_text='API public key')
+    # TODO: remove field
     our_fee_override = models.CharField(
         max_length=50,
         blank=True,
@@ -642,15 +642,6 @@ class Device(models.Model):
         return delta < datetime.timedelta(minutes=2)
 
     is_online.boolean = True
-
-    @property
-    def our_fee_address(self):
-        if self.our_fee_override:
-            return self.our_fee_override
-        if self.bitcoin_network == 'mainnet':
-            return config.OUR_FEE_MAINNET_ADDRESS
-        elif self.bitcoin_network == 'testnet':
-            return config.OUR_FEE_TESTNET_ADDRESS
 
 
 @receiver(pre_save, sender=Device)

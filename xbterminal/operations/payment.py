@@ -60,17 +60,23 @@ def prepare_payment(device, fiat_amount):
         device=device,
         bitcoin_network=device.bitcoin_network,
         merchant_address=device.account.forward_address,
-        fee_address=device.our_fee_address,
         fiat_currency=device.merchant.currency,
         fiat_amount=fiat_amount.quantize(FIAT_DEC_PLACES))
     # Connect to bitcoind
     bc = blockchain.BlockChain(device.bitcoin_network)
-    # Addresses
+    # Local address (payment address)
     try:
         order.local_address = str(bc.get_new_address())
     except Exception as error:
         logger.exception(error)
         raise exceptions.NetworkError
+    # Fee address
+    if device.our_fee_override:
+        order.fee_address = device.our_fee_override
+    elif order.bitcoin_network == 'mainnet':
+        order.fee_address = config.OUR_FEE_MAINNET_ADDRESS
+    elif order.bitcoin_network == 'testnet':
+        order.fee_address = config.OUR_FEE_TESTNET_ADDRESS
     # Exchange service
     if not device.account.instantfiat:
         order.instantfiat_fiat_amount = FIAT_DEC_PLACES
