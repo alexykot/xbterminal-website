@@ -87,9 +87,6 @@ class PaymentOrder(models.Model):
         max_length=64, validators=[validate_transaction], null=True)
     payment_type = models.CharField(
         max_length=10, choices=PAYMENT_TYPES)
-    account_tx = models.OneToOneField(
-        'website.Transaction',
-        null=True)
 
     time_created = models.DateTimeField(auto_now_add=True)
     time_recieved = models.DateTimeField(null=True)
@@ -101,7 +98,7 @@ class PaymentOrder(models.Model):
     time_cancelled = models.DateTimeField(null=True)
 
     def __unicode__(self):
-        return str(self.pk)
+        return self.uid
 
     @property
     def expires_at(self):
@@ -225,9 +222,6 @@ class WithdrawalOrder(models.Model):
     outgoing_tx_id = models.CharField(
         max_length=64,
         validators=[validate_transaction],
-        null=True)
-    account_tx = models.OneToOneField(
-        'website.Transaction',
         null=True)
 
     time_created = models.DateTimeField(auto_now_add=True)

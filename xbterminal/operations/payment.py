@@ -28,6 +28,7 @@ from operations.services.wrappers import get_exchange_rate, is_tx_reliable
 from operations.rq_helpers import run_periodic_task, cancel_current_task
 from operations.models import PaymentOrder
 
+from website.utils.accounts import create_account_txs
 from website.utils.email import send_error_message
 
 logger = logging.getLogger(__name__)
@@ -319,8 +320,6 @@ def forward_transaction(payment_order):
     """
     # Connect to bitcoind
     bc = blockchain.BlockChain(payment_order.bitcoin_network)
-    # Wait for transaction
-    bc.get_raw_transaction(payment_order.incoming_tx_ids[0])
     # Get outputs
     unspent_outputs = bc.get_unspent_outputs(
         CBitcoinAddress(payment_order.local_address))
@@ -331,41 +330,44 @@ def forward_transaction(payment_order):
         payment_order.extra_btc_amount = extra_btc_amount
     else:
         payment_order.tx_fee_btc_amount += extra_btc_amount
-    # Select destination address
-    account = payment_order.device.account
-    if account.balance + payment_order.merchant_btc_amount <= \
-            account.balance_max:
-        # Store bitcoins on merchant's internal account
-        if not account.bitcoin_address:
-            account.bitcoin_address = str(bc.get_new_address())
-            account.save()
-        destination_address = account.bitcoin_address
-        payment_order.account_tx = account.transaction_set.create(
-            amount=payment_order.merchant_btc_amount)  # Updates balance
-    else:
-        # Forward payment to merchant address (default)
-        destination_address = payment_order.merchant_address
-    # Forward payment
-    addresses = [
-        (destination_address,
-         payment_order.merchant_btc_amount),
+    # Select output addresses
+    outputs = [
         (payment_order.fee_address,
          payment_order.fee_btc_amount),
-        (payment_order.instantfiat_address,
-         payment_order.instantfiat_btc_amount),
         (payment_order.refund_address,
          payment_order.extra_btc_amount),
     ]
-    outputs = {}
-    for address, amount in addresses:
-        if not address:
-            continue
-        if address not in outputs:
-            outputs[address] = BTC_DEC_PLACES
-        outputs[address] += amount
+    account = payment_order.device.account
+    if account.instantfiat:
+        assert not payment_order.merchant_btc_amount
+        outputs.append((payment_order.instantfiat_address,
+                        payment_order.instantfiat_btc_amount))
+        create_account_txs(payment_order)
+    else:
+        assert not payment_order.instantfiat_btc_amount
+        if account.balance + payment_order.merchant_btc_amount <= \
+                account.balance_max:
+            # Store bitcoins on merchant's internal account
+            if not account.bitcoin_address:
+                account.bitcoin_address = str(bc.get_new_address())
+                account.save()
+            outputs.append((account.bitcoin_address,
+                            payment_order.merchant_btc_amount))
+            create_account_txs(payment_order)
+        else:
+            # Forward payment to merchant address
+            outputs.append((payment_order.merchant_address,
+                            payment_order.merchant_btc_amount))
+    # Create and send transaction
+    summed_outputs = {}
+    for address, amount in outputs:
+        assert address
+        if address not in summed_outputs:
+            summed_outputs[address] = BTC_DEC_PLACES
+        summed_outputs[address] += amount
     outgoing_tx = bc.create_raw_transaction(
         [out['outpoint'] for out in unspent_outputs],
-        outputs)
+        summed_outputs)
     outgoing_tx_signed = bc.sign_raw_transaction(outgoing_tx)
     payment_order.outgoing_tx_id = bc.send_raw_transaction(outgoing_tx_signed)
     payment_order.time_forwarded = timezone.now()

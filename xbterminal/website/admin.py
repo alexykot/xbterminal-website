@@ -132,11 +132,17 @@ class KYCDocumentInline(admin.TabularInline):
 class TransactionInline(admin.TabularInline):
 
     model = models.Transaction
-    exclude = ['amount', 'instantfiat_tx_id']
+    exclude = [
+        'payment',
+        'withdrawal',
+        # 'amount',
+        'instantfiat_tx_id',
+    ]
     readonly_fields = [
         'amount_colored',
         'tx_hash',
         'is_confirmed',
+        'order',
         'created_at',
     ]
     max_num = 0
@@ -150,6 +156,15 @@ class TransactionInline(admin.TabularInline):
                            obj.amount)
     amount_colored.allow_tags = True
     amount_colored.short_description = 'amount'
+
+    def order(self, obj):
+        if obj.payment:
+            return url_to_object(obj.payment)
+        elif obj.withdrawal:
+            return url_to_object(obj.withdrawal)
+        else:
+            return '-'
+    order.allow_tags = True
 
 
 @admin.register(models.Account)
@@ -217,7 +232,7 @@ class AccountInline(admin.TabularInline):
     def get_formset(self, *args, **kwargs):
         # Disable form validation
         formset = super(AccountInline, self).get_formset(*args, **kwargs)
-        formset.clean = lambda *args: None
+        formset.form._post_clean = lambda *args: None
         return formset
 
 

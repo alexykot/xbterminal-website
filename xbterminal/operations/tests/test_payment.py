@@ -6,6 +6,7 @@ from mock import patch, Mock
 
 from constance import config
 
+from website.models import INSTANTFIAT_PROVIDERS
 from website.tests.factories import (
     MerchantAccountFactory,
     AccountFactory,
@@ -736,19 +737,20 @@ class WaitForValidationTestCase(TestCase):
 class ForwardTransactionTestCase(TestCase):
 
     @patch('operations.payment.blockchain.BlockChain')
-    def test_forward_standard(self, bc_mock):
+    def test_forward_to_address_with_extra(self, bc_mock):
         payment_order = PaymentOrderFactory.create(
+            device__account__currency__name='BTC',
             merchant_btc_amount=Decimal('0.1'),
             fee_btc_amount=Decimal('0.001'),
             tx_fee_btc_amount=Decimal('0.0001'),
             instantfiat_btc_amount=Decimal(0),
             incoming_tx_ids=['0' * 64],
             refund_address='18GV9EWUjSVTU1jXMb1RmaGxAonSyBgKAc')
+        self.assertFalse(payment_order.device.account.instantfiat)
         outgoing_tx_id = '1' * 64
         extra_btc_amount = Decimal('0.001')
 
-        bc_instance_mock = Mock(**{
-            'get_raw_transaction.return_value': 'test_incoming_tx',
+        bc_mock.return_value = bc_instance_mock = Mock(**{
             'get_unspent_outputs.return_value': [{
                 'outpoint': 'test_outpoint',
                 'amount': payment_order.btc_amount + extra_btc_amount,
@@ -757,11 +759,9 @@ class ForwardTransactionTestCase(TestCase):
             'sign_raw_transaction.return_value': 'test_tx_signed',
             'send_raw_transaction.return_value': outgoing_tx_id,
         })
-        bc_mock.return_value = bc_instance_mock
 
         payment.forward_transaction(payment_order)
 
-        self.assertTrue(bc_instance_mock.get_raw_transaction.called)
         self.assertTrue(bc_instance_mock.get_unspent_outputs.called)
         args = bc_instance_mock.get_unspent_outputs.call_args[0]
         self.assertEqual(str(args[0]), payment_order.local_address)
@@ -785,7 +785,57 @@ class ForwardTransactionTestCase(TestCase):
         self.assertEqual(payment_order.extra_btc_amount, extra_btc_amount)
         self.assertEqual(payment_order.tx_fee_btc_amount, Decimal('0.0001'))
         self.assertEqual(payment_order.outgoing_tx_id, outgoing_tx_id)
+        self.assertEqual(payment_order.transaction_set.count(), 0)
         self.assertIsNotNone(payment_order.time_forwarded)
+
+    @patch('operations.payment.blockchain.BlockChain')
+    def test_forward_instantfiat(self, bc_cls_mock):
+        order = PaymentOrderFactory.create(
+            device__merchant__instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            device__account__currency__name='GBP',
+            merchant_btc_amount=Decimal(0),
+            fee_btc_amount=Decimal('0.001'),
+            tx_fee_btc_amount=Decimal('0.0001'),
+            instantfiat_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
+            instantfiat_fiat_amount=Decimal('12.00'),
+            instantfiat_btc_amount=Decimal('0.1'),
+            incoming_tx_ids=['0' * 64],
+            refund_address='18GV9EWUjSVTU1jXMb1RmaGxAonSyBgKAc')
+        self.assertTrue(order.device.account.instantfiat)
+        outgoing_tx_id = '1' * 64
+
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'get_unspent_outputs.return_value': [{
+                'outpoint': 'test_outpoint',
+                'amount': order.btc_amount,
+            }],
+            'create_raw_transaction.return_value': 'test_tx',
+            'sign_raw_transaction.return_value': 'test_tx_signed',
+            'send_raw_transaction.return_value': outgoing_tx_id,
+        })
+
+        payment.forward_transaction(order)
+
+        args = bc_mock.create_raw_transaction.call_args[0]
+        self.assertEqual(args[0], ['test_outpoint'])
+        outputs = args[1]
+        self.assertEqual(len(outputs.keys()), 3)
+        self.assertEqual(outputs[order.instantfiat_address],
+                         order.instantfiat_btc_amount)
+        self.assertEqual(outputs[order.fee_address],
+                         order.fee_btc_amount)
+        self.assertEqual(outputs[order.refund_address],
+                         order.extra_btc_amount)
+
+        order.refresh_from_db()
+        self.assertEqual(order.outgoing_tx_id, outgoing_tx_id)
+        self.assertEqual(order.transaction_set.count(), 1)
+        account_tx = order.transaction_set.first()
+        expected_final_amount = Decimal('11.88')
+        self.assertEqual(account_tx.amount, expected_final_amount)
+        self.assertIsNotNone(order.time_forwarded)
+        self.assertEqual(order.device.account.balance,
+                         expected_final_amount)
 
     @patch('operations.payment.blockchain.BlockChain')
     def test_forward_dust_extra(self, bc_cls_mock):
@@ -794,9 +844,9 @@ class ForwardTransactionTestCase(TestCase):
             fee_btc_amount=Decimal('0.001'),
             tx_fee_btc_amount=Decimal('0.0001'),
             instantfiat_btc_amount=Decimal(0),
-            incoming_tx_ids=['0' * 64])
+            incoming_tx_ids=['0' * 64],
+            refund_address='18GV9EWUjSVTU1jXMb1RmaGxAonSyBgKAc')
         bc_cls_mock.return_value = Mock(**{
-            'get_raw_transaction.return_value': 'test_incoming_tx',
             'get_unspent_outputs.return_value': [{
                 'outpoint': 'test_outpoint',
                 'amount': order.btc_amount + Decimal('0.00005'),
@@ -824,12 +874,13 @@ class ForwardTransactionTestCase(TestCase):
             fee_btc_amount=Decimal('0.001'),
             tx_fee_btc_amount=Decimal('0.0001'),
             instantfiat_btc_amount=Decimal(0),
-            incoming_tx_ids=['0' * 64])
+            incoming_tx_ids=['0' * 64],
+            refund_address='18GV9EWUjSVTU1jXMb1RmaGxAonSyBgKAc')
+        self.assertFalse(payment_order.device.account.instantfiat)
         outgoing_tx_id = '1' * 64
         account_address = '13tmm98hpFexSa3gi15DdD1p4kN2WsEBXX'
 
         bc_instance_mock = Mock(**{
-            'get_raw_transaction.return_value': 'test_incoming_tx',
             'get_unspent_outputs.return_value': [{
                 'outpoint': 'test_outpoint',
                 'amount': payment_order.btc_amount,
@@ -846,16 +897,21 @@ class ForwardTransactionTestCase(TestCase):
         self.assertTrue(bc_instance_mock.get_new_address.called)
 
         outputs = bc_instance_mock.create_raw_transaction.call_args[0][1]
-        self.assertEqual(len(outputs.keys()), 2)
+        self.assertEqual(len(outputs.keys()), 3)
         self.assertEqual(outputs[account_address],
                          payment_order.merchant_btc_amount)
         self.assertEqual(outputs[payment_order.fee_address],
                          payment_order.fee_btc_amount)
+        self.assertEqual(outputs[payment_order.refund_address],
+                         payment_order.extra_btc_amount)
 
         payment_order.refresh_from_db()
         self.assertEqual(payment_order.extra_btc_amount, 0)
         self.assertEqual(payment_order.outgoing_tx_id, outgoing_tx_id)
-        self.assertIsNotNone(payment_order.account_tx)
+        self.assertEqual(payment_order.transaction_set.count(), 1)
+        account_tx = payment_order.transaction_set.first()
+        self.assertEqual(account_tx.amount,
+                         payment_order.merchant_btc_amount)
         self.assertIsNotNone(payment_order.time_forwarded)
 
         btc_account.refresh_from_db()

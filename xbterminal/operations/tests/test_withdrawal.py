@@ -153,7 +153,7 @@ class SendTransactionTestCase(TestCase):
 
     @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.run_periodic_task')
-    def test_send_tx(self, run_task_mock, bc_mock):
+    def test_send_btc(self, run_task_mock, bc_mock):
         device = DeviceFactory.create(
             account__balance=Decimal('0.01'),
             account__bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
@@ -178,9 +178,9 @@ class SendTransactionTestCase(TestCase):
         order.refresh_from_db()
         self.assertEqual(order.customer_address, customer_address)
         self.assertEqual(order.btc_amount, Decimal('0.0051'))
+        self.assertEqual(order.change_btc_amount, Decimal('0.0049'))
         self.assertEqual(order.outgoing_tx_id, outgoing_tx_id)
         self.assertEqual(order.status, 'sent')
-        self.assertIsNotNone(order.account_tx)
 
         self.assertTrue(run_task_mock.called)
 
@@ -191,9 +191,45 @@ class SendTransactionTestCase(TestCase):
         self.assertEqual(outputs[order.customer_address],
                          order.customer_btc_amount)
         self.assertEqual(outputs[order.merchant_address],
-                         Decimal('0.0049'))
+                         order.change_btc_amount)
+
+        self.assertEqual(order.transaction_set.count(), 2)
+        account_tx_1 = order.transaction_set.get(amount__lt=0)
+        self.assertEqual(account_tx_1.amount,
+                         -(order.btc_amount + order.change_btc_amount))
+        account_tx_2 = order.transaction_set.get(amount__gt=0)
+        self.assertEqual(account_tx_2.amount,
+                         order.change_btc_amount)
 
         self.assertEqual(device.account.balance, Decimal('0.0049'))
+
+    @patch('operations.withdrawal.BlockChain')
+    @patch('operations.withdrawal.run_periodic_task')
+    def test_send_btc_without_change(self, run_task_mock, bc_cls_mock):
+        device = DeviceFactory.create(
+            account__balance=Decimal('0.0051'),
+            account__bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+        order = WithdrawalOrderFactory.create(
+            device=device,
+            fiat_amount=Decimal('1.00'),
+            tx_fee_btc_amount=Decimal('0.0001'),
+            reserved_outputs=[COutPoint()],
+            exchange_rate=Decimal(200))
+        customer_address = '1NdS5JCXzbhNv4STQAaknq56iGstfgRCXg'
+        bc_cls_mock.return_value = Mock(**{
+            'create_raw_transaction.return_value': 'test_tx',
+            'sign_raw_transaction.return_value': 'test_tx_signed',
+            'send_raw_transaction.return_value': '0' * 64,
+        })
+
+        withdrawal.send_transaction(order, customer_address)
+        order.refresh_from_db()
+        self.assertEqual(order.change_btc_amount, 0)
+        self.assertEqual(order.status, 'sent')
+        self.assertEqual(order.transaction_set.count(), 1)
+        account_tx_1 = order.transaction_set.get(amount__lt=0)
+        self.assertEqual(account_tx_1.amount, -order.btc_amount)
+        self.assertEqual(device.account.balance, 0)
 
     def test_invalid_address(self):
         order = WithdrawalOrderFactory.create()

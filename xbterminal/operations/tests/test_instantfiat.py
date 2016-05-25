@@ -101,6 +101,17 @@ class CryptoPayTestCase(TestCase):
             'invoice_id', 'test')
         self.assertFalse(result)
 
+    def test_get_final_amount(self):
+        amount_1 = Decimal('0.33')
+        self.assertEqual(instantfiat.cryptopay.get_final_amount(amount_1),
+                         Decimal('0.33'))
+        amount_2 = Decimal('1.00')
+        self.assertEqual(instantfiat.cryptopay.get_final_amount(amount_2),
+                         Decimal('0.99'))
+        amount_3 = Decimal('2.50')
+        self.assertEqual(instantfiat.cryptopay.get_final_amount(amount_3),
+                         Decimal('2.47'))
+
     @patch('operations.instantfiat.cryptopay.requests.post')
     def test_create_merchant(self, post_mock):
         post_mock.return_value = Mock(**{

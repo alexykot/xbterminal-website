@@ -20,20 +20,12 @@ class PaymentOrderTestCase(TestCase):
         self.assertEqual(payment_order.bitcoin_network,
                          payment_order.device.bitcoin_network)
         self.assertEqual(len(payment_order.incoming_tx_ids), 0)
-        self.assertIsNone(payment_order.account_tx)
 
         expected_btc_amount = (payment_order.merchant_btc_amount +
                                payment_order.instantfiat_btc_amount +
                                payment_order.fee_btc_amount +
                                payment_order.tx_fee_btc_amount)
         self.assertEqual(payment_order.btc_amount, expected_btc_amount)
-
-    def test_factory_account_tx(self):
-        order = PaymentOrderFactory.create(account_tx=True)
-        self.assertEqual(order.account_tx.account.pk,
-                         order.device.account.pk)
-        self.assertEqual(order.account_tx.amount,
-                         order.merchant_btc_amount)
 
     def test_incoming_tx_ids(self):
         order = PaymentOrderFactory.create()
@@ -153,7 +145,6 @@ class WithdrawalOrderTestCase(TestCase):
         # Defaults
         self.assertEqual(order.order_type, 'withdrawal')
         self.assertEqual(len(order.uid), 6)
-        self.assertIsNone(order.account_tx)
         self.assertIsNotNone(order.time_created)
         self.assertEqual(str(order), order.uid)
 
@@ -163,14 +154,6 @@ class WithdrawalOrderTestCase(TestCase):
                          order.device.bitcoin_network)
         self.assertEqual(order.fiat_currency,
                          order.device.merchant.currency)
-        self.assertIsNone(order.account_tx)
-
-    def test_factory_account_tx(self):
-        order = WithdrawalOrderFactory.create(account_tx=True)
-        self.assertEqual(order.account_tx.account.pk,
-                         order.device.account.pk)
-        self.assertEqual(order.account_tx.amount,
-                         -order.btc_amount)
 
     def test_btc_amount(self):
         order = WithdrawalOrderFactory.create(

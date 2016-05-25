@@ -394,6 +394,15 @@ class Account(models.Model):
 
 class Transaction(models.Model):
 
+    payment = models.ForeignKey(
+        'operations.PaymentOrder',
+        blank=True,
+        null=True)
+    withdrawal = models.ForeignKey(
+        'operations.WithdrawalOrder',
+        blank=True,
+        null=True)
+
     account = models.ForeignKey(Account)
     amount = models.DecimalField(max_digits=20, decimal_places=8)
     instantfiat_tx_id = models.CharField(
@@ -412,20 +421,20 @@ class Transaction(models.Model):
 
     @property
     def tx_hash(self):
-        if hasattr(self, 'paymentorder'):
-            return self.paymentorder.outgoing_tx_id
-        elif hasattr(self, 'withdrawalorder'):
-            return self.withdrawalorder.outgoing_tx_id
+        if self.payment:
+            return self.payment.outgoing_tx_id
+        elif self.withdrawal:
+            return self.withdrawal.outgoing_tx_id
 
     @property
     def is_confirmed(self):
         # TODO: add is_confirmed field to Transaction model for accuracy
-        if hasattr(self, 'paymentorder'):
-            return self.paymentorder.time_confirmed is not None
-        elif hasattr(self, 'withdrawalorder'):
+        if self.payment:
+            return self.payment.time_confirmed is not None
+        elif self.withdrawal:
             # Confidence reached, but not confirmed
             # Probably, all withdrawals should be included
-            return self.withdrawalorder.time_broadcasted is not None
+            return self.withdrawal.time_broadcasted is not None
         else:
             # Transaction is not linked to operation, may be unconfirmed
             return True
