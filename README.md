@@ -50,7 +50,7 @@ Create admin user:
 
 ```
 vagrant ssh
-/var/lib/sentry/venv/bin/sentry createuser --superuser --email admin@example.net --password admin
+SENTRY_CONF=/etc/sentry /var/lib/sentry/venv/bin/sentry createuser --superuser
 ```
 
 Sentry will be available at port 9000.
