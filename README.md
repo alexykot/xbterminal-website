@@ -41,3 +41,16 @@ cd /vagrant
 python xbterminal/manage.py migrate
 honcho start
 ```
+
+XBT server will be available at port 8083.
+
+### Sentry
+
+Create admin user:
+
+```
+vagrant ssh
+/var/lib/sentry/venv/bin/sentry createuser --superuser --email admin@example.net --password admin
+```
+
+Sentry will be available at port 9000.
