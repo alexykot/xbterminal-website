@@ -178,6 +178,7 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             merchant.instantfiat_provider = INSTANTFIAT_PROVIDERS.CRYPTOPAY
             merchant.instantfiat_merchant_id = cryptopay_merchant_id
             merchant.instantfiat_api_key = cryptopay_api_key
+            merchant.save()
             create_managed_accounts(merchant)
 
     @atomic
