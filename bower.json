@@ -1,0 +1,9 @@
+{
+  "name": "xbt-website",
+  "description": "",
+  "main": "",
+  "private": true,
+  "dependencies": {
+    "jquery-qrcode": "lrsjng/jquery-qrcode#^0.13.4"
+  }
+}

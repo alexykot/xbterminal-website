@@ -1,6 +1,7 @@
 *.pyc
 local_settings.py
-venv
+/venv
+/bower_components
 .vagrant
 vagrant/settings.yml
 vagrant/backups
