@@ -1,3 +1,4 @@
+from decimal import Decimal
 import re
 from rest_framework import serializers
 
@@ -7,9 +8,43 @@ from operations.models import WithdrawalOrder
 from website.models import (
     Language,
     Currency,
+    Account,
     Device,
     DeviceBatch)
 from website.validators import validate_public_key
+
+
+class PaymentInitSerializer(serializers.Serializer):
+
+    device = serializers.CharField(required=False)
+    account = serializers.CharField(required=False)
+    amount = serializers.DecimalField(
+        max_digits=9,
+        decimal_places=2,
+        min_value=Decimal('0.01'))
+    bt_mac = serializers.RegexField(
+        '^[0-9a-fA-F:]{17}$',
+        required=False)
+
+    def validate_device(self, value):
+        try:
+            device = Device.objects.get(key=value, status='active')
+        except Device.DoesNotExist:
+            raise serializers.ValidationError('Invalid device key.')
+        return device
+
+    def validate_account(self, value):
+        try:
+            account = Account.objects.get(pk=value)
+        except Account.DoesNotExist:
+            raise serializers.ValidationError('Invalid account ID.')
+        return account
+
+    def validate(self, data):
+        if not data.get('device') and not data.get('account'):
+            raise serializers.ValidationError(
+                'Either device or account must be specified.')
+        return data
 
 
 class WithdrawalOrderSerializer(serializers.ModelSerializer):

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from decimal import Decimal
 import hashlib
 from mock import Mock, patch
 from django.test import TestCase
@@ -7,14 +8,75 @@ from django.test import TestCase
 from operations.tests.factories import WithdrawalOrderFactory
 from website.models import Language, Currency
 from website.tests.factories import (
+    AccountFactory,
     DeviceBatchFactory,
     DeviceFactory)
 from api.serializers import (
+    PaymentInitSerializer,
     WithdrawalOrderSerializer,
     DeviceSerializer,
     DeviceRegistrationSerializer)
 from api.utils import activation
 from api.utils.crypto import create_test_public_key
+
+
+class PaymentInitSerializerTestCase(TestCase):
+
+    def test_validate_with_device(self):
+        device = DeviceFactory.create(status='active')
+        data = {
+            'device': device.key,
+            'amount': '1.25',
+        }
+        serializer = PaymentInitSerializer(data=data)
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.validated_data['device'].pk,
+                         device.pk)
+        self.assertEqual(serializer.validated_data['amount'],
+                         Decimal('1.25'))
+        self.assertIsNone(serializer.validated_data.get('bt_mac'))
+
+    def test_validate_with_account(self):
+        account = AccountFactory.create()
+        data = {
+            'account': account.pk,
+            'amount': '1.25',
+        }
+        serializer = PaymentInitSerializer(data=data)
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.validated_data['account'].pk,
+                         account.pk)
+
+    def test_no_device_no_account(self):
+        data = {
+            'amount': '1.25',
+        }
+        serializer = PaymentInitSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors['non_field_errors'][0],
+                         'Either device or account must be specified.')
+
+    def test_invalid_device_key(self):
+        data = {
+            'device': '120313',
+            'amount': '1.25',
+        }
+        serializer = PaymentInitSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors['device'][0],
+                         'Invalid device key.')
+
+    def test_invalid_bt_mac(self):
+        device = DeviceFactory.create(status='active')
+        data = {
+            'device': device.key,
+            'amount': '1.25',
+            'bt_mac': '00:11:22:33:44'
+        }
+        serializer = PaymentInitSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors['bt_mac'][0],
+                         'This value does not match the required pattern.')
 
 
 class WithdrawalOrderSerializerTestCase(TestCase):
