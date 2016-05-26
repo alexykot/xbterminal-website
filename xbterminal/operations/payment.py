@@ -42,29 +42,29 @@ def prepare_payment(device, fiat_amount):
     Returns:
         payment_order: PaymentOrder instance
     """
-    # TODO: perform these checks at form validation step
     assert fiat_amount >= FIAT_MIN_OUTPUT
-    if not device.account:
+    account = device.account
+    if not account:
         raise exceptions.PaymentError(
             'Account is not set for device.')
-    if not device.account.instantfiat and not device.account.forward_address:
+    if not account.instantfiat and not account.forward_address:
         raise exceptions.PaymentError(
             'Payout address is not set for account.')
-    if device.account.instantfiat and \
-            device.merchant.currency != device.account.currency:
+    if account.instantfiat and \
+            account.merchant.currency != account.currency:
         raise exceptions.PaymentError(
             'Account currency should match merchant currency.')
     # Prepare payment order
     # TODO: fiat currency -> currency
     order = PaymentOrder(
         device=device,
-        account=device.account,
-        bitcoin_network=device.bitcoin_network,
-        merchant_address=device.account.forward_address,
-        fiat_currency=device.merchant.currency,
+        account=account,
+        bitcoin_network=account.bitcoin_network,
+        merchant_address=account.forward_address,
+        fiat_currency=account.merchant.currency,
         fiat_amount=fiat_amount.quantize(FIAT_DEC_PLACES))
     # Connect to bitcoind
-    bc = blockchain.BlockChain(device.bitcoin_network)
+    bc = blockchain.BlockChain(order.bitcoin_network)
     # Local address (payment address)
     try:
         order.local_address = str(bc.get_new_address())
@@ -72,14 +72,14 @@ def prepare_payment(device, fiat_amount):
         logger.exception(error)
         raise exceptions.NetworkError
     # Fee address
-    if device.our_fee_override:
+    if device and device.our_fee_override:
         order.fee_address = device.our_fee_override
     elif order.bitcoin_network == 'mainnet':
         order.fee_address = config.OUR_FEE_MAINNET_ADDRESS
     elif order.bitcoin_network == 'testnet':
         order.fee_address = config.OUR_FEE_TESTNET_ADDRESS
     # Exchange service
-    if not device.account.instantfiat:
+    if not account.instantfiat:
         order.instantfiat_fiat_amount = FIAT_DEC_PLACES
         order.instantfiat_btc_amount = BTC_DEC_PLACES
         exchange_rate = get_exchange_rate(order.fiat_currency.name)
@@ -88,7 +88,7 @@ def prepare_payment(device, fiat_amount):
         (order.instantfiat_invoice_id,
          order.instantfiat_btc_amount,
          order.instantfiat_address) = instantfiat.create_invoice(
-            device.account,
+            account,
             order.instantfiat_fiat_amount)
         assert order.instantfiat_btc_amount > 0
         if order.instantfiat_btc_amount < BTC_MIN_OUTPUT:
@@ -346,7 +346,7 @@ def forward_transaction(payment_order):
         (payment_order.refund_address,
          payment_order.extra_btc_amount),
     ]
-    account = payment_order.device.account
+    account = payment_order.account
     if account.instantfiat:
         assert not payment_order.merchant_btc_amount
         outputs.append((payment_order.instantfiat_address,
@@ -434,7 +434,7 @@ def wait_for_exchange(payment_order_uid):
         # Timeout, cancel job
         cancel_current_task()
     invoice_paid = instantfiat.is_invoice_paid(
-        payment_order.device.account,
+        payment_order.account,
         payment_order.instantfiat_invoice_id)
     if invoice_paid:
         cancel_current_task()
