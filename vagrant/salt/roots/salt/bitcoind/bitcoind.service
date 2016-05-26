@@ -1,0 +1,13 @@
+[Unit]
+Description=Bitcoin Core daemon
+After=network.target
+ 
+[Service]
+Type=simple
+User=bitcoin
+Group=bitcoin
+ExecStart=/usr/bin/bitcoind -conf=/etc/bitcoin/bitcoin.conf
+ExecStop=/usr/bin/bitcoin-cli -conf=/etc/bitcoin/bitcoin.conf stop
+
+[Install]
+WantedBy=multi-user.target

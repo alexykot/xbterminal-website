@@ -1,0 +1,14 @@
+[Unit]
+Description=Sentry scheduler
+After=postgresql.service redis.service
+
+[Service]
+Type=simple
+User=sentry
+Group=sentry
+WorkingDirectory=/var/lib/sentry
+Environment=SENTRY_CONF=/etc/sentry
+ExecStart=/var/lib/sentry/venv/bin/sentry celery beat
+
+[Install]
+WantedBy=multi-user.target

@@ -1,4 +1,4 @@
-bitcoin-ppa:
+bitcoin_ppa:
   pkgrepo.managed:
     - ppa: bitcoin/bitcoin
     - refresh_db: true
@@ -7,18 +7,21 @@ bitcoind:
   pkg:
     - installed
     - require:
-      - pkgrepo: bitcoin-ppa
+      - pkgrepo: bitcoin_ppa
   service:
     - running
+    - enable: true
     - require:
       - pkg: bitcoind
-      - file: /etc/init/bitcoind.conf
+      - file: /lib/systemd/system/bitcoind.service
       - file: /etc/bitcoin/bitcoin.conf
 
-bitcoin:
+bitcoin_group:
   group:
     - present
     - name: bitcoin
+
+bitcoin_user:
   user:
     - present
     - name: bitcoin
@@ -27,7 +30,7 @@ bitcoin:
     - groups:
       - bitcoin
     - require:
-      - group: bitcoin
+      - group: bitcoin_group
 
 /etc/bitcoin:
   file.directory:
@@ -35,7 +38,7 @@ bitcoin:
     - user: bitcoin
     - group: bitcoin
     - require:
-      - user: bitcoin
+      - user: bitcoin_user
 
 /etc/bitcoin/bitcoin.conf:
   file.managed:
@@ -50,12 +53,10 @@ bitcoin:
     - mode: 660
     - require:
       - file: /etc/bitcoin
-      - user: bitcoin
+      - user: bitcoin_user
 
-/etc/init/bitcoind.conf:
+/lib/systemd/system/bitcoind.service:
   file.managed:
-    - name: /etc/init/bitcoind.conf
-    - source: salt://bitcoind/bitcoind.conf
-    - mode: 755
+    - source: salt://bitcoind/bitcoind.service
     - require:
       - pkg: bitcoind

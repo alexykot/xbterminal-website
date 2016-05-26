@@ -7,12 +7,13 @@ Vagrant.configure("2") do |config|
   rescue Errno::ENOENT
   end
 
-  config.vm.box = "ubuntu/trusty64"
+  config.vm.box = "ubuntu/wily64"
   config.vm.hostname = "xbt-server-dev"
 
   config.vm.network "forwarded_port", guest: 5432, host: settings['vm']['ports']['postgresql']
   config.vm.network "forwarded_port", guest: 6379, host: settings['vm']['ports']['redis']
   config.vm.network "forwarded_port", guest: 18332, host: settings['vm']['ports']['bitcoind']
+  config.vm.network "forwarded_port", guest: 9000, host: settings['vm']['ports']['sentry']
   config.vm.network "forwarded_port", guest: 8083, host: settings['vm']['ports']['xbt-server']
 
   config.vm.provider "virtualbox" do |vb|

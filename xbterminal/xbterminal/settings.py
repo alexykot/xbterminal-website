@@ -37,6 +37,10 @@ LOGGING = {
             'filename': os.path.join(BASE_DIR, '..', 'logs', 'rq.log'),
             'formatter': 'short',
         },
+        'sentry': {
+            'level': 'WARNING',
+            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
+        },
         'null': {
             'level': 'DEBUG',
             'class': 'logging.NullHandler',
@@ -86,6 +90,7 @@ INSTALLED_APPS = (
     'captcha',
     'django_fsm',
     'fsm_admin',
+    'raven.contrib.django.raven_compat',
 
     'website',
     'operations',
@@ -276,6 +281,10 @@ CONSTANCE_CONFIG = {
     'TX_CONFIDENCE_THRESHOLD': (0.95, 'Transaction confidence threshold'),
     'WITHDRAW_UNCONFIRMED': (False, 'Allow to withdraw from unconfirmed deposits'),
 }
+
+# Sentry
+
+RAVEN_CONFIG = {}
 
 # Misc
 
