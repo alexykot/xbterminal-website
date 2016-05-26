@@ -12,7 +12,6 @@ from rest_framework import status, viewsets
 from constance import config
 
 from website.models import Device, DeviceBatch
-from website.utils.qr import generate_qr_code
 
 from api.forms import PaymentForm, WithdrawalForm
 from api.serializers import (
@@ -115,8 +114,6 @@ class PaymentViewSet(viewsets.GenericViewSet):
                 payment_order.btc_amount,
                 device.merchant.company_name,
                 payment_request_url)
-        # TODO: append QR code as data URI only when needed
-        data['qr_code_src'] = generate_qr_code(data['payment_uri'], size=4)
         return Response(data)
 
     def retrieve(self, *args, **kwargs):

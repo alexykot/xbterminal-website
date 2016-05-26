@@ -39,7 +39,6 @@ class PaymentViewSetTestCase(APITestCase):
         form_data = {
             'device_key': device.key,
             'amount': fiat_amount,
-            'qr_code': 'true',
         }
         response = self.client.post(url, form_data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -49,7 +48,7 @@ class PaymentViewSetTestCase(APITestCase):
         self.assertEqual(data['exchange_rate'], exchange_rate)
         self.assertIn('check_url', data)
         self.assertIn('payment_uri', data)
-        self.assertIn('qr_code_src', data)
+        self.assertNotIn('qr_code_src', data)
 
         payment_order = PaymentOrder.objects.get(uid=payment_order.uid)
         self.assertGreater(len(payment_order.request), 0)
@@ -84,7 +83,7 @@ class PaymentViewSetTestCase(APITestCase):
         self.assertIn('payment_uri', data)
         self.assertEqual(data['payment_uid'], payment_order.uid)
         self.assertIn('payment_request', data)
-        self.assertIn('qr_code_src', data)
+        self.assertNotIn('qr_code_src', data)
 
     def test_create_invalid_amount(self):
         device = DeviceFactory.create()
