@@ -57,12 +57,14 @@ def check_documents(merchant):
             if not user_data['verified']:
                 merchant.verification_status = 'unverified'
                 merchant.save()
+                send_verification_info(merchant, documents)
                 send_verification_notification(merchant)
         elif kyc_info['status'] == 'accepted':
             documents.update(status='verified')
             if user_data['verified']:
                 merchant.verification_status = 'verified'
                 merchant.save()
+                send_verification_info(merchant, documents)
                 send_verification_notification(merchant)
         else:
             raise AssertionError

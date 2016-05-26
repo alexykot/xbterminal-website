@@ -84,13 +84,13 @@ def send_reset_password_email(email, password):
 
 def send_verification_info(merchant, documents):
     """
-    Send notification about uploaded KYC documents (for admin)
+    Send notification about KYC documents (for admin)
     Accepts:
         merchant: MerchantAccount instance
-        documents: list of KYCDocument instances (uploaded documents)
+        documents: list of KYCDocument instances
     """
     message = create_html_message(
-        _('KYC documents uploaded'),
+        _('KYC documents status changed'),
         'email/admin_verification.html',
         {'merchant': merchant, 'documents': documents},
         settings.DEFAULT_FROM_EMAIL,

@@ -253,8 +253,10 @@ class KYCUtilsTestCase(TestCase):
             instantfiat_document_id=upload_id,
             status='unverified')
         check_documents(merchant)
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].to[0], merchant.user.email)
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(mail.outbox[0].to,
+                         settings.CONTACT_EMAIL_RECIPIENTS)
+        self.assertEqual(mail.outbox[1].to[0], merchant.user.email)
         merchant.refresh_from_db()
         self.assertEqual(merchant.verification_status, 'unverified')
         document_1.refresh_from_db()
@@ -297,8 +299,10 @@ class KYCUtilsTestCase(TestCase):
             instantfiat_document_id=upload_id,
             status='unverified')
         check_documents(merchant)
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].to[0], merchant.user.email)
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(mail.outbox[0].to,
+                         settings.CONTACT_EMAIL_RECIPIENTS)
+        self.assertEqual(mail.outbox[1].to[0], merchant.user.email)
         merchant.refresh_from_db()
         self.assertEqual(merchant.verification_status, 'verified')
         document_1.refresh_from_db()
