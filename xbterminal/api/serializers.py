@@ -46,6 +46,14 @@ class PaymentInitSerializer(serializers.Serializer):
                 'Either device or account must be specified.')
         return data
 
+    @property
+    def error_message(self):
+        for field, errors in self.errors.items():
+            if field == 'non_field_errors':
+                return errors[0]
+            else:
+                return '{0} - {1}'.format(field, errors[0]).capitalize()
+
 
 class WithdrawalOrderSerializer(serializers.ModelSerializer):
 
