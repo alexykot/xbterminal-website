@@ -8,7 +8,7 @@ from mock import patch, Mock
 
 from bitcoin.core import COutPoint
 
-from website.tests.factories import DeviceFactory
+from website.tests.factories import DeviceFactory, AccountFactory
 from operations.tests.factories import (
     WithdrawalOrderFactory,
     outpoint_factory)
@@ -185,6 +185,25 @@ class PrepareWithdrawalTestCase(TestCase):
         with self.assertRaises(exceptions.WithdrawalError) as context:
             withdrawal.prepare_withdrawal(device, fiat_amount)
         self.assertEqual(context.exception.message, 'Insufficient funds.')
+
+    @patch('operations.withdrawal.BlockChain')
+    @patch('operations.withdrawal.get_exchange_rate')
+    def test_prepare_no_device(self, get_rate_mock, bc_cls_mock):
+        account = AccountFactory.create(
+            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+        fiat_amount = Decimal('1.00')
+        get_rate_mock.return_value = Decimal(100)
+        bc_cls_mock.return_value = Mock(**{
+            'get_unspent_outputs.return_value': [
+                {'amount': Decimal('0.1'), 'outpoint': outpoint_factory()},
+            ],
+        })
+
+        order = withdrawal.prepare_withdrawal(account, fiat_amount)
+        self.assertIsNone(order.device)
+        self.assertEqual(order.account.pk, account.pk)
+        self.assertEqual(order.fiat_currency.pk,
+                         account.merchant.currency.pk)
 
 
 class SendTransactionTestCase(TestCase):

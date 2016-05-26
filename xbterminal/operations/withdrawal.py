@@ -20,6 +20,7 @@ from operations.blockchain import (
 from operations.rq_helpers import cancel_current_task, run_periodic_task
 from operations.models import WithdrawalOrder
 from operations.exceptions import WithdrawalError
+from website.models import Device, Account
 from website.utils.accounts import create_account_txs
 from website.utils.email import send_error_message
 
@@ -48,16 +49,21 @@ def _get_all_reserved_outputs(current_order):
     return all_reserved_outputs
 
 
-def prepare_withdrawal(device, fiat_amount):
+def prepare_withdrawal(device_or_account, fiat_amount):
     """
     Check merchant's account balance, create withdrawal order
     Accepts:
-        device: Device instance
+        device_or_account: Device or Account instance
         fiat_amount: Decimal
     Returns:
         order: WithdrawalOrder instance
     """
-    account = device.account
+    if isinstance(device_or_account, Device):
+        device = device_or_account
+        account = device.account
+    elif isinstance(device_or_account, Account):
+        device = None
+        account = device_or_account
     if not account:
         raise WithdrawalError('Account is not set for device.')
     if account.instantfiat and \

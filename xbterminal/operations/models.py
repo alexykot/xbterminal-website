@@ -42,7 +42,10 @@ class PaymentOrder(models.Model):
                            editable=False,
                            unique=True,
                            default=gen_payment_uid)
-    device = models.ForeignKey('website.Device')
+    device = models.ForeignKey(
+        'website.Device',
+        on_delete=models.SET_NULL,
+        null=True)
     # TODO: this field should be mandatory
     account = models.ForeignKey('website.Account', null=True)
 
@@ -199,7 +202,10 @@ class WithdrawalOrder(models.Model):
                            editable=False,
                            unique=True,
                            default=gen_withdrawal_uid)
-    device = models.ForeignKey('website.Device')
+    device = models.ForeignKey(
+        'website.Device',
+        on_delete=models.SET_NULL,
+        null=True)
     # TODO: this field should be mandatory
     account = models.ForeignKey('website.Account', null=True)
 

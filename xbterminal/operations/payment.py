@@ -28,22 +28,28 @@ from operations.services.wrappers import get_exchange_rate, is_tx_reliable
 from operations.rq_helpers import run_periodic_task, cancel_current_task
 from operations.models import PaymentOrder
 
+from website.models import Device, Account
 from website.utils.accounts import create_account_txs
 from website.utils.email import send_error_message
 
 logger = logging.getLogger(__name__)
 
 
-def prepare_payment(device, fiat_amount):
+def prepare_payment(device_or_account, fiat_amount):
     """
     Accepts:
-        device: website.models.Device
+        device_or_account: Device or Account instance
         fiat_amount: Decimal
     Returns:
-        payment_order: PaymentOrder instance
+        order: PaymentOrder instance
     """
+    if isinstance(device_or_account, Device):
+        device = device_or_account
+        account = device.account
+    elif isinstance(device_or_account, Account):
+        device = None
+        account = device_or_account
     assert fiat_amount >= FIAT_MIN_OUTPUT
-    account = device.account
     if not account:
         raise exceptions.PaymentError(
             'Account is not set for device.')
