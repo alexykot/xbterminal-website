@@ -2,14 +2,12 @@
 {% load website_tags i18n %}
 
 {% block content %}
-{% trans 'Merchant uploaded these documents' %}:
+{% trans 'Merchant' %}: {{ merchant }}
 <ol>
     {% for document in documents %}
     <li>
-        {{ document.get_document_type_display }}:<br>
-        <a href="{{ document|admin_url }}" target="_blank">
-            {{ document.original_name }}
-        </a>
+        <a href="{{ document|admin_url }}" target="_blank">{{ document.get_document_type_display }}</a>:
+        <b>{{ document.get_status_display }}</b>
     </li>
     {% endfor %}
 </ol>
