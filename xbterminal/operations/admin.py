@@ -50,6 +50,7 @@ class PaymentOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
     list_display = [
         '__str__',
         'device_link',
+        'account_link',
         'merchant_link',
         'time_created',
         'status',
@@ -65,14 +66,26 @@ class PaymentOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
         return False
 
     def device_link(self, payment_order):
-        return url_to_object(payment_order.device)
-
+        if payment_order.device:
+            return url_to_object(payment_order.device)
+        else:
+            return '-'
     device_link.allow_tags = True
     device_link.short_description = 'device'
 
-    def merchant_link(self, payment_order):
-        return url_to_object(payment_order.device.merchant)
+    def account_link(self, payment_order):
+        if payment_order.account:
+            return url_to_object(payment_order.account)
+        else:
+            return '-'
+    account_link.allow_tags = True
+    account_link.short_description = 'account'
 
+    def merchant_link(self, payment_order):
+        if payment_order.account:
+            return url_to_object(payment_order.account.merchant)
+        else:
+            return url_to_object(payment_order.device.merchant)
     merchant_link.allow_tags = True
     merchant_link.short_description = 'merchant'
 
@@ -136,6 +149,7 @@ class WithdrawalOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
     list_display = [
         '__str__',
         'device_link',
+        'account_link',
         'merchant_link',
         'time_created',
         'status',
@@ -150,13 +164,25 @@ class WithdrawalOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
         return False
 
     def device_link(self, withdrawal_order):
-        return url_to_object(withdrawal_order.device)
-
+        if withdrawal_order.device:
+            return url_to_object(withdrawal_order.device)
+        else:
+            return '-'
     device_link.allow_tags = True
     device_link.short_description = 'device'
 
-    def merchant_link(self, withdrawal_order):
-        return url_to_object(withdrawal_order.device.merchant)
+    def account_link(self, withdrawal_order):
+        if withdrawal_order.account:
+            return url_to_object(withdrawal_order.account)
+        else:
+            return '-'
+    account_link.allow_tags = True
+    account_link.short_description = 'account'
 
+    def merchant_link(self, withdrawal_order):
+        if withdrawal_order.account:
+            return url_to_object(withdrawal_order.account.merchant)
+        else:
+            return url_to_object(withdrawal_order.device.merchant)
     merchant_link.allow_tags = True
     merchant_link.short_description = 'merchant'
