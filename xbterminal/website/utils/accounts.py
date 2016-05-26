@@ -23,7 +23,9 @@ def create_account_txs(order):
                 amount=order.merchant_btc_amount)
     elif order.order_type == 'withdrawal':
         if account.instantfiat:
-            raise AssertionError
+            account.transaction_set.create(
+                withdrawal=order,
+                amount=-order.fiat_amount)
         else:
             account.transaction_set.create(
                 withdrawal=order,
@@ -88,6 +90,21 @@ def update_balances(merchant):
                     try:
                         transaction = account.transaction_set.get(
                             payment__instantfiat_invoice_id=invoice_id)
+                    except Transaction.DoesNotExist:
+                        # Create new transaction
+                        transaction = account.transaction_set.create(
+                            instantfiat_tx_id=item['id'],
+                            amount=amount_decimal)
+                    else:
+                        # Transaction found, set ID
+                        transaction.instantfiat_tx_id = item['id']
+                        transaction.save()
+                elif item['type'] == 'Bitcoin payment':
+                    # Try to find transaction by withdrawal order
+                    reference = item['reference']
+                    try:
+                        transaction = account.transaction_set.get(
+                            withdrawal__instantfiat_reference=reference)
                     except Transaction.DoesNotExist:
                         # Create new transaction
                         transaction = account.transaction_set.create(

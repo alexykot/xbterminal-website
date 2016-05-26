@@ -293,23 +293,33 @@ class AccountTestCase(TestCase):
             account=account,
             amount=Decimal('0.3'))
         # Withdrawal - sent
+        withdrawal_1 = WithdrawalOrderFactory.create(
+            time_sent=timezone.now())
         TransactionFactory.create(
-            withdrawal=WithdrawalOrderFactory.create(
-                time_sent=timezone.now()),
+            withdrawal=withdrawal_1,
             account=account,
-            amount=Decimal('-0.15'))
+            amount=Decimal('-0.18'))
+        TransactionFactory.create(
+            withdrawal=withdrawal_1,
+            account=account,
+            amount=Decimal('0.03'))
         # Withdrawal - broadcasted
+        withdrawal_2 = WithdrawalOrderFactory.create(
+            time_sent=timezone.now(),
+            time_broadcasted=timezone.now())
         TransactionFactory.create(
-            withdrawal=WithdrawalOrderFactory.create(
-                time_sent=timezone.now(),
-                time_broadcasted=timezone.now()),
+            withdrawal=withdrawal_2,
             account=account,
-            amount=Decimal('-0.05'))
+            amount=Decimal('-0.06'))
+        TransactionFactory.create(
+            withdrawal=withdrawal_2,
+            account=account,
+            amount=Decimal('0.01'))
         # Without order
         TransactionFactory.create(
-            account=account, amount=Decimal('-0.1'))
-        self.assertEqual(account.balance, Decimal('0.2'))
-        self.assertEqual(account.balance_confirmed, Decimal('0.15'))
+            account=account, amount=Decimal('0.13'))
+        self.assertEqual(account.balance, Decimal('0.43'))
+        self.assertEqual(account.balance_confirmed, Decimal('0.20'))
 
 
 class TransactionTestCase(TestCase):

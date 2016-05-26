@@ -140,6 +140,7 @@ class WithdrawalOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
         'time_created',
         'status',
     ]
+    readonly_fields = ['status']
     inlines = [WithdrawalOrderTransactionInline]
 
     def has_add_permission(self, request):

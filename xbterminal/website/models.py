@@ -375,7 +375,7 @@ class Account(models.Model):
         """
         balance = Decimal('0.00000000')
         for transaction in self.transaction_set.all():
-            if transaction.is_confirmed:
+            if transaction.is_confirmed():
                 balance += transaction.amount
         return balance
 
@@ -426,18 +426,23 @@ class Transaction(models.Model):
         elif self.withdrawal:
             return self.withdrawal.outgoing_tx_id
 
-    @property
     def is_confirmed(self):
+        """
+        If true, transaction will be included in calculation of
+        confirmed balance of the account
+        """
         # TODO: add is_confirmed field to Transaction model for accuracy
         if self.payment:
             return self.payment.time_confirmed is not None
         elif self.withdrawal:
-            # Confidence reached, but not confirmed
-            # Probably, all withdrawals should be included
-            return self.withdrawal.time_broadcasted is not None
+            # Always include negative balance changes
+            # 'broadcasted' means confidence reached, but not confirmed
+            return (self.amount < 0 or
+                    self.withdrawal.time_broadcasted is not None)
         else:
             # Transaction is not linked to operation, may be unconfirmed
             return True
+    is_confirmed.boolean = True
 
 
 class KYCDocument(models.Model):

@@ -68,7 +68,8 @@ class WithdrawalOrderFactory(factory.DjangoModelFactory):
 
     @factory.post_generation
     def reserved_outputs(self, create, extracted, **kwargs):
-        self.reserved_outputs = serialize_outputs(extracted or [])
+        if not self.device.account.instantfiat:
+            self.reserved_outputs = serialize_outputs(extracted or [])
 
 
 def outpoint_factory():

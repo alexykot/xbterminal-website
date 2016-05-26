@@ -203,7 +203,7 @@ class WithdrawalOrder(models.Model):
     bitcoin_network = models.CharField(
         max_length=10, choices=BITCOIN_NETWORKS)
     merchant_address = models.CharField(
-        max_length=35, validators=[validate_bitcoin_address])
+        max_length=35, validators=[validate_bitcoin_address], null=True)
     customer_address = models.CharField(
         max_length=35, validators=[validate_bitcoin_address], null=True)
     fiat_currency = models.ForeignKey('website.Currency')
@@ -222,6 +222,12 @@ class WithdrawalOrder(models.Model):
     outgoing_tx_id = models.CharField(
         max_length=64,
         validators=[validate_transaction],
+        null=True)
+    instantfiat_transfer_id = models.CharField(
+        max_length=50,
+        null=True)
+    instantfiat_reference = models.CharField(
+        max_length=50,
         null=True)
 
     time_created = models.DateTimeField(auto_now_add=True)
