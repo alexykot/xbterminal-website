@@ -50,7 +50,7 @@ var paymentInit = function (form) {
         $('.exchange-rate').text((data.exchange_rate / 1000).toFixed(3));
         $('.payment-request').
             attr('alt', data.payment_uri).
-            attr('src', data.qr_code_src);
+            qrcode({render: 'div', 'size': 230, 'background': 'white', 'text': data.payment_uri});
         $('.payment-reset').text(gettext('Cancel'));
         paymentCheck(data.check_url);
     }).fail(function () {
@@ -82,10 +82,8 @@ var paymentCheck = function (checkURL) {
                 $('.payment-init').hide();
                 $('.payment-success').show();
                 $('.payment-receipt')
-                    .attr('alt', data.receipt_url)
-                    .attr('src', data.qr_code_src)
-                    .closest('a')
-                    .attr('href', data.receipt_url);
+                    .attr('href', data.receipt_url)
+                    .qrcode({render: 'div', 'size': 150, 'background': 'white', 'text': data.receipt_url});
                 $('.payment-reset').text('Clear');
             }
         });
@@ -105,6 +103,8 @@ var paymentReset = function () {
         .val('0.00')
         .attr('disabled', false)
         .focus();
+    $('.payment-request').empty();
+    $('.payment-receipt').empty();
 };
 
 var lastActivity = new Date().getTime();
