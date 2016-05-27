@@ -33,9 +33,6 @@
             {% if device.status == 'active' or device.status == 'suspended' %}
             <div><a href="{% url 'website:reconciliation' device.key %}">{% trans 'reconciliation' %}</a></div>
             {% endif %}
-            {% if device.status == 'active' %}
-            <div><a href="{% url 'website:payment' device.key %}" target="_blank">{% trans 'online POS' %}</a></div>
-            {% endif %}
         </td>
     </tr>
     {% endfor %}

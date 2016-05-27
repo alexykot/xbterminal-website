@@ -45,7 +45,7 @@ var paymentInit = function (form) {
         url: paymentInitUrl,
         method: 'POST',
         data: {
-            device: form.data('device-key'),
+            account: form.data('account-id'),
             amount: amount
         }
     }).done(function (data) {

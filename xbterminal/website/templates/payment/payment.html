@@ -5,10 +5,10 @@
 
 {% block content %}
 <div class="content">
-    <form class="enter-amount" data-device-key="{{ device.key }}">
+    <form class="enter-amount" data-account-id="{{ account.pk }}">
         <label class="amount-label">{% trans 'amount' %}</label>
         <div class="amount-wrapper">
-            <div class="fiat-symbol">{{ device.merchant.currency.prefix }}</div>
+            <div class="fiat-symbol">{{ account.merchant.currency.prefix }}</div>
             <input type="text" name="amount" value="{{ amount|unlocalize }}">
         </div>
         <div class="error-message"></div>
@@ -16,7 +16,7 @@
     </form>
     <div class="payment-init">
         <div class="payment-message-1">
-            <div class="fiat-amount-wrapper">{{ device.merchant.currency.prefix }} <span class="fiat-amount"></span></div>
+            <div class="fiat-amount-wrapper">{{ account.merchant.currency.prefix }} <span class="fiat-amount"></span></div>
             <div class="mbtc-amount-wrapper">m฿ <span class="mbtc-amount"></span></div>
         </div>
         <div class="payment-message-2">{% trans 'exchange rate' %}: <span class="exchange-rate"></span></div>
