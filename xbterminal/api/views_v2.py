@@ -63,9 +63,6 @@ class PaymentViewSet(viewsets.GenericViewSet):
         payment_response_url = construct_absolute_url(
             'api:v2:payment-response',
             kwargs={'uid': payment_order.uid})
-        payment_check_url = construct_absolute_url(
-            'api:v2:payment-detail',
-            kwargs={'uid': payment_order.uid})
         # Create payment request
         payment_order.request = operations.protocol.create_payment_request(
             payment_order.bitcoin_network,
@@ -85,14 +82,13 @@ class PaymentViewSet(viewsets.GenericViewSet):
             'fiat_amount': float(fiat_amount),
             'btc_amount': float(btc_amount),
             'exchange_rate': float(exchange_rate),
-            'check_url': payment_check_url,
         }
         if serializer.validated_data.get('bt_mac'):
             # Enable payment via bluetooth
             payment_bluetooth_url = 'bt:{mac}'.\
                 format(mac=serializer.validated_data['bt_mac'].replace(':', ''))
             payment_bluetooth_request = operations.protocol.create_payment_request(
-                payment_order.device.bitcoin_network,
+                payment_order.bitcoin_network,
                 [(payment_order.local_address, payment_order.btc_amount)],
                 payment_order.time_created,
                 payment_order.expires_at,

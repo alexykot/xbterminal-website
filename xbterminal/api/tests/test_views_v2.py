@@ -48,9 +48,7 @@ class PaymentViewSetTestCase(APITestCase):
         self.assertEqual(data['fiat_amount'], fiat_amount)
         self.assertEqual(data['btc_amount'], expected_btc_amount)
         self.assertEqual(data['exchange_rate'], expected_exchange_rate)
-        self.assertIn('check_url', data)
         self.assertIn('payment_uri', data)
-        self.assertNotIn('qr_code_src', data)
 
         self.assertEqual(prepare_mock.call_args[0][0], device)
         self.assertEqual(prepare_mock.call_args[0][1], Decimal('10'))
@@ -84,11 +82,9 @@ class PaymentViewSetTestCase(APITestCase):
         self.assertEqual(data['fiat_amount'], fiat_amount)
         self.assertEqual(data['btc_amount'], expected_btc_amount)
         self.assertEqual(data['exchange_rate'], expected_exchange_rate)
-        self.assertIn('check_url', data)
         self.assertIn('payment_uri', data)
         self.assertEqual(data['payment_uid'], payment_order.uid)
         self.assertIn('payment_request', data)
-        self.assertNotIn('qr_code_src', data)
 
     @patch('api.views_v2.operations.payment.prepare_payment')
     def test_create_for_account(self, prepare_mock):
@@ -113,7 +109,6 @@ class PaymentViewSetTestCase(APITestCase):
         self.assertEqual(data['fiat_amount'], fiat_amount)
         self.assertEqual(data['btc_amount'], expected_btc_amount)
         self.assertEqual(data['exchange_rate'], expected_exchange_rate)
-        self.assertIn('check_url', data)
         self.assertIn('payment_uri', data)
         self.assertEqual(prepare_mock.call_args[0][0], account)
         self.assertEqual(prepare_mock.call_args[0][1], Decimal('10'))
