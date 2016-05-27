@@ -139,6 +139,13 @@ class PaymentOrderTestCase(TestCase):
         order = PaymentOrderFactory.create(incoming_tx_ids=['0' * 64])
         self.assertIn('/prc/{0}'.format(order.uid), order.receipt_url)
 
+    def test_create_payment_request(self):
+        order = PaymentOrderFactory.create()
+        url = 'http://some-url'
+        request = order.create_payment_request(url)
+        self.assertTrue(isinstance(request, bytes))
+        self.assertGreater(len(request), 0)
+
 
 class WithdrawalOrderTestCase(TestCase):
 
