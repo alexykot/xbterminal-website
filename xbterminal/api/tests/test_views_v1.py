@@ -127,9 +127,6 @@ class PaymentInitViewTestCase(TestCase):
         self.assertIn('payment_uri', data)
         self.assertIn('qr_code_src', data)
 
-        payment_order = PaymentOrder.objects.get(uid=payment_order.uid)
-        self.assertGreater(len(payment_order.request), 0)
-
     @patch('api.views_v1.operations.payment.prepare_payment')
     def test_payment_terminal(self, prepare_mock):
         device = DeviceFactory.create(long_key=True)
@@ -208,10 +205,10 @@ class PaymentInitViewTestCase(TestCase):
 
 class PaymentRequestViewTestCase(TestCase):
 
-    def test_payment_request(self):
-        data = '009A8B'.decode('hex')
-        payment_order = PaymentOrderFactory.create(
-            request=data)
+    @patch('operations.models.create_payment_request')
+    def test_payment_request(self, create_mock):
+        create_mock.return_value = data = '009A8B'.decode('hex')
+        payment_order = PaymentOrderFactory.create()
         url = reverse('api:payment_request',
                       kwargs={'payment_uid': payment_order.uid})
         response = self.client.get(url)

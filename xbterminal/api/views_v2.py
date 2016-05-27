@@ -60,13 +60,6 @@ class PaymentViewSet(viewsets.GenericViewSet):
         payment_request_url = construct_absolute_url(
             'api:v2:payment-request',
             kwargs={'uid': payment_order.uid})
-        payment_response_url = construct_absolute_url(
-            'api:v2:payment-response',
-            kwargs={'uid': payment_order.uid})
-        # Create payment request
-        payment_order.request = payment_order.create_payment_request(
-            payment_response_url)
-        payment_order.save()
         # Prepare json response
         fiat_amount = payment_order.fiat_amount.quantize(Decimal('0.00'))
         btc_amount = payment_order.btc_amount
@@ -127,7 +120,12 @@ class PaymentViewSet(viewsets.GenericViewSet):
         payment_order = self.get_object()
         if payment_order.status not in ['new', 'underpaid']:
             raise Http404
-        response = Response(payment_order.request)
+        payment_response_url = construct_absolute_url(
+            'api:v2:payment-response',
+            kwargs={'uid': payment_order.uid})
+        payment_request = payment_order.create_payment_request(
+            payment_response_url)
+        response = Response(payment_request)
         response['Content-Transfer-Encoding'] = 'binary'
         return response
 

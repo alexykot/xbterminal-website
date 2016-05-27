@@ -53,9 +53,6 @@ class PaymentViewSetTestCase(APITestCase):
         self.assertEqual(prepare_mock.call_args[0][0], device)
         self.assertEqual(prepare_mock.call_args[0][1], Decimal('10'))
 
-        payment_order.refresh_from_db()
-        self.assertGreater(len(payment_order.request), 0)
-
     @patch('api.views_v2.operations.payment.prepare_payment')
     def test_create_from_terminal(self, prepare_mock):
         device = DeviceFactory.create(long_key=True)
@@ -207,10 +204,10 @@ class PaymentViewSetTestCase(APITestCase):
         response = self.client.post(url, {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_payment_request(self):
-        data = '009A8B'.decode('hex')
-        payment_order = PaymentOrderFactory.create(
-            request=data)
+    @patch('operations.models.create_payment_request')
+    def test_payment_request(self, create_mock):
+        create_mock.return_value = data = '009A8B'.decode('hex')
+        payment_order = PaymentOrderFactory.create()
         url = reverse('api:v2:payment-request',
                       kwargs={'uid': payment_order.uid})
         response = self.client.get(url)

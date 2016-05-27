@@ -192,21 +192,9 @@ class PaymentInitView(View):
         payment_request_url = construct_absolute_url(
             'api:short:payment_request',
             kwargs={'payment_uid': payment_order.uid})
-        payment_response_url = construct_absolute_url(
-            'api:payment_response',
-            kwargs={'payment_uid': payment_order.uid})
         payment_check_url = construct_absolute_url(
             'api:payment_check',
             kwargs={'payment_uid': payment_order.uid})
-        # Create payment request
-        payment_order.request = operations.protocol.create_payment_request(
-            payment_order.device.bitcoin_network,
-            [(payment_order.local_address, payment_order.btc_amount)],
-            payment_order.time_created,
-            payment_order.expires_at,
-            payment_response_url,
-            device.merchant.company_name)
-        payment_order.save()
         # Prepare json response
         fiat_amount = payment_order.fiat_amount.quantize(Decimal('0.00'))
         btc_amount = payment_order.btc_amount
@@ -223,13 +211,8 @@ class PaymentInitView(View):
             # Enable payment via bluetooth
             payment_bluetooth_url = 'bt:{mac}'.\
                 format(mac=form.cleaned_data['bt_mac'].replace(':', ''))
-            payment_bluetooth_request = operations.protocol.create_payment_request(
-                payment_order.device.bitcoin_network,
-                [(payment_order.local_address, payment_order.btc_amount)],
-                payment_order.time_created,
-                payment_order.expires_at,
-                payment_bluetooth_url,
-                device.merchant.company_name)
+            payment_bluetooth_request = payment_order.create_payment_request(
+                payment_bluetooth_url)
             # Send payment request in response
             data['payment_uri'] = operations.blockchain.construct_bitcoin_uri(
                 payment_order.local_address,
@@ -263,7 +246,12 @@ class PaymentRequestView(View):
             raise Http404
         if payment_order.expires_at < timezone.now():
             raise Http404
-        response = HttpResponse(payment_order.request,
+        payment_response_url = construct_absolute_url(
+            'api:payment_response',
+            kwargs={'payment_uid': payment_order.uid})
+        payment_request = payment_order.create_payment_request(
+            payment_response_url)
+        response = HttpResponse(payment_request,
                                 content_type='application/bitcoin-paymentrequest')
         response['Content-Transfer-Encoding'] = 'binary'
         return response
