@@ -24,6 +24,14 @@ var numKeys = {
 };
 var maxDigits = 9;
 
+var paymentInitUrl = '/api/v2/payments/';
+var getPaymentCheckUrl = function (paymentUid) {
+    return paymentInitUrl + paymentUid + '/';
+};
+var getPaymentReceiptUrl = function (paymentUid) {
+    return paymentInitUrl + paymentUid + '/receipt/';
+};
+
 var paymentInit = function (form) {
     var amountField = form.find('[name="amount"]');
     var amount = parseFloat(amountField.val());
@@ -34,10 +42,10 @@ var paymentInit = function (form) {
     hideErrorMessage();
     amountField.attr('disabled', true);
     $.ajax({
-        url: form.attr('action'),
+        url: paymentInitUrl,
         method: 'POST',
         data: {
-            device_key: form.data('device-key'),
+            device: form.data('device-key'),
             amount: amount
         }
     }).done(function (data) {
@@ -51,7 +59,7 @@ var paymentInit = function (form) {
             attr('alt', data.payment_uri).
             qrcode({render: 'div', 'size': 230, 'background': 'white', 'text': data.payment_uri});
         $('.payment-reset').text(gettext('Cancel'));
-        paymentCheck(data.check_url);
+        paymentCheck(data.payment_uid);
     }).fail(function () {
         showErrorMessage(gettext('server error'));
     });
@@ -70,10 +78,12 @@ var hideErrorMessage = function () {
 };
 
 var currentCheck;
-var paymentCheck = function (checkURL) {
+var paymentCheck = function (paymentUid) {
+    var checkUrl = getPaymentCheckUrl(paymentUid);
+    var receiptUrl = getPaymentReceiptUrl(paymentUid);
     currentCheck = setInterval(function () {
         $.ajax({
-            url: checkURL
+            url: checkUrl,
         }).done(function (data) {
             if (data.paid === 1) {
                 clearInterval(currentCheck);
@@ -81,8 +91,8 @@ var paymentCheck = function (checkURL) {
                 $('.payment-init').hide();
                 $('.payment-success').show();
                 $('.payment-receipt')
-                    .attr('href', data.receipt_url)
-                    .qrcode({render: 'div', 'size': 150, 'background': 'white', 'text': data.receipt_url});
+                    .attr('href', receiptUrl)
+                    .qrcode({render: 'div', 'size': 150, 'background': 'white', 'text': receiptUrl});
                 $('.payment-reset').text('Clear');
             }
         });
