@@ -105,6 +105,13 @@ class PaymentOrder(models.Model):
         return self.uid
 
     @property
+    def merchant(self):
+        if self.account:
+            return self.account.merchant
+        else:
+            return self.device.merchant
+
+    @property
     def expires_at(self):
         return self.time_created + PAYMENT_TIMEOUT
 
@@ -247,6 +254,13 @@ class WithdrawalOrder(models.Model):
 
     def __unicode__(self):
         return self.uid
+
+    @property
+    def merchant(self):
+        if self.account:
+            return self.account.merchant
+        else:
+            return self.device.merchant
 
     @property
     def btc_amount(self):

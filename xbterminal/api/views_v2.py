@@ -73,7 +73,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
             payment_order.time_created,
             payment_order.expires_at,
             payment_response_url,
-            payment_order.account.merchant.company_name)
+            payment_order.merchant.company_name)
         payment_order.save()
         # Prepare json response
         fiat_amount = payment_order.fiat_amount.quantize(Decimal('0.00'))
@@ -97,12 +97,12 @@ class PaymentViewSet(viewsets.GenericViewSet):
                 payment_order.time_created,
                 payment_order.expires_at,
                 payment_bluetooth_url,
-                payment_order.account.merchant.company_name)
+                payment_order.merchant.company_name)
             # Send payment request in response
             data['payment_uri'] = operations.blockchain.construct_bitcoin_uri(
                 payment_order.local_address,
                 payment_order.btc_amount,
-                payment_order.account.merchant.company_name,
+                payment_order.merchant.company_name,
                 payment_bluetooth_url,
                 payment_request_url)
             data['payment_request'] = payment_bluetooth_request.encode('base64')
@@ -110,7 +110,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
             data['payment_uri'] = operations.blockchain.construct_bitcoin_uri(
                 payment_order.local_address,
                 payment_order.btc_amount,
-                payment_order.account.merchant.company_name,
+                payment_order.merchant.company_name,
                 payment_request_url)
         return Response(data)
 
@@ -177,7 +177,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
         response = Response(result.getvalue())
         response['Content-Disposition'] = 'inline; filename="receipt #{0} {1}.pdf"'.format(
             order.id,
-            order.device.merchant.company_name)
+            order.merchant.company_name)
         return response
 
 
@@ -260,7 +260,7 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
         response = Response(result.getvalue())
         response['Content-Disposition'] = 'inline; filename="receipt #{0} {1}.pdf"'.format(
             order.id,
-            order.device.merchant.company_name)
+            order.merchant.company_name)
         return response
 
 

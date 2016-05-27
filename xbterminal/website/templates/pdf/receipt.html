@@ -85,7 +85,7 @@
 <table>
     <tr>
         <td style="width: 400px;" class="col1">{% trans 'Amount' %}</td>
-        <td class="col2">{{ order.device.merchant.currency.prefix }}{{ order.fiat_amount|floatformat:2 }}{{ order.device.merchant.currency.postfix }}</td>
+        <td class="col2">{{ order.merchant.currency.prefix }}{{ order.fiat_amount|floatformat:2 }}{{ order.merchant.currency.postfix }}</td>
     </tr>
     <tr>
         <td class="col1">
@@ -97,7 +97,7 @@
     </tr>
     <tr>
         <td class="col1">{% trans 'Effective exchange rate' %}</td>
-        <td class="col2">{{ order.device.merchant.currency.prefix }}{{ order.scaled_effective_exchange_rate|floatformat:4 }}{{ order.device.merchant.currency.postfix }}</td>
+        <td class="col2">{{ order.merchant.currency.prefix }}{{ order.scaled_effective_exchange_rate|floatformat:4 }}{{ order.merchant.currency.postfix }}</td>
     </tr>
     <tr></tr>
     <tr>
@@ -137,11 +137,11 @@
     <tr></tr>
     <tr>
         <td class="col1">{% trans 'Merchant name' %}</td>
-        <td class="col2">{{ order.device.merchant.company_name }}</td>
+        <td class="col2">{{ order.merchant.company_name }}</td>
     </tr>
     <tr>
         <td class="col1">{% trans 'Merchant address' %}</td>
-        <td class="col2">{{ order.device.merchant.billing_address|join:', ' }}</td>
+        <td class="col2">{{ order.merchant.billing_address|join:', ' }}</td>
     </tr>
     <tr>
         <td class="col1">{% trans 'Receipt number' %}</td>

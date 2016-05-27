@@ -8,6 +8,7 @@ from operations.tests.factories import (
     DeviceFactory,
     PaymentOrderFactory,
     WithdrawalOrderFactory)
+from website.tests.factories import AccountFactory
 
 
 class PaymentOrderTestCase(TestCase):
@@ -41,6 +42,13 @@ class PaymentOrderTestCase(TestCase):
         self.assertIn(tx_2, order.incoming_tx_ids)
         order.save()
         self.assertEqual(len(order.incoming_tx_ids), 2)
+
+    def test_merchant(self):
+        order = PaymentOrderFactory.create()
+        self.assertEqual(order.merchant.pk, order.device.merchant.pk)
+        account = AccountFactory.create()
+        order = PaymentOrderFactory.create(device=None, account=account)
+        self.assertEqual(order.merchant.pk, account.merchant.pk)
 
     def test_status(self):
         # Without instantfiat
@@ -164,6 +172,13 @@ class WithdrawalOrderTestCase(TestCase):
         self.assertEqual(order.fiat_currency,
                          order.account.merchant.currency)
         self.assertIsNotNone(order.merchant_address)
+
+    def test_merchant(self):
+        order = WithdrawalOrderFactory.create()
+        self.assertEqual(order.merchant.pk, order.device.merchant.pk)
+        account = AccountFactory.create()
+        order = WithdrawalOrderFactory.create(device=None, account=account)
+        self.assertEqual(order.merchant.pk, account.merchant.pk)
 
     def test_btc_amount(self):
         order = WithdrawalOrderFactory.create(

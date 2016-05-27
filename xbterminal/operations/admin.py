@@ -82,10 +82,7 @@ class PaymentOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
     account_link.short_description = 'account'
 
     def merchant_link(self, payment_order):
-        if payment_order.account:
-            return url_to_object(payment_order.account.merchant)
-        else:
-            return url_to_object(payment_order.device.merchant)
+        return url_to_object(payment_order.merchant)
     merchant_link.allow_tags = True
     merchant_link.short_description = 'merchant'
 
@@ -180,9 +177,6 @@ class WithdrawalOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
     account_link.short_description = 'account'
 
     def merchant_link(self, withdrawal_order):
-        if withdrawal_order.account:
-            return url_to_object(withdrawal_order.account.merchant)
-        else:
-            return url_to_object(withdrawal_order.device.merchant)
+        return url_to_object(withdrawal_order.merchant)
     merchant_link.allow_tags = True
     merchant_link.short_description = 'merchant'

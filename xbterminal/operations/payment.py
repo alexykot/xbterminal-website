@@ -155,7 +155,7 @@ def wait_for_payment(payment_order_uid):
         cancel_current_task()
         return
     # Connect to bitcoind
-    bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
+    bc = blockchain.BlockChain(payment_order.bitcoin_network)
     transactions = bc.get_unspent_transactions(
         CBitcoinAddress(payment_order.local_address))
     if transactions:
@@ -200,7 +200,7 @@ def parse_payment(payment_order, payment_message):
         payment_ack: pb2-encoded message
     """
     # Select network
-    bc = blockchain.BlockChain(payment_order.device.bitcoin_network)
+    bc = blockchain.BlockChain(payment_order.bitcoin_network)
     try:
         (transactions,
          refund_addresses,
