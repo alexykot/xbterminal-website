@@ -165,10 +165,12 @@ class PaymentViewSetTestCase(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data
-        self.assertEqual(data['paid'], 0)
+        self.assertEqual(data['uid'], payment_order.uid)
+        self.assertEqual(data['status'], 'new')
 
     def test_retrieve_notified(self):
         payment_order = PaymentOrderFactory.create(
+            time_recieved=timezone.now(),
             time_forwarded=timezone.now())
         self.assertIsNone(payment_order.time_notified)
         url = reverse('api:v2:payment-detail',
@@ -176,7 +178,8 @@ class PaymentViewSetTestCase(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data
-        self.assertEqual(data['paid'], 1)
+        self.assertEqual(data['uid'], payment_order.uid)
+        self.assertEqual(data['status'], 'notified')
         payment_order.refresh_from_db()
         self.assertIsNotNone(payment_order.time_notified)
 

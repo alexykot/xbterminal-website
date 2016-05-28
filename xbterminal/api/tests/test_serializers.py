@@ -5,7 +5,9 @@ import hashlib
 from mock import Mock, patch
 from django.test import TestCase
 
-from operations.tests.factories import WithdrawalOrderFactory
+from operations.tests.factories import (
+    PaymentOrderFactory,
+    WithdrawalOrderFactory)
 from website.models import Language, Currency
 from website.tests.factories import (
     AccountFactory,
@@ -13,6 +15,7 @@ from website.tests.factories import (
     DeviceFactory)
 from api.serializers import (
     PaymentInitSerializer,
+    PaymentOrderSerializer,
     WithdrawalOrderSerializer,
     DeviceSerializer,
     DeviceRegistrationSerializer)
@@ -77,6 +80,15 @@ class PaymentInitSerializerTestCase(TestCase):
         self.assertFalse(serializer.is_valid())
         self.assertEqual(serializer.error_message,
                          'Bt_mac - this value does not match the required pattern.')
+
+
+class PaymentOrderSerializerTestCase(TestCase):
+
+    def test_serialization(self):
+        order = PaymentOrderFactory.create()
+        data = PaymentOrderSerializer(order).data
+        self.assertEqual(data['uid'], order.uid)
+        self.assertEqual(data['status'], order.status)
 
 
 class WithdrawalOrderSerializerTestCase(TestCase):

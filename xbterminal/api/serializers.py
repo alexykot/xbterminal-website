@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from api.utils import activation
 from api.utils.salt import Salt
-from operations.models import WithdrawalOrder
+from operations.models import PaymentOrder, WithdrawalOrder
 from website.models import (
     Language,
     Currency,
@@ -53,6 +53,16 @@ class PaymentInitSerializer(serializers.Serializer):
                 return errors[0]
             else:
                 return '{0} - {1}'.format(field, errors[0]).capitalize()
+
+
+class PaymentOrderSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = PaymentOrder
+        fields = [
+            'uid',
+            'status',
+        ]
 
 
 class WithdrawalOrderSerializer(serializers.ModelSerializer):

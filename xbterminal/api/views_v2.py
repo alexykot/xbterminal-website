@@ -16,6 +16,7 @@ from website.models import Device, DeviceBatch
 from api.forms import WithdrawalForm
 from api.serializers import (
     PaymentInitSerializer,
+    PaymentOrderSerializer,
     WithdrawalOrderSerializer,
     DeviceSerializer,
     DeviceRegistrationSerializer)
@@ -94,16 +95,13 @@ class PaymentViewSet(viewsets.GenericViewSet):
         return Response(data)
 
     def retrieve(self, *args, **kwargs):
-        payment_order = self.get_object()
-        if payment_order.time_forwarded is not None:
+        order = self.get_object()
+        if order.time_forwarded and not order.time_notified:
             # Close order
-            data = {'paid': 1}
-            if payment_order.time_notified is None:
-                payment_order.time_notified = timezone.now()
-                payment_order.save()
-        else:
-            data = {'paid': 0}
-        return Response(data)
+            order.time_notified = timezone.now()
+            order.save()
+        serializer = PaymentOrderSerializer(order)
+        return Response(serializer.data)
 
     @detail_route(methods=['POST'])
     @atomic

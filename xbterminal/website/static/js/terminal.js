@@ -85,7 +85,7 @@ var paymentCheck = function (paymentUid) {
         $.ajax({
             url: checkUrl,
         }).done(function (data) {
-            if (data.paid === 1) {
+            if (data.status === 'notified' || data.status == 'confirmed') {
                 clearInterval(currentCheck);
                 currentCheck = undefined;
                 $('.payment-init').hide();
@@ -94,6 +94,8 @@ var paymentCheck = function (paymentUid) {
                     .attr('href', receiptUrl)
                     .qrcode({render: 'div', 'size': 150, 'background': 'white', 'text': receiptUrl});
                 $('.payment-reset').text('Clear');
+            } else if (data.status === 'timeout' || data.status === 'failed') {
+                paymentReset();
             }
         });
     }, 2000);
