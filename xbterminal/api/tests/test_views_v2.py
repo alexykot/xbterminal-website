@@ -60,12 +60,11 @@ class PaymentViewSetTestCase(APITestCase):
         bluetooth_mac = '12:34:56:78:9A:BC'
         expected_btc_amount = 0.05
         expected_exchange_rate = 200
-        payment_order = PaymentOrderFactory.create(
+        prepare_mock.return_value = order = PaymentOrderFactory.create(
             device=device,
             fiat_amount=Decimal(fiat_amount),
             merchant_btc_amount=Decimal('0.0499'),
             tx_fee_btc_amount=Decimal('0.0001'))
-        prepare_mock.return_value = payment_order
 
         url = reverse('api:v2:payment-list')
         form_data = {
@@ -76,11 +75,11 @@ class PaymentViewSetTestCase(APITestCase):
         response = self.client.post(url, form_data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data
+        self.assertEqual(data['uid'], order.uid)
         self.assertEqual(data['fiat_amount'], fiat_amount)
         self.assertEqual(data['btc_amount'], expected_btc_amount)
         self.assertEqual(data['exchange_rate'], expected_exchange_rate)
         self.assertIn('payment_uri', data)
-        self.assertEqual(data['payment_uid'], payment_order.uid)
         self.assertIn('payment_request', data)
 
     @patch('api.views_v2.operations.payment.prepare_payment')
@@ -89,7 +88,7 @@ class PaymentViewSetTestCase(APITestCase):
         fiat_amount = 10
         expected_btc_amount = 0.05
         expected_exchange_rate = 200
-        prepare_mock.return_value = PaymentOrderFactory.create(
+        prepare_mock.return_value = order = PaymentOrderFactory.create(
             device=None,
             account=account,
             fiat_amount=Decimal(fiat_amount),
@@ -103,6 +102,7 @@ class PaymentViewSetTestCase(APITestCase):
         response = self.client.post(url, form_data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data
+        self.assertEqual(data['uid'], order.uid)
         self.assertEqual(data['fiat_amount'], fiat_amount)
         self.assertEqual(data['btc_amount'], expected_btc_amount)
         self.assertEqual(data['exchange_rate'], expected_exchange_rate)

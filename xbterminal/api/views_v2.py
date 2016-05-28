@@ -67,7 +67,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
         exchange_rate = payment_order.effective_exchange_rate.\
             quantize(Decimal('0.000000'))
         data = {
-            'payment_uid': payment_order.uid,
+            'uid': payment_order.uid,
             'fiat_amount': float(fiat_amount),
             'btc_amount': float(btc_amount),
             'exchange_rate': float(exchange_rate),

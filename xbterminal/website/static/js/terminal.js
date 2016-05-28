@@ -59,7 +59,7 @@ var paymentInit = function (form) {
             attr('alt', data.payment_uri).
             qrcode({render: 'div', 'size': 230, 'background': 'white', 'text': data.payment_uri});
         $('.payment-reset').text(gettext('Cancel'));
-        paymentCheck(data.payment_uid);
+        paymentCheck(data.uid);
     }).fail(function () {
         showErrorMessage(gettext('server error'));
     });
