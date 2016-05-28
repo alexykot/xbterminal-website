@@ -240,6 +240,7 @@ class WithdrawalOrder(models.Model):
         max_digits=18, decimal_places=8)
     change_btc_amount = models.DecimalField(
         max_digits=18, decimal_places=8)
+    # TODO: remove this field
     exchange_rate = models.DecimalField(
         max_digits=18, decimal_places=8)
 
