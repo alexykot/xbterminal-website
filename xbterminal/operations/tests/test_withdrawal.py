@@ -39,7 +39,7 @@ class PrepareWithdrawalTestCase(TestCase):
         self.assertEqual(order.device.pk, device.pk)
         self.assertEqual(order.account.pk, device.account.pk)
         self.assertEqual(order.bitcoin_network, device.bitcoin_network)
-        self.assertEqual(order.merchant_address, account_address.address)
+        self.assertIsNone(order.merchant_address)
         self.assertEqual(order.fiat_currency.pk,
                          device.merchant.currency.pk)
         self.assertEqual(order.fiat_amount, fiat_amount)
@@ -49,10 +49,44 @@ class PrepareWithdrawalTestCase(TestCase):
         self.assertEqual(order.change_btc_amount, Decimal('0.0019'))
         self.assertIsNotNone(order.reserved_outputs)
         self.assertEqual(order.status, 'new')
-        self.assertEqual(bc_mock.get_unspent_outputs.call_args[0][0],
-                         order.merchant_address)
+        self.assertEqual(bc_mock.get_unspent_outputs.call_count, 1)
+        self.assertEqual(
+            bc_mock.get_unspent_outputs.call_args[0][0],
+            account_address.address)
         self.assertEqual(
             bc_mock.get_unspent_outputs.call_args[1]['minconf'], 1)
+
+    @patch('operations.withdrawal.BlockChain')
+    @patch('operations.withdrawal.get_exchange_rate')
+    def test_prepare_btc_multiple_addresses(self, get_rate_mock, bc_cls_mock):
+        account = AccountFactory.create()
+        address_1, address_2 = AddressFactory.create_batch(
+            2, account=account)
+        device = DeviceFactory.create(account=account)
+        fiat_amount = Decimal('9.00')
+        get_rate_mock.return_value = Decimal(100)
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'get_unspent_outputs.side_effect': [
+                [
+                    {'amount': Decimal('0.05'), 'outpoint': outpoint_factory()},
+                ],
+                [
+                    {'amount': Decimal('0.05'), 'outpoint': outpoint_factory()},
+                    {'amount': Decimal('0.03'), 'outpoint': outpoint_factory()},
+                ],
+            ],
+        })
+
+        order = withdrawal.prepare_withdrawal(device, fiat_amount)
+        self.assertEqual(order.account.pk, account.pk)
+        self.assertEqual(order.customer_btc_amount, Decimal('0.09'))
+        self.assertEqual(order.tx_fee_btc_amount, Decimal('0.0001'))
+        self.assertEqual(order.change_btc_amount, Decimal('0.0099'))
+        self.assertEqual(bc_mock.get_unspent_outputs.call_count, 2)
+        self.assertEqual(bc_mock.get_unspent_outputs.call_args_list[0][0][0],
+                         address_1.address)
+        self.assertEqual(bc_mock.get_unspent_outputs.call_args_list[1][0][0],
+                         address_2.address)
 
     def test_no_account(self):
         device = DeviceFactory.create(status='registered')
@@ -213,8 +247,10 @@ class SendTransactionTestCase(TestCase):
 
     @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.run_periodic_task')
-    def test_send_btc(self, run_task_mock, bc_mock):
-        device = DeviceFactory.create(account__balance=Decimal('0.01'))
+    def test_send_btc(self, run_task_mock, bc_cls_mock):
+        account = AccountFactory(balance=Decimal('0.01'))
+        account_address = AddressFactory.create(account=account)
+        device = DeviceFactory.create(account=account)
         incoming_tx_hash = b'\x01' * 32
         order = WithdrawalOrderFactory.create(
             device=device,
@@ -225,12 +261,11 @@ class SendTransactionTestCase(TestCase):
             exchange_rate=Decimal(200))
         customer_address = '1NdS5JCXzbhNv4STQAaknq56iGstfgRCXg'
         outgoing_tx_id = '0' * 64
-        bc_instance_mock = Mock(**{
+        bc_cls_mock.return_value = bc_mock = Mock(**{
             'create_raw_transaction.return_value': 'test_tx',
             'sign_raw_transaction.return_value': 'test_tx_signed',
             'send_raw_transaction.return_value': outgoing_tx_id,
         })
-        bc_mock.return_value = bc_instance_mock
 
         withdrawal.send_transaction(order, customer_address)
         order.refresh_from_db()
@@ -244,13 +279,13 @@ class SendTransactionTestCase(TestCase):
         self.assertEqual(run_task_mock.call_args[0][0].__name__,
                          'wait_for_confidence')
 
-        inputs, outputs = bc_instance_mock.create_raw_transaction.call_args[0]
+        inputs, outputs = bc_mock.create_raw_transaction.call_args[0]
         self.assertEqual(len(inputs), 1)
         self.assertEqual(inputs[0].hash, incoming_tx_hash)
         self.assertEqual(len(outputs.keys()), 2)
         self.assertEqual(outputs[order.customer_address],
                          order.customer_btc_amount)
-        self.assertEqual(outputs[order.merchant_address],
+        self.assertEqual(outputs[account_address.address],
                          order.change_btc_amount)
 
         self.assertEqual(order.transaction_set.count(), 2)
@@ -266,7 +301,9 @@ class SendTransactionTestCase(TestCase):
     @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.run_periodic_task')
     def test_send_btc_without_change(self, run_task_mock, bc_cls_mock):
-        device = DeviceFactory.create(account__balance=Decimal('0.0051'))
+        account = AccountFactory.create(balance=Decimal('0.0051'))
+        account_address = AddressFactory.create(account=account)
+        device = DeviceFactory.create(account=account)
         order = WithdrawalOrderFactory.create(
             device=device,
             fiat_amount=Decimal('1.00'),
@@ -274,7 +311,7 @@ class SendTransactionTestCase(TestCase):
             reserved_outputs=[COutPoint()],
             exchange_rate=Decimal(200))
         customer_address = '1NdS5JCXzbhNv4STQAaknq56iGstfgRCXg'
-        bc_cls_mock.return_value = Mock(**{
+        bc_cls_mock.return_value = bc_mock = Mock(**{
             'create_raw_transaction.return_value': 'test_tx',
             'sign_raw_transaction.return_value': 'test_tx_signed',
             'send_raw_transaction.return_value': '0' * 64,
@@ -288,6 +325,8 @@ class SendTransactionTestCase(TestCase):
         account_tx_1 = order.transaction_set.get(amount__lt=0)
         self.assertEqual(account_tx_1.amount, -order.btc_amount)
         self.assertEqual(device.account.balance, 0)
+        self.assertIn(account_address.address,
+                      bc_mock.create_raw_transaction.call_args[0][1])
 
     def test_invalid_address(self):
         order = WithdrawalOrderFactory.create()

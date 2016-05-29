@@ -70,7 +70,7 @@ def prepare_withdrawal(device_or_account, fiat_amount):
             account.merchant.currency != account.currency:
         raise WithdrawalError(
             'Account currency should match merchant currency.')
-    if not account.instantfiat and account.address_set.count() != 1:
+    if not account.instantfiat and account.address_set.count() == 0:
         raise WithdrawalError('Nothing to withdraw.')
 
     # TODO: fiat currency -> currency
@@ -79,7 +79,8 @@ def prepare_withdrawal(device_or_account, fiat_amount):
         account=account,
         bitcoin_network=account.bitcoin_network,
         fiat_currency=account.merchant.currency,
-        fiat_amount=fiat_amount)
+        fiat_amount=fiat_amount,
+        tx_fee_btc_amount=BTC_DEC_PLACES)
     # Calculate BTC amount
     # WARNING: exchange rate and BTC amount will change
     # for instantfiat withdrawals after confirmation
@@ -91,35 +92,37 @@ def prepare_withdrawal(device_or_account, fiat_amount):
         raise WithdrawalError('Customer BTC amount is below dust threshold')
 
     if not account.instantfiat:
-        order.merchant_address = account.address_set.first().address
         # Find unspent outputs which are not reserved by other orders
         # and check balance
         bc = BlockChain(order.bitcoin_network)
         minconf = 0 if config.WITHDRAW_UNCONFIRMED else 1
-        unspent_sum = Decimal(0)
-        unspent_outputs = bc.get_unspent_outputs(order.merchant_address,
-                                                 minconf=minconf)
         all_reserved_outputs = _get_all_reserved_outputs(order)
         reserved_outputs = []
-        for output in unspent_outputs:
-            if output['outpoint'] in all_reserved_outputs:
-                # Output already reserved by another order, skip
-                continue
-            unspent_sum += output['amount']
-            reserved_outputs.append(output['outpoint'])
-            order.tx_fee_btc_amount = get_tx_fee(len(reserved_outputs), 2)
-            if unspent_sum >= order.btc_amount:
+        reserved_sum = Decimal(0)
+        for address in account.address_set.all():
+            unspent_outputs = bc.get_unspent_outputs(address.address,
+                                                     minconf=minconf)
+            for output in unspent_outputs:
+                if output['outpoint'] in all_reserved_outputs:
+                    # Output already reserved by another order, skip
+                    continue
+                reserved_sum += output['amount']
+                reserved_outputs.append(output['outpoint'])
+                order.tx_fee_btc_amount = get_tx_fee(len(reserved_outputs), 2)
+                if reserved_sum >= order.btc_amount:
+                    break
+            if reserved_sum >= order.btc_amount:
                 break
-        else:
+        if reserved_sum < order.btc_amount:
             logger.error('insufficient funds',
                          extra={'data': {'account': str(device.account)}})
             raise WithdrawalError('Insufficient funds')
         order.reserved_outputs = serialize_outputs(reserved_outputs)
-        logger.info('reserved {0} of {1} unspent outputs'.format(
-            len(reserved_outputs), len(unspent_outputs)))
+        logger.info('reserved {0} unspent outputs'.format(
+            len(reserved_outputs)))
 
         # Calculate change amount
-        order.change_btc_amount = unspent_sum - order.btc_amount
+        order.change_btc_amount = reserved_sum - order.btc_amount
         if order.change_btc_amount < BTC_MIN_OUTPUT:
             order.customer_btc_amount += order.change_btc_amount
             order.change_btc_amount = BTC_DEC_PLACES
@@ -160,9 +163,10 @@ def send_transaction(order, customer_address):
             logger.critical('send_transaction - some outputs are reserved by other orders')
             raise WithdrawalError('Insufficient funds')
         # Create and send transaction
+        change_address = order.account.address_set.first().address
         tx_outputs = {
             order.customer_address: order.customer_btc_amount,
-            order.merchant_address: order.change_btc_amount,
+            change_address: order.change_btc_amount,
         }
         bc = BlockChain(order.bitcoin_network)
         tx = bc.create_raw_transaction(tx_inputs, tx_outputs)
