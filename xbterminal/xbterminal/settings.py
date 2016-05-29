@@ -1,3 +1,4 @@
+from decimal import Decimal
 import os
 import sys
 import tempfile
@@ -281,6 +282,8 @@ CONSTANCE_CONFIG = {
     'CURRENT_BATCH_NUMBER': ('', 'Batch number'),
     'TX_CONFIDENCE_THRESHOLD': (0.95, 'Transaction confidence threshold'),
     'WITHDRAW_UNCONFIRMED': (False, 'Allow to withdraw from unconfirmed deposits'),
+    'POOL_TX_MAX_OUTPUT': (Decimal('0.05'),
+                           'Maximum value of TX output in the pool'),
 }
 
 # Sentry

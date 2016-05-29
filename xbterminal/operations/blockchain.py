@@ -9,6 +9,7 @@ from bitcoin.core import COIN, x, lx, b2lx, CTransaction, COutPoint
 from bitcoin.core.serialize import Hash
 from bitcoin.wallet import CBitcoinAddress
 
+from constance import config
 from django.conf import settings
 
 from operations import BTC_DEC_PLACES, BTC_DEFAULT_FEE
@@ -289,3 +290,22 @@ def deserialize_outputs(string):
         outpoint = COutPoint.stream_deserialize(buffer)
         outputs.append(outpoint)
     return outputs
+
+
+def split_amount(amount):
+    """
+    Split bitcoin amount
+    Accepts:
+        amount: Decimal
+    Returns:
+        list
+    """
+    splitted = []
+    while amount > 0:
+        if amount >= config.POOL_TX_MAX_OUTPUT:
+            chunk = config.POOL_TX_MAX_OUTPUT
+        else:
+            chunk = amount
+        amount -= chunk
+        splitted.append(chunk)
+    return splitted
