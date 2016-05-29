@@ -99,7 +99,8 @@ def prepare_withdrawal(device_or_account, fiat_amount):
         all_reserved_outputs = _get_all_reserved_outputs(order)
         reserved_outputs = []
         reserved_sum = Decimal(0)
-        for address in account.address_set.all():
+        # Look for unspent outputs on account addresses (in reverse order)
+        for address in account.address_set.order_by('-created_at'):
             unspent_outputs = bc.get_unspent_outputs(address.address,
                                                      minconf=minconf)
             for output in unspent_outputs:

@@ -365,7 +365,7 @@ def forward_transaction(payment_order):
             # Store bitcoins on merchant's internal account
             splitted = blockchain.split_amount(
                 payment_order.merchant_btc_amount)
-            account_addrs = list(account.address_set.all())
+            account_addrs = list(account.address_set.order_by('created_at'))
             for idx, amount in enumerate(splitted):
                 try:
                     address = account_addrs[idx].address

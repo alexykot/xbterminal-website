@@ -84,9 +84,9 @@ class PrepareWithdrawalTestCase(TestCase):
         self.assertEqual(order.change_btc_amount, Decimal('0.0099'))
         self.assertEqual(bc_mock.get_unspent_outputs.call_count, 2)
         self.assertEqual(bc_mock.get_unspent_outputs.call_args_list[0][0][0],
-                         address_1.address)
-        self.assertEqual(bc_mock.get_unspent_outputs.call_args_list[1][0][0],
                          address_2.address)
+        self.assertEqual(bc_mock.get_unspent_outputs.call_args_list[1][0][0],
+                         address_1.address)
 
     def test_no_account(self):
         device = DeviceFactory.create(status='registered')
