@@ -210,22 +210,6 @@ class AccountAdmin(admin.ModelAdmin):
         TransactionInline,
     ]
 
-    def get_form(self, request, obj, **kwargs):
-        form = super(AccountAdmin, self).get_form(request, obj, **kwargs)
-        if not obj:
-            return form
-        for field_name in form.base_fields:
-            field = form.base_fields[field_name]
-            if field_name == 'bitcoin_address':
-                if obj.currency.name == 'BTC':
-                    field.widget = BitcoinAddressWidget(network='mainnet')
-                elif obj.currency.name == 'TBTC':
-                    field.widget = BitcoinAddressWidget(network='testnet')
-                field.required = True
-                # Workaround for address field with blank=True
-                field.clean = lambda *args: obj.bitcoin_address
-        return form
-
     def payment_processor(self, obj):
         if obj.instantfiat:
             return obj.merchant.get_instantfiat_provider_display()

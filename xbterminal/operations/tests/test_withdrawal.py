@@ -214,9 +214,7 @@ class SendTransactionTestCase(TestCase):
     @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.run_periodic_task')
     def test_send_btc(self, run_task_mock, bc_mock):
-        device = DeviceFactory.create(
-            account__balance=Decimal('0.01'),
-            account__bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+        device = DeviceFactory.create(account__balance=Decimal('0.01'))
         incoming_tx_hash = b'\x01' * 32
         order = WithdrawalOrderFactory.create(
             device=device,
@@ -268,9 +266,7 @@ class SendTransactionTestCase(TestCase):
     @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.run_periodic_task')
     def test_send_btc_without_change(self, run_task_mock, bc_cls_mock):
-        device = DeviceFactory.create(
-            account__balance=Decimal('0.0051'),
-            account__bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+        device = DeviceFactory.create(account__balance=Decimal('0.0051'))
         order = WithdrawalOrderFactory.create(
             device=device,
             fiat_amount=Decimal('1.00'),

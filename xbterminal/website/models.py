@@ -311,12 +311,6 @@ class Account(models.Model):
         max_digits=20,
         decimal_places=8,
         default=0)
-    bitcoin_address = models.CharField(
-        max_length=35,
-        unique=True,
-        validators=[validate_bitcoin_address],
-        blank=True,
-        null=True)
     forward_address = models.CharField(
         max_length=35,
         validators=[validate_bitcoin_address],
@@ -326,7 +320,6 @@ class Account(models.Model):
     instantfiat_account_id = models.CharField(
         _('InstantFiat account ID'),
         max_length=50,
-        unique=True,
         blank=True,
         null=True)
 
