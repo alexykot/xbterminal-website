@@ -95,11 +95,12 @@ class UtilsTestCase(TestCase):
         self.assertEqual(bitcoin.params.__class__.__name__, 'MainParams')
 
     def test_split_amount(self):
-        splitted_1 = split_amount(Decimal('0.01'))
+        max_size = Decimal('0.05')
+        splitted_1 = split_amount(Decimal('0.01'), max_size)
         self.assertEqual(splitted_1, [Decimal('0.01')])
-        splitted_2 = split_amount(Decimal('0.05'))
+        splitted_2 = split_amount(Decimal('0.05'), max_size)
         self.assertEqual(splitted_2, [Decimal('0.05')])
-        splitted_3 = split_amount(Decimal('0.13'))
+        splitted_3 = split_amount(Decimal('0.13'), max_size)
         self.assertEqual(
             splitted_3,
             [Decimal('0.05'), Decimal('0.05'), Decimal('0.03')])

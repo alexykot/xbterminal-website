@@ -364,7 +364,8 @@ def forward_transaction(payment_order):
                 account.balance_max:
             # Store bitcoins on merchant's internal account
             splitted = blockchain.split_amount(
-                payment_order.merchant_btc_amount)
+                payment_order.merchant_btc_amount,
+                config.POOL_TX_MAX_OUTPUT)
             account_addrs = list(account.address_set.order_by('created_at'))
             for idx, amount in enumerate(splitted):
                 try:
