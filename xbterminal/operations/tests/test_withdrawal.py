@@ -296,9 +296,10 @@ class SendTransactionTestCase(TestCase):
             withdrawal.send_transaction(order, customer_address)
 
     def test_outputs_already_reserved(self):
+        account = AccountFactory.create()
         order_1, order_2 = WithdrawalOrderFactory.create_batch(
             2,
-            merchant_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
+            device__account=account,
             reserved_outputs=[outpoint_factory()])
         customer_address = '1NdS5JCXzbhNv4STQAaknq56iGstfgRCXg'
 
