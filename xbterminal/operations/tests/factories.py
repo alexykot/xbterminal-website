@@ -5,7 +5,7 @@ from bitcoin.core import COutPoint
 import factory
 from factory import fuzzy
 
-from website.tests.factories import DeviceFactory
+from website.tests.factories import DeviceFactory, AddressFactory
 from operations.models import PaymentOrder, WithdrawalOrder
 from operations import BTC_DEC_PLACES
 from operations.blockchain import serialize_outputs
@@ -53,7 +53,6 @@ class WithdrawalOrderFactory(factory.DjangoModelFactory):
         lambda wo: wo.device.account)
     bitcoin_network = factory.LazyAttribute(
         lambda wo: wo.account.bitcoin_network)
-    merchant_address = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
     fiat_currency = factory.LazyAttribute(
         lambda wo: wo.account.merchant.currency)
     fiat_amount = fuzzy.FuzzyDecimal(0.1, 2.0)
@@ -62,6 +61,12 @@ class WithdrawalOrderFactory(factory.DjangoModelFactory):
     tx_fee_btc_amount = Decimal('0.0001')
     change_btc_amount = Decimal(0)
     exchange_rate = Decimal('220')
+
+    @factory.lazy_attribute
+    def merchant_address(self):
+        if not self.account.instantfiat:
+            address_obj = AddressFactory.create(account=self.account)
+            return address_obj.address
 
     @factory.post_generation
     def time_created(self, create, extracted, **kwargs):

@@ -945,7 +945,10 @@ class ForwardTransactionTestCase(TestCase):
         self.assertIsNotNone(payment_order.time_forwarded)
 
         btc_account.refresh_from_db()
-        self.assertEqual(btc_account.bitcoin_address, account_address)
+        self.assertIsNone(btc_account.bitcoin_address)
+        address_obj = btc_account.address_set.first()
+        self.assertIsNotNone(address_obj)
+        self.assertEqual(address_obj.address, account_address)
         self.assertEqual(btc_account.balance,
                          payment_order.merchant_btc_amount)
 

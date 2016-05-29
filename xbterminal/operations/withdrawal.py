@@ -70,7 +70,7 @@ def prepare_withdrawal(device_or_account, fiat_amount):
             account.merchant.currency != account.currency:
         raise WithdrawalError(
             'Account currency should match merchant currency.')
-    if not account.instantfiat and not account.bitcoin_address:
+    if not account.instantfiat and account.address_set.count() != 1:
         raise WithdrawalError('Nothing to withdraw.')
 
     # TODO: fiat currency -> currency
@@ -91,7 +91,7 @@ def prepare_withdrawal(device_or_account, fiat_amount):
         raise WithdrawalError('Customer BTC amount is below dust threshold')
 
     if not account.instantfiat:
-        order.merchant_address = account.bitcoin_address
+        order.merchant_address = account.address_set.first().address
         # Find unspent outputs which are not reserved by other orders
         # and check balance
         bc = BlockChain(order.bitcoin_network)

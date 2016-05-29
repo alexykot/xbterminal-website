@@ -363,10 +363,11 @@ def forward_transaction(payment_order):
         if account.balance + payment_order.merchant_btc_amount <= \
                 account.balance_max:
             # Store bitcoins on merchant's internal account
-            if not account.bitcoin_address:
-                account.bitcoin_address = str(bc.get_new_address())
-                account.save()
-            outputs.append((account.bitcoin_address,
+            account_address = account.address_set.first()
+            if not account_address:
+                account_address = account.address_set.create(
+                    address=str(bc.get_new_address()))
+            outputs.append((account_address.address,
                             payment_order.merchant_btc_amount))
             create_account_txs(payment_order)
         else:
