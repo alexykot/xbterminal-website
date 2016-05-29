@@ -118,8 +118,8 @@ class WithdrawBTCTestCase(TestCase):
         account = AccountFactory.create(
             currency__name='BTC',
             balance=Decimal('0.2'),
-            balance_max=Decimal('0.5'),
-            bitcoin_address='1BESvTCjZG8jpK7Hvan7KzpXLFdaFRxWPk')
+            balance_max=Decimal('0.5'))
+        address = AddressFactory.create(account=account)
         bc_cls_mock.return_value = bc_mock = Mock(**{
             'get_unspent_outputs.return_value': [
                 {'amount': Decimal('0.2'), 'outpoint': outpoint_factory()},
@@ -136,6 +136,8 @@ class WithdrawBTCTestCase(TestCase):
             'sent 0.19990000 BTC to 1Mavf5uXXUNiJbvi5vmD4CjvFghTm9pZvM, '
             'tx id 0000')
         self.assertEqual(bc_cls_mock.call_args[0][0], 'mainnet')
+        self.assertEqual(bc_mock.get_unspent_outputs.call_args[0][0],
+                         address.address)
         self.assertTrue(bc_mock.send_raw_transaction.called)
 
 
