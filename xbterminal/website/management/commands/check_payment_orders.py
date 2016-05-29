@@ -35,7 +35,7 @@ def check_payment_orders(network):
         balance = bc.get_address_balance(order.local_address)
         if balance > 0:
             yield MESSAGE_TEMPLATE.format(
-                merchant=str(order.device.merchant),
+                merchant=str(order.merchant),
                 order_id=order.pk,
                 status=order.status,
                 address=order.local_address,
