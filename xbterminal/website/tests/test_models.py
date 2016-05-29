@@ -15,6 +15,7 @@ from website.models import (
     UITheme,
     MerchantAccount,
     Account,
+    Address,
     Transaction,
     Device,
     DeviceBatch,
@@ -26,6 +27,7 @@ from website.tests.factories import (
     MerchantAccountFactory,
     KYCDocumentFactory,
     AccountFactory,
+    AddressFactory,
     TransactionFactory,
     DeviceBatchFactory,
     DeviceFactory,
@@ -33,6 +35,7 @@ from website.tests.factories import (
 from operations.tests.factories import (
     PaymentOrderFactory,
     WithdrawalOrderFactory)
+from operations.blockchain import validate_bitcoin_address
 
 
 class UserTestCase(TestCase):
@@ -320,6 +323,32 @@ class AccountTestCase(TestCase):
             account=account, amount=Decimal('0.13'))
         self.assertEqual(account.balance, Decimal('0.43'))
         self.assertEqual(account.balance_confirmed, Decimal('0.20'))
+
+
+class AddressTestCase(TestCase):
+
+    def test_create(self):
+        account = AccountFactory.create()
+        address_str = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
+        address = Address.objects.create(
+            account=account,
+            address=address_str)
+        self.assertIsNotNone(address.account)
+        self.assertEqual(str(address), address_str)
+
+    def test_factory(self):
+        address_main = AddressFactory.create()
+        self.assertIsNone(
+            validate_bitcoin_address(address_main.address, 'mainnet'))
+        address_test = AddressFactory.create(
+            account__currency__name='TBTC')
+        self.assertIsNone(
+            validate_bitcoin_address(address_test.address, 'testnet'))
+
+    def test_unique(self):
+        address = AddressFactory.create()
+        with self.assertRaises(IntegrityError):
+            AddressFactory.create(address=address.address)
 
 
 class TransactionTestCase(TestCase):
