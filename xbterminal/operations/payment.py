@@ -121,7 +121,15 @@ def prepare_payment(device_or_account, fiat_amount):
     if 0 < order.merchant_btc_amount < BTC_MIN_OUTPUT:
         order.merchant_btc_amount = BTC_MIN_OUTPUT
     # TX fee
-    order.tx_fee_btc_amount = blockchain.get_tx_fee(1, 3)
+    if not account.instantfiat and \
+            account.balance + order.merchant_btc_amount <= account.balance_max:
+        # Output will be splitted, adjust fee
+        n_outputs = 2 + len(blockchain.split_amount(
+            order.merchant_btc_amount,
+            config.POOL_TX_MAX_OUTPUT))
+    else:
+        n_outputs = 3
+    order.tx_fee_btc_amount = blockchain.get_tx_fee(1, n_outputs)
     # Save order
     order.save()
     # Schedule tasks

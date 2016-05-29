@@ -107,6 +107,23 @@ class PreparePaymentTestCase(TestCase):
                          expected_btc_amount)
 
     @patch('operations.payment.blockchain.BlockChain')
+    @patch('operations.payment.get_exchange_rate')
+    @patch('operations.payment.run_periodic_task')
+    def test_btc_large_amount(self, run_task_mock, get_rate_mock, bc_cls_mock):
+        device = DeviceFactory.create(
+            account__currency__name='BTC',
+            account__balance_max=Decimal('100.0'))
+        fiat_amount = Decimal('1000.00')
+        bc_cls_mock.return_value = Mock(**{
+            'get_new_address.return_value': '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje',
+        })
+        get_rate_mock.return_value = Decimal('200.00')
+        order = payment.prepare_payment(device, fiat_amount)
+        self.assertEqual(order.merchant_btc_amount, Decimal('5.0'))
+        self.assertEqual(order.fee_btc_amount, Decimal('0.025'))
+        self.assertEqual(order.tx_fee_btc_amount, Decimal('0.0004'))
+
+    @patch('operations.payment.blockchain.BlockChain')
     @patch('operations.payment.instantfiat.create_invoice')
     @patch('operations.payment.run_periodic_task')
     def test_instantfiat(self, run_task_mock, invoice_mock, bc_mock):
