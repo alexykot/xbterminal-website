@@ -48,16 +48,16 @@ LOGGING = {
     },
     'loggers': {
         '': {
-            'handlers': ['file'],
+            'handlers': ['file', 'sentry'],
             'level': 'DEBUG',
         },
         'django.request': {
-            'handlers': ['file'],
+            'handlers': ['file', 'sentry'],
             'level': 'WARNING',
             'propagate': False,
         },
         'rq.worker': {
-            'handlers': ['rq'],
+            'handlers': ['rq', 'sentry'],
             'level': 'WARNING',
             'propagate': False,
         },
@@ -310,9 +310,9 @@ except ImportError:
 
 if DEBUG:
     # Log to console in development mode
-    LOGGING['loggers']['']['handlers'] = ['file', 'console']
-    LOGGING['loggers']['django.request']['handlers'] = ['file', 'console']
-    LOGGING['loggers']['rq.worker']['handlers'] = ['rq', 'console']
+    LOGGING['loggers']['']['handlers'].append('console')
+    LOGGING['loggers']['django.request']['handlers'].append('console')
+    LOGGING['loggers']['rq.worker']['handlers'].append('console')
 
 if TESTING:
     # Disable logging

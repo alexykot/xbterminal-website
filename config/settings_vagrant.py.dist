@@ -22,3 +22,7 @@ PKI_CERTIFICATES = [
 
 RECAPTCHA_PUBLIC_KEY = '***********'
 RECAPTCHA_PRIVATE_KEY = '***********'
+
+RAVEN_CONFIG = {
+    'dsn': 'http://****:****@localhost:9000/2',
+}

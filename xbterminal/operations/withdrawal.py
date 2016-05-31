@@ -103,6 +103,8 @@ def prepare_withdrawal(device, fiat_amount):
             if unspent_sum >= order.btc_amount:
                 break
         else:
+            logger.error('insufficient funds',
+                         extra={'data': {'account': str(device.account)}})
             raise WithdrawalError('Insufficient funds')
         order.reserved_outputs = serialize_outputs(reserved_outputs)
         logger.info('reserved {0} of {1} unspent outputs'.format(
@@ -117,6 +119,8 @@ def prepare_withdrawal(device, fiat_amount):
         # Check confirmed balance of instantfiat account
         # TODO: improve calculation of balance_confirmed
         if order.device.account.balance_confirmed < order.fiat_amount:
+            logger.error('insufficient funds',
+                         extra={'data': {'account': str(device.account)}})
             raise WithdrawalError('Insufficient funds.')
         order.tx_fee_btc_amount = BTC_DEC_PLACES
         order.change_btc_amount = BTC_DEC_PLACES
