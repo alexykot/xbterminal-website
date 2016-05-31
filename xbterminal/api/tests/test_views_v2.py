@@ -12,12 +12,14 @@ from rest_framework import status
 from api.views_v2 import WithdrawalViewSet
 from api.utils.crypto import create_test_signature, create_test_public_key
 from operations import exceptions
-from operations.models import PaymentOrder
 from operations.tests.factories import (
     PaymentOrderFactory,
     WithdrawalOrderFactory)
 from website.models import Device
-from website.tests.factories import DeviceFactory, DeviceBatchFactory
+from website.tests.factories import (
+    AccountFactory,
+    DeviceFactory,
+    DeviceBatchFactory)
 
 
 class PaymentViewSetTestCase(APITestCase):
@@ -26,8 +28,8 @@ class PaymentViewSetTestCase(APITestCase):
     def test_create_from_website(self, prepare_mock):
         device = DeviceFactory.create()
         fiat_amount = 10
-        btc_amount = 0.05
-        exchange_rate = 200
+        expected_btc_amount = 0.05
+        expected_exchange_rate = 200
         payment_order = PaymentOrderFactory.create(
             device=device,
             fiat_amount=Decimal(fiat_amount),
@@ -37,75 +39,98 @@ class PaymentViewSetTestCase(APITestCase):
 
         url = reverse('api:v2:payment-list')
         form_data = {
-            'device_key': device.key,
+            'device': device.key,
             'amount': fiat_amount,
-            'qr_code': 'true',
         }
         response = self.client.post(url, form_data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data
         self.assertEqual(data['fiat_amount'], fiat_amount)
-        self.assertEqual(data['btc_amount'], btc_amount)
-        self.assertEqual(data['exchange_rate'], exchange_rate)
-        self.assertIn('check_url', data)
+        self.assertEqual(data['btc_amount'], expected_btc_amount)
+        self.assertEqual(data['exchange_rate'], expected_exchange_rate)
         self.assertIn('payment_uri', data)
-        self.assertIn('qr_code_src', data)
 
-        payment_order = PaymentOrder.objects.get(uid=payment_order.uid)
-        self.assertGreater(len(payment_order.request), 0)
+        self.assertEqual(prepare_mock.call_args[0][0], device)
+        self.assertEqual(prepare_mock.call_args[0][1], Decimal('10'))
 
     @patch('api.views_v2.operations.payment.prepare_payment')
     def test_create_from_terminal(self, prepare_mock):
         device = DeviceFactory.create(long_key=True)
         fiat_amount = 10
-        btc_amount = 0.05
-        exchange_rate = 200
         bluetooth_mac = '12:34:56:78:9A:BC'
-        payment_order = PaymentOrderFactory.create(
+        expected_btc_amount = 0.05
+        expected_exchange_rate = 200
+        prepare_mock.return_value = order = PaymentOrderFactory.create(
             device=device,
             fiat_amount=Decimal(fiat_amount),
             merchant_btc_amount=Decimal('0.0499'),
             tx_fee_btc_amount=Decimal('0.0001'))
-        prepare_mock.return_value = payment_order
 
         url = reverse('api:v2:payment-list')
         form_data = {
-            'device_key': device.key,
+            'device': device.key,
             'amount': fiat_amount,
             'bt_mac': bluetooth_mac,
         }
         response = self.client.post(url, form_data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data
+        self.assertEqual(data['uid'], order.uid)
         self.assertEqual(data['fiat_amount'], fiat_amount)
-        self.assertEqual(data['btc_amount'], btc_amount)
-        self.assertEqual(data['exchange_rate'], exchange_rate)
-        self.assertIn('check_url', data)
+        self.assertEqual(data['btc_amount'], expected_btc_amount)
+        self.assertEqual(data['exchange_rate'], expected_exchange_rate)
         self.assertIn('payment_uri', data)
-        self.assertEqual(data['payment_uid'], payment_order.uid)
         self.assertIn('payment_request', data)
-        self.assertIn('qr_code_src', data)
+
+    @patch('api.views_v2.operations.payment.prepare_payment')
+    def test_create_for_account(self, prepare_mock):
+        account = AccountFactory.create()
+        fiat_amount = 10
+        expected_btc_amount = 0.05
+        expected_exchange_rate = 200
+        prepare_mock.return_value = order = PaymentOrderFactory.create(
+            device=None,
+            account=account,
+            fiat_amount=Decimal(fiat_amount),
+            merchant_btc_amount=Decimal('0.0499'),
+            tx_fee_btc_amount=Decimal('0.0001'))
+        url = reverse('api:v2:payment-list')
+        form_data = {
+            'account': account.pk,
+            'amount': fiat_amount,
+        }
+        response = self.client.post(url, form_data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.data
+        self.assertEqual(data['uid'], order.uid)
+        self.assertEqual(data['fiat_amount'], fiat_amount)
+        self.assertEqual(data['btc_amount'], expected_btc_amount)
+        self.assertEqual(data['exchange_rate'], expected_exchange_rate)
+        self.assertIn('payment_uri', data)
+        self.assertEqual(prepare_mock.call_args[0][0], account)
+        self.assertEqual(prepare_mock.call_args[0][1], Decimal('10'))
 
     def test_create_invalid_amount(self):
         device = DeviceFactory.create()
         url = reverse('api:v2:payment-list')
         form_data = {
-            'device_key': device.key,
+            'device': device.key,
             'amount': 'aaa',
         }
         response = self.client.post(url, form_data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         data = response.data
-        self.assertIn('amount', data['errors'])
+        self.assertEqual(data['error'],
+                         'Amount - a valid number is required.')
 
     def test_create_invalid_device_key(self):
         url = reverse('api:v2:payment-list')
         form_data = {
-            'device_key': 'invalidkey',
+            'device': 'invalidkey',
             'amount': '0.5',
         }
         response = self.client.post(url, form_data)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_not_active(self):
         device = DeviceFactory.create(status='activation')
@@ -115,7 +140,7 @@ class PaymentViewSetTestCase(APITestCase):
             'amount': '0.5',
         }
         response = self.client.post(url, form_data)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     @patch('api.views_v2.operations.payment.prepare_payment')
     def test_payment_error(self, prepare_mock):
@@ -125,7 +150,7 @@ class PaymentViewSetTestCase(APITestCase):
         bluetooth_mac = '12:34:56:78:9A:BC'
         url = reverse('api:v2:payment-list')
         form_data = {
-            'device_key': device.key,
+            'device': device.key,
             'amount': fiat_amount,
             'bt_mac': bluetooth_mac,
         }
@@ -140,10 +165,12 @@ class PaymentViewSetTestCase(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data
-        self.assertEqual(data['paid'], 0)
+        self.assertEqual(data['uid'], payment_order.uid)
+        self.assertEqual(data['status'], 'new')
 
     def test_retrieve_notified(self):
         payment_order = PaymentOrderFactory.create(
+            time_recieved=timezone.now(),
             time_forwarded=timezone.now())
         self.assertIsNone(payment_order.time_notified)
         url = reverse('api:v2:payment-detail',
@@ -151,7 +178,8 @@ class PaymentViewSetTestCase(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data
-        self.assertEqual(data['paid'], 1)
+        self.assertEqual(data['uid'], payment_order.uid)
+        self.assertEqual(data['status'], 'notified')
         payment_order.refresh_from_db()
         self.assertIsNotNone(payment_order.time_notified)
 
@@ -179,10 +207,10 @@ class PaymentViewSetTestCase(APITestCase):
         response = self.client.post(url, {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_payment_request(self):
-        data = '009A8B'.decode('hex')
-        payment_order = PaymentOrderFactory.create(
-            request=data)
+    @patch('operations.models.create_payment_request')
+    def test_payment_request(self, create_mock):
+        create_mock.return_value = data = '009A8B'.decode('hex')
+        payment_order = PaymentOrderFactory.create()
         url = reverse('api:v2:payment-request',
                       kwargs={'uid': payment_order.uid})
         response = self.client.get(url)

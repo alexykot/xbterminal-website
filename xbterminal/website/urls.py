@@ -26,6 +26,7 @@ urlpatterns = [
 
     url(r'^accounts/$', views.AccountListView.as_view(), name='accounts'),
     url(r'^accounts/(?P<pk>\d+)/$', views.EditAccountView.as_view(), name='account'),
+    url(r'^accounts/(?P<pk>\d+)/add_funds/$', views.AddFundsView.as_view(), name='add_funds'),
 
     url(r'^devices/$', views.DeviceList.as_view(), name='devices'),
     url(r'^devices/add/$', views.CreateDeviceView.as_view(), name='create_device'),
@@ -57,6 +58,4 @@ urlpatterns = [
     url(r'^devices/(?P<device_key>[0-9a-zA-Z]{8,64})/send_all_to_email/$',
         views.SendAllToEmailView.as_view(),
         name='send_all_to_email'),
-
-    url(r'^devices/(?P<device_key>[0-9a-zA-Z]{8,64})/pos$', views.PaymentView.as_view(), name='payment'),
 ]

@@ -24,6 +24,14 @@ var numKeys = {
 };
 var maxDigits = 9;
 
+var paymentInitUrl = '/api/v2/payments/';
+var getPaymentCheckUrl = function (paymentUid) {
+    return paymentInitUrl + paymentUid + '/';
+};
+var getPaymentReceiptUrl = function (paymentUid) {
+    return paymentInitUrl + paymentUid + '/receipt/';
+};
+
 var paymentInit = function (form) {
     var amountField = form.find('[name="amount"]');
     var amount = parseFloat(amountField.val());
@@ -34,12 +42,11 @@ var paymentInit = function (form) {
     hideErrorMessage();
     amountField.attr('disabled', true);
     $.ajax({
-        url: form.attr('action'),
+        url: paymentInitUrl,
         method: 'POST',
         data: {
-            device_key: form.data('device-key'),
-            amount: amount,
-            qr_code: true
+            account: form.data('account-id'),
+            amount: amount
         }
     }).done(function (data) {
         amountField.attr('disabled', false);
@@ -50,9 +57,9 @@ var paymentInit = function (form) {
         $('.exchange-rate').text((data.exchange_rate / 1000).toFixed(3));
         $('.payment-request').
             attr('alt', data.payment_uri).
-            attr('src', data.qr_code_src);
+            qrcode({render: 'div', 'size': 230, 'background': 'white', 'text': data.payment_uri});
         $('.payment-reset').text(gettext('Cancel'));
-        paymentCheck(data.check_url);
+        paymentCheck(data.uid);
     }).fail(function () {
         showErrorMessage(gettext('server error'));
     });
@@ -71,22 +78,24 @@ var hideErrorMessage = function () {
 };
 
 var currentCheck;
-var paymentCheck = function (checkURL) {
+var paymentCheck = function (paymentUid) {
+    var checkUrl = getPaymentCheckUrl(paymentUid);
+    var receiptUrl = getPaymentReceiptUrl(paymentUid);
     currentCheck = setInterval(function () {
         $.ajax({
-            url: checkURL
+            url: checkUrl,
         }).done(function (data) {
-            if (data.paid === 1) {
+            if (data.status === 'notified' || data.status == 'confirmed') {
                 clearInterval(currentCheck);
                 currentCheck = undefined;
                 $('.payment-init').hide();
                 $('.payment-success').show();
                 $('.payment-receipt')
-                    .attr('alt', data.receipt_url)
-                    .attr('src', data.qr_code_src)
-                    .closest('a')
-                    .attr('href', data.receipt_url);
+                    .attr('href', receiptUrl)
+                    .qrcode({render: 'div', 'size': 150, 'background': 'white', 'text': receiptUrl});
                 $('.payment-reset').text('Clear');
+            } else if (data.status === 'timeout' || data.status === 'failed') {
+                paymentReset();
             }
         });
     }, 2000);
@@ -105,6 +114,8 @@ var paymentReset = function () {
         .val('0.00')
         .attr('disabled', false)
         .focus();
+    $('.payment-request').empty();
+    $('.payment-receipt').empty();
 };
 
 var lastActivity = new Date().getTime();

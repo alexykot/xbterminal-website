@@ -12,10 +12,11 @@ from rest_framework import status, viewsets
 from constance import config
 
 from website.models import Device, DeviceBatch
-from website.utils.qr import generate_qr_code
 
-from api.forms import PaymentForm, WithdrawalForm
+from api.forms import WithdrawalForm
 from api.serializers import (
+    PaymentInitSerializer,
+    PaymentOrderSerializer,
     WithdrawalOrderSerializer,
     DeviceSerializer,
     DeviceRegistrationSerializer)
@@ -43,19 +44,16 @@ class PaymentViewSet(viewsets.GenericViewSet):
     lookup_field = 'uid'
 
     def create(self, *args, **kwargs):
-        form = PaymentForm(data=self.request.data)
-        if not form.is_valid():
-            return Response({'errors': form.errors},
+        serializer = PaymentInitSerializer(data=self.request.data)
+        if not serializer.is_valid():
+            return Response({'error': serializer.error_message},
                             status=status.HTTP_400_BAD_REQUEST)
         # Prepare payment order
         try:
-            device = Device.objects.get(key=form.cleaned_data['device_key'],
-                                        status='active')
-        except Device.DoesNotExist:
-            raise Http404
-        try:
             payment_order = operations.payment.prepare_payment(
-                device, form.cleaned_data['amount'])
+                (serializer.validated_data.get('device') or
+                 serializer.validated_data.get('account')),
+                serializer.validated_data['amount'])
         except exceptions.PaymentError as error:
             return Response({'error': error.message},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -63,49 +61,28 @@ class PaymentViewSet(viewsets.GenericViewSet):
         payment_request_url = construct_absolute_url(
             'api:v2:payment-request',
             kwargs={'uid': payment_order.uid})
-        payment_response_url = construct_absolute_url(
-            'api:v2:payment-response',
-            kwargs={'uid': payment_order.uid})
-        payment_check_url = construct_absolute_url(
-            'api:v2:payment-detail',
-            kwargs={'uid': payment_order.uid})
-        # Create payment request
-        payment_order.request = operations.protocol.create_payment_request(
-            payment_order.device.bitcoin_network,
-            [(payment_order.local_address, payment_order.btc_amount)],
-            payment_order.time_created,
-            payment_order.expires_at,
-            payment_response_url,
-            device.merchant.company_name)
-        payment_order.save()
         # Prepare json response
         fiat_amount = payment_order.fiat_amount.quantize(Decimal('0.00'))
         btc_amount = payment_order.btc_amount
         exchange_rate = payment_order.effective_exchange_rate.\
             quantize(Decimal('0.000000'))
         data = {
-            'payment_uid': payment_order.uid,
+            'uid': payment_order.uid,
             'fiat_amount': float(fiat_amount),
             'btc_amount': float(btc_amount),
             'exchange_rate': float(exchange_rate),
-            'check_url': payment_check_url,
         }
-        if form.cleaned_data['bt_mac']:
+        if serializer.validated_data.get('bt_mac'):
             # Enable payment via bluetooth
             payment_bluetooth_url = 'bt:{mac}'.\
-                format(mac=form.cleaned_data['bt_mac'].replace(':', ''))
-            payment_bluetooth_request = operations.protocol.create_payment_request(
-                payment_order.device.bitcoin_network,
-                [(payment_order.local_address, payment_order.btc_amount)],
-                payment_order.time_created,
-                payment_order.expires_at,
-                payment_bluetooth_url,
-                device.merchant.company_name)
+                format(mac=serializer.validated_data['bt_mac'].replace(':', ''))
+            payment_bluetooth_request = payment_order.create_payment_request(
+                payment_bluetooth_url)
             # Send payment request in response
             data['payment_uri'] = operations.blockchain.construct_bitcoin_uri(
                 payment_order.local_address,
                 payment_order.btc_amount,
-                device.merchant.company_name,
+                payment_order.merchant.company_name,
                 payment_bluetooth_url,
                 payment_request_url)
             data['payment_request'] = payment_bluetooth_request.encode('base64')
@@ -113,23 +90,18 @@ class PaymentViewSet(viewsets.GenericViewSet):
             data['payment_uri'] = operations.blockchain.construct_bitcoin_uri(
                 payment_order.local_address,
                 payment_order.btc_amount,
-                device.merchant.company_name,
+                payment_order.merchant.company_name,
                 payment_request_url)
-        # TODO: append QR code as data URI only when needed
-        data['qr_code_src'] = generate_qr_code(data['payment_uri'], size=4)
         return Response(data)
 
     def retrieve(self, *args, **kwargs):
-        payment_order = self.get_object()
-        if payment_order.time_forwarded is not None:
+        order = self.get_object()
+        if order.time_forwarded and not order.time_notified:
             # Close order
-            data = {'paid': 1}
-            if payment_order.time_notified is None:
-                payment_order.time_notified = timezone.now()
-                payment_order.save()
-        else:
-            data = {'paid': 0}
-        return Response(data)
+            order.time_notified = timezone.now()
+            order.save()
+        serializer = PaymentOrderSerializer(order)
+        return Response(serializer.data)
 
     @detail_route(methods=['POST'])
     @atomic
@@ -146,7 +118,12 @@ class PaymentViewSet(viewsets.GenericViewSet):
         payment_order = self.get_object()
         if payment_order.status not in ['new', 'underpaid']:
             raise Http404
-        response = Response(payment_order.request)
+        payment_response_url = construct_absolute_url(
+            'api:v2:payment-response',
+            kwargs={'uid': payment_order.uid})
+        payment_request = payment_order.create_payment_request(
+            payment_response_url)
+        response = Response(payment_request)
         response['Content-Transfer-Encoding'] = 'binary'
         return response
 
@@ -182,7 +159,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
         response = Response(result.getvalue())
         response['Content-Disposition'] = 'inline; filename="receipt #{0} {1}.pdf"'.format(
             order.id,
-            order.device.merchant.company_name)
+            order.merchant.company_name)
         return response
 
 
@@ -265,7 +242,7 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
         response = Response(result.getvalue())
         response['Content-Disposition'] = 'inline; filename="receipt #{0} {1}.pdf"'.format(
             order.id,
-            order.device.merchant.company_name)
+            order.merchant.company_name)
         return response
 
 

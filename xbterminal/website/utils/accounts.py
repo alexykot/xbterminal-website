@@ -10,7 +10,7 @@ def create_account_txs(order):
     Accepts:
         order: PaymentOrder or WithdrawalOrder instance
     """
-    account = order.device.account
+    account = order.account
     if order.order_type == 'payment':
         if account.instantfiat:
             assert account.merchant.instantfiat_provider == INSTANTFIAT_PROVIDERS.CRYPTOPAY

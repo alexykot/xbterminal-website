@@ -877,31 +877,26 @@ class SendAllToEmailViewTestCase(TestCase):
         self.assertEqual(attachments[1][2], 'application/x-zip-compressed')
 
 
-class PaymentViewTestCase(TestCase):
+class AddFundsViewTestCase(TestCase):
 
     def setUp(self):
         self.merchant = MerchantAccountFactory.create()
 
     def test_view(self):
-        device = DeviceFactory.create(merchant=self.merchant)
-        url = reverse('website:payment',
-                      kwargs={'device_key': device.key})
+        account = AccountFactory.create(merchant=self.merchant)
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:add_funds',
+                      kwargs={'pk': account.pk})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'payment/payment.html')
+        self.assertEqual(response.context['account'].pk, account.pk)
 
-    def test_activation(self):
-        device = DeviceFactory.create(merchant=self.merchant,
-                                      status='activation')
-        url = reverse('website:payment',
-                      kwargs={'device_key': device.key})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 404)
-
-    def test_suspended(self):
-        device = DeviceFactory.create(merchant=self.merchant,
-                                      status='suspended')
-        url = reverse('website:payment',
-                      kwargs={'device_key': device.key})
+    def test_invalid_account_id(self):
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:add_funds',
+                      kwargs={'pk': 1276617276})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)

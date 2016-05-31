@@ -20,6 +20,7 @@ from operations import (
     PAYMENT_CONFIRMATION_TIMEOUT,
     WITHDRAWAL_TIMEOUT,
     WITHDRAWAL_BROADCAST_TIMEOUT)
+from operations.protocol import create_payment_request
 from api.utils.urls import construct_absolute_url
 
 
@@ -42,10 +43,13 @@ class PaymentOrder(models.Model):
                            editable=False,
                            unique=True,
                            default=gen_payment_uid)
-    device = models.ForeignKey('website.Device')
-    request = models.BinaryField(editable=False)
+    device = models.ForeignKey(
+        'website.Device',
+        on_delete=models.SET_NULL,
+        null=True)
+    # TODO: this field should be mandatory
+    account = models.ForeignKey('website.Account', null=True)
 
-    # Payment details
     bitcoin_network = models.CharField(
         max_length=10, choices=BITCOIN_NETWORKS)
     local_address = models.CharField(
@@ -99,6 +103,13 @@ class PaymentOrder(models.Model):
 
     def __unicode__(self):
         return self.uid
+
+    @property
+    def merchant(self):
+        if self.account:
+            return self.account.merchant
+        else:
+            return self.device.merchant
 
     @property
     def expires_at(self):
@@ -183,6 +194,15 @@ class PaymentOrder(models.Model):
     def scaled_effective_exchange_rate(self):
         return self.effective_exchange_rate / settings.BITCOIN_SCALE_DIVIZER
 
+    def create_payment_request(self, response_url):
+        return create_payment_request(
+            self.bitcoin_network,
+            [(self.local_address, self.btc_amount)],
+            self.time_created,
+            self.expires_at,
+            response_url,
+            self.merchant.company_name)
+
 
 def gen_withdrawal_uid():
     bts = uuid.uuid4().bytes
@@ -198,7 +218,12 @@ class WithdrawalOrder(models.Model):
                            editable=False,
                            unique=True,
                            default=gen_withdrawal_uid)
-    device = models.ForeignKey('website.Device')
+    device = models.ForeignKey(
+        'website.Device',
+        on_delete=models.SET_NULL,
+        null=True)
+    # TODO: this field should be mandatory
+    account = models.ForeignKey('website.Account', null=True)
 
     bitcoin_network = models.CharField(
         max_length=10, choices=BITCOIN_NETWORKS)
@@ -215,6 +240,7 @@ class WithdrawalOrder(models.Model):
         max_digits=18, decimal_places=8)
     change_btc_amount = models.DecimalField(
         max_digits=18, decimal_places=8)
+    # TODO: remove this field
     exchange_rate = models.DecimalField(
         max_digits=18, decimal_places=8)
 
@@ -238,6 +264,13 @@ class WithdrawalOrder(models.Model):
 
     def __unicode__(self):
         return self.uid
+
+    @property
+    def merchant(self):
+        if self.account:
+            return self.account.merchant
+        else:
+            return self.device.merchant
 
     @property
     def btc_amount(self):

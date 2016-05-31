@@ -20,6 +20,7 @@ from operations.blockchain import (
 from operations.rq_helpers import cancel_current_task, run_periodic_task
 from operations.models import WithdrawalOrder
 from operations.exceptions import WithdrawalError
+from website.models import Device, Account
 from website.utils.accounts import create_account_txs
 from website.utils.email import send_error_message
 
@@ -48,29 +49,36 @@ def _get_all_reserved_outputs(current_order):
     return all_reserved_outputs
 
 
-def prepare_withdrawal(device, fiat_amount):
+def prepare_withdrawal(device_or_account, fiat_amount):
     """
     Check merchant's account balance, create withdrawal order
     Accepts:
-        device: Device instance
+        device_or_account: Device or Account instance
         fiat_amount: Decimal
     Returns:
         order: WithdrawalOrder instance
     """
-    if not device.account:
+    if isinstance(device_or_account, Device):
+        device = device_or_account
+        account = device.account
+    elif isinstance(device_or_account, Account):
+        device = None
+        account = device_or_account
+    if not account:
         raise WithdrawalError('Account is not set for device.')
-    if device.account.instantfiat and \
-            device.merchant.currency != device.account.currency:
+    if account.instantfiat and \
+            account.merchant.currency != account.currency:
         raise WithdrawalError(
             'Account currency should match merchant currency.')
-    if not device.account.instantfiat and not device.account.bitcoin_address:
+    if not account.instantfiat and not account.bitcoin_address:
         raise WithdrawalError('Nothing to withdraw.')
 
     # TODO: fiat currency -> currency
     order = WithdrawalOrder(
         device=device,
-        bitcoin_network=device.bitcoin_network,
-        fiat_currency=device.merchant.currency,
+        account=account,
+        bitcoin_network=account.bitcoin_network,
+        fiat_currency=account.merchant.currency,
         fiat_amount=fiat_amount)
     # Calculate BTC amount
     # WARNING: exchange rate and BTC amount will change
@@ -82,8 +90,8 @@ def prepare_withdrawal(device, fiat_amount):
     if order.customer_btc_amount < BTC_MIN_OUTPUT:
         raise WithdrawalError('Customer BTC amount is below dust threshold')
 
-    if not order.device.account.instantfiat:
-        order.merchant_address = device.account.bitcoin_address
+    if not account.instantfiat:
+        order.merchant_address = account.bitcoin_address
         # Find unspent outputs which are not reserved by other orders
         # and check balance
         bc = BlockChain(order.bitcoin_network)
@@ -118,7 +126,7 @@ def prepare_withdrawal(device, fiat_amount):
     else:
         # Check confirmed balance of instantfiat account
         # TODO: improve calculation of balance_confirmed
-        if order.device.account.balance_confirmed < order.fiat_amount:
+        if account.balance_confirmed < order.fiat_amount:
             logger.error('insufficient funds',
                          extra={'data': {'account': str(device.account)}})
             raise WithdrawalError('Insufficient funds.')
@@ -143,7 +151,7 @@ def send_transaction(order, customer_address):
     else:
         order.customer_address = customer_address
 
-    if not order.device.account.instantfiat:
+    if not order.account.instantfiat:
         # Get reserved outputs and check them again
         tx_inputs = deserialize_outputs(order.reserved_outputs)
         all_reserved_outputs = _get_all_reserved_outputs(order)
@@ -168,7 +176,7 @@ def send_transaction(order, customer_address):
             (order.instantfiat_transfer_id,
              order.instantfiat_reference,
              order.customer_btc_amount) = instantfiat.send_transaction(
-                order.device.account,
+                order.account,
                 order.fiat_amount,
                 order.customer_address)
         except:
@@ -180,7 +188,7 @@ def send_transaction(order, customer_address):
     # Update account balance
     create_account_txs(order)
 
-    if not order.device.account.instantfiat:
+    if not order.account.instantfiat:
         run_periodic_task(wait_for_confidence, [order.uid], interval=5)
     else:
         run_periodic_task(wait_for_processor, [order.uid], interval=5)
@@ -229,7 +237,7 @@ def wait_for_processor(order_uid):
         cancel_current_task()
         return
     if instantfiat.is_transfer_completed(
-            order.device.account,
+            order.account,
             order.instantfiat_transfer_id):
         cancel_current_task()
         order.time_sent = timezone.now()

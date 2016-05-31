@@ -21,13 +21,13 @@ class PreparePaymentTestCase(TestCase):
     @patch('operations.payment.blockchain.BlockChain')
     @patch('operations.payment.get_exchange_rate')
     @patch('operations.payment.run_periodic_task')
-    def test_keep_btc(self, run_task_mock, get_rate_mock, bc_mock):
+    def test_btc(self, run_task_mock, get_rate_mock, bc_cls_mock):
         device = DeviceFactory.create(account__currency__name='BTC')
         fiat_amount = Decimal('10')
         exchange_rate = Decimal('235.64')
         local_address = '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje'
 
-        bc_mock.return_value = Mock(**{
+        bc_cls_mock.return_value = Mock(**{
             'get_new_address.return_value': local_address,
         })
         get_rate_mock.return_value = exchange_rate
@@ -42,6 +42,8 @@ class PreparePaymentTestCase(TestCase):
                                expected_fee_btc_amount +
                                Decimal('0.0001'))
 
+        self.assertEqual(payment_order.device.pk, device.pk)
+        self.assertEqual(payment_order.account.pk, device.account.pk)
         self.assertEqual(payment_order.local_address,
                          local_address)
         self.assertEqual(payment_order.merchant_address,
@@ -66,6 +68,8 @@ class PreparePaymentTestCase(TestCase):
         self.assertEqual(len(payment_order.incoming_tx_ids), 0)
         self.assertIsNone(payment_order.outgoing_tx_id)
         self.assertEqual(payment_order.status, 'new')
+        self.assertEqual(bc_cls_mock.call_args[0][0],
+                         payment_order.bitcoin_network)
 
         calls = run_task_mock.call_args_list
         self.assertEqual(calls[0][0][0].__name__, 'wait_for_payment')
@@ -75,7 +79,7 @@ class PreparePaymentTestCase(TestCase):
     @patch('operations.payment.blockchain.BlockChain')
     @patch('operations.payment.get_exchange_rate')
     @patch('operations.payment.run_periodic_task')
-    def test_keep_btc_without_fee(self, run_task_mock, get_rate_mock, bc_mock):
+    def test_btc_without_fee(self, run_task_mock, get_rate_mock, bc_mock):
         device = DeviceFactory.create(account__currency__name='BTC')
         fiat_amount = Decimal('1')
         exchange_rate = Decimal('235.64')
@@ -104,7 +108,7 @@ class PreparePaymentTestCase(TestCase):
     @patch('operations.payment.blockchain.BlockChain')
     @patch('operations.payment.instantfiat.create_invoice')
     @patch('operations.payment.run_periodic_task')
-    def test_convert_full(self, run_task_mock, invoice_mock, bc_mock):
+    def test_instantfiat(self, run_task_mock, invoice_mock, bc_mock):
         device = DeviceFactory.create(account__currency__name='GBP')
         self.assertTrue(device.account.instantfiat)
         fiat_amount = Decimal('10')
@@ -147,7 +151,7 @@ class PreparePaymentTestCase(TestCase):
         self.assertEqual(payment_order.instantfiat_invoice_id,
                          instantfiat_invoice_id)
 
-    def test_no_btc_account(self):
+    def test_no_account(self):
         device = DeviceFactory.create(status='registered')
         fiat_amount = Decimal('10')
         with self.assertRaises(exceptions.PaymentError) as context:
@@ -172,6 +176,25 @@ class PreparePaymentTestCase(TestCase):
             payment.prepare_payment(device, fiat_amount)
         self.assertEqual(context.exception.message,
                          'Account currency should match merchant currency.')
+
+    @patch('operations.payment.blockchain.BlockChain')
+    @patch('operations.payment.get_exchange_rate')
+    @patch('operations.payment.run_periodic_task')
+    def test_no_device(self, run_task_mock, get_rate_mock, bc_cls_mock):
+        account = AccountFactory.create()
+        fiat_amount = Decimal('10')
+        bc_cls_mock.return_value = Mock(**{
+            'get_new_address.return_value': '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje',
+        })
+        get_rate_mock.return_value = Decimal('235.64')
+
+        order = payment.prepare_payment(account, fiat_amount)
+        self.assertIsNone(order.device)
+        self.assertEqual(order.account.pk, account.pk)
+        self.assertEqual(order.fiat_currency.pk,
+                         account.merchant.currency.pk)
+        self.assertEqual(order.fee_address,
+                         config.OUR_FEE_MAINNET_ADDRESS)
 
 
 class WaitForPaymentTestCase(TestCase):

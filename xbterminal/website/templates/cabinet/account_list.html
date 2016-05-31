@@ -12,6 +12,7 @@
         <th>{% trans 'Currency' %}</th>
         <th>{% trans 'Balance' %}</th>
         <th>{% trans 'Payment processor' %}</th>
+        <th>{% trans 'Actions' %}</th>
     </tr>
     {% for account in accounts %}
     <tr>
@@ -30,6 +31,7 @@
             -
             {% endif %}
         </td>
+        <td><a href="{% url 'website:add_funds' pk=account.pk %}" target="_blank">Add funds</a></td>
     </tr>
     {% endfor %}
 </table>

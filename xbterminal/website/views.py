@@ -776,25 +776,18 @@ class SendAllToEmailView(DeviceMixin, CabinetView):
         return redirect('website:reconciliation', context['device'].key)
 
 
-class PaymentView(TemplateResponseMixin, View):
+class AddFundsView(TemplateResponseMixin, CabinetView):
     """
-    Online POS (public view)
+    Add funds to account
     """
-
-    template_name = "payment/payment.html"
+    template_name = 'payment/payment.html'
 
     def get(self, *args, **kwargs):
-        device = get_object_or_404(
-            models.Device,
-            key=self.kwargs.get('device_key'),
-            status='active')
+        context = self.get_context_data(**kwargs)
         try:
-            amount = Decimal(self.request.GET.get('amount', '0.00'))
-        except ArithmeticError:
-            return HttpResponseBadRequest('invalid amount')
-        response = self.render_to_response({
-            'device': device,
-            'amount': amount.quantize(Decimal('0.00')),
-        })
-        response['X-Frame-Options'] = 'ALLOW-FROM *'
-        return response
+            context['account'] = self.request.user.merchant.account_set.\
+                get(pk=self.kwargs.get('pk'))
+        except models.Account.DoesNotExist:
+            raise Http404
+        context['amount'] = Decimal('0.00')
+        return self.render_to_response(context)
