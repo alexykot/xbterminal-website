@@ -8,7 +8,8 @@ from website.tests.factories import AccountFactory
 from operations import instantfiat
 from operations.exceptions import (
     InstantFiatError,
-    CryptoPayUserAlreadyExists)
+    CryptoPayUserAlreadyExists,
+    InsufficientFunds)
 
 
 class InstantFiatTestCase(TestCase):
@@ -298,6 +299,7 @@ class CryptoPayTestCase(TestCase):
                 'cryptopay_reference': 'BT120200116',
                 'amount': '0.01',
             },
+            'status_code': 201,
         })
         account_id = '6bc3f1b4-a690-463a-8240-d47bcccba2a2'
         currency_name = 'USD'
@@ -316,6 +318,34 @@ class CryptoPayTestCase(TestCase):
         self.assertEqual(data['account'], account_id)
         self.assertEqual(post_mock.call_args[1]['headers']['X-Api-Key'],
                          api_key)
+
+    @patch('operations.instantfiat.cryptopay.requests.post')
+    def test_send_transaction_error(self, post_mock):
+        post_mock.return_value = Mock(**{
+            'text': 'error',
+            'status_code': 500,
+        })
+        with self.assertRaises(InstantFiatError):
+            instantfiat.cryptopay.send_transaction(
+                '6bc3f1b4-a690-463a-8240-d47bcccba2a2',
+                'USD', Decimal('0.01'),
+                '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
+                'test-api-key')
+
+    @patch('operations.instantfiat.cryptopay.requests.post')
+    def test_send_transaction_insufficient_funds(self, post_mock):
+        post_mock.return_value = Mock(**{
+            'json.return_value': {
+                'errors': ['Amount balance is not enough.'],
+            },
+            'status_code': 422,
+        })
+        with self.assertRaises(InsufficientFunds):
+            instantfiat.cryptopay.send_transaction(
+                '6bc3f1b4-a690-463a-8240-d47bcccba2a2',
+                'USD', Decimal('0.01'),
+                '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
+                'test-api-key')
 
     @patch('operations.instantfiat.cryptopay.requests.get')
     def test_get_transfer(self, get_mock):

@@ -12,7 +12,8 @@ import requests
 from operations import BTC_DEC_PLACES
 from operations.exceptions import (
     InstantFiatError,
-    CryptoPayUserAlreadyExists)
+    CryptoPayUserAlreadyExists,
+    InsufficientFunds)
 
 logger = logging.getLogger(__name__)
 
@@ -255,6 +256,7 @@ def send_transaction(account_id, currency_name, fiat_amount, destination, api_ke
     Returns:
         transfer_id: transfer ID
         reference: transfer reference
+        btc_amount: bitcoin amount, Decimal
     """
     api_url = 'https://cryptopay.me/api/v2/bitcoin_transfers'
     payload = {
@@ -272,11 +274,17 @@ def send_transaction(account_id, currency_name, fiat_amount, destination, api_ke
         api_url,
         data=json.dumps(payload),
         headers=headers)
-    response.raise_for_status()
-    data = response.json()
-    return (data['id'],
-            data['cryptopay_reference'],
-            Decimal(data['amount']).quantize(BTC_DEC_PLACES))
+    if response.status_code == 201:
+        data = response.json()
+        transfer_id = data['id']
+        reference = data['cryptopay_reference']
+        btc_amount = Decimal(data['amount']).quantize(BTC_DEC_PLACES)
+        return transfer_id, reference, btc_amount
+    elif response.status_code == 422:
+        data = response.json()
+        if data['errors'] == ['Amount balance is not enough.']:
+            raise InsufficientFunds
+    raise InstantFiatError(response.text)
 
 
 def get_transfer(transfer_id, api_key):
