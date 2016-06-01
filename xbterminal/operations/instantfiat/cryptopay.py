@@ -308,22 +308,21 @@ def get_transfer(transfer_id, api_key):
     return data
 
 
-def is_transfer_completed(transfer_id, api_key):
+def check_transfer(transfer_id, api_key):
     """
-    Check transfer status
+    Check status of bitcoin transfer
     Accepts:
         transfer_id: CryptoPay transfer ID
         api_key: merchant's API key
     Returns:
-        True if transfer is completed, False otherwise
+        is_completed: boolean
+        tx_hash: bitcoin transaction ID
     """
     try:
         result = get_transfer(transfer_id, api_key)
-        assert 'status' in result
-    except Exception as error:
-        logger.exception(error)
-        return False
-    if result['status'] == 'completed':
-        return True
+        is_completed = (result['status'] == 'completed')
+        tx_hash = result['tx_hash']
+    except Exception:
+        raise InstantFiatError
     else:
-        return False
+        return is_completed, tx_hash

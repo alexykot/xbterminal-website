@@ -59,7 +59,7 @@ def send_transaction(account, fiat_amount, destination):
         raise AssertionError
 
 
-def is_transfer_completed(account, transfer_id):
+def check_transfer(account, transfer_id):
     """
     Check transfer status
     Accepts:
@@ -67,7 +67,7 @@ def is_transfer_completed(account, transfer_id):
         transfer_id: string
     """
     if account.merchant.instantfiat_provider == INSTANTFIAT_PROVIDERS.CRYPTOPAY:
-        return cryptopay.is_transfer_completed(
+        return cryptopay.check_transfer(
             transfer_id,
             account.merchant.instantfiat_api_key)
     else:

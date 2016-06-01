@@ -176,7 +176,6 @@ def send_transaction(order, customer_address):
         order.time_sent = timezone.now()
     else:
         try:
-            # TODO: find transaction ID and save to outgoing_tx_id field
             # TODO: only one identifier is needed
             (order.instantfiat_transfer_id,
              order.instantfiat_reference,
@@ -242,10 +241,16 @@ def wait_for_processor(order_uid):
         send_error_message(order=order)
         cancel_current_task()
         return
-    if instantfiat.is_transfer_completed(
+    try:
+        is_completed, outgoing_tx_id = instantfiat.check_transfer(
             order.account,
-            order.instantfiat_transfer_id):
+            order.instantfiat_transfer_id)
+    except Exception as error:
+        logger.exception(error)
+        return
+    if is_completed:
         cancel_current_task()
+        order.outgoing_tx_id = outgoing_tx_id
         order.time_sent = timezone.now()
         # TODO: check for confidence in another task?
         order.time_broadcasted = timezone.now()

@@ -470,38 +470,52 @@ class WaitForConfidenceTestCase(TestCase):
 class WaitForProcessorTestCase(TestCase):
 
     @patch('operations.withdrawal.cancel_current_task')
-    @patch('operations.withdrawal.instantfiat.is_transfer_completed')
-    def test_completed(self, is_completed_mock, cancel_mock):
+    @patch('operations.withdrawal.instantfiat.check_transfer')
+    def test_completed(self, check_mock, cancel_mock):
         order = WithdrawalOrderFactory.create()
-        is_completed_mock.return_value = True
+        tx_id = '4' * 64
+        check_mock.return_value = (True, tx_id)
         withdrawal.wait_for_processor(order.uid)
-        self.assertTrue(is_completed_mock.called)
-        self.assertEqual(is_completed_mock.call_args[0][0],
+        self.assertTrue(check_mock.called)
+        self.assertEqual(check_mock.call_args[0][0],
                          order.device.account)
-        self.assertEqual(is_completed_mock.call_args[0][1],
+        self.assertEqual(check_mock.call_args[0][1],
                          order.instantfiat_transfer_id)
         order.refresh_from_db()
         self.assertEqual(order.status, 'broadcasted')
+        self.assertEqual(order.outgoing_tx_id, tx_id)
         self.assertTrue(cancel_mock.called)
 
     @patch('operations.withdrawal.cancel_current_task')
-    @patch('operations.withdrawal.instantfiat.is_transfer_completed')
-    def test_not_completed(self, is_completed_mock, cancel_mock):
+    @patch('operations.withdrawal.instantfiat.check_transfer')
+    def test_not_completed(self, check_mock, cancel_mock):
         order = WithdrawalOrderFactory.create()
-        is_completed_mock.return_value = False
+        check_mock.return_value = (False, None)
         withdrawal.wait_for_processor(order.uid)
         order.refresh_from_db()
         self.assertEqual(order.status, 'new')
+        self.assertIsNone(order.outgoing_tx_id)
         self.assertFalse(cancel_mock.called)
 
     @patch('operations.withdrawal.cancel_current_task')
-    @patch('operations.withdrawal.instantfiat.is_transfer_completed')
-    def test_timeout(self, is_completed_mock, cancel_mock):
+    @patch('operations.withdrawal.instantfiat.check_transfer')
+    def test_error(self, check_mock, cancel_mock):
+        order = WithdrawalOrderFactory.create()
+        check_mock.side_effect = ValueError
+        withdrawal.wait_for_processor(order.uid)
+        order.refresh_from_db()
+        self.assertEqual(order.status, 'new')
+        self.assertIsNone(order.outgoing_tx_id)
+        self.assertFalse(cancel_mock.called)
+
+    @patch('operations.withdrawal.cancel_current_task')
+    @patch('operations.withdrawal.instantfiat.check_transfer')
+    def test_timeout(self, check_mock, cancel_mock):
         order = WithdrawalOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=1))
         withdrawal.wait_for_processor(order.uid)
         order.refresh_from_db()
         self.assertEqual(order.status, 'timeout')
         self.assertTrue(cancel_mock.called)
-        self.assertFalse(is_completed_mock.called)
+        self.assertFalse(check_mock.called)
         self.assertEqual(len(mail.outbox), 1)
