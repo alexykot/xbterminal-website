@@ -184,6 +184,8 @@ def send_transaction(order, customer_address):
                 order.fiat_amount,
                 order.customer_address)
         except InsufficientFunds:
+            logger.error('insufficient funds',
+                         extra={'data': {'account': str(order.account)}})
             raise WithdrawalError('Insufficient funds.')
         except:
             raise WithdrawalError('Instantfiat error.')
