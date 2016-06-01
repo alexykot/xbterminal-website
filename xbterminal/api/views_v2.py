@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from rest_framework.decorators import list_route, detail_route
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework import status, viewsets
 from constance import config
 
@@ -301,3 +302,9 @@ class DeviceBatchViewSet(viewsets.GenericViewSet):
         except DeviceBatch.DoesNotExist:
             raise Http404
         return Response(batch.batch_number)
+
+
+class PingView(APIView):
+
+    def get(self, *args, **kwargs):
+        return Response({'status': 'online'})

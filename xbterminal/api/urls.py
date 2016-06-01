@@ -67,6 +67,7 @@ api_v2_router.register('devices',
 
 api_v2_urls = [
     url(r'^', include(api_v2_router.urls)),
+    url(r'^ping/', views_v2.PingView.as_view(), name='ping'),
 ]
 
 urlpatterns = [

@@ -612,3 +612,12 @@ class DeviceBatchViewSetTestCase(APITestCase):
         url = reverse('api:v2:batch-current')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class PingViewTestCase(APITestCase):
+
+    def test_ping(self):
+        url = reverse('api:v2:ping')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['status'], 'online')
