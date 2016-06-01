@@ -137,7 +137,7 @@ class PrepareWithdrawalTestCase(TestCase):
 
         with self.assertRaises(exceptions.WithdrawalError) as context:
             withdrawal.prepare_withdrawal(device, fiat_amount)
-        self.assertEqual(context.exception.message, 'Insufficient funds')
+        self.assertEqual(context.exception.message, 'Insufficient funds.')
 
     @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.get_exchange_rate')
@@ -159,7 +159,7 @@ class PrepareWithdrawalTestCase(TestCase):
         })
         with self.assertRaises(exceptions.WithdrawalError) as context:
             withdrawal.prepare_withdrawal(device, fiat_amount)
-        self.assertEqual(context.exception.message, 'Insufficient funds')
+        self.assertEqual(context.exception.message, 'Insufficient funds.')
 
         # Order cancelled
         order.time_cancelled = timezone.now()
@@ -344,7 +344,7 @@ class SendTransactionTestCase(TestCase):
 
         with self.assertRaises(exceptions.WithdrawalError) as context:
             withdrawal.send_transaction(order_2, customer_address)
-        self.assertEqual(context.exception.message, 'Insufficient funds')
+        self.assertEqual(context.exception.message, 'Insufficient funds.')
 
     @patch('operations.withdrawal.instantfiat.send_transaction')
     @patch('operations.withdrawal.run_periodic_task')
@@ -382,6 +382,24 @@ class SendTransactionTestCase(TestCase):
         self.assertTrue(run_task_mock.called)
         self.assertEqual(run_task_mock.call_args[0][0].__name__,
                          'wait_for_processor')
+
+    @patch('operations.withdrawal.instantfiat.send_transaction')
+    def test_send_instantfiat_insufficient_funds(self, send_mock):
+        device = DeviceFactory.create(
+            account__currency__name='GBP',
+            account__balance=Decimal('2.00'))
+        order = WithdrawalOrderFactory.create(
+            device=device,
+            fiat_amount=Decimal('1.00'),
+            tx_fee_btc_amount=0,
+            change_btc_amount=0,
+            exchange_rate=Decimal(200))
+        customer_address = '1NdS5JCXzbhNv4STQAaknq56iGstfgRCXg'
+        send_mock.side_effect = exceptions.InsufficientFunds
+
+        with self.assertRaises(exceptions.WithdrawalError) as context:
+            withdrawal.send_transaction(order, customer_address)
+        self.assertEqual(context.exception.message, 'Insufficient funds.')
 
     @patch('operations.withdrawal.instantfiat.send_transaction')
     def test_send_instantfiat_error(self, send_mock):
