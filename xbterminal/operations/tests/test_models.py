@@ -180,6 +180,13 @@ class WithdrawalOrderTestCase(TestCase):
                          order.account.merchant.currency)
         self.assertIsNotNone(order.merchant_address)
 
+    def test_factory_instantfiat(self):
+        order = WithdrawalOrderFactory.create(
+            device__account__currency__name='GBP')
+        self.assertEqual(order.fiat_currency,
+                         order.account.merchant.currency)
+        self.assertIsNone(order.merchant_address)
+
     def test_merchant(self):
         order = WithdrawalOrderFactory.create()
         self.assertEqual(order.merchant.pk, order.device.merchant.pk)

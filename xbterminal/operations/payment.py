@@ -121,7 +121,15 @@ def prepare_payment(device_or_account, fiat_amount):
     if 0 < order.merchant_btc_amount < BTC_MIN_OUTPUT:
         order.merchant_btc_amount = BTC_MIN_OUTPUT
     # TX fee
-    order.tx_fee_btc_amount = blockchain.get_tx_fee(1, 3)
+    if not account.instantfiat and \
+            account.balance + order.merchant_btc_amount <= account.balance_max:
+        # Output will be splitted, adjust fee
+        n_outputs = 2 + len(blockchain.split_amount(
+            order.merchant_btc_amount,
+            config.POOL_TX_MAX_OUTPUT))
+    else:
+        n_outputs = 3
+    order.tx_fee_btc_amount = blockchain.get_tx_fee(1, n_outputs)
     # Save order
     order.save()
     # Schedule tasks
@@ -363,11 +371,17 @@ def forward_transaction(payment_order):
         if account.balance + payment_order.merchant_btc_amount <= \
                 account.balance_max:
             # Store bitcoins on merchant's internal account
-            if not account.bitcoin_address:
-                account.bitcoin_address = str(bc.get_new_address())
-                account.save()
-            outputs.append((account.bitcoin_address,
-                            payment_order.merchant_btc_amount))
+            splitted = blockchain.split_amount(
+                payment_order.merchant_btc_amount,
+                config.POOL_TX_MAX_OUTPUT)
+            account_addrs = list(account.address_set.order_by('created_at'))
+            for idx, amount in enumerate(splitted):
+                try:
+                    address = account_addrs[idx].address
+                except IndexError:
+                    address = str(bc.get_new_address())
+                    account.address_set.create(address=address)
+                outputs.append((address, amount))
             create_account_txs(payment_order)
         else:
             # Forward payment to merchant address

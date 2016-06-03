@@ -129,6 +129,26 @@ class KYCDocumentInline(admin.TabularInline):
     extra = 0
 
 
+class AddressInline(admin.TabularInline):
+
+    model = models.Address
+    max_num = 0
+    extra = 0
+    can_delete = 0
+
+    def get_formset(self, request, obj, **kwargs):
+        formset = super(AddressInline, self).get_formset(
+            request, obj, **kwargs)
+        if not obj:
+            return formset
+        for field_name in formset.form.base_fields:
+            field = formset.form.base_fields[field_name]
+            if field_name == 'address':
+                field.widget = BitcoinAddressWidget(network=obj.bitcoin_network)
+                field.required = False
+        return formset
+
+
 class TransactionInline(admin.TabularInline):
 
     model = models.Transaction
@@ -186,24 +206,9 @@ class AccountAdmin(admin.ModelAdmin):
     ]
     list_filter = ['instantfiat']
     inlines = [
+        AddressInline,
         TransactionInline,
     ]
-
-    def get_form(self, request, obj, **kwargs):
-        form = super(AccountAdmin, self).get_form(request, obj, **kwargs)
-        if not obj:
-            return form
-        for field_name in form.base_fields:
-            field = form.base_fields[field_name]
-            if field_name == 'bitcoin_address':
-                if obj.currency.name == 'BTC':
-                    field.widget = BitcoinAddressWidget(network='mainnet')
-                elif obj.currency.name == 'TBTC':
-                    field.widget = BitcoinAddressWidget(network='testnet')
-                field.required = True
-                # Workaround for address field with blank=True
-                field.clean = lambda *args: obj.bitcoin_address
-        return form
 
     def payment_processor(self, obj):
         if obj.instantfiat:

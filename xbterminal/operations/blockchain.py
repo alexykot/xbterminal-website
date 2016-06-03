@@ -289,3 +289,23 @@ def deserialize_outputs(string):
         outpoint = COutPoint.stream_deserialize(buffer)
         outputs.append(outpoint)
     return outputs
+
+
+def split_amount(amount, max_size):
+    """
+    Split bitcoin amount
+    Accepts:
+        amount: total amount, Decimal
+        max_size: split size, Decimal
+    Returns:
+        list
+    """
+    splitted = []
+    while amount > 0:
+        if amount >= max_size:
+            chunk = max_size
+        else:
+            chunk = amount
+        amount -= chunk
+        splitted.append(chunk)
+    return splitted

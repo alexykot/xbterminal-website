@@ -43,7 +43,6 @@ class AccountAdminTestCase(TestCase):
             'merchant': merchant.pk,
             'currency': merchant.currency.pk,
             'balance_max': '0.00',
-            'bitcoin_address': '',
             'forward_address': '',
             'instantfiat': True,
             'instantfiat_account_id': 'test',
@@ -61,7 +60,6 @@ class AccountAdminTestCase(TestCase):
             'merchant': merchant.pk,
             'currency': merchant.currency.pk,
             'balance_max': '0.00',
-            'bitcoin_address': '',
             'forward_address': '',
             'instantfiat': True,
         }
@@ -78,7 +76,6 @@ class AccountAdminTestCase(TestCase):
             'merchant': merchant.pk,
             'currency': btc.pk,
             'balance_max': '0.00',
-            'bitcoin_address': '',
             'forward_address': '',
             'instantfiat': False,
         }
@@ -88,13 +85,11 @@ class AccountAdminTestCase(TestCase):
                          'This field is required.')
 
     def test_update_btc(self):
-        account = AccountFactory.create(
-            bitcoin_address='1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE')
+        account = AccountFactory.create()
         data = {
             'merchant': account.merchant.pk,
             'currency': account.currency.pk,
             'balance_max': '1.00',
-            'bitcoin_address': '',
             'forward_address': '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
             'instantfiat': False,
         }
@@ -103,5 +98,3 @@ class AccountAdminTestCase(TestCase):
         self.assertTrue(form.is_valid())
         account_updated = form.save()
         self.assertEqual(account_updated.pk, account.pk)
-        self.assertEqual(account_updated.bitcoin_address,
-                         account.bitcoin_address)

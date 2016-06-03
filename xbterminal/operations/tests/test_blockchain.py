@@ -8,7 +8,8 @@ from operations.blockchain import (
     BlockChain,
     serialize_outputs,
     deserialize_outputs,
-    validate_bitcoin_address)
+    validate_bitcoin_address,
+    split_amount)
 
 
 class BlockChainTestCase(TestCase):
@@ -92,3 +93,14 @@ class UtilsTestCase(TestCase):
         self.assertIsNotNone(
             validate_bitcoin_address(invalid_addr, None))
         self.assertEqual(bitcoin.params.__class__.__name__, 'MainParams')
+
+    def test_split_amount(self):
+        max_size = Decimal('0.05')
+        splitted_1 = split_amount(Decimal('0.01'), max_size)
+        self.assertEqual(splitted_1, [Decimal('0.01')])
+        splitted_2 = split_amount(Decimal('0.05'), max_size)
+        self.assertEqual(splitted_2, [Decimal('0.05')])
+        splitted_3 = split_amount(Decimal('0.13'), max_size)
+        self.assertEqual(
+            splitted_3,
+            [Decimal('0.05'), Decimal('0.05'), Decimal('0.03')])

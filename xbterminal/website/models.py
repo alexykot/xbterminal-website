@@ -311,12 +311,6 @@ class Account(models.Model):
         max_digits=20,
         decimal_places=8,
         default=0)
-    bitcoin_address = models.CharField(
-        max_length=35,
-        unique=True,
-        validators=[validate_bitcoin_address],
-        blank=True,
-        null=True)
     forward_address = models.CharField(
         max_length=35,
         validators=[validate_bitcoin_address],
@@ -326,7 +320,6 @@ class Account(models.Model):
     instantfiat_account_id = models.CharField(
         _('InstantFiat account ID'),
         max_length=50,
-        unique=True,
         blank=True,
         null=True)
 
@@ -389,6 +382,23 @@ class Account(models.Model):
             if not self.forward_address:
                 raise ValidationError({
                     'forward_address': 'This field is required.'})
+
+
+class Address(models.Model):
+
+    account = models.ForeignKey(Account)
+    address = models.CharField(
+        max_length=35,
+        unique=True,
+        validators=[validate_bitcoin_address])
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['account']
+        verbose_name_plural = 'addresses'
+
+    def __unicode__(self):
+        return self.address
 
 
 class Transaction(models.Model):

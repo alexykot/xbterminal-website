@@ -15,6 +15,7 @@ from website.models import (
     UITheme,
     MerchantAccount,
     Account,
+    Address,
     Transaction,
     Device,
     DeviceBatch,
@@ -26,6 +27,7 @@ from website.tests.factories import (
     MerchantAccountFactory,
     KYCDocumentFactory,
     AccountFactory,
+    AddressFactory,
     TransactionFactory,
     DeviceBatchFactory,
     DeviceFactory,
@@ -33,6 +35,7 @@ from website.tests.factories import (
 from operations.tests.factories import (
     PaymentOrderFactory,
     WithdrawalOrderFactory)
+from operations.blockchain import validate_bitcoin_address
 
 
 class UserTestCase(TestCase):
@@ -218,7 +221,6 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.currency.name, 'BTC')
         self.assertEqual(account.balance, 0)
         self.assertEqual(account.balance_max, 0)
-        self.assertIsNone(account.bitcoin_address)
         self.assertFalse(account.instantfiat)
         self.assertIsNone(account.instantfiat_account_id)
         self.assertEqual(str(account), 'BTC - 0.00000000')
@@ -228,7 +230,6 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.currency.name, 'BTC')
         self.assertEqual(account.balance, 0)
         self.assertEqual(account.balance_max, 0)
-        self.assertIsNone(account.bitcoin_address)
         self.assertIsNotNone(account.forward_address)
         self.assertFalse(account.instantfiat)
         self.assertIsNone(account.instantfiat_account_id)
@@ -241,16 +242,10 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.currency.name, 'GBP')
         self.assertEqual(account.balance, 0)
         self.assertEqual(account.balance_max, 0)
-        self.assertIsNone(account.bitcoin_address)
         self.assertIsNone(account.forward_address)
         self.assertTrue(account.instantfiat)
         self.assertIsNotNone(account.instantfiat_account_id)
         self.assertEqual(str(account), 'GBP - 0.00 (CryptoPay)')
-
-    def test_unique_instantfiat_account_id(self):
-        AccountFactory.create(instantfiat_account_id='test')
-        with self.assertRaises(IntegrityError):
-            AccountFactory.create(instantfiat_account_id='test')
 
     def test_unique_together(self):
         merchant = MerchantAccountFactory.create()
@@ -320,6 +315,32 @@ class AccountTestCase(TestCase):
             account=account, amount=Decimal('0.13'))
         self.assertEqual(account.balance, Decimal('0.43'))
         self.assertEqual(account.balance_confirmed, Decimal('0.20'))
+
+
+class AddressTestCase(TestCase):
+
+    def test_create(self):
+        account = AccountFactory.create()
+        address_str = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
+        address = Address.objects.create(
+            account=account,
+            address=address_str)
+        self.assertIsNotNone(address.account)
+        self.assertEqual(str(address), address_str)
+
+    def test_factory(self):
+        address_main = AddressFactory.create()
+        self.assertIsNone(
+            validate_bitcoin_address(address_main.address, 'mainnet'))
+        address_test = AddressFactory.create(
+            account__currency__name='TBTC')
+        self.assertIsNone(
+            validate_bitcoin_address(address_test.address, 'testnet'))
+
+    def test_unique(self):
+        address = AddressFactory.create()
+        with self.assertRaises(IntegrityError):
+            AddressFactory.create(address=address.address)
 
 
 class TransactionTestCase(TestCase):
