@@ -19,7 +19,7 @@ from operations.blockchain import (
     deserialize_outputs)
 from operations.rq_helpers import cancel_current_task, run_periodic_task
 from operations.models import WithdrawalOrder
-from operations.exceptions import WithdrawalError
+from operations.exceptions import WithdrawalError, InsufficientFunds
 from website.models import Device, Account
 from website.utils.accounts import create_account_txs
 from website.utils.email import send_error_message
@@ -117,7 +117,7 @@ def prepare_withdrawal(device_or_account, fiat_amount):
         if reserved_sum < order.btc_amount:
             logger.error('insufficient funds',
                          extra={'data': {'account': str(device.account)}})
-            raise WithdrawalError('Insufficient funds')
+            raise WithdrawalError('Insufficient funds.')
         order.reserved_outputs = serialize_outputs(reserved_outputs)
         logger.info('reserved {0} unspent outputs'.format(
             len(reserved_outputs)))
@@ -162,7 +162,7 @@ def send_transaction(order, customer_address):
         if set(tx_inputs) & all_reserved_outputs:
             # Some of the reserved outputs are reserved by other orders
             logger.critical('send_transaction - some outputs are reserved by other orders')
-            raise WithdrawalError('Insufficient funds')
+            raise WithdrawalError('Insufficient funds.')
         # Create and send transaction
         change_address = order.account.address_set.first().address
         tx_outputs = {
@@ -176,7 +176,6 @@ def send_transaction(order, customer_address):
         order.time_sent = timezone.now()
     else:
         try:
-            # TODO: find transaction ID and save to outgoing_tx_id field
             # TODO: only one identifier is needed
             (order.instantfiat_transfer_id,
              order.instantfiat_reference,
@@ -184,8 +183,11 @@ def send_transaction(order, customer_address):
                 order.account,
                 order.fiat_amount,
                 order.customer_address)
+        except InsufficientFunds:
+            logger.error('insufficient funds',
+                         extra={'data': {'account': str(order.account)}})
+            raise WithdrawalError('Insufficient funds.')
         except:
-            # TODO: better error handling
             raise WithdrawalError('Instantfiat error.')
         # Don't set time_sent at this moment
 
@@ -241,10 +243,16 @@ def wait_for_processor(order_uid):
         send_error_message(order=order)
         cancel_current_task()
         return
-    if instantfiat.is_transfer_completed(
+    try:
+        is_completed, outgoing_tx_id = instantfiat.check_transfer(
             order.account,
-            order.instantfiat_transfer_id):
+            order.instantfiat_transfer_id)
+    except Exception as error:
+        logger.exception(error)
+        return
+    if is_completed:
         cancel_current_task()
+        order.outgoing_tx_id = outgoing_tx_id
         order.time_sent = timezone.now()
         # TODO: check for confidence in another task?
         order.time_broadcasted = timezone.now()

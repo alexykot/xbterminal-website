@@ -120,7 +120,9 @@ class PaymentOrder(models.Model):
         """
         Returns status of the payment:
             new - payment order has just been created
-            recieved - incoming transaction receieved
+            underpaid - incoming transaction received,
+                but amount is not sufficient
+            recieved - incoming transaction receieved, full amount
             forwarded - payment forwarded
             processed - recieved confirmation from instantfiat service
             notified - customer notified about successful payment

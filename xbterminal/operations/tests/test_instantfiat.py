@@ -8,7 +8,8 @@ from website.tests.factories import AccountFactory
 from operations import instantfiat
 from operations.exceptions import (
     InstantFiatError,
-    CryptoPayUserAlreadyExists)
+    CryptoPayUserAlreadyExists,
+    InsufficientFunds)
 
 
 class InstantFiatTestCase(TestCase):
@@ -62,18 +63,20 @@ class InstantFiatTestCase(TestCase):
         self.assertEqual(result[1], 'test-ref')
         self.assertEqual(result[2], Decimal('0.1'))
 
-    @patch('operations.instantfiat.cryptopay.is_transfer_completed')
-    def test_is_transfer_completed(self, is_completed_mock):
+    @patch('operations.instantfiat.cryptopay.check_transfer')
+    def test_check_transfer(self, check_mock):
         account = AccountFactory.create(
             currency__name='GBP',
             merchant__instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
             merchant__instantfiat_api_key='test')
-        is_completed_mock.return_value = True
-        result = instantfiat.is_transfer_completed(account, 'transfer_id')
-        self.assertEqual(is_completed_mock.call_args[0][0], 'transfer_id')
-        self.assertEqual(is_completed_mock.call_args[0][1],
+        check_mock.return_value = (True, '3' * 64)
+        is_completed, tx_hash = instantfiat.check_transfer(
+            account, 'transfer_id')
+        self.assertEqual(check_mock.call_args[0][0], 'transfer_id')
+        self.assertEqual(check_mock.call_args[0][1],
                          account.merchant.instantfiat_api_key)
-        self.assertTrue(result)
+        self.assertTrue(is_completed)
+        self.assertEqual(tx_hash, '3' * 64)
 
 
 class CryptoPayTestCase(TestCase):
@@ -298,6 +301,7 @@ class CryptoPayTestCase(TestCase):
                 'cryptopay_reference': 'BT120200116',
                 'amount': '0.01',
             },
+            'status_code': 201,
         })
         account_id = '6bc3f1b4-a690-463a-8240-d47bcccba2a2'
         currency_name = 'USD'
@@ -317,6 +321,34 @@ class CryptoPayTestCase(TestCase):
         self.assertEqual(post_mock.call_args[1]['headers']['X-Api-Key'],
                          api_key)
 
+    @patch('operations.instantfiat.cryptopay.requests.post')
+    def test_send_transaction_error(self, post_mock):
+        post_mock.return_value = Mock(**{
+            'text': 'error',
+            'status_code': 500,
+        })
+        with self.assertRaises(InstantFiatError):
+            instantfiat.cryptopay.send_transaction(
+                '6bc3f1b4-a690-463a-8240-d47bcccba2a2',
+                'USD', Decimal('0.01'),
+                '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
+                'test-api-key')
+
+    @patch('operations.instantfiat.cryptopay.requests.post')
+    def test_send_transaction_insufficient_funds(self, post_mock):
+        post_mock.return_value = Mock(**{
+            'json.return_value': {
+                'errors': ['Amount balance is not enough.'],
+            },
+            'status_code': 422,
+        })
+        with self.assertRaises(InsufficientFunds):
+            instantfiat.cryptopay.send_transaction(
+                '6bc3f1b4-a690-463a-8240-d47bcccba2a2',
+                'USD', Decimal('0.01'),
+                '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
+                'test-api-key')
+
     @patch('operations.instantfiat.cryptopay.requests.get')
     def test_get_transfer(self, get_mock):
         get_mock.return_value = Mock(**{
@@ -335,23 +367,35 @@ class CryptoPayTestCase(TestCase):
         self.assertEqual(result['status'], 'new')
 
     @patch('operations.instantfiat.cryptopay.requests.get')
-    def test_is_transfer_completed(self, get_mock):
+    def test_check_transfer(self, get_mock):
         get_mock.return_value = Mock(**{
             'json.return_value': {
                 'id': '36e2a91e-18d1-4e3c-9e82-8c63e01797be',
                 'cryptopay_reference': 'BT120200116',
                 'status': 'completed',
+                'tx_hash': '1' * 64,
             },
         })
         transfer_id = '36e2a91e-18d1-4e3c-9e82-8c63e01797be'
         api_key = 'test-api-key'
-        self.assertTrue(instantfiat.cryptopay.is_transfer_completed(
-            transfer_id, api_key))
+        is_completed, tx_hash = instantfiat.cryptopay.check_transfer(
+            transfer_id, api_key)
+        self.assertTrue(is_completed)
+        self.assertEqual(tx_hash, '1' * 64)
 
     @patch('operations.instantfiat.cryptopay.requests.get')
-    def test_is_transfer_completed_error(self, get_mock):
-        get_mock.side_effect = ValueError
+    def test_check_transfer_not_completed(self, get_mock):
+        get_mock.return_value = Mock(**{
+            'json.return_value': {
+                'id': '36e2a91e-18d1-4e3c-9e82-8c63e01797be',
+                'cryptopay_reference': 'BT120200116',
+                'status': 'new',
+                'tx_hash': None,
+            },
+        })
         transfer_id = '36e2a91e-18d1-4e3c-9e82-8c63e01797be'
         api_key = 'test-api-key'
-        self.assertFalse(instantfiat.cryptopay.is_transfer_completed(
-            transfer_id, api_key))
+        is_completed, tx_hash = instantfiat.cryptopay.check_transfer(
+            transfer_id, api_key)
+        self.assertFalse(is_completed)
+        self.assertIsNone(tx_hash)
