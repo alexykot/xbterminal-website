@@ -289,7 +289,12 @@ def reverse_payment(order):
     order.refund_tx_id = refund_tx_id
     order.time_refunded = timezone.now()
     order.save()
-    logger.warning('payment returned ({0})'.format(order.uid))
+    logger.warning(
+        'Payment returned',
+        extra={'data': {
+            'order_uid': order.uid,
+            'order_admin_url': get_admin_url(order),
+        }})
 
 
 def wait_for_validation(payment_order_uid):
@@ -489,18 +494,18 @@ def check_payment_status(payment_order_uid):
             pass
         logger.error(
             'Payment failed',
-            extra={
+            extra={'data': {
                 'order_uid': payment_order.uid,
-                'admin_url': get_admin_url(payment_order),
-            })
+                'order_admin_url': get_admin_url(payment_order),
+            }})
         cancel_current_task()
     elif payment_order.status == 'unconfirmed':
         logger.error(
             'Payment error - outgoing transaction not confirmed',
-            extra={
+            extra={'data': {
                 'order_uid': payment_order.uid,
-                'admin_url': get_admin_url(payment_order),
-            })
+                'order_admin_url': get_admin_url(payment_order),
+            }})
         cancel_current_task()
     elif payment_order.status in ['refunded', 'confirmed']:
         cancel_current_task()
