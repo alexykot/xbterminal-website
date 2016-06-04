@@ -2,7 +2,6 @@ from decimal import Decimal
 import json
 import datetime
 import re
-import traceback
 
 from django.shortcuts import get_object_or_404, redirect
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, StreamingHttpResponse
@@ -26,14 +25,6 @@ from api.utils import activation
 from website import forms, models
 from website.utils import reconciliation, email
 from website.utils import kyc
-
-
-class ServerErrorMiddleware(object):
-
-    def process_exception(self, request, exception):
-        if not isinstance(exception, Http404):
-            email.send_error_message(tb=traceback.format_exc())
-        return None
 
 
 class LandingView(TemplateResponseMixin, View):
