@@ -31,21 +31,6 @@ def send_reconciliation_email(recipient, date, context, files):
     message.send(fail_silently=False)
 
 
-def send_error_message(tb=None, order=None):
-    """
-    Accepts:
-        tb: traceback object
-        order: PaymentOrder or WithdrawalOrder instance
-    """
-    message = create_html_message(
-        'XBTerminal - error',
-        'email/error.html',
-        {'traceback': tb, 'order': order},
-        settings.DEFAULT_FROM_EMAIL,
-        settings.CONTACT_EMAIL_RECIPIENTS)
-    message.send(fail_silently=False)
-
-
 def send_registration_email(email, password):
     """
     Send merchant registration email
