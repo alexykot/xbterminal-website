@@ -22,7 +22,7 @@ from operations.models import WithdrawalOrder
 from operations.exceptions import WithdrawalError, InsufficientFunds
 from website.models import Device, Account
 from website.utils.accounts import create_account_txs
-from website.utils.email import send_error_message
+from api.utils.urls import get_admin_url
 
 logger = logging.getLogger(__name__)
 
@@ -115,8 +115,12 @@ def prepare_withdrawal(device_or_account, fiat_amount):
             if reserved_sum >= order.btc_amount:
                 break
         if reserved_sum < order.btc_amount:
-            logger.error('insufficient funds',
-                         extra={'data': {'account': str(device.account)}})
+            logger.error(
+                'Withdrawal error - insufficient funds',
+                extra={'data': {
+                    'account_id': account.pk,
+                    'account_admin_url': get_admin_url(account),
+                }})
             raise WithdrawalError('Insufficient funds.')
         order.reserved_outputs = serialize_outputs(reserved_outputs)
         logger.info('reserved {0} unspent outputs'.format(
@@ -131,8 +135,12 @@ def prepare_withdrawal(device_or_account, fiat_amount):
         # Check confirmed balance of instantfiat account
         # TODO: improve calculation of balance_confirmed
         if account.balance_confirmed < order.fiat_amount:
-            logger.error('insufficient funds',
-                         extra={'data': {'account': str(device.account)}})
+            logger.error(
+                'Withdrawal error - insufficient funds',
+                extra={'data': {
+                    'account_id': account.pk,
+                    'account_admin_url': get_admin_url(account),
+                }})
             raise WithdrawalError('Insufficient funds.')
         order.tx_fee_btc_amount = BTC_DEC_PLACES
         order.change_btc_amount = BTC_DEC_PLACES
@@ -161,7 +169,12 @@ def send_transaction(order, customer_address):
         all_reserved_outputs = _get_all_reserved_outputs(order)
         if set(tx_inputs) & all_reserved_outputs:
             # Some of the reserved outputs are reserved by other orders
-            logger.critical('send_transaction - some outputs are reserved by other orders')
+            logger.error(
+                'Withdrawal error - some outputs are reserved by other orders',
+                extra={'data': {
+                    'order_uid': order.uid,
+                    'order_admin_url': get_admin_url(order),
+                }})
             raise WithdrawalError('Insufficient funds.')
         # Create and send transaction
         change_address = order.account.address_set.first().address
@@ -184,8 +197,13 @@ def send_transaction(order, customer_address):
                 order.fiat_amount,
                 order.customer_address)
         except InsufficientFunds:
-            logger.error('insufficient funds',
-                         extra={'data': {'account': str(order.account)}})
+            logger.error(
+                'Withdrawal error - insufficient funds',
+                extra={'data': {
+                    'account_id': order.account.pk,
+                    'account_admin_url': get_admin_url(order.account),
+                    'order_uid': order.uid,
+                }})
             raise WithdrawalError('Insufficient funds.')
         except:
             raise WithdrawalError('Instantfiat error.')
@@ -215,7 +233,12 @@ def wait_for_confidence(order_uid):
         return
     if order.time_created + WITHDRAWAL_BROADCAST_TIMEOUT < timezone.now():
         # Timeout, cancel job
-        send_error_message(order=order)
+        logger.error(
+            'Withdrawal error - confidence not reached',
+            extra={'data': {
+                'order_uid': order.uid,
+                'order_admin_url': get_admin_url(order),
+            }})
         cancel_current_task()
         return
     if is_tx_reliable(order.outgoing_tx_id, order.bitcoin_network):
@@ -239,8 +262,12 @@ def wait_for_processor(order_uid):
         return
     if order.time_created + WITHDRAWAL_BROADCAST_TIMEOUT < timezone.now():
         # Timeout, cancel job
-        # WARNING: order status is 'timeout', not 'failed'
-        send_error_message(order=order)
+        logger.error(
+            'Withdrawal error - instantfiat timeout',
+            extra={'data': {
+                'order_uid': order.uid,
+                'order_admin_url': get_admin_url(order),
+            }})
         cancel_current_task()
         return
     try:

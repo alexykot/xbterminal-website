@@ -10,3 +10,12 @@ def construct_absolute_url(url_name, args=None, kwargs=None):
         domain_name=site.domain,
         path=reverse(url_name, args=args, kwargs=kwargs))
     return url
+
+
+def get_admin_url(obj, absolute=True):
+    url_name = u'admin:{0}_{1}_change'.format(
+        obj._meta.app_label, obj._meta.model_name)
+    if absolute:
+        return construct_absolute_url(url_name, args=[obj.pk])
+    else:
+        return reverse(url_name, args=[obj.pk])

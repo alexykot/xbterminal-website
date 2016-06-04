@@ -1077,21 +1077,17 @@ class CheckPaymentStatusTestCase(TestCase):
         self.assertTrue(cancel_mock.called)
 
     @patch('operations.payment.cancel_current_task')
-    @patch('operations.payment.send_error_message')
     @patch('operations.payment.reverse_payment')
-    def test_failed(self, reverse_mock, send_mock, cancel_mock):
+    def test_failed(self, reverse_mock, cancel_mock):
         order = PaymentOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=2),
             time_recieved=timezone.now() - datetime.timedelta(hours=1))
         payment.check_payment_status(order.uid)
         self.assertTrue(cancel_mock.called)
-        self.assertTrue(send_mock.called)
-        self.assertEqual(send_mock.call_args[1]['order'].pk, order.pk)
         self.assertTrue(reverse_mock.called)
 
     @patch('operations.payment.cancel_current_task')
-    @patch('operations.payment.send_error_message')
-    def test_unconfirmed(self, send_mock, cancel_mock):
+    def test_unconfirmed(self, cancel_mock):
         order = PaymentOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=4),
             time_recieved=timezone.now() - datetime.timedelta(hours=3),
@@ -1100,38 +1096,30 @@ class CheckPaymentStatusTestCase(TestCase):
         self.assertEqual(order.status, 'unconfirmed')
         payment.check_payment_status(order.uid)
         self.assertTrue(cancel_mock.called)
-        self.assertTrue(send_mock.called)
-        self.assertEqual(send_mock.call_args[1]['order'].pk, order.pk)
 
     @patch('operations.payment.cancel_current_task')
-    @patch('operations.payment.send_error_message')
-    def test_refunded(self, send_mock, cancel_mock):
+    def test_refunded(self, cancel_mock):
         order = PaymentOrderFactory.create(
             time_created=timezone.now(),
             time_recieved=timezone.now(),
             time_refunded=timezone.now())
         payment.check_payment_status(order.uid)
         self.assertTrue(cancel_mock.called)
-        self.assertFalse(send_mock.called)
 
     @patch('operations.payment.cancel_current_task')
-    @patch('operations.payment.send_error_message')
     @patch('operations.payment.reverse_payment')
-    def test_cancelled(self, reverse_mock, send_mock, cancel_mock):
+    def test_cancelled(self, reverse_mock, cancel_mock):
         order = PaymentOrderFactory.create(
             time_cancelled=timezone.now())
         payment.check_payment_status(order.uid)
         self.assertTrue(cancel_mock.called)
-        self.assertFalse(send_mock.called)
         self.assertTrue(reverse_mock.called)
 
     @patch('operations.payment.cancel_current_task')
-    @patch('operations.payment.send_error_message')
     @patch('operations.payment.reverse_payment')
-    def test_timeout(self, reverse_mock, send_mock, cancel_mock):
+    def test_timeout(self, reverse_mock, cancel_mock):
         order = PaymentOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=1))
         payment.check_payment_status(order.uid)
         self.assertTrue(cancel_mock.called)
-        self.assertFalse(send_mock.called)
         self.assertTrue(reverse_mock.called)

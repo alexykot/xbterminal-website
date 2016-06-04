@@ -1,7 +1,6 @@
 import datetime
 from decimal import Decimal
 
-from django.core import mail
 from django.test import TestCase
 from django.utils import timezone
 from mock import patch, Mock
@@ -452,9 +451,8 @@ class WaitForConfidenceTestCase(TestCase):
         self.assertFalse(tx_check_mock.called)
 
     @patch('operations.withdrawal.cancel_current_task')
-    @patch('operations.withdrawal.send_error_message')
     @patch('operations.withdrawal.is_tx_reliable')
-    def test_timeout(self, tx_check_mock, send_mock, cancel_mock):
+    def test_timeout(self, tx_check_mock, cancel_mock):
         order = WithdrawalOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=1),
             time_sent=timezone.now() - datetime.timedelta(hours=1))
@@ -462,8 +460,6 @@ class WaitForConfidenceTestCase(TestCase):
         order.refresh_from_db()
         self.assertEqual(order.status, 'failed')
         self.assertTrue(cancel_mock.called)
-        self.assertTrue(send_mock.called)
-        self.assertEqual(send_mock.call_args[1]['order'].pk, order.pk)
         self.assertFalse(tx_check_mock.called)
 
 
@@ -518,4 +514,3 @@ class WaitForProcessorTestCase(TestCase):
         self.assertEqual(order.status, 'timeout')
         self.assertTrue(cancel_mock.called)
         self.assertFalse(check_mock.called)
-        self.assertEqual(len(mail.outbox), 1)

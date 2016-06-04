@@ -30,7 +30,7 @@ from operations.models import PaymentOrder
 
 from website.models import Device, Account
 from website.utils.accounts import create_account_txs
-from website.utils.email import send_error_message
+from api.utils.urls import get_admin_url
 
 logger = logging.getLogger(__name__)
 
@@ -289,7 +289,12 @@ def reverse_payment(order):
     order.refund_tx_id = refund_tx_id
     order.time_refunded = timezone.now()
     order.save()
-    logger.warning('payment returned ({0})'.format(order.uid))
+    logger.warning(
+        'Payment returned',
+        extra={'data': {
+            'order_uid': order.uid,
+            'order_admin_url': get_admin_url(order),
+        }})
 
 
 def wait_for_validation(payment_order_uid):
@@ -487,10 +492,20 @@ def check_payment_status(payment_order_uid):
             reverse_payment(payment_order)
         except exceptions.RefundError:
             pass
-        send_error_message(order=payment_order)
+        logger.error(
+            'Payment failed',
+            extra={'data': {
+                'order_uid': payment_order.uid,
+                'order_admin_url': get_admin_url(payment_order),
+            }})
         cancel_current_task()
     elif payment_order.status == 'unconfirmed':
-        send_error_message(order=payment_order)
+        logger.error(
+            'Payment error - outgoing transaction not confirmed',
+            extra={'data': {
+                'order_uid': payment_order.uid,
+                'order_admin_url': get_admin_url(payment_order),
+            }})
         cancel_current_task()
     elif payment_order.status in ['refunded', 'confirmed']:
         cancel_current_task()

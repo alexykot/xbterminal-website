@@ -11,7 +11,6 @@ from website.utils.accounts import (
     create_managed_accounts,
     update_managed_accounts,
     update_balances)
-from website.utils.email import send_error_message
 from website.utils.kyc import upload_documents, check_documents
 from website.tests.factories import (
     MerchantAccountFactory,
@@ -113,23 +112,6 @@ class AccountsUtilsTestCase(TestCase):
         self.assertEqual(payment_tx.instantfiat_tx_id, '110')
         withdrawal_tx.refresh_from_db()
         self.assertEqual(withdrawal_tx.instantfiat_tx_id, '112')
-
-
-class EmailUtilsTestCase(TestCase):
-
-    def test_error_message_payment(self):
-        order = PaymentOrderFactory.create()
-        send_error_message(order=order)
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].to,
-                         settings.CONTACT_EMAIL_RECIPIENTS)
-
-    def test_error_message_withdrawal(self):
-        order = WithdrawalOrderFactory.create()
-        send_error_message(order=order)
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].to,
-                         settings.CONTACT_EMAIL_RECIPIENTS)
 
 
 class KYCUtilsTestCase(TestCase):
