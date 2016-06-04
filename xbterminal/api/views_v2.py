@@ -56,7 +56,6 @@ class PaymentViewSet(viewsets.GenericViewSet):
                  serializer.validated_data.get('account')),
                 serializer.validated_data['amount'])
         except exceptions.PaymentError as error:
-            logger.exception(error)
             return Response({'error': error.message},
                             status=status.HTTP_400_BAD_REQUEST)
         # Urls
@@ -194,7 +193,6 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
                 form.cleaned_data['device'],
                 form.cleaned_data['amount'])
         except exceptions.WithdrawalError as error:
-            logger.exception(error)
             return Response({'error': error.message},
                             status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(order)
