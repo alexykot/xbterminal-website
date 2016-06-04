@@ -22,7 +22,7 @@ from operations.models import WithdrawalOrder
 from operations.exceptions import WithdrawalError, InsufficientFunds
 from website.models import Device, Account
 from website.utils.accounts import create_account_txs
-from website.utils.email import send_error_message
+from api.utils.urls import get_admin_url
 
 logger = logging.getLogger(__name__)
 
@@ -215,7 +215,12 @@ def wait_for_confidence(order_uid):
         return
     if order.time_created + WITHDRAWAL_BROADCAST_TIMEOUT < timezone.now():
         # Timeout, cancel job
-        send_error_message(order=order)
+        logger.error(
+            'Withdrawal error - confidence not reached',
+            extra={
+                'order_uid': order.uid,
+                'admin_url': get_admin_url(order),
+            })
         cancel_current_task()
         return
     if is_tx_reliable(order.outgoing_tx_id, order.bitcoin_network):
@@ -239,8 +244,12 @@ def wait_for_processor(order_uid):
         return
     if order.time_created + WITHDRAWAL_BROADCAST_TIMEOUT < timezone.now():
         # Timeout, cancel job
-        # WARNING: order status is 'timeout', not 'failed'
-        send_error_message(order=order)
+        logger.error(
+            'Withdrawal error - instantfiat timeout',
+            extra={
+                'order_uid': order.uid,
+                'admin_url': get_admin_url(order),
+            })
         cancel_current_task()
         return
     try:
