@@ -405,7 +405,7 @@ class DeviceAdminForm(forms.ModelForm):
         cleaned_data = super(DeviceAdminForm, self).clean()
         account = cleaned_data.get('account')
         if account:
-            addresses = ['bitcoin_address', 'our_fee_override']
+            addresses = ['our_fee_override']
             for address in addresses:
                 try:
                     if cleaned_data[address]:
