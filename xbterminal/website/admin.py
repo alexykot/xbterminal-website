@@ -1,6 +1,5 @@
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
-from django.core.urlresolvers import reverse
 from django.utils.html import format_html
 
 from constance import config
@@ -10,13 +9,12 @@ from website import forms, models
 from website.utils.qr import generate_qr_code
 from website.widgets import BitcoinAddressWidget
 from operations.instantfiat import cryptopay
+from api.utils.urls import get_admin_url
 
 
 def url_to_object(obj):
-    url_name = u'admin:{0}_{1}_change'.format(
-        obj._meta.app_label, obj._meta.model_name)
     return format_html(u'<a href="{0}">{1}</a>',
-                       reverse(url_name, args=[obj.pk]),
+                       get_admin_url(obj, absolute=False),
                        str(obj))
 
 

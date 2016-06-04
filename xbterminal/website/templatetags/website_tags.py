@@ -7,7 +7,7 @@ from django.utils.html import format_html
 
 from operations.services import blockcypher
 from website.utils.qr import generate_qr_code
-from api.utils.urls import construct_absolute_url
+from api.utils.urls import get_admin_url
 
 register = template.Library()
 
@@ -24,10 +24,7 @@ def amount(value):
 
 @register.filter
 def admin_url(obj):
-    url_name = u'admin:{0}_{1}_change'.format(
-        obj._meta.app_label,
-        obj._meta.model_name)
-    return construct_absolute_url(url_name, args=[obj.pk])
+    return get_admin_url(obj, absolute=True)
 
 
 @register.simple_tag
