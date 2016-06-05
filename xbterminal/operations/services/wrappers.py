@@ -32,4 +32,8 @@ def is_tx_reliable(tx_id, network):
     except Exception as error:
         # Error when accessing blockcypher API
         logger.exception(error)
-        return sochain.is_tx_reliable(tx_id, network)
+        try:
+            return sochain.is_tx_reliable(tx_id, network)
+        except Exception as error:
+            logger.exception(error)
+            return False
