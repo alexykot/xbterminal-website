@@ -10,7 +10,7 @@ django-oauth-toolkit==0.10.0
 django-picklefield==0.3.1
 django-recaptcha==1.0.5
 django-redis==4.3.0
-django-rq==0.9.0
+django-rq==0.9.1
 djangorestframework==3.2.5
 cryptography==1.2.3
 xhtml2pdf==0.0.6
@@ -28,6 +28,7 @@ python-bitcoinlib==0.4.0
 protobuf==2.5.0
 qrcode==5.1
 raven==5.18.0
+redis==2.10.5
 requests==2.9.1
-rq==0.5.6
-rq-scheduler==0.5.1
+rq==0.6.0
+rq-scheduler==0.6.1
