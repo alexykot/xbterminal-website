@@ -1,5 +1,5 @@
 {% extends "cabinet/base.html" %}
-{% load i18n %}
+{% load i18n website_tags %}
 
 {% block cabinet_content %}
 <div>
@@ -17,13 +17,7 @@
     {% for account in accounts %}
     <tr>
         <td><a href="{% url 'website:account' pk=account.pk %}">{{ account.currency.name }}</a></td>
-        <td>
-            {% if account.currency.name == 'BTC' or account.currency.name == 'TBTC' %}
-            {{ account.balance|floatformat:8 }}
-            {% else %}
-            {{ account.balance|floatformat:2 }}
-            {% endif %}
-        </td>
+        <td>{{ account.balance|amount:account.currency.name }}</td>
         <td>
             {% if account.instantfiat %}
             {{ account.merchant.get_instantfiat_provider_display }}
