@@ -228,7 +228,6 @@ class AccountInline(admin.TabularInline):
         'currency',
         'instantfiat',
         'balance',
-        'balance_max',
     ]
     extra = 0
     max_num = 0

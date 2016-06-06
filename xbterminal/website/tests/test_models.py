@@ -221,7 +221,6 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.currency.name, 'BTC')
         self.assertEqual(account.max_payout, 0)
         self.assertEqual(account.balance, 0)
-        self.assertEqual(account.balance_max, 0)
         self.assertFalse(account.instantfiat)
         self.assertIsNone(account.instantfiat_account_id)
         self.assertEqual(str(account), 'BTC - 0.00000000')
@@ -231,7 +230,6 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.currency.name, 'BTC')
         self.assertEqual(account.max_payout, 0)
         self.assertEqual(account.balance, 0)
-        self.assertEqual(account.balance_max, 0)
         self.assertIsNotNone(account.forward_address)
         self.assertFalse(account.instantfiat)
         self.assertIsNone(account.instantfiat_account_id)
@@ -244,7 +242,6 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.currency.name, 'GBP')
         self.assertEqual(account.max_payout, 0)
         self.assertEqual(account.balance, 0)
-        self.assertEqual(account.balance_max, 0)
         self.assertIsNone(account.forward_address)
         self.assertTrue(account.instantfiat)
         self.assertIsNotNone(account.instantfiat_account_id)
@@ -319,11 +316,18 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.balance, Decimal('0.43'))
         self.assertEqual(account.balance_confirmed, Decimal('0.20'))
 
-    def test_balance_min(self):
-        account = AccountFactory.create(max_payout=Decimal('0.2'))
+    def test_balance_min_max(self):
+        account_btc = AccountFactory.create(currency__name='BTC',
+                                            max_payout=Decimal('0.2'))
         DeviceFactory.create_batch(
-            3, merchant=account.merchant, account=account)
-        self.assertEqual(account.balance_min, Decimal('0.6'))
+            3, merchant=account_btc.merchant, account=account_btc)
+        self.assertEqual(account_btc.balance_min, Decimal('0.6'))
+        self.assertEqual(account_btc.balance_max, Decimal('1.8'))
+        account_gbp = AccountFactory.create(currency__name='GBP')
+        DeviceFactory.create_batch(
+            3, merchant=account_gbp.merchant, account=account_gbp)
+        self.assertEqual(account_gbp.balance_min, 0)
+        self.assertEqual(account_gbp.balance_max, 0)
 
 
 class AddressTestCase(TestCase):

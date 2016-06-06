@@ -312,10 +312,6 @@ class Account(models.Model):
         max_digits=20,
         decimal_places=8,
         default=0)
-    balance_max = models.DecimalField(
-        max_digits=20,
-        decimal_places=8,
-        default=0)
     forward_address = models.CharField(
         max_length=35,
         validators=[validate_bitcoin_address],
@@ -379,6 +375,11 @@ class Account(models.Model):
     @property
     def balance_min(self):
         return self.max_payout * self.device_set.count()
+
+    @property
+    def balance_max(self):
+        multiplier = 3
+        return self.balance_min * multiplier
 
     def clean(self):
         if not hasattr(self, 'instantfiat'):
