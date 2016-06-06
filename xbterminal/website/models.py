@@ -376,6 +376,10 @@ class Account(models.Model):
                 balance += transaction.amount
         return balance
 
+    @property
+    def balance_min(self):
+        return self.max_payout * self.device_set.count()
+
     def clean(self):
         if not hasattr(self, 'instantfiat'):
             return

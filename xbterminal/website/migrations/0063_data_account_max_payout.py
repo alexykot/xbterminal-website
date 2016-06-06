@@ -7,7 +7,7 @@ from django.db import migrations, models
 def set_max_payout(apps, schema_editor):
     Account = apps.get_model('website', 'Account')
     for account in Account.objects.filter(instantfiat=False):
-        account.max_payout = account.balance_max
+        account.max_payout = account.balance_max / 3
         account.save()
 
 

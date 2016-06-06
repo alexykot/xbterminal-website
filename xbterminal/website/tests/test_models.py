@@ -319,6 +319,12 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.balance, Decimal('0.43'))
         self.assertEqual(account.balance_confirmed, Decimal('0.20'))
 
+    def test_balance_min(self):
+        account = AccountFactory.create(max_payout=Decimal('0.2'))
+        DeviceFactory.create_batch(
+            3, merchant=account.merchant, account=account)
+        self.assertEqual(account.balance_min, Decimal('0.6'))
+
 
 class AddressTestCase(TestCase):
 
