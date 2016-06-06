@@ -11,13 +11,19 @@
     <tr>
         <th>{% trans 'Currency' %}</th>
         <th>{% trans 'Balance' %}</th>
+        <th>{% trans 'Balance min.' %}</th>
+        <th>{% trans 'Balance max.' %}</th>
         <th>{% trans 'Payment processor' %}</th>
         <th>{% trans 'Actions' %}</th>
     </tr>
     {% for account in accounts %}
     <tr>
         <td><a href="{% url 'website:account' pk=account.pk %}">{{ account.currency.name }}</a></td>
-        <td>{{ account.balance|amount:account.currency.name }}</td>
+        <td {% if account.balance < account.balance_min %}class="balance-too-low"{% endif %}>
+            {{ account.balance|amount:account.currency.name }}
+        </td>
+        <td>{{ account.balance_min|amount:account.currency.name }}</td>
+        <td>{{ account.balance_max|amount:account.currency.name }}</td>
         <td>
             {% if account.instantfiat %}
             {{ account.merchant.get_instantfiat_provider_display }}

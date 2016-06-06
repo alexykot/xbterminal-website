@@ -199,6 +199,7 @@ class AccountAdmin(admin.ModelAdmin):
         'currency',
         'balance',
         'balance_confirmed',
+        'balance_min',
         'balance_max',
         'payment_processor',
     ]
