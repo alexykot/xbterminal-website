@@ -219,6 +219,7 @@ class AccountTestCase(TestCase):
                                          instantfiat=False)
         # Check defaults
         self.assertEqual(account.currency.name, 'BTC')
+        self.assertEqual(account.max_payout, 0)
         self.assertEqual(account.balance, 0)
         self.assertEqual(account.balance_max, 0)
         self.assertFalse(account.instantfiat)
@@ -228,6 +229,7 @@ class AccountTestCase(TestCase):
     def test_factory_btc(self):
         account = AccountFactory.create()
         self.assertEqual(account.currency.name, 'BTC')
+        self.assertEqual(account.max_payout, 0)
         self.assertEqual(account.balance, 0)
         self.assertEqual(account.balance_max, 0)
         self.assertIsNotNone(account.forward_address)
@@ -240,6 +242,7 @@ class AccountTestCase(TestCase):
             currency__name='GBP',
             merchant__instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY)
         self.assertEqual(account.currency.name, 'GBP')
+        self.assertEqual(account.max_payout, 0)
         self.assertEqual(account.balance, 0)
         self.assertEqual(account.balance_max, 0)
         self.assertIsNone(account.forward_address)

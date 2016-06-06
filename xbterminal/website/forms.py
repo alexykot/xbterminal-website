@@ -424,6 +424,7 @@ class AccountForm(forms.ModelForm):
         model = Account
         fields = [
             'currency',
+            'max_payout',
             'forward_address',
         ]
 
@@ -433,6 +434,7 @@ class AccountForm(forms.ModelForm):
         self.fields['currency'].widget.attrs['disabled'] = True
         self.fields['currency'].required = False
         if self.instance.currency.name not in ['BTC', 'TBTC']:
+            del self.fields['max_payout']
             del self.fields['forward_address']
 
     def clean_currency(self):

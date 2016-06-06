@@ -307,6 +307,11 @@ class Account(models.Model):
     """
     merchant = models.ForeignKey(MerchantAccount)
     currency = models.ForeignKey(Currency)
+    max_payout = models.DecimalField(
+        _('Maximum payout'),
+        max_digits=20,
+        decimal_places=8,
+        default=0)
     balance_max = models.DecimalField(
         max_digits=20,
         decimal_places=8,
