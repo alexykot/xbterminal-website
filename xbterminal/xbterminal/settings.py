@@ -203,8 +203,10 @@ STATIC_URL = '/static/'
 
 # Media
 
+DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+
 MEDIA_ROOT = os.path.join(BASE_DIR, '..', 'media')
-MEDIA_URL = '/media/'
+MEDIA_URL = '/'
 
 if TESTING:
     MEDIA_ROOT = TEMP_DIR

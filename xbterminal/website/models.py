@@ -30,8 +30,7 @@ from website.validators import (
     validate_public_key)
 from website.utils.files import (
     get_verification_file_name,
-    verification_file_path_gen,
-    VerificationFileStorage)
+    verification_file_path_gen)
 
 
 class UserManager(BaseUserManager):
@@ -477,7 +476,6 @@ class KYCDocument(models.Model):
     document_type = models.PositiveSmallIntegerField(
         choices=KYC_DOCUMENT_TYPES)
     file = models.FileField(
-        storage=VerificationFileStorage(),
         upload_to=verification_file_path_gen)
     status = models.CharField(
         max_length=50,

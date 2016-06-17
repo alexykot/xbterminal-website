@@ -17,13 +17,15 @@ def verification_file_path_gen(instance, filename):
     normalized = unicodedata.normalize('NFKD', unicode(filename)).\
         encode('ascii', 'ignore')
     prefixed = '{0}__{1}'.format(instance.document_type, normalized)
-    return os.path.join(str(merchant_id), prefixed)
+    return os.path.join('verification', str(merchant_id), prefixed)
 
 
 def get_verification_file_name(file):
     match = re.match('^[0-9]__(.*)$', os.path.basename(file.name))
     return match.group(1)
 
+
+# TODO: remove storage class
 
 @deconstructible
 class VerificationFileStorage(FileSystemStorage):
