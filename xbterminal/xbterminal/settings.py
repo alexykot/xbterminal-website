@@ -181,6 +181,8 @@ RQ_QUEUES = {
     },
 }
 
+RQ_EXCEPTION_HANDLERS = ['operations.rq_helpers.sentry_exc_handler']
+
 # Internationalization
 
 LANGUAGE_CODE = 'en'

@@ -133,8 +133,8 @@ def prepare_payment(device_or_account, fiat_amount):
     # Save order
     order.save()
     # Schedule tasks
-    run_periodic_task(wait_for_payment, [order.uid])
-    run_periodic_task(wait_for_validation, [order.uid])
+    run_periodic_task(wait_for_payment, [order.uid], interval=2)
+    run_periodic_task(wait_for_validation, [order.uid], interval=5)
     run_periodic_task(check_payment_status, [order.uid], interval=60)
     return order
 

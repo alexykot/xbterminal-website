@@ -12,7 +12,7 @@ group=xbterminal
 
 [program:rqscheduler]
 directory=/repo_root/
-command=/repo_root/venv/bin/python /repo_root/xbterminal/manage.py rqscheduler high --interval=1
+command=/repo_root/venv/bin/python /repo_root/xbterminal/manage.py rqscheduler --queue high --interval=1
 user=xbterminal
 group=xbterminal
 
