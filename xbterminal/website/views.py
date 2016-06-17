@@ -536,7 +536,7 @@ class VerificationFileView(View):
             if document.base_name == self.file_name:
                 return StreamingHttpResponse(
                     document.file.read(),
-                    content_type='application/octet-stream')
+                    content_type='image')
         raise Http404
 
     def post(self, *args, **kwargs):
