@@ -15,5 +15,4 @@ config/xbterminal.ini
 config/xbterminal.conf
 config/supervisor.ini
 /logs
-/reports
 *.mo
