@@ -117,7 +117,13 @@ class UserAdmin(UserAdmin):
 @admin.register(models.KYCDocument)
 class KYCDocumentAdmin(admin.ModelAdmin):
 
-    list_display = ['__unicode__', 'merchant', 'status']
+    list_display = [
+        '__unicode__',
+        'merchant',
+        'original_name',
+        'status',
+        'uploaded_at',
+    ]
     readonly_fields = ['uploaded_at']
 
 
