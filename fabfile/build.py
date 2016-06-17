@@ -4,8 +4,6 @@ from fabric.api import env, task, settings, prefix, local, lcd
 @task
 def dirs():
     env.run("mkdir -p logs")
-    env.run("mkdir -p reports")
-    env.run("chmod -R a+w reports")
     env.run("mkdir -p media")
     env.run("chmod -R a+w media")
 
