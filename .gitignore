@@ -7,7 +7,6 @@ vagrant/settings.yml
 vagrant/backups
 .coverage
 /static
-/media
 fabfile/deploy.py
 /certs
 .idea/*
