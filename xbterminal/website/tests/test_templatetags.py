@@ -6,6 +6,14 @@ from website.tests.factories import DeviceFactory
 
 class TemplateTagsTestCase(TestCase):
 
+    def test_amount(self):
+        self.assertEqual(website_tags.amount(0.125, 'BTC'),
+                         '0.12500000')
+        self.assertEqual(website_tags.amount(15, 'mBTC'),
+                         '15.00000')
+        self.assertEqual(website_tags.amount(15.2, 'USD'),
+                         '15.20')
+
     def test_admin_url(self):
         device = DeviceFactory.create()
         url = website_tags.admin_url(device)

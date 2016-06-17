@@ -18,8 +18,13 @@ def scale(value):
 
 
 @register.filter
-def amount(value):
-    return '{0:g}'.format(float(value))
+def amount(value, currency_name):
+    if currency_name in ['BTC', 'TBTC']:
+        return '{0:.8f}'.format(float(value))
+    elif currency_name == 'mBTC':
+        return '{0:.5f}'.format(float(value))
+    else:
+        return '{0:.2f}'.format(float(value))
 
 
 @register.filter

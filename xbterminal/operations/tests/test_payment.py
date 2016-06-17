@@ -112,7 +112,7 @@ class PreparePaymentTestCase(TestCase):
     def test_btc_large_amount(self, run_task_mock, get_rate_mock, bc_cls_mock):
         device = DeviceFactory.create(
             account__currency__name='BTC',
-            account__balance_max=Decimal('100.0'))
+            account__max_payout=Decimal('100.0'))
         fiat_amount = Decimal('1000.00')
         bc_cls_mock.return_value = Mock(**{
             'get_new_address.return_value': '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje',
@@ -914,7 +914,7 @@ class ForwardTransactionTestCase(TestCase):
     def test_forward_to_btc_account_no_split(self, bc_mock):
         merchant = MerchantAccountFactory.create()
         btc_account = AccountFactory.create(merchant=merchant,
-                                            balance_max=Decimal('1.0'))
+                                            max_payout=Decimal('0.3'))
         payment_order = PaymentOrderFactory.create(
             device__merchant=merchant,
             device__account=btc_account,
@@ -974,7 +974,7 @@ class ForwardTransactionTestCase(TestCase):
     def test_forward_to_btc_account_with_split(self, bc_cls_mock):
         merchant = MerchantAccountFactory.create()
         account = AccountFactory.create(merchant=merchant,
-                                        balance_max=Decimal('1.0'))
+                                        max_payout=Decimal('0.3'))
         account_address = AddressFactory.create(account=account)
         order = PaymentOrderFactory.create(
             device__merchant=merchant,

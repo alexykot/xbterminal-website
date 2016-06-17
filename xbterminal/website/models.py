@@ -307,7 +307,8 @@ class Account(models.Model):
     """
     merchant = models.ForeignKey(MerchantAccount)
     currency = models.ForeignKey(Currency)
-    balance_max = models.DecimalField(
+    max_payout = models.DecimalField(
+        _('Maximum payout'),
         max_digits=20,
         decimal_places=8,
         default=0)
@@ -370,6 +371,15 @@ class Account(models.Model):
             if transaction.is_confirmed():
                 balance += transaction.amount
         return balance
+
+    @property
+    def balance_min(self):
+        return self.max_payout * self.device_set.count()
+
+    @property
+    def balance_max(self):
+        multiplier = 3
+        return self.balance_min * multiplier
 
     def clean(self):
         if not hasattr(self, 'instantfiat'):

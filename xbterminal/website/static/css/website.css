@@ -103,6 +103,10 @@ label[for="id_county"]:after {
     margin-top: 10px;
 }
 
+.balance-too-low {
+    color: red;
+}
+
 /* Contact page */
 
 #contact-form {

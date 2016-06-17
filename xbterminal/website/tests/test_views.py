@@ -711,6 +711,7 @@ class EditAccountViewTestCase(TestCase):
                           password='password')
         url = reverse('website:account', kwargs={'pk': account.pk})
         form_data = {
+            'max_payout': '0.05',
             'forward_address': '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
         }
         response = self.client.post(url, data=form_data)

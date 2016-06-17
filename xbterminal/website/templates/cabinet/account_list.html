@@ -1,5 +1,5 @@
 {% extends "cabinet/base.html" %}
-{% load i18n %}
+{% load i18n website_tags %}
 
 {% block cabinet_content %}
 <div>
@@ -11,19 +11,19 @@
     <tr>
         <th>{% trans 'Currency' %}</th>
         <th>{% trans 'Balance' %}</th>
+        <th>{% trans 'Balance min.' %}</th>
+        <th>{% trans 'Balance max.' %}</th>
         <th>{% trans 'Payment processor' %}</th>
         <th>{% trans 'Actions' %}</th>
     </tr>
     {% for account in accounts %}
     <tr>
         <td><a href="{% url 'website:account' pk=account.pk %}">{{ account.currency.name }}</a></td>
-        <td>
-            {% if account.currency.name == 'BTC' or account.currency.name == 'TBTC' %}
-            {{ account.balance|floatformat:8 }}
-            {% else %}
-            {{ account.balance|floatformat:2 }}
-            {% endif %}
+        <td {% if account.balance < account.balance_min %}class="balance-too-low"{% endif %}>
+            {{ account.balance|amount:account.currency.name }}
         </td>
+        <td>{{ account.balance_min|amount:account.currency.name }}</td>
+        <td>{{ account.balance_max|amount:account.currency.name }}</td>
         <td>
             {% if account.instantfiat %}
             {{ account.merchant.get_instantfiat_provider_display }}

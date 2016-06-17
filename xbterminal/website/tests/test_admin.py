@@ -42,6 +42,7 @@ class AccountAdminTestCase(TestCase):
         data = {
             'merchant': merchant.pk,
             'currency': merchant.currency.pk,
+            'max_payout': '0.00',
             'balance_max': '0.00',
             'forward_address': '',
             'instantfiat': True,
@@ -59,6 +60,7 @@ class AccountAdminTestCase(TestCase):
         data = {
             'merchant': merchant.pk,
             'currency': merchant.currency.pk,
+            'max_payout': '0.00',
             'balance_max': '0.00',
             'forward_address': '',
             'instantfiat': True,
@@ -75,6 +77,7 @@ class AccountAdminTestCase(TestCase):
         data = {
             'merchant': merchant.pk,
             'currency': btc.pk,
+            'max_payout': '0.00',
             'balance_max': '0.00',
             'forward_address': '',
             'instantfiat': False,
@@ -89,6 +92,7 @@ class AccountAdminTestCase(TestCase):
         data = {
             'merchant': account.merchant.pk,
             'currency': account.currency.pk,
+            'max_payout': '1.00',
             'balance_max': '1.00',
             'forward_address': '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
             'instantfiat': False,

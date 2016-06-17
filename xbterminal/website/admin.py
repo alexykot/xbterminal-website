@@ -199,6 +199,7 @@ class AccountAdmin(admin.ModelAdmin):
         'currency',
         'balance',
         'balance_confirmed',
+        'balance_min',
         'balance_max',
         'payment_processor',
     ]
@@ -227,7 +228,6 @@ class AccountInline(admin.TabularInline):
         'currency',
         'instantfiat',
         'balance',
-        'balance_max',
     ]
     extra = 0
     max_num = 0
