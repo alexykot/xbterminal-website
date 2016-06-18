@@ -65,6 +65,12 @@ sentry_pg_database:
 /etc/sentry/config.yml:
   file.managed:
     - source: salt://sentry/config.yml
+    - template: jinja
+    - context:
+      smtp_host: {{ pillar['sentry']['smtp_host'] }}
+      smtp_port: {{ pillar['sentry']['smtp_port'] }}
+      smtp_user: {{ pillar['sentry']['smtp_user'] }}
+      smtp_password: {{ pillar['sentry']['smtp_password'] }}
     - user: sentry
     - group: sentry
     - require:
@@ -94,20 +100,6 @@ sentry_db_upgrade:
   file.managed:
     - source: salt://sentry/sentry-web.service
 
-sentry_worker_service:
-  service.running:
-    - name: sentry-worker
-    - enable: true
-    - require:
-      - file: /lib/systemd/system/sentry-worker.service
-
-sentry_scheduler_service:
-  service.running:
-    - name: sentry-scheduler
-    - enable: true
-    - require:
-      - file: /lib/systemd/system/sentry-scheduler.service
-
 sentry_web_service:
   service.running:
     - name: sentry-web
@@ -115,3 +107,25 @@ sentry_web_service:
     - require:
       - file: /lib/systemd/system/sentry-web.service
       - cmd: sentry_db_upgrade
+    - watch:
+      - virtualenv: /var/lib/sentry/venv
+      - file: /etc/sentry/config.yml
+      - cmd: sentry_db_upgrade
+
+sentry_worker_service:
+  service.running:
+    - name: sentry-worker
+    - enable: true
+    - require:
+      - file: /lib/systemd/system/sentry-worker.service
+    - watch:
+      - service: sentry_web_service
+
+sentry_scheduler_service:
+  service.running:
+    - name: sentry-scheduler
+    - enable: true
+    - require:
+      - file: /lib/systemd/system/sentry-scheduler.service
+    - watch:
+      - service: sentry_web_service

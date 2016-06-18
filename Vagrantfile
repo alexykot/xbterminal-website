@@ -3,7 +3,7 @@ require 'yaml'
 Vagrant.configure("2") do |config|
   settings = YAML::load_file("vagrant/default_settings.yml")
   begin
-    settings.merge!(YAML::load_file("vagrant/settings.yml"))
+    settings.deep_merge!(YAML::load_file("vagrant/settings.yml"))
   rescue Errno::ENOENT
   end
 

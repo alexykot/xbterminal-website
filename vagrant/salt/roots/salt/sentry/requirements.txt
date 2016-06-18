@@ -1,1 +1,1 @@
-sentry[postgres]==8.4.1
+sentry[postgres]==8.5.1

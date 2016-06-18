@@ -17,3 +17,8 @@ pillar:
   bitcoind:
     user: xbt
     password: xbt
+  sentry:
+    smtp_host: localhost
+    smtp_port: 25
+    smtp_user: user
+    smtp_password: password
