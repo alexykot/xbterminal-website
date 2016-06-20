@@ -7,14 +7,15 @@
 # Mail Server #
 ###############
 
-mail.backend: 'smtp'  # Use dummy if you want to disable email entirely
-# mail.host: 'localhost'
-# mail.port: 25
-# mail.username: ''
-# mail.password: ''
-# mail.use-tls: false
+mail.backend: 'django.core.mail.backends.smtp.EmailBackend'
+mail.host: '{{ smtp_host }}'
+mail.port: {{ smtp_port }}
+mail.username: '{{ smtp_user }}'
+mail.password: '{{ smtp_password }}'
+mail.use-tls: true
 # The email address to send on behalf of
-# mail.from: 'root@localhost'
+mail.from: 'sentry@xbterminal.io'
+
 
 # If you'd like to configure email replies, enable this.
 # mail.enable-replies: false
