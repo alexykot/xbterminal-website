@@ -7,7 +7,6 @@ vagrant/settings.yml
 vagrant/backups
 .coverage
 /static
-/media
 fabfile/deploy.py
 /certs
 .idea/*
@@ -15,5 +14,4 @@ config/xbterminal.ini
 config/xbterminal.conf
 config/supervisor.ini
 /logs
-/reports
 *.mo

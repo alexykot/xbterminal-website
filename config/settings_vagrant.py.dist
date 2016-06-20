@@ -3,6 +3,10 @@ DEBUG = True
 SITE_ID = 3
 ALLOWED_HOSTS = ['*']
 
+AWS_ACCESS_KEY_ID = '***********'
+AWS_SECRET_ACCESS_KEY = '***********'
+AWS_STORAGE_BUCKET_NAME = '***********'
+
 EMAIL_HOST = '***********'
 EMAIL_PORT = 2525
 EMAIL_HOST_USER = '***********'

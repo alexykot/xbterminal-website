@@ -1,10 +1,8 @@
 from cStringIO import StringIO
-import os
 import unicodecsv
 from zipfile import ZipFile
 from decimal import Decimal
 
-from django.conf import settings
 from django.utils.text import get_valid_filename
 from django.db.models import Sum, F
 
@@ -128,13 +126,9 @@ def send_reconciliation(recipient, device, rec_range):
         csv.seek(0)
         csv_data = csv.read()
         csv_filename = get_report_filename(device, rec_range[1])
-        with open(os.path.join(settings.REPORTS_PATH, csv_filename), 'w') as f:
-            f.write(csv_data)
         files.append([csv_filename, csv_data, 'text/csv'])
         archive = get_receipts_archive(payment_orders)
         archive_data = archive.getvalue()
         archive_filename = get_receipts_archive_filename(device, rec_range[1])
         files.append([archive_filename, archive_data, 'application/x-zip-compressed'])
-        with open(os.path.join(settings.REPORTS_PATH, archive_filename), 'wb') as f:
-            f.write(archive_data)
     send_reconciliation_email(recipient, rec_range[1], context, files)

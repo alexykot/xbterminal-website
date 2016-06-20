@@ -1,3 +1,1 @@
 -r requirements.txt
-django-storages==1.4
-boto==2.39.0

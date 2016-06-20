@@ -203,11 +203,14 @@ STATIC_URL = '/static/'
 
 # Media
 
-MEDIA_ROOT = os.path.join(BASE_DIR, '..', 'media')
-MEDIA_URL = '/media/'
+MEDIA_URL = '/'
 
 if TESTING:
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
     MEDIA_ROOT = TEMP_DIR
+else:
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
+    AWS_DEFAULT_ACL = 'private'
 
 # Email
 
@@ -299,8 +302,6 @@ PKI_CERTIFICATES = []
 
 RECAPTCHA_PRIVATE_KEY = ''
 RECAPTCHA_PUBLIC_KEY = ''
-
-REPORTS_PATH = os.path.join(BASE_DIR, '..', 'reports')
 
 BITCOIN_SCALE_DIVIZER = 1000
 
