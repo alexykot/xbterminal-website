@@ -19,6 +19,10 @@ class TemplateTagsTestCase(TestCase):
         url = website_tags.admin_url(device)
         self.assertIn('/admin/website/device/', url)
 
+    def test_email_static(self):
+        url = website_tags.email_static('img/xbt_email_footer.png')
+        self.assertTrue(url.startswith('http'))
+
     def test_btc_tx_url(self):
         tx_id = '1' * 64
         result = website_tags.btc_tx_url(tx_id, 'mainnet')
