@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from decimal import Decimal
 
 from django.test import TestCase
@@ -45,8 +46,8 @@ class MerchantRegistrationFormTestCase(TestCase):
             'town': 'Test Town',
             'country': 'GB',
             'post_code': '123456',
-            'contact_first_name': 'Test',
-            'contact_last_name': 'Test',
+            'contact_first_name': u'Тест',
+            'contact_last_name': u'Тест',
             'contact_email': 'test@example.net',
             'contact_phone': '+123456789',
         }
@@ -54,6 +55,10 @@ class MerchantRegistrationFormTestCase(TestCase):
         self.assertTrue(form.is_valid())
         merchant = form.save()
         self.assertEqual(merchant.company_name, form_data['company_name'])
+        self.assertEqual(merchant.contact_first_name,
+                         form_data['contact_first_name'])
+        self.assertEqual(merchant.contact_last_name,
+                         form_data['contact_last_name'])
         self.assertEqual(merchant.user.email, form_data['contact_email'])
         self.assertEqual(merchant.language.code, 'en')
         self.assertEqual(merchant.currency.name, 'GBP')
@@ -112,6 +117,27 @@ class MerchantRegistrationFormTestCase(TestCase):
         self.assertIn('contact_last_name', form.errors)
         self.assertIn('contact_email', form.errors)
         self.assertIn('contact_phone', form.errors)
+
+    def test_invalid_names(self):
+        form_data = {
+            'company_name': 'Test Company',
+            'business_address': 'Test Address',
+            'town': 'Test Town',
+            'country': 'GB',
+            'post_code': '123456',
+            'contact_first_name': 'User1',
+            'contact_last_name': 'User.',
+            'contact_email': 'test@example.net',
+            'contact_phone': '+123456789',
+        }
+        form = MerchantRegistrationForm(data=form_data)
+        self.assertFalse(form.is_valid())
+        self.assertEqual(
+            form.errors['contact_first_name'][0],
+            'Enter a valid name. This value may contain only letters.')
+        self.assertEqual(
+            form.errors['contact_last_name'][0],
+            'Enter a valid name. This value may contain only letters.')
 
     @patch('website.forms.cryptopay.create_merchant')
     @patch('website.forms.create_managed_accounts')

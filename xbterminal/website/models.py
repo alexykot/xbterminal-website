@@ -26,6 +26,7 @@ from extended_choices import Choices
 from website.validators import (
     validate_phone,
     validate_post_code,
+    validate_name,
     validate_bitcoin_address,
     validate_public_key)
 from website.utils.files import (
@@ -172,10 +173,12 @@ class MerchantAccount(models.Model):
 
     contact_first_name = models.CharField(
         _('Contact first name'),
-        max_length=255)
+        max_length=255,
+        validators=[validate_name])
     contact_last_name = models.CharField(
         _('Contact last name'),
-        max_length=255)
+        max_length=255,
+        validators=[validate_name])
     contact_phone = models.CharField(_('Contact phone'), max_length=32, validators=[validate_phone], null=True)
     contact_email = models.EmailField(_('Contact email'), max_length=254, unique=True)
 

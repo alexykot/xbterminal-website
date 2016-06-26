@@ -1,6 +1,7 @@
 import re
 
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 
 from api.utils.crypto import load_public_key
 from operations import blockchain
@@ -24,6 +25,12 @@ def validate_phone(value):
 def validate_post_code(value):
     if re.match(r"^[a-zA-Z0-9\s\-+]{2,10}$", value) is None:
         raise ValidationError('Please enter a valid post code.')
+
+
+validate_name = RegexValidator(
+    r'^(?u)[^\W\d_]+$',
+    'Enter a valid name. This value may contain only letters.',
+    code='invalid_name')
 
 
 def validate_bitcoin_address(address, network=None):
