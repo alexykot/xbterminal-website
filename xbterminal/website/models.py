@@ -26,6 +26,7 @@ from extended_choices import Choices
 from website.validators import (
     validate_phone,
     validate_post_code,
+    validate_name,
     validate_bitcoin_address,
     validate_public_key)
 from website.utils.files import (
@@ -152,12 +153,6 @@ KYC_DOCUMENT_TYPES = Choices(
 
 class MerchantAccount(models.Model):
 
-    PAYMENT_PROCESSOR_CHOICES = [
-        ('bitpay', 'BitPay'),
-        ('cryptopay', 'CryptoPay'),
-        ('gocoin', 'GoCoin'),
-    ]
-
     VERIFICATION_STATUSES = [
         ('unverified', _('unverified')),
         ('pending', _('verification pending')),
@@ -176,8 +171,14 @@ class MerchantAccount(models.Model):
     post_code = models.CharField(_('Post code'), max_length=32, validators=[validate_post_code], null=True)
     country = CountryField(_('Country'), default='GB')
 
-    contact_first_name = models.CharField(_('Contact first name'), max_length=255)
-    contact_last_name = models.CharField(_('Contact last name'), max_length=255)
+    contact_first_name = models.CharField(
+        _('Contact first name'),
+        max_length=255,
+        validators=[validate_name])
+    contact_last_name = models.CharField(
+        _('Contact last name'),
+        max_length=255,
+        validators=[validate_name])
     contact_phone = models.CharField(_('Contact phone'), max_length=32, validators=[validate_phone], null=True)
     contact_email = models.EmailField(_('Contact email'), max_length=254, unique=True)
 
