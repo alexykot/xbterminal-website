@@ -1,63 +1,39 @@
-import base64
-
-from Crypto.Hash import SHA256
-from Crypto.PublicKey import RSA
-from Crypto.Signature import PKCS1_v1_5
-from Crypto.Util.asn1 import DerSequence
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.primitives.asymmetric import padding
 
 
-def read_pem_file(filename):
+def read_cert_file(filename):
     """
     Read data from file, convert from PEM to DER
     Returns:
         DER data (bytes)
     """
     with open(filename) as f:
-        pem = f.read()
-        der = base64.b64decode(''.join(pem.splitlines()[1:-1]))
-    return der
+        pem_data = f.read()
+        cert = x509.load_pem_x509_certificate(pem_data, default_backend())
+        der_data = cert.public_bytes(serialization.Encoding.DER)
+    return der_data
 
 
-def get_public_key(der_data):
+def create_signature(message, key_path):
     """
-    http://www.ietf.org/rfc/rfc3280.txt
-    Accepts:
-        der_data: DER-encoded certificate
-    Returns:
-        public_key: RSA key (instance)
-    """
-    cert = DerSequence()
-    cert.decode(der_data)
-    # Extract tbsCertificate field
-    tbs_certificate = DerSequence()
-    tbs_certificate.decode(cert[0])
-    # Extract subjectPublicKeyInfo field
-    subject_public_key_info = tbs_certificate[6]
-    public_key = RSA.importKey(subject_public_key_info)
-    return public_key
-
-
-def get_private_key(der_data):
-    """
-    Accepts:
-        der_data: DER-encoded key
-    Returns:
-        private_key: RSA key (instance)
-    """
-    private_key = RSA.importKey(der_data)
-    return private_key
-
-
-def create_signature(message, key):
-    """
-    Create PKCS#1 v1.5 signature using SHA256
     Accepts:
         message: text message
-        key: RSA key (instance)
+        key_path: path to private key (PEM)
     Returns:
         signature
     """
-    hsh = SHA256.new(message)
-    signer = PKCS1_v1_5.new(key)
-    signature = signer.sign(hsh)
+    with open(key_path) as f:
+        pem_data = f.read()
+    private_key = serialization.load_pem_private_key(
+        pem_data,
+        password=None,
+        backend=default_backend())
+    signer = private_key.signer(
+        padding.PKCS1v15(),
+        hashes.SHA256())
+    signer.update(message)
+    signature = signer.finalize()
     return signature
