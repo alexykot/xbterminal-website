@@ -7,7 +7,7 @@ from django.utils.html import format_html
 
 from operations.services import blockcypher
 from website.utils.qr import generate_qr_code
-from api.utils.urls import get_admin_url
+from api.utils.urls import get_admin_url, get_absolute_static_url
 
 register = template.Library()
 
@@ -45,6 +45,11 @@ def pdf_static(path):
         finders.find(path),
         os.path.join(settings.BASE_DIR, '..'))
     return result
+
+
+@register.simple_tag
+def email_static(path):
+    return get_absolute_static_url(path)
 
 
 @register.simple_tag
