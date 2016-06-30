@@ -152,8 +152,8 @@ class BlockChain(object):
                 outputs_[address] = float(amount)
         assert len(outputs_) > 0
         # Create transaction
-        transaction_hex = self._proxy.createrawtransaction(
-            inputs_, outputs_)
+        transaction_hex = self._proxy._call(
+            'createrawtransaction', inputs_, outputs_)
         transaction = CTransaction.deserialize(x(transaction_hex))
         return transaction
 

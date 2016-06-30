@@ -79,17 +79,16 @@ def create_payment_request(*args):
         # Prepare certificates and private key
         certificates = []
         for file_name in settings.PKI_CERTIFICATES:
-            der_data = x509.read_pem_file(
+            der_data = x509.read_cert_file(
                 os.path.join(settings.CERT_PATH, file_name))
             certificates.append(der_data)
-        private_key = x509.get_private_key(x509.read_pem_file(
-            os.path.join(settings.CERT_PATH, settings.PKI_KEY_FILE)))
         # Sign payment request
         request.pki_type = "x509+sha256"
         request.pki_data = create_pki_data(certificates)
         request.signature = ""
-        signature = x509.create_signature(request.SerializeToString(),
-                                          private_key)
+        signature = x509.create_signature(
+            request.SerializeToString(),
+            os.path.join(settings.CERT_PATH, settings.PKI_KEY_FILE))
         request.signature = signature
     return request.SerializeToString()
 
