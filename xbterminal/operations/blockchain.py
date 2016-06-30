@@ -1,4 +1,5 @@
 from decimal import Decimal
+import ssl
 import urllib
 from cStringIO import StringIO
 
@@ -15,6 +16,15 @@ from operations import BTC_DEC_PLACES, BTC_DEFAULT_FEE
 from operations import exceptions
 
 
+class CustomProxy(bitcoin.rpc.Proxy):
+    """
+    Fixes SSL context bug in python-bitcoinlib 0.5.*
+    """
+    def __init__(self, *args, **kwargs):
+        self.__ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+        super(CustomProxy, self).__init__(*args, **kwargs)
+
+
 class BlockChain(object):
 
     def __init__(self, network):
@@ -28,7 +38,7 @@ class BlockChain(object):
             password=config['PASSWORD'],
             host=config['HOST'],
             port=config.get('PORT', bitcoin.params.RPC_PORT))
-        self._proxy = bitcoin.rpc.Proxy(service_url)
+        self._proxy = CustomProxy(service_url)
 
     def get_new_address(self):
         """
