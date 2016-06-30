@@ -15,7 +15,7 @@ from operations.blockchain import (
 class BlockChainTestCase(TestCase):
 
     @patch('operations.blockchain.bitcoin.SelectParams')
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('operations.blockchain.CustomProxy')
     def test_init(self, proxy_mock, select_params_mock):
         BlockChain('mainnet')
         self.assertTrue(select_params_mock.called)
@@ -24,7 +24,7 @@ class BlockChainTestCase(TestCase):
         service_url = proxy_mock.call_args[0][0]
         self.assertTrue(service_url.startswith('http'))
 
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('operations.blockchain.CustomProxy')
     def test_get_balance(self, proxy_mock):
         proxy_mock.return_value = Mock(**{
             'getbalance.return_value': 500000,
@@ -33,7 +33,7 @@ class BlockChainTestCase(TestCase):
         balance = bc.get_balance()
         self.assertEqual(balance, Decimal('0.005'))
 
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('operations.blockchain.CustomProxy')
     def test_get_address_balance(self, proxy_mock):
         proxy_mock.return_value = Mock(**{
             'listunspent.return_value': [{'amount': 500000}],
@@ -42,7 +42,7 @@ class BlockChainTestCase(TestCase):
         balance = bc.get_address_balance('test')
         self.assertEqual(balance, Decimal('0.005'))
 
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('operations.blockchain.CustomProxy')
     def test_get_unspent_outputs(self, proxy_cls_mock):
         proxy_cls_mock.return_value = proxy_mock = Mock(**{
             'listunspent.return_value': [{
@@ -55,7 +55,7 @@ class BlockChainTestCase(TestCase):
         self.assertTrue(proxy_mock.listunspent.called)
         self.assertEqual(proxy_mock.listunspent.call_args[1]['minconf'], 1)
 
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('operations.blockchain.CustomProxy')
     def test_is_tx_confirmed(self, proxy_mock):
         # Confirmed
         proxy_mock.return_value = Mock(**{

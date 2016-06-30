@@ -1,5 +1,8 @@
+import base64
 from decimal import Decimal
 import urllib
+import urlparse
+import httplib
 from cStringIO import StringIO
 
 import bitcoin
@@ -15,6 +18,31 @@ from operations import BTC_DEC_PLACES, BTC_DEFAULT_FEE
 from operations import exceptions
 
 
+class CustomProxy(bitcoin.rpc.Proxy):
+    """
+    Fixes SSL context bug in python-bitcoinlib 0.5.*
+    """
+    def __init__(self, service_url,
+                 timeout=bitcoin.rpc.DEFAULT_HTTP_TIMEOUT):
+        self._BaseProxy__service_url = service_url
+        self._BaseProxy__url = urlparse.urlparse(service_url)
+        port = self._BaseProxy__url.port
+        self._BaseProxy__id_count = 0
+        authpair = "%s:%s" % (self._BaseProxy__url.username,
+                              self._BaseProxy__url.password)
+        authpair = authpair.encode('utf8')
+        self._BaseProxy__auth_header = b"Basic " + base64.b64encode(authpair)
+        if self._BaseProxy__url.scheme == 'https':
+            self._BaseProxy__conn = httplib.HTTPSConnection(
+                self._BaseProxy__url.hostname, port=port,
+                key_file=None, cert_file=None,
+                timeout=timeout)
+        else:
+            self._BaseProxy__conn = httplib.HTTPConnection(
+                self._BaseProxy__url.hostname, port=port,
+                timeout=timeout)
+
+
 class BlockChain(object):
 
     def __init__(self, network):
@@ -28,7 +56,7 @@ class BlockChain(object):
             password=config['PASSWORD'],
             host=config['HOST'],
             port=config.get('PORT', bitcoin.params.RPC_PORT))
-        self._proxy = bitcoin.rpc.Proxy(service_url)
+        self._proxy = CustomProxy(service_url)
 
     def get_new_address(self):
         """
