@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.core.urlresolvers import reverse
@@ -16,8 +15,8 @@ def construct_absolute_url(url_name, args=None, kwargs=None):
 
 def get_absolute_static_url(path):
     url = staticfiles_storage.url(path)
-    if settings.STATICFILES_STORAGE == \
-            'storages.backends.s3boto.S3BotoStorage':
+    if url.startswith('http'):
+        # Already absolute
         return url
     else:
         site = Site.objects.get_current()
