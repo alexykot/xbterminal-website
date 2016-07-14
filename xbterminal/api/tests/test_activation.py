@@ -29,7 +29,7 @@ class ActivationTestCase(TestCase):
         device = DeviceFactory.create(status='registered')
         start(device, merchant)
         self.assertTrue(run_mock.called)
-        self.assertEqual(run_mock.call_args[1]['timeout'], 1260)
+        self.assertEqual(run_mock.call_args[1]['timeout'], 1500)
         self.assertTrue(run_periodic_mock.called)
         device_updated = Device.objects.get(pk=device.pk)
         self.assertEqual(device_updated.status, 'activation')
