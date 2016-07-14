@@ -128,7 +128,7 @@ class Salt(object):
         result = self._send_request('post', '/', data=payload)
         return result[minion_id].get(key)
 
-    def highstate(self, minion_id, pillar_data, timeout=60):
+    def highstate(self, minion_id, pillar_data, timeout):
         """
         https://docs.saltstack.com/en/2015.5/ref/modules/all
             /salt.modules.state.html#salt.modules.state.highstate
