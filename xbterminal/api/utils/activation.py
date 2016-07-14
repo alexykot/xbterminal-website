@@ -25,11 +25,12 @@ def start(device, merchant):
         device.account = merchant.account_set.get(currency__name='BTC')
     device.start_activation()
     device.save()
+    rq_task_timeout = int(ACTIVATION_TIMEOUT.total_seconds()) + 60
     job = rq_helpers.run_task(
         prepare_device,
         [device.key],
         queue='low',
-        timeout=int(ACTIVATION_TIMEOUT.total_seconds()))
+        timeout=rq_task_timeout)
     rq_helpers.run_periodic_task(
         wait_for_activation,
         [device.key, job.get_id(), timezone.now()])
