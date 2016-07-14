@@ -49,8 +49,9 @@ def prepare_device(device_key):
     salt.login()
     salt.accept(device.key)
     # Wait for device
+    ping_interval = 10
     while not salt.ping(device.key):
-        time.sleep(5)
+        time.sleep(ping_interval)
     # Collect information
     machine = salt.get_grain(device.key, 'machine')
     ui_theme = device.merchant.ui_theme.name
