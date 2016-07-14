@@ -128,7 +128,7 @@ class Salt(object):
         result = self._send_request('post', '/', data=payload)
         return result[minion_id].get(key)
 
-    def highstate(self, minion_id, pillar_data, timeout=60):
+    def highstate(self, minion_id, pillar_data, timeout):
         """
         https://docs.saltstack.com/en/2015.5/ref/modules/all
             /salt.modules.state.html#salt.modules.state.highstate
@@ -145,7 +145,7 @@ class Salt(object):
         jid = result['jid']
         # Wait for result
         start_time = time.time()
-        interval = 3
+        interval = 15
         while time.time() < start_time + timeout:
             job_info = self._lookup_jid(jid)
             try:
@@ -168,7 +168,7 @@ class Salt(object):
                     logger.info('highstate executed')
                     return
             time.sleep(interval)
-        raise SaltTimeout
+        raise SaltTimeout('job ID {}'.format(jid))
 
     def reboot(self, minion_id):
         """

@@ -2,7 +2,7 @@ from mock import Mock, patch
 from django.test import TestCase
 from django.test.utils import override_settings
 
-from api.utils.salt import Salt
+from api.utils.salt import Salt, SaltTimeout
 
 
 @override_settings(SALT_SERVERS={
@@ -81,12 +81,26 @@ class SaltTestCase(TestCase):
             },
         }
         salt = Salt()
-        salt.highstate('m1', {'test': 'test'})
+        salt.highstate('m1', {'test': 'test'}, 1200)
         self.assertTrue(send_mock.called)
         payload = send_mock.call_args[1]['data']
         self.assertEqual(payload['kwarg']['pillar']['test'], 'test')
         self.assertTrue(lookup_jid_mock.called)
         self.assertEqual(lookup_jid_mock.call_args[0][0], 'test')
+
+    @patch('api.utils.salt.Salt._send_request')
+    @patch('api.utils.salt.time.time')
+    @patch('api.utils.salt.Salt._lookup_jid')
+    def test_highstate_timeout(self, lookup_jid_mock, time_mock, send_mock):
+        send_mock.return_value = {'jid': 'test'}
+        time_mock.side_effect = [1000, 1000000]
+        lookup_jid_mock.return_value = {}
+        salt = Salt()
+        with self.assertRaises(SaltTimeout) as context:
+            salt.highstate('m1', {'test': 'test'}, 1200)
+        self.assertEqual(context.exception.args[0], 'job ID test')
+        self.assertTrue(send_mock.called)
+        self.assertFalse(lookup_jid_mock.called)
 
     @patch('api.utils.salt.Salt._send_request')
     def test_reboot(self, send_mock):

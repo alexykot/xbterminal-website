@@ -12,7 +12,7 @@ from api.utils.aptly import get_latest_version
 from operations import rq_helpers
 
 CACHE_KEY_TEMPLATE = 'activation-{device_key}'
-ACTIVATION_TIMEOUT = datetime.timedelta(minutes=10)
+ACTIVATION_TIMEOUT = datetime.timedelta(minutes=20)
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +25,12 @@ def start(device, merchant):
         device.account = merchant.account_set.get(currency__name='BTC')
     device.start_activation()
     device.save()
+    rq_task_timeout = int(ACTIVATION_TIMEOUT.total_seconds()) + 60
     job = rq_helpers.run_task(
         prepare_device,
         [device.key],
         queue='low',
-        timeout=int(ACTIVATION_TIMEOUT.total_seconds()))
+        timeout=rq_task_timeout)
     rq_helpers.run_periodic_task(
         wait_for_activation,
         [device.key, job.get_id(), timezone.now()])
@@ -73,7 +74,7 @@ def prepare_device(device_key):
     # Apply state
     salt.highstate(device.key,
                    pillar_data,
-                   timeout=int(ACTIVATION_TIMEOUT.total_seconds()))
+                   int(ACTIVATION_TIMEOUT.total_seconds()))
 
 
 def set_status(device, activation_status):
