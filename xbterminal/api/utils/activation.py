@@ -12,7 +12,7 @@ from api.utils.aptly import get_latest_version
 from operations import rq_helpers
 
 CACHE_KEY_TEMPLATE = 'activation-{device_key}'
-ACTIVATION_TIMEOUT = datetime.timedelta(minutes=10)
+ACTIVATION_TIMEOUT = datetime.timedelta(minutes=20)
 
 logger = logging.getLogger(__name__)
 
