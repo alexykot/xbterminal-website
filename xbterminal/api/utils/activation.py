@@ -107,7 +107,8 @@ def wait_for_activation(device_key, activation_job_id):
         rq_helpers.cancel_current_task()
         return
     job = Job.fetch(activation_job_id)
-    if job.started_at + datetime.timedelta(seconds=job.timeout) < timezone.now():
+    if timezone.make_aware(job.started_at, timezone.utc) + \
+            datetime.timedelta(seconds=job.timeout) < timezone.now():
         set_status(device, 'error')
         logger.error('activation timeout ({})'.format(device.key))
         rq_helpers.cancel_current_task()

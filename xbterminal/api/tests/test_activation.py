@@ -1,7 +1,6 @@
 import datetime
 from mock import Mock, patch
 from django.test import TestCase
-from django.utils import timezone
 
 from api.utils.activation import (
     start,
@@ -106,7 +105,7 @@ class ActivationTestCase(TestCase):
     def test_wait_for_activation(self, cancel_mock, job_fetch_mock):
         job_fetch_mock.return_value = Mock(
             is_failed=False,
-            started_at=timezone.now(),
+            started_at=datetime.datetime.now(),
             timeout=600)
         device = DeviceFactory.create(status='activation')
         job_id = 'test'
@@ -124,7 +123,7 @@ class ActivationTestCase(TestCase):
     @patch('api.utils.activation.rq_helpers.cancel_current_task')
     def test_wait_for_activation_timeout(self, cancel_mock, job_fetch_mock):
         job_fetch_mock.return_value = Mock(
-            started_at=timezone.now() - datetime.timedelta(minutes=20),
+            started_at=datetime.datetime.now() - datetime.timedelta(minutes=20),
             timeout=600)
         device = DeviceFactory.create(status='activation')
         job_id = 'test'
@@ -138,7 +137,7 @@ class ActivationTestCase(TestCase):
     def test_wait_for_activation_error(self, cancel_mock, job_fetch_mock):
         job_fetch_mock.return_value = Mock(
             is_failed=True,
-            started_at=timezone.now(),
+            started_at=datetime.datetime.now(),
             timeout=600)
         device = DeviceFactory.create(status='activation')
         job_id = 'test'
