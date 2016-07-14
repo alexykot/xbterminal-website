@@ -104,25 +104,31 @@ class ActivationTestCase(TestCase):
     @patch('api.utils.activation.Job.fetch')
     @patch('api.utils.activation.rq_helpers.cancel_current_task')
     def test_wait_for_activation(self, cancel_mock, job_fetch_mock):
-        job_fetch_mock.return_value = Mock(is_failed=False)
+        job_fetch_mock.return_value = Mock(
+            is_failed=False,
+            started_at=timezone.now(),
+            timeout=600)
         device = DeviceFactory.create(status='activation')
         job_id = 'test'
-        wait_for_activation(device.key, job_id, timezone.now())
+        wait_for_activation(device.key, job_id)
         self.assertFalse(cancel_mock.called)
 
     @patch('api.utils.activation.rq_helpers.cancel_current_task')
     def test_wait_for_activation_finished(self, cancel_mock):
         device = DeviceFactory.create(status='active')
         job_id = 'test'
-        wait_for_activation(device.key, job_id, timezone.now())
+        wait_for_activation(device.key, job_id)
         self.assertTrue(cancel_mock.called)
 
+    @patch('api.utils.activation.Job.fetch')
     @patch('api.utils.activation.rq_helpers.cancel_current_task')
-    def test_wait_for_activation_timeout(self, cancel_mock):
+    def test_wait_for_activation_timeout(self, cancel_mock, job_fetch_mock):
+        job_fetch_mock.return_value = Mock(
+            started_at=timezone.now() - datetime.timedelta(minutes=20),
+            timeout=600)
         device = DeviceFactory.create(status='activation')
         job_id = 'test'
-        started_at = timezone.now() - datetime.timedelta(minutes=20)
-        wait_for_activation(device.key, job_id, started_at)
+        wait_for_activation(device.key, job_id)
         self.assertTrue(cancel_mock.called)
         status = get_status(device)
         self.assertEqual(status, 'error')
@@ -130,10 +136,13 @@ class ActivationTestCase(TestCase):
     @patch('api.utils.activation.Job.fetch')
     @patch('api.utils.activation.rq_helpers.cancel_current_task')
     def test_wait_for_activation_error(self, cancel_mock, job_fetch_mock):
-        job_fetch_mock.return_value = Mock(is_failed=True)
+        job_fetch_mock.return_value = Mock(
+            is_failed=True,
+            started_at=timezone.now(),
+            timeout=600)
         device = DeviceFactory.create(status='activation')
         job_id = 'test'
-        wait_for_activation(device.key, job_id, timezone.now())
+        wait_for_activation(device.key, job_id)
         self.assertTrue(cancel_mock.called)
         status = get_status(device)
         self.assertEqual(status, 'error')

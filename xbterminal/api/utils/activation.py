@@ -33,7 +33,7 @@ def start(device, merchant):
         timeout=activation_job_timeout)
     rq_helpers.run_periodic_task(
         wait_for_activation,
-        [device.key, job.get_id(), timezone.now()])
+        [device.key, job.get_id()])
     logger.info('activation started ({})'.format(device.key))
 
 
@@ -96,7 +96,7 @@ def get_status(device):
     return cache.get(cache_key, 'in_progress')
 
 
-def wait_for_activation(device_key, activation_job_id, started_at):
+def wait_for_activation(device_key, activation_job_id):
     """
     Asynchronous task
     """
@@ -105,14 +105,14 @@ def wait_for_activation(device_key, activation_job_id, started_at):
         logger.info('activation finished ({})'.format(device.key))
         rq_helpers.cancel_current_task()
         return
-    if started_at + ACTIVATION_TIMEOUT < timezone.now():
+    job = Job.fetch(activation_job_id)
+    if job.started_at + datetime.timedelta(seconds=job.timeout) < timezone.now():
         set_status(device, 'error')
-        logger.warning('activation timeout ({})'.format(device.key))
+        logger.error('activation timeout ({})'.format(device.key))
         rq_helpers.cancel_current_task()
         return
-    job = Job.fetch(activation_job_id)
     if job.is_failed:
         set_status(device, 'error')
-        logger.warning('activation failed ({})'.format(device.key))
+        logger.error('activation failed ({})'.format(device.key))
         rq_helpers.cancel_current_task()
         return
