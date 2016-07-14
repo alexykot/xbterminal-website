@@ -49,7 +49,7 @@ def prepare_device(device_key):
     salt.login()
     salt.accept(device.key)
     # Wait for device
-    ping_interval = 10
+    ping_interval = 30
     while not salt.ping(device.key):
         time.sleep(ping_interval)
     # Collect information
