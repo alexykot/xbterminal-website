@@ -88,17 +88,18 @@ class SaltTestCase(TestCase):
         self.assertTrue(lookup_jid_mock.called)
         self.assertEqual(lookup_jid_mock.call_args[0][0], 'test')
 
+    @patch('api.utils.salt.logger')
     @patch('api.utils.salt.Salt._send_request')
     @patch('api.utils.salt.time.time')
     @patch('api.utils.salt.Salt._lookup_jid')
-    def test_highstate_timeout(self, lookup_jid_mock, time_mock, send_mock):
+    def test_highstate_timeout(self, lookup_jid_mock, time_mock,
+                               send_mock, logger_mock):
         send_mock.return_value = {'jid': 'test'}
         time_mock.side_effect = [1000, 1000000]
         lookup_jid_mock.return_value = {}
         salt = Salt()
-        with self.assertRaises(SaltTimeout) as context:
+        with self.assertRaises(SaltTimeout):
             salt.highstate('m1', {'test': 'test'}, 1200)
-        self.assertEqual(context.exception.args[0], 'job ID test')
         self.assertTrue(send_mock.called)
         self.assertFalse(lookup_jid_mock.called)
 

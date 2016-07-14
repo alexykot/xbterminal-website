@@ -1,7 +1,6 @@
 import datetime
 from mock import Mock, patch
 from django.test import TestCase
-from django.utils import timezone
 
 from api.utils.activation import (
     start,
@@ -29,7 +28,7 @@ class ActivationTestCase(TestCase):
         device = DeviceFactory.create(status='registered')
         start(device, merchant)
         self.assertTrue(run_mock.called)
-        self.assertEqual(run_mock.call_args[1]['timeout'], 1260)
+        self.assertEqual(run_mock.call_args[1]['timeout'], 1500)
         self.assertTrue(run_periodic_mock.called)
         device_updated = Device.objects.get(pk=device.pk)
         self.assertEqual(device_updated.status, 'activation')
@@ -104,25 +103,31 @@ class ActivationTestCase(TestCase):
     @patch('api.utils.activation.Job.fetch')
     @patch('api.utils.activation.rq_helpers.cancel_current_task')
     def test_wait_for_activation(self, cancel_mock, job_fetch_mock):
-        job_fetch_mock.return_value = Mock(is_failed=False)
+        job_fetch_mock.return_value = Mock(
+            is_failed=False,
+            started_at=datetime.datetime.now(),
+            timeout=600)
         device = DeviceFactory.create(status='activation')
         job_id = 'test'
-        wait_for_activation(device.key, job_id, timezone.now())
+        wait_for_activation(device.key, job_id)
         self.assertFalse(cancel_mock.called)
 
     @patch('api.utils.activation.rq_helpers.cancel_current_task')
     def test_wait_for_activation_finished(self, cancel_mock):
         device = DeviceFactory.create(status='active')
         job_id = 'test'
-        wait_for_activation(device.key, job_id, timezone.now())
+        wait_for_activation(device.key, job_id)
         self.assertTrue(cancel_mock.called)
 
+    @patch('api.utils.activation.Job.fetch')
     @patch('api.utils.activation.rq_helpers.cancel_current_task')
-    def test_wait_for_activation_timeout(self, cancel_mock):
+    def test_wait_for_activation_timeout(self, cancel_mock, job_fetch_mock):
+        job_fetch_mock.return_value = Mock(
+            started_at=datetime.datetime.now() - datetime.timedelta(minutes=20),
+            timeout=600)
         device = DeviceFactory.create(status='activation')
         job_id = 'test'
-        started_at = timezone.now() - datetime.timedelta(minutes=20)
-        wait_for_activation(device.key, job_id, started_at)
+        wait_for_activation(device.key, job_id)
         self.assertTrue(cancel_mock.called)
         status = get_status(device)
         self.assertEqual(status, 'error')
@@ -130,10 +135,13 @@ class ActivationTestCase(TestCase):
     @patch('api.utils.activation.Job.fetch')
     @patch('api.utils.activation.rq_helpers.cancel_current_task')
     def test_wait_for_activation_error(self, cancel_mock, job_fetch_mock):
-        job_fetch_mock.return_value = Mock(is_failed=True)
+        job_fetch_mock.return_value = Mock(
+            is_failed=True,
+            started_at=datetime.datetime.now(),
+            timeout=600)
         device = DeviceFactory.create(status='activation')
         job_id = 'test'
-        wait_for_activation(device.key, job_id, timezone.now())
+        wait_for_activation(device.key, job_id)
         self.assertTrue(cancel_mock.called)
         status = get_status(device)
         self.assertEqual(status, 'error')

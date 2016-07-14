@@ -143,6 +143,7 @@ class Salt(object):
         }
         result = self._send_request('post', '/', data=payload)
         jid = result['jid']
+        logger.info('highstate execution started, job id {}'.format(jid))
         # Wait for result
         start_time = time.time()
         interval = 15
@@ -168,7 +169,7 @@ class Salt(object):
                     logger.info('highstate executed')
                     return
             time.sleep(interval)
-        raise SaltTimeout('job ID {}'.format(jid))
+        raise SaltTimeout()
 
     def reboot(self, minion_id):
         """

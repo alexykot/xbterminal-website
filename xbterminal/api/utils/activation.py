@@ -25,15 +25,15 @@ def start(device, merchant):
         device.account = merchant.account_set.get(currency__name='BTC')
     device.start_activation()
     device.save()
-    rq_task_timeout = int(ACTIVATION_TIMEOUT.total_seconds()) + 60
+    activation_job_timeout = int(ACTIVATION_TIMEOUT.total_seconds()) + 5 * 60
     job = rq_helpers.run_task(
         prepare_device,
         [device.key],
         queue='low',
-        timeout=rq_task_timeout)
+        timeout=activation_job_timeout)
     rq_helpers.run_periodic_task(
         wait_for_activation,
-        [device.key, job.get_id(), timezone.now()])
+        [device.key, job.get_id()])
     logger.info('activation started ({})'.format(device.key))
 
 
@@ -49,8 +49,9 @@ def prepare_device(device_key):
     salt.login()
     salt.accept(device.key)
     # Wait for device
+    ping_interval = 30
     while not salt.ping(device.key):
-        time.sleep(5)
+        time.sleep(ping_interval)
     # Collect information
     machine = salt.get_grain(device.key, 'machine')
     ui_theme = device.merchant.ui_theme.name
@@ -96,7 +97,7 @@ def get_status(device):
     return cache.get(cache_key, 'in_progress')
 
 
-def wait_for_activation(device_key, activation_job_id, started_at):
+def wait_for_activation(device_key, activation_job_id):
     """
     Asynchronous task
     """
@@ -105,14 +106,15 @@ def wait_for_activation(device_key, activation_job_id, started_at):
         logger.info('activation finished ({})'.format(device.key))
         rq_helpers.cancel_current_task()
         return
-    if started_at + ACTIVATION_TIMEOUT < timezone.now():
+    job = Job.fetch(activation_job_id)
+    if timezone.make_aware(job.started_at, timezone.utc) + \
+            datetime.timedelta(seconds=job.timeout) < timezone.now():
         set_status(device, 'error')
-        logger.warning('activation timeout ({})'.format(device.key))
+        logger.error('activation timeout ({})'.format(device.key))
         rq_helpers.cancel_current_task()
         return
-    job = Job.fetch(activation_job_id)
     if job.is_failed:
         set_status(device, 'error')
-        logger.warning('activation failed ({})'.format(device.key))
+        logger.error('activation failed ({})'.format(device.key))
         rq_helpers.cancel_current_task()
         return
