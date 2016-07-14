@@ -145,7 +145,7 @@ class Salt(object):
         jid = result['jid']
         # Wait for result
         start_time = time.time()
-        interval = 3
+        interval = 15
         while time.time() < start_time + timeout:
             job_info = self._lookup_jid(jid)
             try:
