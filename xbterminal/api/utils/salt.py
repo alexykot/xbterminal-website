@@ -168,7 +168,7 @@ class Salt(object):
                     logger.info('highstate executed')
                     return
             time.sleep(interval)
-        raise SaltTimeout
+        raise SaltTimeout('job ID {}'.format(jid))
 
     def reboot(self, minion_id):
         """

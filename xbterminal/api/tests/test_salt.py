@@ -96,8 +96,9 @@ class SaltTestCase(TestCase):
         time_mock.side_effect = [1000, 1000000]
         lookup_jid_mock.return_value = {}
         salt = Salt()
-        with self.assertRaises(SaltTimeout):
+        with self.assertRaises(SaltTimeout) as context:
             salt.highstate('m1', {'test': 'test'}, 1200)
+        self.assertEqual(context.exception.args[0], 'job ID test')
         self.assertTrue(send_mock.called)
         self.assertFalse(lookup_jid_mock.called)
 
