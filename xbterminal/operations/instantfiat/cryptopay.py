@@ -13,6 +13,7 @@ from operations import BTC_DEC_PLACES
 from operations.exceptions import (
     InstantFiatError,
     CryptoPayUserAlreadyExists,
+    CryptoPayInvalidAPIKey,
     InsufficientFunds)
 
 logger = logging.getLogger(__name__)
@@ -219,6 +220,8 @@ def list_accounts(api_key):
         'X-Api-Key': api_key,
     }
     response = requests.get(api_url, headers=headers)
+    if response.status_code == 403:
+        raise CryptoPayInvalidAPIKey
     response.raise_for_status()
     data = response.json()
     return data

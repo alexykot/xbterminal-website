@@ -9,6 +9,7 @@ from operations import instantfiat
 from operations.exceptions import (
     InstantFiatError,
     CryptoPayUserAlreadyExists,
+    CryptoPayInvalidAPIKey,
     InsufficientFunds)
 
 
@@ -276,6 +277,13 @@ class CryptoPayTestCase(TestCase):
         self.assertEqual(get_mock.call_args[1]['headers']['X-Api-Key'],
                          'test-api-key')
         self.assertEqual(len(results), 2)
+
+    @patch('operations.instantfiat.cryptopay.requests.get')
+    def test_list_accounts_auth_error(self, get_mock):
+        get_mock.return_value = Mock(status_code=403)
+        api_key = 'test-api-key'
+        with self.assertRaises(CryptoPayInvalidAPIKey):
+            instantfiat.cryptopay.list_accounts(api_key)
 
     @patch('operations.instantfiat.cryptopay.requests.get')
     def test_list_transactions(self, get_mock):
