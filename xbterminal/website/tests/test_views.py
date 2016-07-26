@@ -482,6 +482,10 @@ class VerificationViewTestCase(TestCase):
     def setUp(self):
         self.url = reverse('website:verification')
 
+    def test_no_login(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
     def test_get_no_managed_cryptopay_profile(self):
         merchant = MerchantAccountFactory.create()
         self.client.login(username=merchant.user.email,
