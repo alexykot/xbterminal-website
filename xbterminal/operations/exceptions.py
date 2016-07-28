@@ -26,6 +26,11 @@ class CryptoPayUserAlreadyExists(InstantFiatError):
     message = 'CryptoPay user already exists'
 
 
+class CryptoPayInvalidAPIKey(InstantFiatError):
+
+    message = 'CryptoPay API key is invalid'
+
+
 class InvalidTransaction(PaymentError):
 
     message = "Invalid transaction"

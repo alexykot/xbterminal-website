@@ -19,6 +19,7 @@ from website.management.commands.check_wallet import \
     check_wallet, check_wallet_strict
 from website.management.commands.withdraw_btc import withdraw_btc
 from website.management.commands.cryptopay_sync import cryptopay_sync
+from operations.exceptions import CryptoPayInvalidAPIKey
 from operations.tests.factories import outpoint_factory
 
 
@@ -153,6 +154,9 @@ class CryptoPaySyncTestCase(TestCase):
             instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY)
         MerchantAccountFactory.create(
             instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_api_key=None)
+        MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
             instantfiat_merchant_id='xxx',
             verification_status='pending')
         messages = list(cryptopay_sync())
@@ -160,3 +164,14 @@ class CryptoPaySyncTestCase(TestCase):
         self.assertEqual(b_mock.call_count, 2)
         self.assertEqual(c_mock.call_count, 1)
         self.assertEqual(len(messages), 2)
+
+    @patch('website.management.commands.cryptopay_sync.update_managed_accounts')
+    def test_invalid_api_key(self, update_mock):
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY)
+        self.assertIsNotNone(merchant.instantfiat_api_key)
+        update_mock.side_effect = CryptoPayInvalidAPIKey
+        messages = list(cryptopay_sync())
+        merchant.refresh_from_db()
+        self.assertIsNone(merchant.instantfiat_api_key)
+        self.assertEqual(len(messages), 1)

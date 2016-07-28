@@ -2,6 +2,7 @@ import logging
 
 from django.core.management.base import BaseCommand
 
+from operations.exceptions import CryptoPayInvalidAPIKey
 from website.models import MerchantAccount, INSTANTFIAT_PROVIDERS
 from website.utils.accounts import (
     update_managed_accounts,
@@ -22,7 +23,8 @@ class Command(BaseCommand):
 
 def cryptopay_sync():
     merchants = MerchantAccount.objects.filter(
-        instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY)
+        instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+        instantfiat_api_key__isnull=False)
     for merchant in merchants:
         try:
             update_managed_accounts(merchant)
@@ -30,6 +32,12 @@ def cryptopay_sync():
             if merchant.has_managed_cryptopay_profile and \
                     merchant.verification_status == 'pending':
                 check_documents(merchant)
+        except CryptoPayInvalidAPIKey as error:
+            # Remove invalid API key
+            merchant.instantfiat_api_key = None
+            merchant.save()
+            logger.exception(error)
+            yield '{0} - INVALID API KEY'.format(merchant.company_name)
         except Exception as error:
             logger.exception(error)
             yield '{0} - ERROR'.format(merchant.company_name)
