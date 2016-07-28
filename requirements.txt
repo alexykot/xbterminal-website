@@ -15,6 +15,7 @@ django-rq==0.9.1
 django-storages==1.4.1
 djangorestframework==3.2.5
 cryptography==1.2.3
+html5lib==0.9999999
 ndg-httpsclient==0.4.0  # requests[security]
 oauthlib==1.0.3
 Pillow==3.0.0
