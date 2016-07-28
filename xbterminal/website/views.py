@@ -238,7 +238,8 @@ class CabinetView(ContextMixin, View):
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        if not get_current_merchant(request):
+        self.merchant = get_current_merchant(request)
+        if not self.merchant:
             raise Http404
         return super(CabinetView, self).dispatch(request, *args, **kwargs)
 
@@ -256,8 +257,7 @@ class DeviceList(TemplateResponseMixin, CabinetView):
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        context['devices'] = self.request.user.merchant.\
-            device_set.order_by('-id')
+        context['devices'] = self.merchant.device_set.order_by('-id')
         return self.render_to_response(context)
 
 
@@ -272,10 +272,10 @@ class CreateDeviceView(TemplateResponseMixin, CabinetView):
         device_type = self.request.GET.get('device_type', 'hardware')
         if device_type not in device_types:
             return HttpResponseBadRequest('')
-        count = self.request.user.merchant.device_set.count()
+        count = self.merchant.device_set.count()
         context = self.get_context_data(**kwargs)
         context['form'] = forms.DeviceForm(
-            merchant=self.request.user.merchant,
+            merchant=self.merchant,
             initial={
                 'device_type': device_type,
                 'name': u'{0} #{1}'.format(device_types[device_type], count + 1),
@@ -283,8 +283,7 @@ class CreateDeviceView(TemplateResponseMixin, CabinetView):
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
-        form = forms.DeviceForm(self.request.POST,
-                                merchant=self.request.user.merchant)
+        form = forms.DeviceForm(self.request.POST, merchant=self.merchant)
         if form.is_valid():
             device = form.save()
             return redirect(reverse('website:device',
@@ -307,8 +306,7 @@ class ActivateDeviceView(TemplateResponseMixin, CabinetView):
     def post(self, *args, **kwargs):
         form = forms.DeviceActivationForm(self.request.POST)
         if form.is_valid():
-            activation.start(form.device,
-                             self.request.user.merchant)
+            activation.start(form.device, self.merchant)
             return redirect(reverse('website:activation',
                                     kwargs={'device_key': form.device.key}))
         else:
@@ -322,9 +320,8 @@ class ActivationView(TemplateResponseMixin, CabinetView):
     template_name = 'cabinet/activation.html'
 
     def get(self, *args, **kwargs):
-        merchant = self.request.user.merchant
         try:
-            device = merchant.device_set.get(
+            device = self.merchant.device_set.get(
                 key=self.kwargs.get('device_key'))
         except models.Device.DoesNotExist:
             raise Http404
@@ -344,10 +341,9 @@ class DeviceMixin(ContextMixin):
 
     def get_context_data(self, **kwargs):
         context = super(DeviceMixin, self).get_context_data(**kwargs)
-        merchant = self.request.user.merchant
         device_key = self.kwargs.get('device_key')
         try:
-            context['device'] = merchant.device_set.\
+            context['device'] = self.merchant.device_set.\
                 filter(status__in=['active', 'suspended']).\
                 get(key=device_key)
         except models.Device.DoesNotExist:
@@ -365,14 +361,14 @@ class UpdateDeviceView(DeviceMixin, TemplateResponseMixin, CabinetView):
         context = self.get_context_data(**kwargs)
         context['form'] = forms.DeviceForm(
             instance=context['device'],
-            merchant=self.request.user.merchant)
+            merchant=self.merchant)
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         form = forms.DeviceForm(self.request.POST,
                                 instance=context['device'],
-                                merchant=self.request.user.merchant)
+                                merchant=self.merchant)
         if form.is_valid():
             device = form.save()
             return redirect(reverse('website:device',
@@ -390,14 +386,13 @@ class UpdateProfileView(TemplateResponseMixin, CabinetView):
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        merchant = self.request.user.merchant
-        context['form'] = forms.ProfileForm(instance=merchant)
+        context['form'] = forms.ProfileForm(instance=self.merchant)
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         form = forms.ProfileForm(self.request.POST,
-                                 instance=self.request.user.merchant)
+                                 instance=self.merchant)
         if form.is_valid():
             form.save()
             return redirect(reverse('website:profile'))
@@ -412,21 +407,21 @@ class InstantFiatSettingsView(TemplateResponseMixin, CabinetView):
 
     def get_context_data(self, **kwargs):
         context = super(InstantFiatSettingsView, self).get_context_data(**kwargs)
-        if self.request.user.merchant.instantfiat_merchant_id:
+        if self.merchant.instantfiat_merchant_id:
             raise Http404
         return context
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         context['form'] = forms.InstantFiatSettingsForm(
-            instance=self.request.user.merchant)
+            instance=self.merchant)
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         form = forms.InstantFiatSettingsForm(
             self.request.POST,
-            instance=self.request.user.merchant)
+            instance=self.merchant)
         if form.is_valid():
             form.save()
             return redirect(reverse('website:accounts'))
@@ -463,13 +458,9 @@ class VerificationView(TemplateResponseMixin, CabinetView):
     """
     template_name = 'cabinet/verification.html'
 
-    def dispatch(self, *args, **kwargs):
-        self.merchant = self.request.user.merchant
+    def get(self, *args, **kwargs):
         if not self.merchant.has_managed_cryptopay_profile:
             raise Http404
-        return super(VerificationView, self).dispatch(*args, **kwargs)
-
-    def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         if self.merchant.verification_status == 'unverified':
             # Prepare upload forms
@@ -490,6 +481,8 @@ class VerificationView(TemplateResponseMixin, CabinetView):
 
     @atomic
     def post(self, *args, **kwargs):
+        if not self.merchant.has_managed_cryptopay_profile:
+            raise Http404
         if self.merchant.verification_status != 'unverified':
             raise Http404
         uploaded = []
@@ -587,9 +580,9 @@ class AccountListView(TemplateResponseMixin, CabinetView):
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        context['accounts'] = self.request.user.merchant.account_set.all()
+        context['accounts'] = self.merchant.account_set.all()
         context['can_edit_ift_settings'] = \
-            not self.request.user.merchant.instantfiat_merchant_id
+            not self.merchant.instantfiat_merchant_id
         return self.render_to_response(context)
 
 
@@ -602,7 +595,7 @@ class EditAccountView(TemplateResponseMixin, CabinetView):
     def get_context_data(self, **kwargs):
         context = super(EditAccountView, self).get_context_data(**kwargs)
         try:
-            context['account'] = self.request.user.merchant.account_set.\
+            context['account'] = self.merchant.account_set.\
                 get(pk=self.kwargs.get('pk'))
         except models.Account.DoesNotExist:
             raise Http404
@@ -649,7 +642,7 @@ class ReconciliationView(DeviceMixin, TemplateResponseMixin, CabinetView):
                 instantfiat_fiat_amount=Sum('instantfiat_fiat_amount')).\
             order_by('-date')
         context['send_form'] = forms.SendReconciliationForm(
-            initial={'email': self.request.user.merchant.contact_email})
+            initial={'email': self.merchant.contact_email})
         return self.render_to_response(context)
 
 
@@ -776,7 +769,7 @@ class AddFundsView(TemplateResponseMixin, CabinetView):
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         try:
-            context['account'] = self.request.user.merchant.account_set.\
+            context['account'] = self.merchant.account_set.\
                 get(pk=self.kwargs.get('pk'))
         except models.Account.DoesNotExist:
             raise Http404
