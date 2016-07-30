@@ -113,6 +113,12 @@ def prepare_payment(device_or_account, fiat_amount):
                             Decimal(config.OUR_FEE_SHARE) /
                             exchange_rate).quantize(BTC_DEC_PLACES)
     if order.fee_btc_amount < BTC_MIN_OUTPUT:
+        logger.warning(
+            'Payment fee is zero',
+            extra={'data': {
+                'order_uid': order.uid,
+                'order_admin_url': get_admin_url(order),
+            }})
         order.fee_btc_amount = BTC_DEC_PLACES
     # Merchant
     order.merchant_btc_amount = ((order.fiat_amount - order.instantfiat_fiat_amount) /
