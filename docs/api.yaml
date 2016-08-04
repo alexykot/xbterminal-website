@@ -37,6 +37,23 @@ paths:
       responses:
         200:
           description: Payment order created
+          schema:
+            type: object
+            properties:
+              uid:
+                type: string
+              fiat_amount:
+                type: number
+              btc_amount:
+                type: number
+              exchange_rate:
+                type: number
+              payment_uri:
+                type: string
+              payment_request:
+                type: string
+        400:
+          description: Invalid parameters
   /payments/{order_uid}/:
     get:
       summary: Get payment details
@@ -45,6 +62,15 @@ paths:
       responses:
         200:
           description: Payment order details retrieved
+          schema:
+            type: object
+            properties:
+              uid:
+                type: string
+              status:
+                type: string
+        404:
+          description: Payment order does not exist
   /payments/{order_uid}/cancel/:
     post:
       summary: Cancel payment
@@ -53,22 +79,47 @@ paths:
       responses:
         204:
           description: Payment cancelled
+        404:
+          description: Payment order does not exist or can't be cancelled
   /payments/{order_uid}/request/:
     get:
       summary: Download BIP70 payment request
       parameters:
         - $ref: '#/parameters/payment_order_uid'
+      produces:
+        - application/bitcoin-paymentrequest
       responses:
         200:
           description: Payment request retrieved
+          schema:
+            type: string
+            format: binary
+        404:
+          description: Payment order does not exist
   /payments/{order_uid}/response/:
-    get:
-      summary: Download BIP70 payment ACK
+    post:
+      summary: Upload BIP70 payment message
       parameters:
         - $ref: '#/parameters/payment_order_uid'
+        - name: payment_message
+          in: body
+          description: BIP70 payment message
+          required: true
+          schema:
+            type: string
+            format: binary
+      produces:
+        - application/bitcoin-paymentack
       responses:
         200:
           description: Payment ACK retrieved
+          schema:
+            type: string
+            format: binary
+        400:
+          description: Invalid payment message
+        404:
+          description: Payment order does not exist
   /payments/{order_uid}/receipt/:
     get:
       summary: Download payment receipt
@@ -79,12 +130,35 @@ paths:
       responses:
         200:
           description: Payment receipt retrieved
+          schema:
+            type: string
+            format: binary
+        404:
+          description: Payment order does not exist or payment not completed
   /withdrawals/:
     post:
       summary: Create withdrawal order
+      parameters:
+        - $ref: '#/parameters/signature'
+        - name: device
+          in: formData
+          description: Device key (device ID)
+          required: true
+          type: string
+        - name: amount
+          in: formData
+          description: Withdrawal amount
+          required: true
+          type: number
       responses:
-        201:
+        200:
           description: Withdrawal order created
+          schema:
+            $ref: '#/definitions/WithdrawalOrder'
+        400:
+          description: Invalid parameters
+        401:
+          description: Invalid signature
   /withdrawals/{order_uid}/:
     get:
       summary: Get withdrawal details
@@ -93,36 +167,91 @@ paths:
       responses:
         200:
           description: Withdrawal details retrieved
+          schema:
+            $ref: '#/definitions/WithdrawalOrder'
+        404:
+          description: Withdrawal order does not exist
   /withdrawals/{order_uid}/confirm/:
     post:
       summary: Confirm withdrawal
       parameters:
         - $ref: '#/parameters/withdrawal_order_uid'
+        - $ref: '#/parameters/signature'
+        - name: address
+          in: formData
+          description: Withdrawal address
+          required: true
+          type: string
       responses:
         200:
           description: Withdrawal confirmed
+          schema:
+            $ref: '#/definitions/WithdrawalOrder'
+        400:
+          description: Invalid withdrawal address
+        401:
+          description: Invalid signature
+        404:
+          description: Withdrawal order does not exist or already confirmed
   /withdrawals/{order_uid}/cancel/:
     post:
       summary: Cancel withdrawal
       parameters:
         - $ref: '#/parameters/withdrawal_order_uid'
+        - $ref: '#/parameters/signature'
       responses:
         204:
           description: Withdrawal cancelled
+        401:
+          description: Invalid signature
+        404:
+          description: Withdrawal order does not exist or can't be cancelled
   /withdrawals/{order_uid}/receipt/:
     get:
       summary: Download withdrawal receipt
       parameters:
         - $ref: '#/parameters/withdrawal_order_uid'
+      produces:
+        - application/pdf
       responses:
         200:
           description: Withdrawal receipt retrieved
+        404:
+          description: Withdrawal order does not exist or withdrawal is not completed
   /devices/:
     post:
       summary: Register device
+      parameters:
+        - name: batch
+          in: formData
+          description: Batch number
+          required: true
+          type: string
+        - name: key
+          in: formData
+          description: Device key (device ID)
+          required: true
+          type: string
+        - name: api_key
+          in: formData
+          description: Public key for auth
+          required: true
+          type: string
+        - name: salt_fingerprint
+          in: formData
+          description: Salt public key fingerprint
+          required: true
+          type: string
       responses:
         200:
           description: Device registered
+          schema:
+            type: object
+            properties:
+              activation_code:
+                type: string
+        400:
+          description: Invalid parameters
   /devices/{device_key}/:
     get:
       summary: Get device details
@@ -131,6 +260,33 @@ paths:
       responses:
         200:
           description: Device details retrieved
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+              bitcoin_network:
+                type: string
+              language:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  fractional_split:
+                    type: string
+                  thousands_split:
+                    type: string
+              currency:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  prefix:
+                    type: string
+                  postfix:
+                    type: string
+        404:
+          description: Device does not exist
   /devices/{device_key}/confirm_activation/:
     post:
       summary: Confirm device activation
@@ -139,6 +295,8 @@ paths:
       responses:
         204:
           description: Device activation confirmed
+        404:
+          description: Device does not exist
   /batches/current/:
     get:
       summary: Retrieve current batch number
@@ -167,9 +325,30 @@ parameters:
     description: Withdrawal order UID
     required: true
     type: string
+  signature:
+    name: signature
+    in: header
+    description: Request signature
+    required: true
+    type: string
   device_key:
     name: device_key
     in: path
     description: Device key (device ID)
     required: true
     type: string
+
+definitions:
+  WithdrawalOrder:
+    type: object
+    properties:
+      uid:
+        type: string
+      fiat_amount:
+        type: number
+      btc_amount:
+        type: number
+      exchange_rate:
+        type: number
+      status:
+        type: string
