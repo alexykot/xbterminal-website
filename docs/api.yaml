@@ -1,0 +1,175 @@
+swagger: '2.0'
+info:
+  title: XBTerminal API
+  version: "2"
+host: xbterminal.io
+schemes:
+  - https
+basePath: /api/v2
+produces:
+  - application/json
+
+paths:
+  /payments/:
+    post:
+      summary: Create payment order
+      parameters:
+        - name: device
+          in: formData
+          description: Device key (device ID)
+          required: false
+          type: string
+        - name: account
+          in: formData
+          description: Account ID
+          required: false
+          type: integer
+        - name: amount
+          in: formData
+          description: Payment amount
+          required: true
+          type: string
+        - name: bt_mac
+          in: formData
+          description: Bluetooth MAC address
+          required: false
+          type: string
+      responses:
+        200:
+          description: Payment order created
+  /payments/{order_uid}/:
+    get:
+      summary: Get payment details
+      parameters:
+        - $ref: '#/parameters/payment_order_uid'
+      responses:
+        200:
+          description: Payment order details retrieved
+  /payments/{order_uid}/cancel/:
+    post:
+      summary: Cancel payment
+      parameters:
+        - $ref: '#/parameters/payment_order_uid'
+      responses:
+        204:
+          description: Payment cancelled
+  /payments/{order_uid}/request/:
+    get:
+      summary: Download BIP70 payment request
+      parameters:
+        - $ref: '#/parameters/payment_order_uid'
+      responses:
+        200:
+          description: Payment request retrieved
+  /payments/{order_uid}/response/:
+    get:
+      summary: Download BIP70 payment ACK
+      parameters:
+        - $ref: '#/parameters/payment_order_uid'
+      responses:
+        200:
+          description: Payment ACK retrieved
+  /payments/{order_uid}/receipt/:
+    get:
+      summary: Download payment receipt
+      parameters:
+        - $ref: '#/parameters/payment_order_uid'
+      produces:
+        - application/pdf
+      responses:
+        200:
+          description: Payment receipt retrieved
+  /withdrawals/:
+    post:
+      summary: Create withdrawal order
+      responses:
+        201:
+          description: Withdrawal order created
+  /withdrawals/{order_uid}/:
+    get:
+      summary: Get withdrawal details
+      parameters:
+        - $ref: '#/parameters/withdrawal_order_uid'
+      responses:
+        200:
+          description: Withdrawal details retrieved
+  /withdrawals/{order_uid}/confirm/:
+    post:
+      summary: Confirm withdrawal
+      parameters:
+        - $ref: '#/parameters/withdrawal_order_uid'
+      responses:
+        200:
+          description: Withdrawal confirmed
+  /withdrawals/{order_uid}/cancel/:
+    post:
+      summary: Cancel withdrawal
+      parameters:
+        - $ref: '#/parameters/withdrawal_order_uid'
+      responses:
+        204:
+          description: Withdrawal cancelled
+  /withdrawals/{order_uid}/receipt/:
+    get:
+      summary: Download withdrawal receipt
+      parameters:
+        - $ref: '#/parameters/withdrawal_order_uid'
+      responses:
+        200:
+          description: Withdrawal receipt retrieved
+  /devices/:
+    post:
+      summary: Register device
+      responses:
+        200:
+          description: Device registered
+  /devices/{device_key}/:
+    get:
+      summary: Get device details
+      parameters:
+        - $ref: '#/parameters/device_key'
+      responses:
+        200:
+          description: Device details retrieved
+  /devices/{device_key}/confirm_activation/:
+    post:
+      summary: Confirm device activation
+      parameters:
+        - $ref: '#/parameters/device_key'
+      responses:
+        204:
+          description: Device activation confirmed
+  /batches/current/:
+    get:
+      summary: Retrieve current batch number
+      produces:
+        - text/plain
+      responses:
+        200:
+          description: Batch number retrieved
+  /ping/:
+    get:
+      summary: Check server status
+      responses:
+        200:
+          description: Server is online
+
+parameters:
+  payment_order_uid:
+    name: order_uid
+    in: path
+    description: Payment order UID
+    required: true
+    type: string
+  withdrawal_order_uid:
+    name: order_uid
+    in: path
+    description: Withdrawal order UID
+    required: true
+    type: string
+  device_key:
+    name: device_key
+    in: path
+    description: Device key (device ID)
+    required: true
+    type: string
