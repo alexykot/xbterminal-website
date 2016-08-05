@@ -10,10 +10,12 @@ from operations.tests.factories import (
     WithdrawalOrderFactory)
 from website.models import Language, Currency
 from website.tests.factories import (
+    MerchantAccountFactory,
     AccountFactory,
     DeviceBatchFactory,
     DeviceFactory)
 from api.serializers import (
+    MerchantSerializer,
     PaymentInitSerializer,
     PaymentOrderSerializer,
     WithdrawalOrderSerializer,
@@ -21,6 +23,19 @@ from api.serializers import (
     DeviceRegistrationSerializer)
 from api.utils import activation
 from api.utils.crypto import create_test_public_key
+
+
+class MerchantSerializerTestCase(TestCase):
+
+    def test_serialization(self):
+        merchant = MerchantAccountFactory.create()
+        data = MerchantSerializer(merchant).data
+        self.assertEqual(data['company_name'], merchant.company_name)
+        self.assertEqual(data['contact_first_name'],
+                         merchant.contact_first_name)
+        self.assertEqual(data['contact_last_name'],
+                         merchant.contact_last_name)
+        self.assertEqual(data['contact_email'], merchant.contact_email)
 
 
 class PaymentInitSerializerTestCase(TestCase):

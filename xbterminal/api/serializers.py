@@ -8,10 +8,23 @@ from operations.models import PaymentOrder, WithdrawalOrder
 from website.models import (
     Language,
     Currency,
+    MerchantAccount,
     Account,
     Device,
     DeviceBatch)
 from website.validators import validate_public_key
+
+
+class MerchantSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = MerchantAccount
+        fields = [
+            'company_name',
+            'contact_first_name',
+            'contact_last_name',
+            'contact_email',
+        ]
 
 
 class PaymentInitSerializer(serializers.Serializer):
