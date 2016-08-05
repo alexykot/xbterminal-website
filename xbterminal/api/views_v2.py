@@ -12,10 +12,13 @@ from rest_framework.views import APIView
 from rest_framework import status, viewsets
 from constance import config
 
+from website.forms import SimpleMerchantRegistrationForm
 from website.models import Device, DeviceBatch
+from website.utils import email
 
 from api.forms import WithdrawalForm
 from api.serializers import (
+    MerchantSerializer,
     PaymentInitSerializer,
     PaymentOrderSerializer,
     WithdrawalOrderSerializer,
@@ -37,6 +40,22 @@ import operations.protocol
 from operations import withdrawal, exceptions
 
 logger = logging.getLogger(__name__)
+
+
+class MerchantViewSet(viewsets.GenericViewSet):
+
+    serializer_class = MerchantSerializer
+
+    def create(self, *args, **kwargs):
+        form = SimpleMerchantRegistrationForm(data=self.request.data)
+        if not form.is_valid():
+            return Response(form.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
+        merchant = form.save()
+        email.send_registration_info(merchant)
+        serializer = self.get_serializer(merchant)
+        return Response(serializer.data,
+                        status=status.HTTP_201_CREATED)
 
 
 class PaymentViewSet(viewsets.GenericViewSet):

@@ -3,6 +3,7 @@ from decimal import Decimal
 import hashlib
 
 from django.conf import settings
+from django.core import mail
 from django.core.urlresolvers import reverse
 from django.utils import timezone
 from mock import patch, Mock
@@ -15,11 +16,47 @@ from operations import exceptions
 from operations.tests.factories import (
     PaymentOrderFactory,
     WithdrawalOrderFactory)
-from website.models import Device
+from website.models import MerchantAccount, Device, INSTANTFIAT_PROVIDERS
 from website.tests.factories import (
     AccountFactory,
     DeviceFactory,
     DeviceBatchFactory)
+
+
+class MerchantViewSet(APITestCase):
+
+    @patch('website.forms.cryptopay.create_merchant')
+    @patch('website.forms.create_managed_accounts')
+    def test_create(self, create_acc_mock, cryptopay_mock):
+        cryptopay_mock.return_value = ('merchant_id', 'zxwvyx')
+        url = reverse('api:v2:merchant-list')
+        data = {
+            'company_name': 'TestMerchant',
+            'country': 'GB',
+            'contact_first_name': 'Test',
+            'contact_last_name': 'Test',
+            'contact_email': 'test-mr@example.net',
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn('id', response.data)
+        merchant = MerchantAccount.objects.get(pk=response.data['id'])
+        self.assertEqual(merchant.company_name, data['company_name'])
+        self.assertEqual(merchant.user.email, data['contact_email'])
+        self.assertEqual(merchant.instantfiat_provider,
+                         INSTANTFIAT_PROVIDERS.CRYPTOPAY)
+        self.assertEqual(merchant.verification_status, 'unverified')
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(mail.outbox[0].to[0], data['contact_email'])
+        self.assertEqual(mail.outbox[1].to[0],
+                         settings.CONTACT_EMAIL_RECIPIENTS[0])
+
+    def test_create_error(self):
+        url = reverse('api:v2:merchant-list')
+        response = self.client.post(url, {})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['company_name'][0],
+                         'This field is required.')
 
 
 class PaymentViewSetTestCase(APITestCase):

@@ -20,6 +20,7 @@ class MerchantSerializer(serializers.ModelSerializer):
     class Meta:
         model = MerchantAccount
         fields = [
+            'id',
             'company_name',
             'contact_first_name',
             'contact_last_name',

@@ -30,6 +30,7 @@ class MerchantSerializerTestCase(TestCase):
     def test_serialization(self):
         merchant = MerchantAccountFactory.create()
         data = MerchantSerializer(merchant).data
+        self.assertEqual(data['id'], merchant.pk)
         self.assertEqual(data['company_name'], merchant.company_name)
         self.assertEqual(data['contact_first_name'],
                          merchant.contact_first_name)

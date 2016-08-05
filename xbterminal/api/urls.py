@@ -52,6 +52,9 @@ short_urls = [
 ]
 
 api_v2_router = routers.DefaultRouter()
+api_v2_router.register('merchants',
+                       views_v2.MerchantViewSet,
+                       base_name='merchant')
 api_v2_router.register('payments',
                        views_v2.PaymentViewSet,
                        base_name='payment')
