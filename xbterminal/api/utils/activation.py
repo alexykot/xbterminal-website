@@ -54,16 +54,15 @@ def prepare_device(device_key):
         time.sleep(ping_interval)
     # Collect information
     machine = salt.get_grain(device.key, 'machine')
+    xbt_package = salt.get_grain(device.key, 'xbt-package')
     ui_theme = device.merchant.ui_theme.name
-    firmware_package_version = get_latest_version(
-        machine,
-        'xbterminal-firmware')
+    xbt_package_version = get_latest_version(machine, xbt_package)
     ui_theme_package_version = get_latest_version(
         machine,
         'xbterminal-firmware-theme-{}'.format(ui_theme))
     pillar_data = {
         'xbt': {
-            'version': firmware_package_version,
+            'version': xbt_package_version,
             'themes': {
                 ui_theme: ui_theme_package_version,
             },

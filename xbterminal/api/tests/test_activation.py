@@ -62,7 +62,7 @@ class ActivationTestCase(TestCase):
     def test_prepare_device(self, get_version_mock, salt_cls_mock):
         salt_cls_mock.return_value = salt_mock = Mock(**{
             'ping.return_value': True,
-            'get_grain.return_value': 'qemuarm',
+            'get_grain.side_effect': ['qemuarm', 'xbterminal-rpc'],
         })
         get_version_mock.side_effect = ['1.0', '1.0-theme']
         device = DeviceFactory.create(status='activation')
@@ -70,9 +70,12 @@ class ActivationTestCase(TestCase):
         prepare_device(device.key)
         self.assertTrue(salt_mock.accept.called)
         self.assertTrue(salt_mock.ping.called)
-        self.assertTrue(salt_mock.get_grain.called)
+        self.assertEqual(salt_mock.get_grain.call_count, 2)
         self.assertEqual(get_version_mock.call_count, 2)
-        self.assertEqual(get_version_mock.call_args[0][0], 'qemuarm')
+        self.assertEqual(get_version_mock.call_args_list[0][0][0],
+                         'qemuarm')
+        self.assertEqual(get_version_mock.call_args_list[0][0][1],
+                         'xbterminal-rpc')
 
         self.assertTrue(salt_mock.highstate.called)
         self.assertEqual(salt_mock.highstate.call_args[0][0], device.key)
