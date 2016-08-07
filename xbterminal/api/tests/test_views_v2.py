@@ -18,12 +18,27 @@ from operations.tests.factories import (
     WithdrawalOrderFactory)
 from website.models import MerchantAccount, Device, INSTANTFIAT_PROVIDERS
 from website.tests.factories import (
+    MerchantAccountFactory,
     AccountFactory,
     DeviceFactory,
     DeviceBatchFactory)
 
 
-class MerchantViewSet(APITestCase):
+class GetTokenViewTestCase(APITestCase):
+
+    def test_get_token(self):
+        merchant = MerchantAccountFactory.create()
+        url = reverse('api:v2:token')
+        data = {
+            'email': merchant.user.email,
+            'password': 'password',
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('token', response.data)
+
+
+class MerchantViewSetTestCase(APITestCase):
 
     @patch('website.forms.cryptopay.create_merchant')
     @patch('website.forms.create_managed_accounts')

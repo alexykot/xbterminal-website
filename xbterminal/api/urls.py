@@ -1,5 +1,7 @@
 from django.conf.urls import include, url
 from rest_framework import routers
+from rest_framework_jwt.views import obtain_jwt_token
+
 from api import views_v1, views_v2, renderers
 
 
@@ -71,6 +73,7 @@ api_v2_router.register('devices',
 api_v2_urls = [
     url(r'^', include(api_v2_router.urls)),
     url(r'^ping/', views_v2.PingView.as_view(), name='ping'),
+    url(r'^token/', obtain_jwt_token, name='token'),
 ]
 
 urlpatterns = [
