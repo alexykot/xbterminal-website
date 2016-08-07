@@ -6,14 +6,16 @@ from django.db.transaction import atomic
 from django.http import Http404
 from django.utils import timezone
 
+from rest_framework import status, viewsets, mixins
 from rest_framework.decorators import list_route, detail_route
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import status, viewsets
+from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 from constance import config
 
 from website.forms import SimpleMerchantRegistrationForm
-from website.models import Device, DeviceBatch
+from website.models import MerchantAccount, Device, DeviceBatch
 from website.utils import email
 
 from api.forms import WithdrawalForm
@@ -42,9 +44,23 @@ from operations import withdrawal, exceptions
 logger = logging.getLogger(__name__)
 
 
-class MerchantViewSet(viewsets.GenericViewSet):
+class MerchantViewSet(mixins.RetrieveModelMixin,
+                      viewsets.GenericViewSet):
 
+    queryset = MerchantAccount.objects.all()
     serializer_class = MerchantSerializer
+    authentication_classes = [JSONWebTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def perform_authentication(self, request):
+        if self.action == 'create':
+            return
+        super(MerchantViewSet, self).perform_authentication(request)
+
+    def check_permissions(self, request):
+        if self.action == 'create':
+            return
+        super(MerchantViewSet, self).check_permissions(request)
 
     def create(self, *args, **kwargs):
         form = SimpleMerchantRegistrationForm(data=self.request.data)

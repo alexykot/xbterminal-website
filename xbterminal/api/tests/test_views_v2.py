@@ -40,6 +40,14 @@ class GetTokenViewTestCase(APITestCase):
 
 class MerchantViewSetTestCase(APITestCase):
 
+    def _get_token(self, user):
+        url = reverse('api:v2:token')
+        response = self.client.post(url, data={
+            'email': user.email,
+            'password': 'password',
+        })
+        return response.data['token']
+
     @patch('website.forms.cryptopay.create_merchant')
     @patch('website.forms.create_managed_accounts')
     def test_create(self, create_acc_mock, cryptopay_mock):
@@ -72,6 +80,28 @@ class MerchantViewSetTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['company_name'][0],
                          'This field is required.')
+
+    def test_retrieve(self):
+        merchant = MerchantAccountFactory.create()
+        url = reverse('api:v2:merchant-detail',
+                      kwargs={'pk': merchant.pk})
+        auth = 'JWT {}'.format(self._get_token(merchant.user))
+        response = self.client.get(url, HTTP_AUTHORIZATION=auth)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['id'], merchant.pk)
+
+    def test_retrieve_no_auth(self):
+        merchant = MerchantAccountFactory.create()
+        url = reverse('api:v2:merchant-detail',
+                      kwargs={'pk': merchant.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_retrieve_no_merchant(self):
+        url = reverse('api:v2:merchant-detail',
+                      kwargs={'pk': 128718})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class PaymentViewSetTestCase(APITestCase):
