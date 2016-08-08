@@ -63,6 +63,12 @@ class MerchantViewSet(mixins.RetrieveModelMixin,
             return
         super(MerchantViewSet, self).check_permissions(request)
 
+    def check_object_permissions(self, request, obj):
+        merchant = getattr(self.request.user, 'merchant')
+        if not merchant or obj.pk != merchant.pk:
+            self.permission_denied(request)
+        super(MerchantViewSet, self).check_object_permissions(request, obj)
+
     def create(self, *args, **kwargs):
         form = SimpleMerchantRegistrationForm(data=self.request.data)
         if not form.is_valid():

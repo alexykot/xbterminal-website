@@ -105,6 +105,15 @@ class MerchantViewSetTestCase(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    def test_retrieve_another_merchant(self):
+        merchant_1 = MerchantAccountFactory.create()
+        merchant_2 = MerchantAccountFactory.create()
+        url = reverse('api:v2:merchant-detail',
+                      kwargs={'pk': merchant_1.pk})
+        auth = 'JWT {}'.format(self._get_token(merchant_2.user))
+        response = self.client.get(url, HTTP_AUTHORIZATION=auth)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
     @patch('api.views_v2.kyc.upload_documents')
     def test_upload_kyc(self, upload_mock):
         merchant = MerchantAccountFactory.create(
