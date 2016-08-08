@@ -5,6 +5,7 @@ import re
 import unicodedata
 
 from django.conf import settings
+from django.core.files.base import ContentFile
 from django.core.files.storage import FileSystemStorage
 from django.utils.deconstruct import deconstructible
 
@@ -40,6 +41,25 @@ def encode_base64(file):
         mimetype=mimetype,
         content=base64.b64encode(file.read()))
     return data
+
+
+def decode_base64(data):
+    """
+    Accepts:
+        data: base64 encoded file, string
+    Returns:
+        ContentFile instance
+    """
+    match = re.match(r'^data:(?P<type>.+?);base64,(?P<content>.+)$',
+                     data.strip())
+    mimetype = match.group('type')
+    b64_content = match.group('content')
+    extension = mimetypes.guess_extension(mimetype)
+    assert extension
+    file_name = b64_content[:8].encode('hex') + extension
+    file = ContentFile(base64.b64decode(b64_content),
+                       name=file_name)
+    return file
 
 
 # TODO: remove storage class
