@@ -53,11 +53,6 @@ class MerchantViewSet(mixins.RetrieveModelMixin,
     authentication_classes = [JSONWebTokenAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def perform_authentication(self, request):
-        if self.action == 'create':
-            return
-        super(MerchantViewSet, self).perform_authentication(request)
-
     def check_permissions(self, request):
         if self.action == 'create':
             return
