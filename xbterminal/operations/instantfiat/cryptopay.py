@@ -1,11 +1,9 @@
 """
 https://developers.cryptopay.me/
 """
-import base64
 from decimal import Decimal, ROUND_HALF_DOWN
 import json
 import logging
-import mimetypes
 
 import requests
 
@@ -15,6 +13,7 @@ from operations.exceptions import (
     CryptoPayUserAlreadyExists,
     CryptoPayInvalidAPIKey,
     InsufficientFunds)
+from website.utils.files import encode_base64
 
 logger = logging.getLogger(__name__)
 
@@ -166,19 +165,6 @@ def set_password(user_id, password, api_key):
         raise InstantFiatError(response.text)
 
 
-def _encode_base64(file):
-    """
-    Accepts:
-        file: file-like object
-    """
-    mimetype, encoding = mimetypes.guess_type(file.name)
-    assert mimetype
-    data = 'data:{mimetype};base64,{content}'.format(
-        mimetype=mimetype,
-        content=base64.b64encode(file.read()))
-    return data
-
-
 def upload_documents(user_id, documents, api_key):
     """
     Accepts:
@@ -190,9 +176,9 @@ def upload_documents(user_id, documents, api_key):
     """
     api_url = 'https://cryptopay.me/api/v2/users/{user_id}/documents'
     payload = {
-        'id_document_frontside': _encode_base64(documents[0]),
-        'id_document_backside': _encode_base64(documents[1]),
-        'residence_document': _encode_base64(documents[2]),
+        'id_document_frontside': encode_base64(documents[0]),
+        'id_document_backside': encode_base64(documents[1]),
+        'residence_document': encode_base64(documents[2]),
     }
     assert api_key
     headers = {

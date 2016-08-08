@@ -12,6 +12,7 @@ from website.utils.accounts import (
     update_managed_accounts,
     update_balances)
 from website.utils.kyc import upload_documents, check_documents
+from website.utils.files import encode_base64
 from website.tests.factories import (
     MerchantAccountFactory,
     KYCDocumentFactory,
@@ -293,3 +294,12 @@ class KYCUtilsTestCase(TestCase):
         self.assertEqual(document_1.status, 'verified')
         self.assertEqual(document_2.status, 'verified')
         self.assertEqual(document_3.status, 'verified')
+
+
+class FileUtilsTestCase(TestCase):
+
+    def test_encode_base64(self):
+        file = Mock(**{'read.return_value': 'test'})
+        file.name = 'test.jpg'
+        data = encode_base64(file)
+        self.assertEqual(data, 'data:image/jpeg;base64,dGVzdA==')

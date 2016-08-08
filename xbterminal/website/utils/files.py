@@ -1,3 +1,5 @@
+import base64
+import mimetypes
 import os
 import re
 import unicodedata
@@ -23,6 +25,21 @@ def verification_file_path_gen(instance, filename):
 def get_verification_file_name(file):
     match = re.match('^[0-9]__(.*)$', os.path.basename(file.name))
     return match.group(1)
+
+
+def encode_base64(file):
+    """
+    Accepts:
+        file: file-like object
+    Returns:
+        string
+    """
+    mimetype, encoding = mimetypes.guess_type(file.name)
+    assert mimetype
+    data = 'data:{mimetype};base64,{content}'.format(
+        mimetype=mimetype,
+        content=base64.b64encode(file.read()))
+    return data
 
 
 # TODO: remove storage class
