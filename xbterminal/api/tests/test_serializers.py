@@ -9,6 +9,7 @@ from operations.tests.factories import (
     PaymentOrderFactory,
     WithdrawalOrderFactory)
 from website.models import Language, Currency
+from website.utils.kyc import REQUIRED_DOCUMENTS
 from website.tests.factories import (
     MerchantAccountFactory,
     AccountFactory,
@@ -16,6 +17,7 @@ from website.tests.factories import (
     DeviceFactory)
 from api.serializers import (
     MerchantSerializer,
+    KYCDocumentsSerializer,
     PaymentInitSerializer,
     PaymentOrderSerializer,
     WithdrawalOrderSerializer,
@@ -37,6 +39,46 @@ class MerchantSerializerTestCase(TestCase):
         self.assertEqual(data['contact_last_name'],
                          merchant.contact_last_name)
         self.assertEqual(data['contact_email'], merchant.contact_email)
+
+
+class KYCDocumentsSerializerTestCase(TestCase):
+
+    def test_validation(self):
+        merchant = MerchantAccountFactory.create()
+        data = {
+            'id_document_frontside': 'data:image/png;base64,dGVzdA==',
+            'id_document_backside': 'data:image/png;base64,dGVzdA==',
+            'residence_document': 'data:image/png;base64,dGVzdA==',
+        }
+        serializer = KYCDocumentsSerializer(
+            data=data, context={'merchant': merchant})
+        self.assertTrue(serializer.is_valid())
+        uploaded = serializer.save()
+        self.assertEqual(len(uploaded), 3)
+        for document_type in REQUIRED_DOCUMENTS:
+            document = merchant.get_kyc_document(document_type, 'uploaded')
+            self.assertIsNotNone(document)
+            self.assertTrue(document.base_name.endswith('.png'))
+            self.assertIsNone(document.instantfiat_document_id)
+
+    def test_required(self):
+        serializer = KYCDocumentsSerializer(data={})
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors['id_document_frontside'][0],
+                         'This field is required.')
+        self.assertEqual(serializer.errors['id_document_backside'][0],
+                         'This field is required.')
+        self.assertEqual(serializer.errors['residence_document'][0],
+                         'This field is required.')
+
+    def test_invalid_file(self):
+        data = {
+            'id_document_frontside': 'aaa',
+        }
+        serializer = KYCDocumentsSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors['id_document_frontside'][0],
+                         'Invalid encoded file.')
 
 
 class PaymentInitSerializerTestCase(TestCase):

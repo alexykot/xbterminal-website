@@ -10,9 +10,12 @@ from website.models import (
     Currency,
     MerchantAccount,
     Account,
+    KYCDocument,
     Device,
-    DeviceBatch)
+    DeviceBatch,
+    KYC_DOCUMENT_TYPES)
 from website.validators import validate_public_key
+from website.utils.files import decode_base64
 
 
 class MerchantSerializer(serializers.ModelSerializer):
@@ -26,6 +29,41 @@ class MerchantSerializer(serializers.ModelSerializer):
             'contact_last_name',
             'contact_email',
         ]
+
+
+class KYCDocumentsSerializer(serializers.Serializer):
+
+    id_document_frontside = serializers.CharField()
+    id_document_backside = serializers.CharField()
+    residence_document = serializers.CharField()
+
+    def validate_id_document_frontside(self, value):
+        try:
+            return decode_base64(value), KYC_DOCUMENT_TYPES.ID_FRONT
+        except:
+            raise serializers.ValidationError('Invalid encoded file.')
+
+    def validate_id_document_backside(self, value):
+        try:
+            return decode_base64(value), KYC_DOCUMENT_TYPES.ID_BACK
+        except:
+            raise serializers.ValidationError('Invalid encoded file.')
+
+    def validate_residence_document(self, value):
+        try:
+            return decode_base64(value), KYC_DOCUMENT_TYPES.ADDRESS
+        except:
+            raise serializers.ValidationError('Invalid encoded file.')
+
+    def create(self, validated_data):
+        uploaded = []
+        for file, document_type in validated_data.values():
+            document = KYCDocument(merchant=self.context['merchant'],
+                                   document_type=document_type)
+            document.file.save(file.name, file)
+            document.save()
+            uploaded.append(document)
+        return uploaded
 
 
 class PaymentInitSerializer(serializers.Serializer):
