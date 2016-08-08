@@ -39,6 +39,8 @@ class MerchantSerializerTestCase(TestCase):
         self.assertEqual(data['contact_last_name'],
                          merchant.contact_last_name)
         self.assertEqual(data['contact_email'], merchant.contact_email)
+        self.assertEqual(data['verification_status'],
+                         merchant.verification_status)
 
 
 class KYCDocumentsSerializerTestCase(TestCase):

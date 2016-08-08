@@ -89,6 +89,8 @@ class MerchantViewSetTestCase(APITestCase):
         response = self.client.get(url, HTTP_AUTHORIZATION=auth)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['id'], merchant.pk)
+        self.assertEqual(response.data['verification_status'],
+                         'unverified')
 
     def test_retrieve_no_auth(self):
         merchant = MerchantAccountFactory.create()
@@ -102,6 +104,56 @@ class MerchantViewSetTestCase(APITestCase):
                       kwargs={'pk': 128718})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    @patch('api.views_v2.kyc.upload_documents')
+    def test_upload_kyc(self, upload_mock):
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='xxx')
+        url = reverse('api:v2:merchant-upload-kyc',
+                      kwargs={'pk': merchant.pk})
+        auth = 'JWT {}'.format(self._get_token(merchant.user))
+        data = {
+            'id_document_frontside': 'data:image/png;base64,dGVzdA==',
+            'id_document_backside': 'data:image/png;base64,dGVzdA==',
+            'residence_document': 'data:image/png;base64,dGVzdA==',
+        }
+        response = self.client.post(url, data=data, HTTP_AUTHORIZATION=auth)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['id'], merchant.pk)
+        self.assertEqual(upload_mock.call_args[0][0].pk, merchant.pk)
+        self.assertEqual(len(upload_mock.call_args[0][1]), 3)
+
+    def test_upload_kyc_errors(self):
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='xxx')
+        url = reverse('api:v2:merchant-upload-kyc',
+                      kwargs={'pk': merchant.pk})
+        auth = 'JWT {}'.format(self._get_token(merchant.user))
+        response = self.client.post(url, data={}, HTTP_AUTHORIZATION=auth)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['id_document_frontside'][0],
+                         'This field is required.')
+
+    def test_upload_kyc_no_cryptopay_account(self):
+        merchant = MerchantAccountFactory.create()
+        url = reverse('api:v2:merchant-upload-kyc',
+                      kwargs={'pk': merchant.pk})
+        auth = 'JWT {}'.format(self._get_token(merchant.user))
+        response = self.client.post(url, data={}, HTTP_AUTHORIZATION=auth)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_upload_kyc_pending_verification(self):
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_merchant_id='xxx',
+            verification_status='verification_pending')
+        url = reverse('api:v2:merchant-upload-kyc',
+                      kwargs={'pk': merchant.pk})
+        auth = 'JWT {}'.format(self._get_token(merchant.user))
+        response = self.client.post(url, data={}, HTTP_AUTHORIZATION=auth)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
 class PaymentViewSetTestCase(APITestCase):

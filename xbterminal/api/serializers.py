@@ -28,6 +28,7 @@ class MerchantSerializer(serializers.ModelSerializer):
             'contact_first_name',
             'contact_last_name',
             'contact_email',
+            'verification_status',
         ]
 
 

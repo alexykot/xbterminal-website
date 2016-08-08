@@ -16,11 +16,12 @@ from constance import config
 
 from website.forms import SimpleMerchantRegistrationForm
 from website.models import MerchantAccount, Device, DeviceBatch
-from website.utils import email
+from website.utils import email, kyc
 
 from api.forms import WithdrawalForm
 from api.serializers import (
     MerchantSerializer,
+    KYCDocumentsSerializer,
     PaymentInitSerializer,
     PaymentOrderSerializer,
     WithdrawalOrderSerializer,
@@ -72,6 +73,22 @@ class MerchantViewSet(mixins.RetrieveModelMixin,
         serializer = self.get_serializer(merchant)
         return Response(serializer.data,
                         status=status.HTTP_201_CREATED)
+
+    @detail_route(methods=['POST'])
+    def upload_kyc(self, *args, **kwargs):
+        merchant = self.get_object()
+        if not merchant.has_managed_cryptopay_profile:
+            raise Http404
+        if merchant.verification_status != 'unverified':
+            raise Http404
+        kyc_serializer = KYCDocumentsSerializer(
+            data=self.request.data,
+            context={'merchant': merchant})
+        kyc_serializer.is_valid(raise_exception=True)
+        uploaded = kyc_serializer.save()
+        kyc.upload_documents(merchant, uploaded)
+        serializer = self.get_serializer(merchant)
+        return Response(serializer.data)
 
 
 class PaymentViewSet(viewsets.GenericViewSet):
