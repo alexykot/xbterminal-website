@@ -14,7 +14,8 @@ from website.utils import email, kyc
 from api.serializers import (
     MerchantSerializer,
     KYCDocumentsSerializer,
-    ThirdPartyDeviceSerializer)
+    ThirdPartyDeviceSerializer,
+    TransactionSerializer)
 
 
 class MerchantViewSet(mixins.RetrieveModelMixin,
@@ -95,4 +96,11 @@ class DeviceViewSet(MerchantMixin,
         device.last_activity = timezone.now()
         device.save()
         serializer = self.get_serializer(device)
+        return Response(serializer.data)
+
+    @detail_route(methods=['GET'])
+    def list_transactions(self, *args, **kwargs):
+        device = self.get_object()
+        serializer = TransactionSerializer(
+            device.get_transactions(), many=True)
         return Response(serializer.data)

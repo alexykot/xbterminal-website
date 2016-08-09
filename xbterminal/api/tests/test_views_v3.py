@@ -6,10 +6,14 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from rest_framework_jwt.settings import api_settings
 
+from operations.tests.factories import (
+    PaymentOrderFactory,
+    WithdrawalOrderFactory)
 from website.models import MerchantAccount, INSTANTFIAT_PROVIDERS
 from website.tests.factories import (
     MerchantAccountFactory,
     AccountFactory,
+    TransactionFactory,
     DeviceFactory)
 
 
@@ -215,3 +219,31 @@ class DeviceViewSetTestCase(APITestCase):
         auth = 'JWT {}'.format(get_auth_token(device.merchant.user))
         response = self.client.get(url, HTTP_AUTHORIZATION=auth)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_retrieve_no_auth(self):
+        device = DeviceFactory.create()
+        url = reverse('api:v3:device-detail', kwargs={'key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_list_transactions(self):
+        device = DeviceFactory.create()
+        TransactionFactory.create(
+            payment=PaymentOrderFactory.create(device=device),
+            account=device.account)
+        TransactionFactory.create(
+            withdrawal=WithdrawalOrderFactory.create(device=device),
+            account=device.account)
+        url = reverse('api:v3:device-list-transactions',
+                      kwargs={'key': device.key})
+        auth = 'JWT {}'.format(get_auth_token(device.merchant.user))
+        response = self.client.get(url, HTTP_AUTHORIZATION=auth)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+
+    def test_list_transactions_no_auth(self):
+        device = DeviceFactory.create()
+        url = reverse('api:v3:device-list-transactions',
+                      kwargs={'key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
