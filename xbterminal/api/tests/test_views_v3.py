@@ -4,10 +4,19 @@ from django.core.urlresolvers import reverse
 from mock import patch
 from rest_framework.test import APITestCase
 from rest_framework import status
+from rest_framework_jwt.settings import api_settings
 
 from website.models import MerchantAccount, INSTANTFIAT_PROVIDERS
 from website.tests.factories import (
-    MerchantAccountFactory)
+    MerchantAccountFactory,
+    AccountFactory)
+
+
+def get_auth_token(user):
+    jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+    jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+    payload = jwt_payload_handler(user)
+    return jwt_encode_handler(payload)
 
 
 class GetTokenViewTestCase(APITestCase):
@@ -149,3 +158,44 @@ class MerchantViewSetTestCase(APITestCase):
         auth = 'JWT {}'.format(self._get_token(merchant.user))
         response = self.client.post(url, data={}, HTTP_AUTHORIZATION=auth)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class DeviceViewSetTestCase(APITestCase):
+
+    def test_create(self):
+        merchant = MerchantAccountFactory.create()
+        AccountFactory.create(merchant=merchant,
+                              currency__name='GBP')
+        url = reverse('api:v3:device-list')
+        auth = 'JWT {}'.format(get_auth_token(merchant.user))
+        data = {
+            'name': 'PoS 12',
+            'currency_code': 'GBP',
+        }
+        response = self.client.post(url, data, HTTP_AUTHORIZATION=auth)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['name'], data['name'])
+        self.assertEqual(response.data['currency_code'], data['currency_code'])
+        self.assertIn('key', response.data)
+
+    def test_create_no_auth(self):
+        url = reverse('api:v3:device-list')
+        data = {
+            'name': 'PoS 12',
+            'currency_code': 'GBP',
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_create_error(self):
+        merchant = MerchantAccountFactory.create()
+        url = reverse('api:v3:device-list')
+        auth = 'JWT {}'.format(get_auth_token(merchant.user))
+        data = {
+            'name': 'PoS 12',
+            'currency_code': 'GBP',
+        }
+        response = self.client.post(url, data, HTTP_AUTHORIZATION=auth)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['currency_code'][0],
+                         'Account does not exist.')

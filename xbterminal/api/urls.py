@@ -76,6 +76,9 @@ api_v3_router = routers.DefaultRouter()
 api_v3_router.register('merchants',
                        views_v3.MerchantViewSet,
                        base_name='merchant')
+api_v3_router.register('devices',
+                       views_v3.DeviceViewSet,
+                       base_name='device')
 
 api_v3_urls = [
     url(r'^', include(api_v3_router.urls)),

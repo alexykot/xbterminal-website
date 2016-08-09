@@ -12,7 +12,8 @@ from website.utils import email, kyc
 
 from api.serializers import (
     MerchantSerializer,
-    KYCDocumentsSerializer)
+    KYCDocumentsSerializer,
+    ThirdPartyDeviceSerializer)
 
 
 class MerchantViewSet(mixins.RetrieveModelMixin,
@@ -60,3 +61,29 @@ class MerchantViewSet(mixins.RetrieveModelMixin,
         kyc.upload_documents(merchant, uploaded)
         serializer = self.get_serializer(merchant)
         return Response(serializer.data)
+
+
+class MerchantMixin(object):
+
+    def initial(self, *args, **kwargs):
+        self.merchant = getattr(self.request.user, 'merchant', None)
+        if not self.merchant:
+            self.permission_denied(self.request)
+        super(MerchantMixin, self).initial(*args, **kwargs)
+
+
+class DeviceViewSet(MerchantMixin,
+                    mixins.CreateModelMixin,
+                    viewsets.GenericViewSet):
+
+    serializer_class = ThirdPartyDeviceSerializer
+    authentication_classes = [JSONWebTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return self.merchant.device_set.exclude(status='suspended')
+
+    def get_serializer_context(self):
+        context = super(DeviceViewSet, self).get_serializer_context()
+        context['merchant'] = self.merchant
+        return context
