@@ -9,7 +9,8 @@ from rest_framework_jwt.settings import api_settings
 from website.models import MerchantAccount, INSTANTFIAT_PROVIDERS
 from website.tests.factories import (
     MerchantAccountFactory,
-    AccountFactory)
+    AccountFactory,
+    DeviceFactory)
 
 
 def get_auth_token(user):
@@ -199,3 +200,18 @@ class DeviceViewSetTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['currency_code'][0],
                          'Account does not exist.')
+
+    def test_retrieve(self):
+        device = DeviceFactory.create()
+        url = reverse('api:v3:device-detail', kwargs={'key': device.key})
+        auth = 'JWT {}'.format(get_auth_token(device.merchant.user))
+        response = self.client.get(url, HTTP_AUTHORIZATION=auth)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['key'], device.key)
+
+    def test_retrieve_suspended(self):
+        device = DeviceFactory.create(status='suspended')
+        url = reverse('api:v3:device-detail', kwargs={'key': device.key})
+        auth = 'JWT {}'.format(get_auth_token(device.merchant.user))
+        response = self.client.get(url, HTTP_AUTHORIZATION=auth)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

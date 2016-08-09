@@ -1,4 +1,5 @@
 from django.http import Http404
+from django.utils import timezone
 
 from rest_framework import status, viewsets, mixins
 from rest_framework.decorators import detail_route
@@ -76,6 +77,7 @@ class DeviceViewSet(MerchantMixin,
                     mixins.CreateModelMixin,
                     viewsets.GenericViewSet):
 
+    lookup_field = 'key'
     serializer_class = ThirdPartyDeviceSerializer
     authentication_classes = [JSONWebTokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -87,3 +89,10 @@ class DeviceViewSet(MerchantMixin,
         context = super(DeviceViewSet, self).get_serializer_context()
         context['merchant'] = self.merchant
         return context
+
+    def retrieve(self, *args, **kwargs):
+        device = self.get_object()
+        device.last_activity = timezone.now()
+        device.save()
+        serializer = self.get_serializer(device)
+        return Response(serializer.data)
