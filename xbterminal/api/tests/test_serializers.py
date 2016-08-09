@@ -22,7 +22,8 @@ from api.serializers import (
     PaymentOrderSerializer,
     WithdrawalOrderSerializer,
     DeviceSerializer,
-    DeviceRegistrationSerializer)
+    DeviceRegistrationSerializer,
+    ThirdPartyDeviceSerializer)
 from api.utils import activation
 from api.utils.crypto import create_test_public_key
 
@@ -315,3 +316,60 @@ class DeviceRegistrationSerializerTestCase(TestCase):
         self.assertTrue(salt_mock.check_fingerprint.called)
         self.assertEqual(serializer.errors['salt_fingerprint'][0],
                          'Invalid salt key fingerprint.')
+
+
+class ThirdPartyDeviceSerializerTestCase(TestCase):
+
+    def test_serialization(self):
+        device = DeviceFactory.create()
+        data = ThirdPartyDeviceSerializer(device).data
+        self.assertEqual(data['name'], device.name)
+        self.assertEqual(data['currency_code'],
+                         device.account.currency.name)
+        self.assertEqual(data['key'], device.key)
+        self.assertEqual(data['status'], device.status)
+
+    def test_create(self):
+        merchant = MerchantAccountFactory.create()
+        account = AccountFactory.create(merchant=merchant,
+                                        currency__name='USD')
+        data = {
+            'name': 'PoS 10',
+            'currency_code': 'USD',
+        }
+        serializer = ThirdPartyDeviceSerializer(
+            data=data,
+            context={'merchant': merchant})
+        self.assertTrue(serializer.is_valid())
+        device = serializer.save()
+        self.assertEqual(device.merchant.pk, merchant.pk)
+        self.assertEqual(device.account.pk, account.pk)
+        self.assertEqual(device.device_type, 'mobile')
+        self.assertEqual(device.status, 'active')
+        self.assertEqual(device.name, data['name'])
+        self.assertEqual(len(device.key), 8)
+        self.assertIsNone(device.api_key)
+
+    def test_invalid_currency_code(self):
+        merchant = MerchantAccountFactory.create()
+        data = {
+            'name': 'PoS 11',
+            'currency_code': 'XXX',
+        }
+        serializer = ThirdPartyDeviceSerializer(
+            data=data, context={'merchant': merchant})
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors['currency_code'][0],
+                         'Invalid currency code.')
+
+    def test_account_does_not_exist(self):
+        merchant = MerchantAccountFactory.create()
+        data = {
+            'name': 'PoS 11',
+            'currency_code': 'USD',
+        }
+        serializer = ThirdPartyDeviceSerializer(
+            data=data, context={'merchant': merchant})
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors['currency_code'][0],
+                         'Account does not exist.')

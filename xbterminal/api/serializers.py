@@ -237,3 +237,39 @@ class DeviceRegistrationSerializer(serializers.ModelSerializer):
             key=validated_data['key'],
             batch=validated_data['batch'],
             api_key=validated_data['api_key'])
+
+
+class ThirdPartyDeviceSerializer(serializers.ModelSerializer):
+
+    currency_code = serializers.CharField(source='account.currency.name')
+
+    class Meta:
+        model = Device
+        fields = [
+            'name',
+            'currency_code',
+            'key',
+            'status',
+        ]
+        read_only_fields = ['key', 'status']
+
+    def validate_currency_code(self, value):
+        try:
+            currency = Currency.objects.get(name=value)
+        except Currency.DoesNotExist:
+            raise serializers.ValidationError('Invalid currency code.')
+        try:
+            self.context['merchant'].account_set.get(currency=currency)
+        except Account.DoesNotExist:
+            raise serializers.ValidationError('Account does not exist.')
+        return value
+
+    def create(self, validated_data):
+        account = self.context['merchant'].account_set.get(
+            currency__name=validated_data['account']['currency']['name'])
+        return Device.objects.create(
+            merchant=self.context['merchant'],
+            account=account,
+            device_type='mobile',
+            status='active',
+            name=validated_data['name'])
