@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.core import mail
 from django.core.urlresolvers import reverse
@@ -246,4 +248,35 @@ class DeviceViewSetTestCase(APITestCase):
         url = reverse('api:v3:device-list-transactions',
                       kwargs={'key': device.key})
         response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class PaymentViewSetTestCase(APITestCase):
+
+    @patch('api.views_v2.operations.payment.prepare_payment')
+    def test_payment_init(self, prepare_mock):
+        device = DeviceFactory.create()
+        url = reverse('api:v3:payment-list')
+        auth = 'JWT {}'.format(get_auth_token(device.merchant.user))
+        prepare_mock.return_value = order = PaymentOrderFactory.create(
+            device=device,
+            fiat_amount=Decimal('0.50'),
+            merchant_btc_amount=Decimal('0.0499'),
+            tx_fee_btc_amount=Decimal('0.0001'))
+        data = {
+            'device': device.key,
+            'amount': '0.50',
+        }
+        response = self.client.post(url, data, HTTP_AUTHORIZATION=auth)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['uid'], order.uid)
+
+    def test_payment_init_no_auth(self):
+        device = DeviceFactory.create()
+        url = reverse('api:v3:payment-list')
+        data = {
+            'device': device.key,
+            'amount': '0.50',
+        }
+        response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

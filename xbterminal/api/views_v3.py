@@ -16,6 +16,7 @@ from api.serializers import (
     KYCDocumentsSerializer,
     ThirdPartyDeviceSerializer,
     TransactionSerializer)
+from api.views_v2 import PaymentViewSet as Version2PaymentViewSet
 
 
 class MerchantViewSet(mixins.RetrieveModelMixin,
@@ -104,3 +105,9 @@ class DeviceViewSet(MerchantMixin,
         serializer = TransactionSerializer(
             device.get_transactions(), many=True)
         return Response(serializer.data)
+
+
+class PaymentViewSet(Version2PaymentViewSet):
+
+    authentication_classes = [JSONWebTokenAuthentication]
+    permission_classes = [IsAuthenticated]

@@ -79,6 +79,9 @@ api_v3_router.register('merchants',
 api_v3_router.register('devices',
                        views_v3.DeviceViewSet,
                        base_name='device')
+api_v3_router.register('payments',
+                       views_v3.PaymentViewSet,
+                       base_name='payment')
 
 api_v3_urls = [
     url(r'^', include(api_v3_router.urls)),
