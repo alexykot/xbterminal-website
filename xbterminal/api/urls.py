@@ -2,7 +2,7 @@ from django.conf.urls import include, url
 from rest_framework import routers
 from rest_framework_jwt.views import obtain_jwt_token
 
-from api import views_v1, views_v2, renderers
+from api import views_v1, views_v2, views_v3, renderers
 
 
 api_v1_urls = [
@@ -54,9 +54,6 @@ short_urls = [
 ]
 
 api_v2_router = routers.DefaultRouter()
-api_v2_router.register('merchants',
-                       views_v2.MerchantViewSet,
-                       base_name='merchant')
 api_v2_router.register('payments',
                        views_v2.PaymentViewSet,
                        base_name='payment')
@@ -73,6 +70,15 @@ api_v2_router.register('devices',
 api_v2_urls = [
     url(r'^', include(api_v2_router.urls)),
     url(r'^ping/', views_v2.PingView.as_view(), name='ping'),
+]
+
+api_v3_router = routers.DefaultRouter()
+api_v3_router.register('merchants',
+                       views_v3.MerchantViewSet,
+                       base_name='merchant')
+
+api_v3_urls = [
+    url(r'^', include(api_v3_router.urls)),
     url(r'^token/', obtain_jwt_token, name='token'),
 ]
 
@@ -80,4 +86,5 @@ urlpatterns = [
     url(r'^api/', include(api_v1_urls)),
     url(r'', include(short_urls, namespace='short')),
     url(r'^api/v2/', include(api_v2_urls, namespace='v2')),
+    url(r'^api/v3/', include(api_v3_urls, namespace='v3')),
 ]
