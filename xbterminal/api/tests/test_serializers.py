@@ -13,6 +13,7 @@ from website.utils.kyc import REQUIRED_DOCUMENTS
 from website.tests.factories import (
     MerchantAccountFactory,
     AccountFactory,
+    TransactionFactory,
     DeviceBatchFactory,
     DeviceFactory)
 from api.serializers import (
@@ -23,7 +24,8 @@ from api.serializers import (
     WithdrawalOrderSerializer,
     DeviceSerializer,
     DeviceRegistrationSerializer,
-    ThirdPartyDeviceSerializer)
+    ThirdPartyDeviceSerializer,
+    TransactionSerializer)
 from api.utils import activation
 from api.utils.crypto import create_test_public_key
 
@@ -373,3 +375,14 @@ class ThirdPartyDeviceSerializerTestCase(TestCase):
         self.assertFalse(serializer.is_valid())
         self.assertEqual(serializer.errors['currency_code'][0],
                          'Account does not exist.')
+
+
+class TransactionSerializerTestCase(TestCase):
+
+    def test_serialization(self):
+        transaction = TransactionFactory.create()
+        data = TransactionSerializer(transaction).data
+        self.assertEqual(data['amount'].rstrip('0'),
+                         str(transaction.amount))
+        self.assertIn('created_at', data)
+        self.assertTrue(data['is_confirmed'])

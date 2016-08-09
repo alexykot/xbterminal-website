@@ -10,6 +10,7 @@ from website.models import (
     Currency,
     MerchantAccount,
     Account,
+    Transaction,
     KYCDocument,
     Device,
     DeviceBatch,
@@ -273,3 +274,14 @@ class ThirdPartyDeviceSerializer(serializers.ModelSerializer):
             device_type='mobile',
             status='active',
             name=validated_data['name'])
+
+
+class TransactionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Transaction
+        fields = [
+            'amount',
+            'created_at',
+            'is_confirmed',
+        ]
