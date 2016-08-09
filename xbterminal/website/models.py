@@ -654,6 +654,15 @@ class Device(models.Model):
             beg, end = date
         return self.paymentorder_set.filter(time_notified__range=(beg, end))
 
+    def get_transactions(self):
+        """
+        Returns list of device transactions
+        """
+        # TODO: replace get_payments and get_payments_by_date
+        return Transaction.objects.filter(
+            models.Q(payment__device=self) |
+            models.Q(withdrawal__device=self)).order_by('created_at')
+
     def is_online(self):
         if self.last_activity is None:
             return False

@@ -483,6 +483,26 @@ class DeviceTestCase(TestCase):
             account__currency__name='TBTC')
         self.assertEqual(device_3.bitcoin_network, 'testnet')
 
+    def test_get_transactions(self):
+        device = DeviceFactory.create()
+        TransactionFactory.create(
+            payment=PaymentOrderFactory.create(device=device),
+            account=device.account,
+            amount=Decimal('0.2'))
+        TransactionFactory.create(
+            withdrawal=WithdrawalOrderFactory.create(device=device),
+            account=device.account,
+            amount=Decimal('-0.1'))
+        TransactionFactory.create(
+            payment=PaymentOrderFactory.create(
+                device=None,
+                account=device.account),
+            account=device.account,
+            amount=Decimal('0.5'))
+        transactions = device.get_transactions()
+        self.assertEqual(transactions[0].amount, Decimal('0.2'))
+        self.assertEqual(transactions[1].amount, Decimal('-0.1'))
+
 
 class DeviceBatchTestCase(TestCase):
 
