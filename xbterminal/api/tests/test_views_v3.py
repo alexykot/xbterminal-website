@@ -44,14 +44,6 @@ class GetTokenViewTestCase(APITestCase):
 
 class MerchantViewSetTestCase(APITestCase):
 
-    def _get_token(self, user):
-        url = reverse('api:v3:token')
-        response = self.client.post(url, data={
-            'email': user.email,
-            'password': 'password',
-        })
-        return response.data['token']
-
     @patch('website.forms.cryptopay.create_merchant')
     @patch('website.forms.create_managed_accounts')
     def test_create(self, create_acc_mock, cryptopay_mock):
@@ -89,7 +81,7 @@ class MerchantViewSetTestCase(APITestCase):
         merchant = MerchantAccountFactory.create()
         url = reverse('api:v3:merchant-detail',
                       kwargs={'pk': merchant.pk})
-        auth = 'JWT {}'.format(self._get_token(merchant.user))
+        auth = 'JWT {}'.format(get_auth_token(merchant.user))
         response = self.client.get(url, HTTP_AUTHORIZATION=auth)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['id'], merchant.pk)
@@ -114,7 +106,7 @@ class MerchantViewSetTestCase(APITestCase):
         merchant_2 = MerchantAccountFactory.create()
         url = reverse('api:v3:merchant-detail',
                       kwargs={'pk': merchant_1.pk})
-        auth = 'JWT {}'.format(self._get_token(merchant_2.user))
+        auth = 'JWT {}'.format(get_auth_token(merchant_2.user))
         response = self.client.get(url, HTTP_AUTHORIZATION=auth)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -125,7 +117,7 @@ class MerchantViewSetTestCase(APITestCase):
             instantfiat_merchant_id='xxx')
         url = reverse('api:v3:merchant-upload-kyc',
                       kwargs={'pk': merchant.pk})
-        auth = 'JWT {}'.format(self._get_token(merchant.user))
+        auth = 'JWT {}'.format(get_auth_token(merchant.user))
         data = {
             'id_document_frontside': 'data:image/png;base64,dGVzdA==',
             'id_document_backside': 'data:image/png;base64,dGVzdA==',
@@ -143,7 +135,7 @@ class MerchantViewSetTestCase(APITestCase):
             instantfiat_merchant_id='xxx')
         url = reverse('api:v3:merchant-upload-kyc',
                       kwargs={'pk': merchant.pk})
-        auth = 'JWT {}'.format(self._get_token(merchant.user))
+        auth = 'JWT {}'.format(get_auth_token(merchant.user))
         response = self.client.post(url, data={}, HTTP_AUTHORIZATION=auth)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['id_document_frontside'][0],
@@ -153,7 +145,7 @@ class MerchantViewSetTestCase(APITestCase):
         merchant = MerchantAccountFactory.create()
         url = reverse('api:v3:merchant-upload-kyc',
                       kwargs={'pk': merchant.pk})
-        auth = 'JWT {}'.format(self._get_token(merchant.user))
+        auth = 'JWT {}'.format(get_auth_token(merchant.user))
         response = self.client.post(url, data={}, HTTP_AUTHORIZATION=auth)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -164,7 +156,7 @@ class MerchantViewSetTestCase(APITestCase):
             verification_status='verification_pending')
         url = reverse('api:v3:merchant-upload-kyc',
                       kwargs={'pk': merchant.pk})
-        auth = 'JWT {}'.format(self._get_token(merchant.user))
+        auth = 'JWT {}'.format(get_auth_token(merchant.user))
         response = self.client.post(url, data={}, HTTP_AUTHORIZATION=auth)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
