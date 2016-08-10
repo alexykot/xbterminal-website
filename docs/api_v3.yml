@@ -262,9 +262,9 @@ paths:
   /payments/{order_uid}/request/:
     get:
       summary: Download BIP70 payment request
+      description: This API endpoint doesn't require authentication
       parameters:
         - $ref: '#/parameters/payment_order_uid'
-        - $ref: '#/parameters/auth'
       produces:
         - application/bitcoin-paymentrequest
       responses:
@@ -273,16 +273,14 @@ paths:
           schema:
             type: string
             format: binary
-        401:
-          description: Invalid auth header
         404:
           description: Payment order does not exist
   /payments/{order_uid}/response/:
     post:
       summary: Upload BIP70 payment message
+      description: This API endpoint doesn't require authentication
       parameters:
         - $ref: '#/parameters/payment_order_uid'
-        - $ref: '#/parameters/auth'
         - name: payment_message
           in: body
           description: BIP70 payment message
@@ -300,16 +298,14 @@ paths:
             format: binary
         400:
           description: Invalid payment message
-        401:
-          description: Invalid auth header
         404:
           description: Payment order does not exist
   /payments/{order_uid}/receipt/:
     get:
       summary: Download payment receipt
+      description: This API endpoint doesn't require authentication
       parameters:
         - $ref: '#/parameters/payment_order_uid'
-        - $ref: '#/parameters/auth'
       produces:
         - application/pdf
       responses:
@@ -318,11 +314,8 @@ paths:
           schema:
             type: string
             format: binary
-        401:
-          description: Invalid auth header
         404:
           description: Payment order does not exist or payment not completed
-  
 
 
 parameters:

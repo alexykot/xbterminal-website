@@ -111,3 +111,8 @@ class PaymentViewSet(Version2PaymentViewSet):
 
     authentication_classes = [JSONWebTokenAuthentication]
     permission_classes = [IsAuthenticated]
+
+    def check_permissions(self, request):
+        if self.action in ['request', 'response', 'receipt']:
+            return
+        super(PaymentViewSet, self).check_permissions(request)

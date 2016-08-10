@@ -1,9 +1,11 @@
 from decimal import Decimal
+from mock import patch, Mock
 
 from django.conf import settings
 from django.core import mail
 from django.core.urlresolvers import reverse
-from mock import patch
+from django.utils import timezone
+
 from rest_framework.test import APITestCase
 from rest_framework import status
 from rest_framework_jwt.settings import api_settings
@@ -280,3 +282,14 @@ class PaymentViewSetTestCase(APITestCase):
         }
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    @patch('api.utils.pdf.get_template')
+    def test_receipt_no_auth(self, get_template_mock):
+        get_template_mock.return_value = Mock(**{
+            'render.return_value': 'test',
+        })
+        order = PaymentOrderFactory.create(time_notified=timezone.now())
+        url = reverse('api:v3:payment-receipt',
+                      kwargs={'uid': order.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
