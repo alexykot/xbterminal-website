@@ -1,5 +1,5 @@
 boto==2.40.0
-Django==1.8.8
+Django==1.8.14
 django-bootstrap3==6.2.2
 django-constance==1.1.1
 django-countries==3.4.1
@@ -13,7 +13,8 @@ django-recaptcha==1.0.5
 django-redis==4.3.0
 django-rq==0.9.1
 django-storages==1.4.1
-djangorestframework==3.2.5
+djangorestframework==3.3.3
+djangorestframework-jwt==1.8.0
 cryptography==1.2.3
 html5lib==0.9999999
 ndg-httpsclient==0.4.0  # requests[security]

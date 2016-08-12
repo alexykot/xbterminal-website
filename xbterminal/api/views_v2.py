@@ -6,10 +6,10 @@ from django.db.transaction import atomic
 from django.http import Http404
 from django.utils import timezone
 
+from rest_framework import status, viewsets
 from rest_framework.decorators import list_route, detail_route
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import status, viewsets
 from constance import config
 
 from website.models import Device, DeviceBatch
