@@ -28,8 +28,6 @@ class PaymentViewSetTestCase(APITestCase):
     def test_create_from_website(self, prepare_mock):
         device = DeviceFactory.create()
         fiat_amount = 10
-        expected_btc_amount = 0.05
-        expected_exchange_rate = 200
         payment_order = PaymentOrderFactory.create(
             device=device,
             fiat_amount=Decimal(fiat_amount),
@@ -45,9 +43,9 @@ class PaymentViewSetTestCase(APITestCase):
         response = self.client.post(url, form_data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data
-        self.assertEqual(data['fiat_amount'], fiat_amount)
-        self.assertEqual(data['btc_amount'], expected_btc_amount)
-        self.assertEqual(data['exchange_rate'], expected_exchange_rate)
+        self.assertEqual(data['fiat_amount'], '10.00')
+        self.assertEqual(data['btc_amount'], '0.05000000')
+        self.assertEqual(data['exchange_rate'], '200.00000000')
         self.assertIn('payment_uri', data)
 
         self.assertEqual(prepare_mock.call_args[0][0], device)
@@ -58,8 +56,6 @@ class PaymentViewSetTestCase(APITestCase):
         device = DeviceFactory.create(long_key=True)
         fiat_amount = 10
         bluetooth_mac = '12:34:56:78:9A:BC'
-        expected_btc_amount = 0.05
-        expected_exchange_rate = 200
         prepare_mock.return_value = order = PaymentOrderFactory.create(
             device=device,
             fiat_amount=Decimal(fiat_amount),
@@ -76,9 +72,9 @@ class PaymentViewSetTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data
         self.assertEqual(data['uid'], order.uid)
-        self.assertEqual(data['fiat_amount'], fiat_amount)
-        self.assertEqual(data['btc_amount'], expected_btc_amount)
-        self.assertEqual(data['exchange_rate'], expected_exchange_rate)
+        self.assertEqual(data['fiat_amount'], '10.00')
+        self.assertEqual(data['btc_amount'], '0.05000000')
+        self.assertEqual(data['exchange_rate'], '200.00000000')
         self.assertIn('payment_uri', data)
         self.assertIn('payment_request', data)
 
@@ -86,8 +82,6 @@ class PaymentViewSetTestCase(APITestCase):
     def test_create_for_account(self, prepare_mock):
         account = AccountFactory.create()
         fiat_amount = 10
-        expected_btc_amount = 0.05
-        expected_exchange_rate = 200
         prepare_mock.return_value = order = PaymentOrderFactory.create(
             device=None,
             account=account,
@@ -103,9 +97,9 @@ class PaymentViewSetTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data
         self.assertEqual(data['uid'], order.uid)
-        self.assertEqual(data['fiat_amount'], fiat_amount)
-        self.assertEqual(data['btc_amount'], expected_btc_amount)
-        self.assertEqual(data['exchange_rate'], expected_exchange_rate)
+        self.assertEqual(data['fiat_amount'], '10.00')
+        self.assertEqual(data['btc_amount'], '0.05000000')
+        self.assertEqual(data['exchange_rate'], '200.00000000')
         self.assertIn('payment_uri', data)
         self.assertEqual(prepare_mock.call_args[0][0], account)
         self.assertEqual(prepare_mock.call_args[0][1], Decimal('10'))

@@ -1,4 +1,3 @@
-from decimal import Decimal
 import logging
 
 from django.conf import settings
@@ -43,13 +42,14 @@ class PaymentViewSet(viewsets.GenericViewSet):
 
     queryset = PaymentOrder.objects.all()
     lookup_field = 'uid'
+    serializer_class = PaymentOrderSerializer
 
     def create(self, *args, **kwargs):
         serializer = PaymentInitSerializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         # Prepare payment order
         try:
-            payment_order = operations.payment.prepare_payment(
+            order = operations.payment.prepare_payment(
                 (serializer.validated_data.get('device') or
                  serializer.validated_data.get('account')),
                 serializer.validated_data['amount'])
@@ -59,37 +59,28 @@ class PaymentViewSet(viewsets.GenericViewSet):
         # Urls
         payment_request_url = construct_absolute_url(
             'api:v2:payment-request',
-            kwargs={'uid': payment_order.uid})
+            kwargs={'uid': order.uid})
         # Prepare json response
-        fiat_amount = payment_order.fiat_amount.quantize(Decimal('0.00'))
-        btc_amount = payment_order.btc_amount
-        exchange_rate = payment_order.effective_exchange_rate.\
-            quantize(Decimal('0.000000'))
-        data = {
-            'uid': payment_order.uid,
-            'fiat_amount': float(fiat_amount),
-            'btc_amount': float(btc_amount),
-            'exchange_rate': float(exchange_rate),
-        }
+        data = self.get_serializer(order).data
         if serializer.validated_data.get('bt_mac'):
             # Enable payment via bluetooth
             payment_bluetooth_url = 'bt:{mac}'.\
                 format(mac=serializer.validated_data['bt_mac'].replace(':', ''))
-            payment_bluetooth_request = payment_order.create_payment_request(
+            payment_bluetooth_request = order.create_payment_request(
                 payment_bluetooth_url)
             # Send payment request in response
             data['payment_uri'] = operations.blockchain.construct_bitcoin_uri(
-                payment_order.local_address,
-                payment_order.btc_amount,
-                payment_order.merchant.company_name,
+                order.local_address,
+                order.btc_amount,
+                order.merchant.company_name,
                 payment_bluetooth_url,
                 payment_request_url)
             data['payment_request'] = payment_bluetooth_request.encode('base64')
         else:
             data['payment_uri'] = operations.blockchain.construct_bitcoin_uri(
-                payment_order.local_address,
-                payment_order.btc_amount,
-                payment_order.merchant.company_name,
+                order.local_address,
+                order.btc_amount,
+                order.merchant.company_name,
                 payment_request_url)
         return Response(data)
 
@@ -99,7 +90,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
             # Close order
             order.time_notified = timezone.now()
             order.save()
-        serializer = PaymentOrderSerializer(order)
+        serializer = self.get_serializer(order)
         return Response(serializer.data)
 
     @detail_route(methods=['POST'])
