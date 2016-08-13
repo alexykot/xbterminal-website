@@ -220,25 +220,17 @@ paths:
           schema:
             title: PaymentInit
             type: object
-            properties:
-              uid:
-                description: Payment UID
-                type: string
-              fiat_amount:
-                description: Amount in fiat currency
-                type: number
-              btc_amount:
-                description: Amount in BTC
-                type: number
-              exchange_rate:
-                description: Exchange rate
-                type: number
-              payment_uri:
-                description: Payment URI
-                type: string
-              payment_request:
-                description: Payment request (base64)
-                type: string
+            allOf:
+              - $ref: '#/definitions/Payment'
+              - type: object
+                title: PaymentURI
+                properties:
+                  payment_uri:
+                    description: Payment URI
+                    type: string
+                  payment_request:
+                    description: Payment request (base64)
+                    type: string
         400:
           description: Invalid parameters
         401:
@@ -253,15 +245,7 @@ paths:
         200:
           description: Payment details retrieved
           schema:
-            title: Payment
-            type: object
-            properties:
-              uid:
-                description: Payment UID
-                type: string
-              status:
-                description: Payment status
-                type: string
+            $ref: '#/definitions/Payment'
         401:
           description: Invalid auth header
         404:
@@ -405,4 +389,22 @@ definitions:
         type: string
       status:
         description: Device status
+        type: string
+  Payment:
+    type: object
+    properties:
+      uid:
+        description: Payment UID
+        type: string
+      fiat_amount:
+        description: Amount in fiat currency
+        type: number
+      btc_amount:
+        description: Amount in BTC
+        type: number
+      exchange_rate:
+        description: Exchange rate
+        type: number
+      status:
+        description: Payment status
         type: string
