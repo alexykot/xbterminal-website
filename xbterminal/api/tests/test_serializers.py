@@ -21,6 +21,7 @@ from api.serializers import (
     KYCDocumentsSerializer,
     PaymentInitSerializer,
     PaymentOrderSerializer,
+    WithdrawalInitSerializer,
     WithdrawalOrderSerializer,
     DeviceSerializer,
     DeviceRegistrationSerializer,
@@ -152,6 +153,44 @@ class PaymentOrderSerializerTestCase(TestCase):
         data = PaymentOrderSerializer(order).data
         self.assertEqual(data['uid'], order.uid)
         self.assertEqual(data['status'], order.status)
+
+
+class WithdrawalInitSerializerTestCase(TestCase):
+
+    def test_validation(self):
+        device = DeviceFactory.create()
+        data = {
+            'device': device.key,
+            'amount': '0.50',
+        }
+        serializer = WithdrawalInitSerializer(data=data)
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.validated_data['device'].pk,
+                         device.pk)
+        self.assertEqual(serializer.validated_data['amount'],
+                         Decimal('0.5'))
+
+    def test_invalid_device_key(self):
+        data = {
+            'device': 'invalidkey',
+            'amount': '0.50',
+        }
+        serializer = WithdrawalInitSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors['device'][0],
+                         'Invalid device key.')
+
+    def test_invalid_amount(self):
+        device = DeviceFactory.create()
+        data = {
+            'device': device.key,
+            'amount': '0.00',
+        }
+        serializer = WithdrawalInitSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(
+            serializer.errors['amount'][0],
+            'Ensure this value is greater than or equal to 0.01.')
 
 
 class WithdrawalOrderSerializerTestCase(TestCase):

@@ -119,6 +119,22 @@ class PaymentOrderSerializer(serializers.ModelSerializer):
         ]
 
 
+class WithdrawalInitSerializer(serializers.Serializer):
+
+    device = serializers.CharField()
+    amount = serializers.DecimalField(
+        max_digits=9,
+        decimal_places=2,
+        min_value=Decimal('0.01'))
+
+    def validate_device(self, value):
+        try:
+            return Device.objects.get(key=value,
+                                      status='active')
+        except Device.DoesNotExist:
+            raise serializers.ValidationError('Invalid device key.')
+
+
 class WithdrawalOrderSerializer(serializers.ModelSerializer):
 
     btc_amount = serializers.DecimalField(
