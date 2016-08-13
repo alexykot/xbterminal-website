@@ -14,10 +14,10 @@ from constance import config
 
 from website.models import Device, DeviceBatch
 
-from api.forms import WithdrawalForm
 from api.serializers import (
     PaymentInitSerializer,
     PaymentOrderSerializer,
+    WithdrawalInitSerializer,
     WithdrawalOrderSerializer,
     DeviceSerializer,
     DeviceRegistrationSerializer)
@@ -182,18 +182,16 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
 
     @atomic
     def create(self, request):
-        form = WithdrawalForm(data=self.request.data)
-        if not form.is_valid():
-            return Response({'error': form.error_message},
-                            status=status.HTTP_400_BAD_REQUEST)
-        if not self._verify_signature(form.cleaned_data['device']):
+        serializer = WithdrawalInitSerializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        if not self._verify_signature(serializer.validated_data['device']):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
         try:
             order = withdrawal.prepare_withdrawal(
-                form.cleaned_data['device'],
-                form.cleaned_data['amount'])
+                serializer.validated_data['device'],
+                serializer.validated_data['amount'])
         except exceptions.WithdrawalError as error:
-            return Response({'error': error.message},
+            return Response({'device': [error.message]},
                             status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(order)
         return Response(serializer.data)

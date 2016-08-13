@@ -347,7 +347,7 @@ class WithdrawalViewSetTestCase(APITestCase):
                          str(order.effective_exchange_rate))
         self.assertEqual(response.data['status'], 'new')
 
-    def test_create_order_error(self):
+    def test_create_invalid_device_key(self):
         form_data = {
             'device': 'invalid_key',
             'amount': '1.00',
@@ -355,10 +355,10 @@ class WithdrawalViewSetTestCase(APITestCase):
         url = reverse('api:v2:withdrawal-list')
         response = self.client.post(url, form_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['error'],
-                         'Device - invalid device key')
+        self.assertEqual(response.data['device'][0],
+                         'Invalid device key.')
 
-    def test_device_not_active(self):
+    def test_create_device_not_active(self):
         device = DeviceFactory.create(status='activation')
         form_data = {
             'device': device.key,
@@ -367,8 +367,28 @@ class WithdrawalViewSetTestCase(APITestCase):
         url = reverse('api:v2:withdrawal-list')
         response = self.client.post(url, form_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['error'],
-                         'Device - invalid device key')
+        self.assertEqual(response.data['device'][0],
+                         'Invalid device key.')
+
+    @patch('api.views_v2.withdrawal.prepare_withdrawal')
+    def test_create_withdrawal_error(self, prepare_mock):
+        device = DeviceFactory.create()
+        prepare_mock.side_effect = exceptions.WithdrawalError(
+            'Account is not set for device.')
+        view = WithdrawalViewSet.as_view(actions={'post': 'create'})
+        data = {
+            'device': device.key,
+            'amount': '1.00',
+        }
+        url = reverse('api:v2:withdrawal-list')
+        request = self.factory.post(url, data, format='json')
+        device.api_key, request.META['HTTP_X_SIGNATURE'] = \
+            create_test_signature(request.body)
+        device.save()
+        response = view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['device'][0],
+                         'Account is not set for device.')
 
     def test_invalid_signature(self):
         device = DeviceFactory.create()
