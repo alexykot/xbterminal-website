@@ -272,9 +272,7 @@ class DeviceViewSet(viewsets.GenericViewSet):
 
     def create(self, request):
         serializer = self.get_serializer(data=self.request.data)
-        if not serializer.is_valid():
-            return Response({'errors': serializer.errors},
-                            status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
         device = serializer.save()
         return Response({'activation_code': device.activation_code})
 

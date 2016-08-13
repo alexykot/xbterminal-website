@@ -537,9 +537,12 @@ class DeviceViewSetTestCase(APITestCase):
         url = reverse('api:v2:device-list')
         response = self.client.post(url, {})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('batch', response.data['errors'])
-        self.assertIn('key', response.data['errors'])
-        self.assertIn('api_key', response.data['errors'])
+        self.assertEqual(response.data['batch'][0],
+                         'This field is required.')
+        self.assertEqual(response.data['key'][0],
+                         'This field is required.')
+        self.assertEqual(response.data['api_key'][0],
+                         'This field is required.')
 
     def test_retrieve_registered(self):
         device = DeviceFactory.create(status='registered')
