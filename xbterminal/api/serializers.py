@@ -100,23 +100,42 @@ class PaymentInitSerializer(serializers.Serializer):
                 'Either device or account must be specified.')
         return data
 
-    @property
-    def error_message(self):
-        for field, errors in self.errors.items():
-            if field == 'non_field_errors':
-                return errors[0]
-            else:
-                return '{0} - {1}'.format(field, errors[0]).capitalize()
-
 
 class PaymentOrderSerializer(serializers.ModelSerializer):
+
+    btc_amount = serializers.DecimalField(
+        max_digits=18,
+        decimal_places=8)
+    exchange_rate = serializers.DecimalField(
+        max_digits=18,
+        decimal_places=8,
+        source='effective_exchange_rate')
 
     class Meta:
         model = PaymentOrder
         fields = [
             'uid',
+            'fiat_amount',
+            'btc_amount',
+            'exchange_rate',
             'status',
         ]
+
+
+class WithdrawalInitSerializer(serializers.Serializer):
+
+    device = serializers.CharField()
+    amount = serializers.DecimalField(
+        max_digits=9,
+        decimal_places=2,
+        min_value=Decimal('0.01'))
+
+    def validate_device(self, value):
+        try:
+            return Device.objects.get(key=value,
+                                      status='active')
+        except Device.DoesNotExist:
+            raise serializers.ValidationError('Invalid device key.')
 
 
 class WithdrawalOrderSerializer(serializers.ModelSerializer):

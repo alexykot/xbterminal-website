@@ -21,6 +21,7 @@ from api.serializers import (
     KYCDocumentsSerializer,
     PaymentInitSerializer,
     PaymentOrderSerializer,
+    WithdrawalInitSerializer,
     WithdrawalOrderSerializer,
     DeviceSerializer,
     DeviceRegistrationSerializer,
@@ -119,7 +120,7 @@ class PaymentInitSerializerTestCase(TestCase):
         }
         serializer = PaymentInitSerializer(data=data)
         self.assertFalse(serializer.is_valid())
-        self.assertEqual(serializer.error_message,
+        self.assertEqual(serializer.errors['non_field_errors'][0],
                          'Either device or account must be specified.')
 
     def test_invalid_device_key(self):
@@ -129,8 +130,8 @@ class PaymentInitSerializerTestCase(TestCase):
         }
         serializer = PaymentInitSerializer(data=data)
         self.assertFalse(serializer.is_valid())
-        self.assertEqual(serializer.error_message,
-                         'Device - invalid device key.')
+        self.assertEqual(serializer.errors['device'][0],
+                         'Invalid device key.')
 
     def test_invalid_bt_mac(self):
         device = DeviceFactory.create(status='active')
@@ -141,8 +142,8 @@ class PaymentInitSerializerTestCase(TestCase):
         }
         serializer = PaymentInitSerializer(data=data)
         self.assertFalse(serializer.is_valid())
-        self.assertEqual(serializer.error_message,
-                         'Bt_mac - this value does not match the required pattern.')
+        self.assertEqual(serializer.errors['bt_mac'][0],
+                         'This value does not match the required pattern.')
 
 
 class PaymentOrderSerializerTestCase(TestCase):
@@ -151,7 +152,49 @@ class PaymentOrderSerializerTestCase(TestCase):
         order = PaymentOrderFactory.create()
         data = PaymentOrderSerializer(order).data
         self.assertEqual(data['uid'], order.uid)
+        self.assertEqual(data['fiat_amount'], str(order.fiat_amount))
+        self.assertEqual(data['btc_amount'], str(order.btc_amount))
+        self.assertEqual(data['exchange_rate'],
+                         str(order.effective_exchange_rate))
         self.assertEqual(data['status'], order.status)
+
+
+class WithdrawalInitSerializerTestCase(TestCase):
+
+    def test_validation(self):
+        device = DeviceFactory.create()
+        data = {
+            'device': device.key,
+            'amount': '0.50',
+        }
+        serializer = WithdrawalInitSerializer(data=data)
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.validated_data['device'].pk,
+                         device.pk)
+        self.assertEqual(serializer.validated_data['amount'],
+                         Decimal('0.5'))
+
+    def test_invalid_device_key(self):
+        data = {
+            'device': 'invalidkey',
+            'amount': '0.50',
+        }
+        serializer = WithdrawalInitSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors['device'][0],
+                         'Invalid device key.')
+
+    def test_invalid_amount(self):
+        device = DeviceFactory.create()
+        data = {
+            'device': device.key,
+            'amount': '0.00',
+        }
+        serializer = WithdrawalInitSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(
+            serializer.errors['amount'][0],
+            'Ensure this value is greater than or equal to 0.01.')
 
 
 class WithdrawalOrderSerializerTestCase(TestCase):
@@ -383,6 +426,6 @@ class TransactionSerializerTestCase(TestCase):
         transaction = TransactionFactory.create()
         data = TransactionSerializer(transaction).data
         self.assertEqual(data['amount'].rstrip('0'),
-                         str(transaction.amount))
+                         str(transaction.amount).rstrip('0'))
         self.assertIn('created_at', data)
         self.assertTrue(data['is_confirmed'])

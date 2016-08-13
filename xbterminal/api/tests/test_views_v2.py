@@ -24,12 +24,10 @@ from website.tests.factories import (
 
 class PaymentViewSetTestCase(APITestCase):
 
-    @patch('api.views_v2.operations.payment.prepare_payment')
+    @patch('api.views_v2.payment.prepare_payment')
     def test_create_from_website(self, prepare_mock):
         device = DeviceFactory.create()
         fiat_amount = 10
-        expected_btc_amount = 0.05
-        expected_exchange_rate = 200
         payment_order = PaymentOrderFactory.create(
             device=device,
             fiat_amount=Decimal(fiat_amount),
@@ -45,21 +43,19 @@ class PaymentViewSetTestCase(APITestCase):
         response = self.client.post(url, form_data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data
-        self.assertEqual(data['fiat_amount'], fiat_amount)
-        self.assertEqual(data['btc_amount'], expected_btc_amount)
-        self.assertEqual(data['exchange_rate'], expected_exchange_rate)
+        self.assertEqual(data['fiat_amount'], '10.00')
+        self.assertEqual(data['btc_amount'], '0.05000000')
+        self.assertEqual(data['exchange_rate'], '200.00000000')
         self.assertIn('payment_uri', data)
 
         self.assertEqual(prepare_mock.call_args[0][0], device)
         self.assertEqual(prepare_mock.call_args[0][1], Decimal('10'))
 
-    @patch('api.views_v2.operations.payment.prepare_payment')
+    @patch('api.views_v2.payment.prepare_payment')
     def test_create_from_terminal(self, prepare_mock):
         device = DeviceFactory.create(long_key=True)
         fiat_amount = 10
         bluetooth_mac = '12:34:56:78:9A:BC'
-        expected_btc_amount = 0.05
-        expected_exchange_rate = 200
         prepare_mock.return_value = order = PaymentOrderFactory.create(
             device=device,
             fiat_amount=Decimal(fiat_amount),
@@ -76,18 +72,16 @@ class PaymentViewSetTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data
         self.assertEqual(data['uid'], order.uid)
-        self.assertEqual(data['fiat_amount'], fiat_amount)
-        self.assertEqual(data['btc_amount'], expected_btc_amount)
-        self.assertEqual(data['exchange_rate'], expected_exchange_rate)
+        self.assertEqual(data['fiat_amount'], '10.00')
+        self.assertEqual(data['btc_amount'], '0.05000000')
+        self.assertEqual(data['exchange_rate'], '200.00000000')
         self.assertIn('payment_uri', data)
         self.assertIn('payment_request', data)
 
-    @patch('api.views_v2.operations.payment.prepare_payment')
+    @patch('api.views_v2.payment.prepare_payment')
     def test_create_for_account(self, prepare_mock):
         account = AccountFactory.create()
         fiat_amount = 10
-        expected_btc_amount = 0.05
-        expected_exchange_rate = 200
         prepare_mock.return_value = order = PaymentOrderFactory.create(
             device=None,
             account=account,
@@ -103,9 +97,9 @@ class PaymentViewSetTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data
         self.assertEqual(data['uid'], order.uid)
-        self.assertEqual(data['fiat_amount'], fiat_amount)
-        self.assertEqual(data['btc_amount'], expected_btc_amount)
-        self.assertEqual(data['exchange_rate'], expected_exchange_rate)
+        self.assertEqual(data['fiat_amount'], '10.00')
+        self.assertEqual(data['btc_amount'], '0.05000000')
+        self.assertEqual(data['exchange_rate'], '200.00000000')
         self.assertIn('payment_uri', data)
         self.assertEqual(prepare_mock.call_args[0][0], account)
         self.assertEqual(prepare_mock.call_args[0][1], Decimal('10'))
@@ -119,9 +113,8 @@ class PaymentViewSetTestCase(APITestCase):
         }
         response = self.client.post(url, form_data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        data = response.data
-        self.assertEqual(data['error'],
-                         'Amount - a valid number is required.')
+        self.assertEqual(response.data['amount'][0],
+                         'A valid number is required.')
 
     def test_create_invalid_device_key(self):
         url = reverse('api:v2:payment-list')
@@ -131,18 +124,22 @@ class PaymentViewSetTestCase(APITestCase):
         }
         response = self.client.post(url, form_data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['device'][0],
+                         'Invalid device key.')
 
     def test_create_not_active(self):
         device = DeviceFactory.create(status='activation')
         url = reverse('api:v2:payment-list')
         form_data = {
-            'device_key': device.key,
+            'device': device.key,
             'amount': '0.5',
         }
         response = self.client.post(url, form_data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['device'][0],
+                         'Invalid device key.')
 
-    @patch('api.views_v2.operations.payment.prepare_payment')
+    @patch('api.views_v2.payment.prepare_payment')
     def test_payment_error(self, prepare_mock):
         prepare_mock.side_effect = exceptions.PaymentError
         device = DeviceFactory.create(long_key=True)
@@ -156,7 +153,7 @@ class PaymentViewSetTestCase(APITestCase):
         }
         response = self.client.post(url, form_data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['error'], 'Payment error')
+        self.assertEqual(response.data['device'][0], 'Payment error')
 
     def test_retrieve_not_notified(self):
         payment_order = PaymentOrderFactory.create()
@@ -235,7 +232,7 @@ class PaymentViewSetTestCase(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    @patch('api.views_v2.operations.payment.parse_payment')
+    @patch('api.views_v2.payment.parse_payment')
     def test_payment_response(self, parse_mock):
         payment_order = PaymentOrderFactory.create()
         parse_mock.return_value = 'test'
@@ -347,7 +344,7 @@ class WithdrawalViewSetTestCase(APITestCase):
                          str(order.effective_exchange_rate))
         self.assertEqual(response.data['status'], 'new')
 
-    def test_create_order_error(self):
+    def test_create_invalid_device_key(self):
         form_data = {
             'device': 'invalid_key',
             'amount': '1.00',
@@ -355,10 +352,10 @@ class WithdrawalViewSetTestCase(APITestCase):
         url = reverse('api:v2:withdrawal-list')
         response = self.client.post(url, form_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['error'],
-                         'Device - invalid device key')
+        self.assertEqual(response.data['device'][0],
+                         'Invalid device key.')
 
-    def test_device_not_active(self):
+    def test_create_device_not_active(self):
         device = DeviceFactory.create(status='activation')
         form_data = {
             'device': device.key,
@@ -367,8 +364,28 @@ class WithdrawalViewSetTestCase(APITestCase):
         url = reverse('api:v2:withdrawal-list')
         response = self.client.post(url, form_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['error'],
-                         'Device - invalid device key')
+        self.assertEqual(response.data['device'][0],
+                         'Invalid device key.')
+
+    @patch('api.views_v2.withdrawal.prepare_withdrawal')
+    def test_create_withdrawal_error(self, prepare_mock):
+        device = DeviceFactory.create()
+        prepare_mock.side_effect = exceptions.WithdrawalError(
+            'Account is not set for device.')
+        view = WithdrawalViewSet.as_view(actions={'post': 'create'})
+        data = {
+            'device': device.key,
+            'amount': '1.00',
+        }
+        url = reverse('api:v2:withdrawal-list')
+        request = self.factory.post(url, data, format='json')
+        device.api_key, request.META['HTTP_X_SIGNATURE'] = \
+            create_test_signature(request.body)
+        device.save()
+        response = view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['device'][0],
+                         'Account is not set for device.')
 
     def test_invalid_signature(self):
         device = DeviceFactory.create()
@@ -537,9 +554,12 @@ class DeviceViewSetTestCase(APITestCase):
         url = reverse('api:v2:device-list')
         response = self.client.post(url, {})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('batch', response.data['errors'])
-        self.assertIn('key', response.data['errors'])
-        self.assertIn('api_key', response.data['errors'])
+        self.assertEqual(response.data['batch'][0],
+                         'This field is required.')
+        self.assertEqual(response.data['key'][0],
+                         'This field is required.')
+        self.assertEqual(response.data['api_key'][0],
+                         'This field is required.')
 
     def test_retrieve_registered(self):
         device = DeviceFactory.create(status='registered')

@@ -30,10 +30,15 @@ paths:
         200:
           description: Auth token retrieved
           schema:
+            title: AuthResponse
             type: object
             properties:
               token:
                 type: string
+                description: JWT auth token
+          examples:
+            application/json:
+              token: eyJhbGci...
   /merchants/:
     post:
       summary: Register merchant
@@ -69,7 +74,7 @@ paths:
           schema:
             $ref: '#/definitions/Merchant'
         400:
-          description: Invalid merchant data
+          description: Invalid parameters
   /merchants/{merchant_id}/:
     get:
       summary: Retrieve merchant details
@@ -164,16 +169,21 @@ paths:
         200:
           description: Transaction list retrieved
           schema:
+            title: TransactionList
             type: array
             items:
+              title: Transaction
               type: object
               properties:
                 amount:
+                  description: Transaction amount
                   type: string
                 created_at:
+                  description: Transcation time
                   type: string
                   format: date-time
                 is_confirmed:
+                  description: Confirmation status
                   type: boolean
         401:
           description: Invalid auth header
@@ -208,49 +218,43 @@ paths:
         200:
           description: Payment order created
           schema:
+            title: PaymentInit
             type: object
-            properties:
-              uid:
-                type: string
-              fiat_amount:
-                type: number
-              btc_amount:
-                type: number
-              exchange_rate:
-                type: number
-              payment_uri:
-                type: string
-              payment_request:
-                type: string
+            allOf:
+              - $ref: '#/definitions/Payment'
+              - type: object
+                title: PaymentURI
+                properties:
+                  payment_uri:
+                    description: Payment URI
+                    type: string
+                  payment_request:
+                    description: Payment request (base64)
+                    type: string
         400:
           description: Invalid parameters
         401:
           description: Invalid auth header
-  /payments/{order_uid}/:
+  /payments/{payment_uid}/:
     get:
       summary: Get payment details
       parameters:
-        - $ref: '#/parameters/payment_order_uid'
+        - $ref: '#/parameters/payment_uid'
         - $ref: '#/parameters/auth'
       responses:
         200:
-          description: Payment order details retrieved
+          description: Payment details retrieved
           schema:
-            type: object
-            properties:
-              uid:
-                type: string
-              status:
-                type: string
+            $ref: '#/definitions/Payment'
         401:
           description: Invalid auth header
         404:
-          description: Payment order does not exist
-  /payments/{order_uid}/cancel/:
+          description: Payment does not exist
+  /payments/{payment_uid}/cancel/:
     post:
       summary: Cancel payment
       parameters:
-        - $ref: '#/parameters/payment_order_uid'
+        - $ref: '#/parameters/payment_uid'
         - $ref: '#/parameters/auth'
       responses:
         204:
@@ -258,29 +262,30 @@ paths:
         401:
           description: Invalid auth header
         404:
-          description: Payment order does not exist or can't be cancelled
-  /payments/{order_uid}/request/:
+          description: Payment does not exist or can't be cancelled
+  /payments/{payment_uid}/request/:
     get:
       summary: Download BIP70 payment request
       description: This API endpoint doesn't require authentication
       parameters:
-        - $ref: '#/parameters/payment_order_uid'
+        - $ref: '#/parameters/payment_uid'
       produces:
         - application/bitcoin-paymentrequest
       responses:
         200:
           description: Payment request retrieved
           schema:
+            title: PaymentRequest
             type: string
             format: binary
         404:
-          description: Payment order does not exist
-  /payments/{order_uid}/response/:
+          description: Payment does not exist
+  /payments/{payment_uid}/response/:
     post:
       summary: Upload BIP70 payment message
       description: This API endpoint doesn't require authentication
       parameters:
-        - $ref: '#/parameters/payment_order_uid'
+        - $ref: '#/parameters/payment_uid'
         - name: payment_message
           in: body
           description: BIP70 payment message
@@ -294,28 +299,30 @@ paths:
         200:
           description: Payment ACK retrieved
           schema:
+            title: PaymentACK
             type: string
             format: binary
         400:
           description: Invalid payment message
         404:
-          description: Payment order does not exist
-  /payments/{order_uid}/receipt/:
+          description: Payment does not exist
+  /payments/{payment_uid}/receipt/:
     get:
       summary: Download payment receipt
       description: This API endpoint doesn't require authentication
       parameters:
-        - $ref: '#/parameters/payment_order_uid'
+        - $ref: '#/parameters/payment_uid'
       produces:
         - application/pdf
       responses:
         200:
           description: Payment receipt retrieved
           schema:
+            title: Receipt
             type: string
             format: binary
         404:
-          description: Payment order does not exist or payment not completed
+          description: Payment does not exist or payment not completed
 
 
 parameters:
@@ -338,10 +345,10 @@ parameters:
     description: Device key (device ID)
     required: true
     type: string
-  payment_order_uid:
-    name: order_uid
+  payment_uid:
+    name: payment_uid
     in: path
-    description: Payment order UID
+    description: Payment UID
     required: true
     type: string
 
@@ -350,26 +357,54 @@ definitions:
     type: object
     properties:
       id:
+        description: Merchant ID
         type: integer
         format: int32
       company_name:
+        description: Company name
         type: string
       contact_first_name:
+        description: Contact first name
         type: string
       contact_last_name:
+        description: Contact last name
         type: string
       contact_email:
+        description: Contact email
         type: string
       verification_status:
+        description: KYC verification status
         type: string
   Device:
     type: object
     properties:
       name:
+        description: Device name
         type: string
       currency_code:
+        description: Device currency
         type: string
       key:
+        description: Device key (device ID)
         type: string
       status:
+        description: Device status
+        type: string
+  Payment:
+    type: object
+    properties:
+      uid:
+        description: Payment UID
+        type: string
+      fiat_amount:
+        description: Amount in fiat currency
+        type: number
+      btc_amount:
+        description: Amount in BTC
+        type: number
+      exchange_rate:
+        description: Exchange rate
+        type: number
+      status:
+        description: Payment status
         type: string

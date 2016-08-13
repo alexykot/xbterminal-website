@@ -1,4 +1,3 @@
-from decimal import Decimal
 import logging
 
 from django.conf import settings
@@ -14,10 +13,10 @@ from constance import config
 
 from website.models import Device, DeviceBatch
 
-from api.forms import WithdrawalForm
 from api.serializers import (
     PaymentInitSerializer,
     PaymentOrderSerializer,
+    WithdrawalInitSerializer,
     WithdrawalOrderSerializer,
     DeviceSerializer,
     DeviceRegistrationSerializer)
@@ -30,11 +29,8 @@ from api.utils.crypto import verify_signature
 from api.utils.pdf import generate_pdf
 from api.utils.urls import construct_absolute_url
 
+from operations import payment, blockchain, withdrawal, exceptions
 from operations.models import PaymentOrder, WithdrawalOrder
-import operations.payment
-import operations.blockchain
-import operations.protocol
-from operations import withdrawal, exceptions
 
 logger = logging.getLogger(__name__)
 
@@ -43,55 +39,45 @@ class PaymentViewSet(viewsets.GenericViewSet):
 
     queryset = PaymentOrder.objects.all()
     lookup_field = 'uid'
+    serializer_class = PaymentOrderSerializer
 
     def create(self, *args, **kwargs):
         serializer = PaymentInitSerializer(data=self.request.data)
-        if not serializer.is_valid():
-            return Response({'error': serializer.error_message},
-                            status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
         # Prepare payment order
         try:
-            payment_order = operations.payment.prepare_payment(
+            order = payment.prepare_payment(
                 (serializer.validated_data.get('device') or
                  serializer.validated_data.get('account')),
                 serializer.validated_data['amount'])
         except exceptions.PaymentError as error:
-            return Response({'error': error.message},
+            return Response({'device': [error.message]},
                             status=status.HTTP_400_BAD_REQUEST)
         # Urls
         payment_request_url = construct_absolute_url(
             'api:v2:payment-request',
-            kwargs={'uid': payment_order.uid})
+            kwargs={'uid': order.uid})
         # Prepare json response
-        fiat_amount = payment_order.fiat_amount.quantize(Decimal('0.00'))
-        btc_amount = payment_order.btc_amount
-        exchange_rate = payment_order.effective_exchange_rate.\
-            quantize(Decimal('0.000000'))
-        data = {
-            'uid': payment_order.uid,
-            'fiat_amount': float(fiat_amount),
-            'btc_amount': float(btc_amount),
-            'exchange_rate': float(exchange_rate),
-        }
+        data = self.get_serializer(order).data
         if serializer.validated_data.get('bt_mac'):
             # Enable payment via bluetooth
             payment_bluetooth_url = 'bt:{mac}'.\
                 format(mac=serializer.validated_data['bt_mac'].replace(':', ''))
-            payment_bluetooth_request = payment_order.create_payment_request(
+            payment_bluetooth_request = order.create_payment_request(
                 payment_bluetooth_url)
             # Send payment request in response
-            data['payment_uri'] = operations.blockchain.construct_bitcoin_uri(
-                payment_order.local_address,
-                payment_order.btc_amount,
-                payment_order.merchant.company_name,
+            data['payment_uri'] = blockchain.construct_bitcoin_uri(
+                order.local_address,
+                order.btc_amount,
+                order.merchant.company_name,
                 payment_bluetooth_url,
                 payment_request_url)
             data['payment_request'] = payment_bluetooth_request.encode('base64')
         else:
-            data['payment_uri'] = operations.blockchain.construct_bitcoin_uri(
-                payment_order.local_address,
-                payment_order.btc_amount,
-                payment_order.merchant.company_name,
+            data['payment_uri'] = blockchain.construct_bitcoin_uri(
+                order.local_address,
+                order.btc_amount,
+                order.merchant.company_name,
                 payment_request_url)
         return Response(data)
 
@@ -101,7 +87,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
             # Close order
             order.time_notified = timezone.now()
             order.save()
-        serializer = PaymentOrderSerializer(order)
+        serializer = self.get_serializer(order)
         return Response(serializer.data)
 
     @detail_route(methods=['POST'])
@@ -143,7 +129,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
             logger.warning("PaymentResponseView: message is too large")
             return Response(status=status.HTTP_400_BAD_REQUEST)
         try:
-            payment_ack = operations.payment.parse_payment(payment_order, self.request.body)
+            payment_ack = payment.parse_payment(payment_order, self.request.body)
         except Exception as error:
             logger.exception(error)
             return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -182,18 +168,16 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
 
     @atomic
     def create(self, request):
-        form = WithdrawalForm(data=self.request.data)
-        if not form.is_valid():
-            return Response({'error': form.error_message},
-                            status=status.HTTP_400_BAD_REQUEST)
-        if not self._verify_signature(form.cleaned_data['device']):
+        serializer = WithdrawalInitSerializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        if not self._verify_signature(serializer.validated_data['device']):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
         try:
             order = withdrawal.prepare_withdrawal(
-                form.cleaned_data['device'],
-                form.cleaned_data['amount'])
+                serializer.validated_data['device'],
+                serializer.validated_data['amount'])
         except exceptions.WithdrawalError as error:
-            return Response({'error': error.message},
+            return Response({'device': [error.message]},
                             status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(order)
         return Response(serializer.data)
@@ -272,9 +256,7 @@ class DeviceViewSet(viewsets.GenericViewSet):
 
     def create(self, request):
         serializer = self.get_serializer(data=self.request.data)
-        if not serializer.is_valid():
-            return Response({'errors': serializer.errors},
-                            status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
         device = serializer.save()
         return Response({'activation_code': device.activation_code})
 
