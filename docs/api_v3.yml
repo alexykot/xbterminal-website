@@ -1,8 +1,18 @@
 swagger: '2.0'
 info:
-  title: XBTerminal API
+  title: XBTerminal external payment module API
+  termsOfService: proprietary
   version: "3"
 host: xbterminal.io
+tags:
+  - name: auth
+    description: authentication
+  - name: merchants
+    description: merchant registeration, verification and update
+  - name: devices
+    description: device registeration and access
+  - name: payments
+    description: payments and refunds
 schemes:
   - https
 basePath: /api/v3
@@ -13,6 +23,8 @@ paths:
   /token/:
     post:
       summary: Obtain auth token
+      tags:
+        - auth
       description: https://jwt.io/introduction/
       parameters:
         - name: email
@@ -42,6 +54,8 @@ paths:
   /merchants/:
     post:
       summary: Register merchant
+      tags:
+        - merchants
       parameters:
         - name: company_name
           in: formData
@@ -78,6 +92,8 @@ paths:
   /merchants/{merchant_id}/:
     get:
       summary: Retrieve merchant details
+      tags:
+        - merchants
       parameters:
         - $ref: '#/parameters/merchant_id'
         - $ref: '#/parameters/auth'
@@ -93,6 +109,8 @@ paths:
   /merchants/{merchant_id}/upload_kyc/:
     post:
       summary: Upload KYC documents
+      tags:
+        - merchants
       parameters:
         - $ref: '#/parameters/merchant_id'
         - $ref: '#/parameters/auth'
@@ -123,6 +141,8 @@ paths:
   /devices/:
     post:
       summary: Register device
+      tags:
+        - devices
       parameters:
         - $ref: '#/parameters/auth'
         - name: name
@@ -147,6 +167,8 @@ paths:
   /devices/{device_key}/:
     get:
       summary: Get device details
+      tags:
+        - devices
       parameters:
         - $ref: '#/parameters/device_key'
         - $ref: '#/parameters/auth'
@@ -162,6 +184,8 @@ paths:
   /devices/{device_key}/list_transactions/:
     get:
       summary: List device transactions
+      tags:
+        - devices
       parameters:
         - $ref: '#/parameters/device_key'
         - $ref: '#/parameters/auth'
@@ -192,6 +216,8 @@ paths:
   /payments/:
     post:
       summary: Create payment order
+      tags:
+        - payments
       parameters:
         - $ref: '#/parameters/auth'
         - name: device
@@ -238,6 +264,8 @@ paths:
   /payments/{payment_uid}/:
     get:
       summary: Get payment details
+      tags:
+        - payments
       parameters:
         - $ref: '#/parameters/payment_uid'
         - $ref: '#/parameters/auth'
@@ -253,6 +281,8 @@ paths:
   /payments/{payment_uid}/cancel/:
     post:
       summary: Cancel payment
+      tags:
+        - payments
       parameters:
         - $ref: '#/parameters/payment_uid'
         - $ref: '#/parameters/auth'
@@ -266,6 +296,8 @@ paths:
   /payments/{payment_uid}/request/:
     get:
       summary: Download BIP70 payment request
+      tags:
+        - payments
       description: This API endpoint doesn't require authentication
       parameters:
         - $ref: '#/parameters/payment_uid'
@@ -283,6 +315,8 @@ paths:
   /payments/{payment_uid}/response/:
     post:
       summary: Upload BIP70 payment message
+      tags:
+        - payments
       description: This API endpoint doesn't require authentication
       parameters:
         - $ref: '#/parameters/payment_uid'
@@ -309,6 +343,8 @@ paths:
   /payments/{payment_uid}/receipt/:
     get:
       summary: Download payment receipt
+      tags:
+        - payments
       description: This API endpoint doesn't require authentication
       parameters:
         - $ref: '#/parameters/payment_uid'
