@@ -29,11 +29,8 @@ from api.utils.crypto import verify_signature
 from api.utils.pdf import generate_pdf
 from api.utils.urls import construct_absolute_url
 
+from operations import payment, blockchain, withdrawal, exceptions
 from operations.models import PaymentOrder, WithdrawalOrder
-import operations.payment
-import operations.blockchain
-import operations.protocol
-from operations import withdrawal, exceptions
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +46,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
         serializer.is_valid(raise_exception=True)
         # Prepare payment order
         try:
-            order = operations.payment.prepare_payment(
+            order = payment.prepare_payment(
                 (serializer.validated_data.get('device') or
                  serializer.validated_data.get('account')),
                 serializer.validated_data['amount'])
@@ -69,7 +66,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
             payment_bluetooth_request = order.create_payment_request(
                 payment_bluetooth_url)
             # Send payment request in response
-            data['payment_uri'] = operations.blockchain.construct_bitcoin_uri(
+            data['payment_uri'] = blockchain.construct_bitcoin_uri(
                 order.local_address,
                 order.btc_amount,
                 order.merchant.company_name,
@@ -77,7 +74,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
                 payment_request_url)
             data['payment_request'] = payment_bluetooth_request.encode('base64')
         else:
-            data['payment_uri'] = operations.blockchain.construct_bitcoin_uri(
+            data['payment_uri'] = blockchain.construct_bitcoin_uri(
                 order.local_address,
                 order.btc_amount,
                 order.merchant.company_name,
@@ -132,7 +129,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
             logger.warning("PaymentResponseView: message is too large")
             return Response(status=status.HTTP_400_BAD_REQUEST)
         try:
-            payment_ack = operations.payment.parse_payment(payment_order, self.request.body)
+            payment_ack = payment.parse_payment(payment_order, self.request.body)
         except Exception as error:
             logger.exception(error)
             return Response(status=status.HTTP_400_BAD_REQUEST)

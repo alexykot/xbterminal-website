@@ -247,7 +247,7 @@ class DeviceViewSetTestCase(APITestCase):
 
 class PaymentViewSetTestCase(APITestCase):
 
-    @patch('api.views_v2.operations.payment.prepare_payment')
+    @patch('api.views_v2.payment.prepare_payment')
     def test_payment_init(self, prepare_mock):
         device = DeviceFactory.create()
         url = reverse('api:v3:payment-list')

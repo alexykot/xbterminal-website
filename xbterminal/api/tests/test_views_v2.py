@@ -24,7 +24,7 @@ from website.tests.factories import (
 
 class PaymentViewSetTestCase(APITestCase):
 
-    @patch('api.views_v2.operations.payment.prepare_payment')
+    @patch('api.views_v2.payment.prepare_payment')
     def test_create_from_website(self, prepare_mock):
         device = DeviceFactory.create()
         fiat_amount = 10
@@ -51,7 +51,7 @@ class PaymentViewSetTestCase(APITestCase):
         self.assertEqual(prepare_mock.call_args[0][0], device)
         self.assertEqual(prepare_mock.call_args[0][1], Decimal('10'))
 
-    @patch('api.views_v2.operations.payment.prepare_payment')
+    @patch('api.views_v2.payment.prepare_payment')
     def test_create_from_terminal(self, prepare_mock):
         device = DeviceFactory.create(long_key=True)
         fiat_amount = 10
@@ -78,7 +78,7 @@ class PaymentViewSetTestCase(APITestCase):
         self.assertIn('payment_uri', data)
         self.assertIn('payment_request', data)
 
-    @patch('api.views_v2.operations.payment.prepare_payment')
+    @patch('api.views_v2.payment.prepare_payment')
     def test_create_for_account(self, prepare_mock):
         account = AccountFactory.create()
         fiat_amount = 10
@@ -139,7 +139,7 @@ class PaymentViewSetTestCase(APITestCase):
         self.assertEqual(response.data['device'][0],
                          'Invalid device key.')
 
-    @patch('api.views_v2.operations.payment.prepare_payment')
+    @patch('api.views_v2.payment.prepare_payment')
     def test_payment_error(self, prepare_mock):
         prepare_mock.side_effect = exceptions.PaymentError
         device = DeviceFactory.create(long_key=True)
@@ -232,7 +232,7 @@ class PaymentViewSetTestCase(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    @patch('api.views_v2.operations.payment.parse_payment')
+    @patch('api.views_v2.payment.parse_payment')
     def test_payment_response(self, parse_mock):
         payment_order = PaymentOrderFactory.create()
         parse_mock.return_value = 'test'
