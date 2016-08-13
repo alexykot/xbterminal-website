@@ -119,9 +119,8 @@ class PaymentViewSetTestCase(APITestCase):
         }
         response = self.client.post(url, form_data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        data = response.data
-        self.assertEqual(data['error'],
-                         'Amount - a valid number is required.')
+        self.assertEqual(response.data['amount'][0],
+                         'A valid number is required.')
 
     def test_create_invalid_device_key(self):
         url = reverse('api:v2:payment-list')
@@ -131,16 +130,20 @@ class PaymentViewSetTestCase(APITestCase):
         }
         response = self.client.post(url, form_data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['device'][0],
+                         'Invalid device key.')
 
     def test_create_not_active(self):
         device = DeviceFactory.create(status='activation')
         url = reverse('api:v2:payment-list')
         form_data = {
-            'device_key': device.key,
+            'device': device.key,
             'amount': '0.5',
         }
         response = self.client.post(url, form_data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['device'][0],
+                         'Invalid device key.')
 
     @patch('api.views_v2.operations.payment.prepare_payment')
     def test_payment_error(self, prepare_mock):
@@ -156,7 +159,7 @@ class PaymentViewSetTestCase(APITestCase):
         }
         response = self.client.post(url, form_data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['error'], 'Payment error')
+        self.assertEqual(response.data['device'][0], 'Payment error')
 
     def test_retrieve_not_notified(self):
         payment_order = PaymentOrderFactory.create()

@@ -120,7 +120,7 @@ class PaymentInitSerializerTestCase(TestCase):
         }
         serializer = PaymentInitSerializer(data=data)
         self.assertFalse(serializer.is_valid())
-        self.assertEqual(serializer.error_message,
+        self.assertEqual(serializer.errors['non_field_errors'][0],
                          'Either device or account must be specified.')
 
     def test_invalid_device_key(self):
@@ -130,8 +130,8 @@ class PaymentInitSerializerTestCase(TestCase):
         }
         serializer = PaymentInitSerializer(data=data)
         self.assertFalse(serializer.is_valid())
-        self.assertEqual(serializer.error_message,
-                         'Device - invalid device key.')
+        self.assertEqual(serializer.errors['device'][0],
+                         'Invalid device key.')
 
     def test_invalid_bt_mac(self):
         device = DeviceFactory.create(status='active')
@@ -142,8 +142,8 @@ class PaymentInitSerializerTestCase(TestCase):
         }
         serializer = PaymentInitSerializer(data=data)
         self.assertFalse(serializer.is_valid())
-        self.assertEqual(serializer.error_message,
-                         'Bt_mac - this value does not match the required pattern.')
+        self.assertEqual(serializer.errors['bt_mac'][0],
+                         'This value does not match the required pattern.')
 
 
 class PaymentOrderSerializerTestCase(TestCase):
@@ -422,6 +422,6 @@ class TransactionSerializerTestCase(TestCase):
         transaction = TransactionFactory.create()
         data = TransactionSerializer(transaction).data
         self.assertEqual(data['amount'].rstrip('0'),
-                         str(transaction.amount))
+                         str(transaction.amount).rstrip('0'))
         self.assertIn('created_at', data)
         self.assertTrue(data['is_confirmed'])

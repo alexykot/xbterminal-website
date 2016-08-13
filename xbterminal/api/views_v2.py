@@ -46,9 +46,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
 
     def create(self, *args, **kwargs):
         serializer = PaymentInitSerializer(data=self.request.data)
-        if not serializer.is_valid():
-            return Response({'error': serializer.error_message},
-                            status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
         # Prepare payment order
         try:
             payment_order = operations.payment.prepare_payment(
@@ -56,7 +54,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
                  serializer.validated_data.get('account')),
                 serializer.validated_data['amount'])
         except exceptions.PaymentError as error:
-            return Response({'error': error.message},
+            return Response({'device': [error.message]},
                             status=status.HTTP_400_BAD_REQUEST)
         # Urls
         payment_request_url = construct_absolute_url(
