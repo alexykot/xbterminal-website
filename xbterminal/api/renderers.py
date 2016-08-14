@@ -33,6 +33,15 @@ class PDFRenderer(BaseRenderer):
         return data
 
 
+class YAMLRenderer(BaseRenderer):
+
+    media_type = 'application/x-yaml'
+    format = 'yaml'
+
+    def render(self, data, media_type=None, renderer_context=None):
+        return data
+
+
 class PaymentRequestRenderer(BaseRenderer):
 
     media_type = 'application/bitcoin-paymentrequest'

@@ -85,6 +85,7 @@ api_v3_router.register('payments',
 
 api_v3_urls = [
     url(r'^', include(api_v3_router.urls)),
+    url(r'^swagger.yaml', views_v3.SwaggerView.as_view(), name='swagger'),
     url(r'^token/', obtain_jwt_token, name='token'),
 ]
 

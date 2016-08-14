@@ -5,18 +5,31 @@ from rest_framework import status, viewsets, mixins
 from rest_framework.decorators import detail_route
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
 from website.forms import SimpleMerchantRegistrationForm
 from website.models import MerchantAccount
 from website.utils import email, kyc
 
+from api.renderers import YAMLRenderer
 from api.serializers import (
     MerchantSerializer,
     KYCDocumentsSerializer,
     ThirdPartyDeviceSerializer,
     TransactionSerializer)
 from api.views_v2 import PaymentViewSet as Version2PaymentViewSet
+from api.utils import swagger
+
+
+class SwaggerView(APIView):
+
+    renderer_classes = [YAMLRenderer]
+
+    def get(self, *args, **kwargs):
+        response = Response(swagger.get_spec(3))
+        response['Access-Control-Allow-Origin'] = '*'
+        return response
 
 
 class MerchantViewSet(mixins.RetrieveModelMixin,
