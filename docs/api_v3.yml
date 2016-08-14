@@ -215,6 +215,15 @@ paths:
                 is_confirmed:
                   description: Confirmation status
                   type: boolean
+            example:
+              -
+                amount: '0.00283342'
+                created_at: '2016-08-06T17:55:54.343686Z'
+                is_confirmed: true
+              -
+                amount: '0.00044657'
+                created_at: '2016-08-13T18:49:10.034129Z'
+                is_confirmed: false
         401:
           description: Invalid auth header
         404:
@@ -428,6 +437,13 @@ definitions:
           - unverified
           - verification_pending
           - verified
+    example:
+      id: 123
+      company_name: XBTerminal Ltd.
+      contact_first_name: John
+      contact_last_name: Doe
+      contact_email: johndoe@example.com
+      verification_status: unverified
   Device:
     type: object
     required:
@@ -455,6 +471,11 @@ definitions:
         enum:
           - active
           - suspended
+    example:
+      name: PoS 123
+      currency_code: USD
+      key: aKP7xPw1
+      status: active
   Payment:
     type: object
     required:
@@ -469,13 +490,13 @@ definitions:
         type: string
       fiat_amount:
         description: Amount in fiat currency
-        type: number
+        type: string
       btc_amount:
         description: Amount in BTC
-        type: number
+        type: string
       exchange_rate:
         description: Exchange rate
-        type: number
+        type: string
       status:
         description: Payment status
         type: string
@@ -492,3 +513,9 @@ definitions:
           - failed
           - unconfirmed
           - cancelled
+    example:
+      uid: 6xgTjg
+      fiat_amount: '10.00'
+      btc_amount: '0.05000000'
+      exchange_rate: '200.00000000'
+      status: confirmed
