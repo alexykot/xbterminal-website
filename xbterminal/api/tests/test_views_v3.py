@@ -1,5 +1,5 @@
 from decimal import Decimal
-from mock import patch, Mock
+from mock import patch, Mock, mock_open
 
 from django.conf import settings
 from django.core import mail
@@ -40,6 +40,18 @@ class GetTokenViewTestCase(APITestCase):
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('token', response.data)
+
+
+class SwaggerViewTestCase(APITestCase):
+
+    def test_get_spec(self):
+        url = reverse('api:v3:swagger')
+        open_mock = mock_open(read_data="swagger: '2.0'")
+        with patch('api.utils.swagger.open', open_mock, create=True):
+            response = self.client.get(url)
+        self.assertEqual(response.content, "swagger: '2.0'")
+        self.assertEqual(response['Content-Type'],
+                         'application/x-yaml; charset=utf-8')
 
 
 class MerchantViewSetTestCase(APITestCase):
