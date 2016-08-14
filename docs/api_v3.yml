@@ -44,6 +44,8 @@ paths:
           schema:
             title: AuthResponse
             type: object
+            required:
+              - token
             properties:
               token:
                 type: string
@@ -198,6 +200,10 @@ paths:
             items:
               title: Transaction
               type: object
+              required:
+                - amount
+                - created_at
+                - is_confirmed
               properties:
                 amount:
                   description: Transaction amount
@@ -391,6 +397,13 @@ parameters:
 definitions:
   Merchant:
     type: object
+    required:
+      - id
+      - company_name
+      - contact_first_name
+      - contact_last_name
+      - contact_email
+      - verification_status
     properties:
       id:
         description: Merchant ID
@@ -411,8 +424,17 @@ definitions:
       verification_status:
         description: KYC verification status
         type: string
+        enum:
+          - unverified
+          - verification_pending
+          - verified
   Device:
     type: object
+    required:
+      - name
+      - currency_code
+      - key
+      - status
     properties:
       name:
         description: Device name
@@ -420,14 +442,27 @@ definitions:
       currency_code:
         description: Device currency
         type: string
+        enum:
+          - GBP
+          - USD
+          - EUR
       key:
         description: Device key (device ID)
         type: string
       status:
         description: Device status
         type: string
+        enum:
+          - active
+          - suspended
   Payment:
     type: object
+    required:
+      - uid
+      - fiat_amount
+      - btc_amount
+      - exchange_rate
+      - status
     properties:
       uid:
         description: Payment UID
@@ -444,3 +479,16 @@ definitions:
       status:
         description: Payment status
         type: string
+        enum:
+          - new
+          - underpaid
+          - recieved
+          - forwarded
+          - processed
+          - notified
+          - confirmed
+          - refunded
+          - timeout
+          - failed
+          - unconfirmed
+          - cancelled
