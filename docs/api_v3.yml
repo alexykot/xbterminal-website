@@ -8,9 +8,9 @@ tags:
   - name: auth
     description: authentication
   - name: merchants
-    description: merchant registeration, verification and update
+    description: merchant registration, verification and update
   - name: devices
-    description: device registeration and access
+    description: device registration and access
   - name: payments
     description: payments and refunds
 schemes:
