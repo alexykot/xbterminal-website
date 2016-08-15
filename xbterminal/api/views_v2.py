@@ -156,6 +156,15 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
     lookup_field = 'uid'
     serializer_class = WithdrawalOrderSerializer
 
+    def initialize_request(self, request, *args, **kwargs):
+        """
+        Access body attribute to save POST data in HttpRequest instance
+        This allows POST data to be retrieved later for signature checking
+        """
+        request.body
+        return super(WithdrawalViewSet, self).initialize_request(
+            request, *args, **kwargs)
+
     def _verify_signature(self, device):
         if not device.api_key:
             return False
