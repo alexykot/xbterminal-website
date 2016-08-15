@@ -307,7 +307,7 @@ BITCOIN_SCALE_DIVIZER = 1000
 
 DEFAULT_BATCH_NUMBER = '00000000000000000000000000000000'
 
-SWAGGER_SPEC_PATH = os.path.join(BASE_DIR, '..', 'docs')
+SWAGGER_SPEC_PATH = os.path.join(BASE_DIR, 'api', 'specs')
 
 
 # Override default settings
