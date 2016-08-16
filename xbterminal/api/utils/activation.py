@@ -54,23 +54,23 @@ def prepare_device(device_key):
         time.sleep(ping_interval)
     # Collect information
     machine = salt.get_grain(device.key, 'machine')
-    xbt_package = salt.get_grain(device.key, 'xbt-package')
-    xbt_package_version = get_latest_version(machine, xbt_package)
+    rpc_package_version = get_latest_version(machine, 'xbterminal-rpc')
+    gui_package_version = get_latest_version(machine, 'xbterminal-gui')
     pillar_data = {
         'xbt': {
-            'version': xbt_package_version,
-            'config': {},
+            'rpc_version': rpc_package_version,
+            'gui_version': gui_package_version,
+            'gui_config': {},
         },
     }
-    if xbt_package == 'xbterminal-firmware':
-        ui_theme = device.merchant.ui_theme.name
-        ui_theme_package_version = get_latest_version(
-            machine,
-            'xbterminal-firmware-theme-{}'.format(ui_theme))
-        pillar_data['xbt']['themes'] = {
-            ui_theme: ui_theme_package_version,
-        }
-        pillar_data['xbt']['config']['theme'] = ui_theme
+    ui_theme = device.merchant.ui_theme.name
+    ui_theme_package_version = get_latest_version(
+        machine,
+        'xbterminal-gui-theme-{}'.format(ui_theme))
+    pillar_data['xbt']['themes'] = {
+        ui_theme: ui_theme_package_version,
+    }
+    pillar_data['xbt']['gui_config']['theme'] = ui_theme
     # Apply state
     salt.highstate(device.key,
                    pillar_data,
