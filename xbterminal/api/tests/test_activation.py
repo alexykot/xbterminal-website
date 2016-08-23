@@ -88,6 +88,7 @@ class ActivationTestCase(TestCase):
         self.assertEqual(pillar_data['xbt']['rpc_version'], '1.0')
         self.assertEqual(pillar_data['xbt']['gui_version'], '1.1')
         self.assertEqual(pillar_data['xbt']['themes']['default'], '1.1-theme')
+        self.assertEqual(pillar_data['xbt']['rpc_config'], {})
         self.assertEqual(pillar_data['xbt']['gui_config']['theme'], 'default')
 
         self.assertFalse(salt_mock.reboot.called)

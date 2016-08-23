@@ -60,6 +60,7 @@ def prepare_device(device_key):
         'xbt': {
             'rpc_version': rpc_package_version,
             'gui_version': gui_package_version,
+            'rpc_config': {},
             'gui_config': {},
         },
     }
