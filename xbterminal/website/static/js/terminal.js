@@ -52,9 +52,12 @@ var paymentInit = function (form) {
         amountField.attr('disabled', false);
         form.hide();
         $('.payment-init').show();
-        $('.fiat-amount').text(data.fiat_amount.toFixed(2));
-        $('.mbtc-amount').text((data.btc_amount * 1000).toFixed(2));
-        $('.exchange-rate').text((data.exchange_rate / 1000).toFixed(3));
+        $('.fiat-amount').text(
+            parseFloat(data.fiat_amount).toFixed(2));
+        $('.mbtc-amount').text(
+            (parseFloat(data.btc_amount) * 1000).toFixed(2));
+        $('.exchange-rate').text(
+            (parseFloat(data.exchange_rate) / 1000).toFixed(3));
         $('.payment-request').
             attr('alt', data.payment_uri).
             qrcode({render: 'div', 'size': 230, 'background': 'white', 'text': data.payment_uri});
