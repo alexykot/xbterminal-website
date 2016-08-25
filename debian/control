@@ -9,7 +9,7 @@ Standards-Version: 3.9.5
 Package: xbterminal-website
 Architecture: amd64
 Pre-Depends: dpkg (>= 1.16.1), python2.7
-Depends: libpq5, openssl, virtualenv, libjpeg62-turbo, libprotobuf9, libffi6
+Depends: libpq5, openssl, virtualenv, libjpeg62-turbo, libprotobuf9, libffi6, gettext
 Description: xbterminal-website with venv blob
 
 
