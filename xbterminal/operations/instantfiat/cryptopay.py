@@ -107,9 +107,12 @@ def create_merchant(first_name, last_name, email, api_key):
         headers=headers)
     data = response.json()
     if response.status_code == 201:
-        return data['id'], data['apikey']
+        merchant_id = data['id']
+        # TODO: API key is required
+        merchant_api_key = data.get('apikey', None)
+        return merchant_id, merchant_api_key
     else:
-        if data['email'] == ['has already been taken']:
+        if data.get('email') == ['has already been taken']:
             raise CryptoPayUserAlreadyExists
         else:
             response.raise_for_status()

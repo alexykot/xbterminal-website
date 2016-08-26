@@ -179,6 +179,9 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             merchant.instantfiat_merchant_id = cryptopay_merchant_id
             merchant.instantfiat_api_key = cryptopay_api_key
             merchant.save()
+            if not merchant.instantfiat_api_key:
+                # Skip account sync if API key is not available
+                return
             create_managed_accounts(merchant)
 
     @atomic
