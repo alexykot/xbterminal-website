@@ -7,7 +7,7 @@ from api.utils import aptly
 
 @override_settings(APTLY_SERVERS={
     'default': {
-        'HOST': 'http://test',
+        'HOST': 'https://test',
         'CLIENT_CERT': 'test',
         'CLIENT_KEY': 'test',
         'CA_CERT': 'test',
@@ -26,5 +26,4 @@ class AptlyTestCase(TestCase):
         self.assertEqual(latest, '0.9.6.20160822-b1-master-r0.0')
         self.assertEqual(
             get_mock.call_args[0][0],
-            'https://test/api/repos/xbtfw-qemuarm-dev/packages'
-            '?q=xbterminal-gui&format=details')
+            'https://test/api/repos/xbtfw-qemuarm-dev/packages')
