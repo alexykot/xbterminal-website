@@ -3,34 +3,27 @@ from urlparse import urljoin
 from django.conf import settings
 import requests
 
-YOCTO_RELEASE = 'jethro'
-
 
 def get_latest_version(machine, package_name):
+    """
+    https://www.aptly.info/doc/api/repos/
+    """
     config = settings.APTLY_SERVERS['default']
     repo_name = 'xbtfw-{machine}-dev'.format(machine=machine)
-    url = urljoin(
-        config['HOST'],
-        '/repos/deb/{branch}/{repo}/dists/poky/main/binary-armel/Packages'.format(
-            branch=YOCTO_RELEASE,
-            repo=repo_name))
+    api_url = '/api/repos/{name}/packages'.format(name=repo_name)
+    params = {
+        'q': package_name,
+        'format': 'details',
+    }
     certs = (
         os.path.join(settings.CERT_PATH, config['CLIENT_CERT']),
         os.path.join(settings.CERT_PATH, config['CLIENT_KEY']),
     )
     ca_cert = os.path.join(settings.CERT_PATH, config['CA_CERT'])
-    response = requests.get(url, cert=certs, verify=ca_cert)
-    # Parse response
-    packages = []
-    for line in response.content.splitlines():
-        if not line.strip():
-            continue
-        if line.startswith('Package:') or line.startswith('Version:'):
-            key, value = line.split(': ')
-            if key == 'Package':
-                packages.append({})
-            packages[-1][key] = value
-    # Find latest version
-    latest = max(pkg['Version'] for pkg in packages
-                 if pkg['Package'] == package_name)
+    response = requests.get(urljoin(config['HOST'], api_url),
+                            params=params,
+                            cert=certs,
+                            verify=ca_cert)
+    result = response.json()
+    latest = max(pkg['Version'] for pkg in result)
     return latest
