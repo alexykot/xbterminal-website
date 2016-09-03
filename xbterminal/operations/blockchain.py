@@ -13,8 +13,9 @@ from bitcoin.core.serialize import Hash
 from bitcoin.wallet import CBitcoinAddress
 
 from django.conf import settings
+from constance import config
 
-from operations import BTC_DEC_PLACES, BTC_DEFAULT_FEE
+from operations import BTC_DEC_PLACES
 from operations import exceptions
 
 
@@ -287,7 +288,7 @@ def get_tx_fee(inputs, outputs):
         outputs: number of outputs
     """
     tx_size = inputs * 148 + outputs * 34 + 10 + inputs
-    fee = BTC_DEFAULT_FEE * (tx_size // 1024 + 1)
+    fee = config.TX_DEFAULT_FEE * (tx_size // 1024 + 1)
     return fee
 
 
