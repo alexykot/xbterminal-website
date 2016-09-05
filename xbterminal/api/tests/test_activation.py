@@ -28,7 +28,7 @@ class ActivationTestCase(TestCase):
         device = DeviceFactory.create(status='registered')
         start(device, merchant)
         self.assertTrue(run_mock.called)
-        self.assertEqual(run_mock.call_args[1]['timeout'], 1800)
+        self.assertEqual(run_mock.call_args[1]['timeout'], 2400)
         self.assertTrue(run_periodic_mock.called)
         device_updated = Device.objects.get(pk=device.pk)
         self.assertEqual(device_updated.status, 'activation')
@@ -83,7 +83,7 @@ class ActivationTestCase(TestCase):
 
         self.assertTrue(salt_mock.highstate.called)
         self.assertEqual(salt_mock.highstate.call_args[0][0], device.key)
-        self.assertEqual(salt_mock.highstate.call_args[0][2], 1500)
+        self.assertEqual(salt_mock.highstate.call_args[0][2], 1800)
         pillar_data = salt_mock.highstate.call_args[0][1]
         self.assertEqual(pillar_data['xbt']['rpc_version'], '1.0')
         self.assertEqual(pillar_data['xbt']['gui_version'], '1.1')
