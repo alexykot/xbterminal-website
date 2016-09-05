@@ -170,16 +170,3 @@ class Salt(object):
                     return
             time.sleep(interval)
         raise SaltTimeout()
-
-    def reboot(self, minion_id):
-        """
-        https://docs.saltstack.com/en/2015.5/ref/modules/all
-            /salt.modules.system.html#salt.modules.system.reboot
-        """
-        payload = {
-            'client': 'local_async',
-            'fun': 'system.reboot',
-            'tgt': minion_id,
-        }
-        self._send_request('post', '/', data=payload)
-        logger.info('device {} is going to reboot'.format(minion_id))
