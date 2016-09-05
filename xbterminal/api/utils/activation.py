@@ -54,6 +54,7 @@ def prepare_device(device_key):
         logger.info('device is offline, waiting {} seconds'.format(
             ping_interval))
         time.sleep(ping_interval)
+    logger.info('device is online')
     # Collect information
     machine = salt.get_grain(device.key, 'machine')
     rpc_package_version = get_latest_version(machine, 'xbterminal-rpc')
