@@ -57,6 +57,8 @@ class SaltTestCase(TestCase):
         send_mock.return_value = {'m1': True}
         salt = Salt()
         self.assertTrue(salt.ping('m1'))
+        self.assertEqual(send_mock.call_args[1]['data']['client'], 'local')
+        self.assertEqual(send_mock.call_args[1]['data']['timeout'], 300)
         self.assertFalse(salt.ping('m2'))
 
     @patch('api.utils.salt.Salt._send_request')
@@ -64,6 +66,9 @@ class SaltTestCase(TestCase):
         send_mock.return_value = {'m1': {'machine': 'qemuarm'}}
         salt = Salt()
         self.assertEqual(salt.get_grain('m1', 'machine'), 'qemuarm')
+        self.assertEqual(send_mock.call_args[1]['data']['client'], 'local')
+        self.assertEqual(send_mock.call_args[1]['data']['timeout'], 300)
+        # Test error
         with self.assertRaises(KeyError):
             salt.get_grain('m2', 'machine')
 

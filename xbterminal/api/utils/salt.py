@@ -20,6 +20,8 @@ class SaltTimeout(Exception):
 
 class Salt(object):
 
+    MINION_TIMEOUT = 300
+
     def __init__(self, server='default'):
         self.config = settings.SALT_SERVERS[server]
         self._auth_token = None
@@ -114,6 +116,7 @@ class Salt(object):
             'client': 'local',
             'fun': 'test.ping',
             'tgt': minion_id,
+            'timeout': self.MINION_TIMEOUT,
         }
         result = self._send_request('post', '/', data=payload)
         return result.get(minion_id, False)
@@ -124,6 +127,7 @@ class Salt(object):
             'fun': 'grains.item',
             'tgt': minion_id,
             'arg': [key],
+            'timeout': self.MINION_TIMEOUT,
         }
         result = self._send_request('post', '/', data=payload)
         return result[minion_id].get(key)
