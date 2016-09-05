@@ -71,8 +71,7 @@ class SaltTestCase(TestCase):
         time_mock.side_effect = [1000, 1000000]
         lookup_jid_mock.return_value = {}
         salt = Salt()
-        with self.assertRaises(SaltTimeout):
-            salt.ping('m1')
+        self.assertFalse(salt.ping('m1'))
         self.assertTrue(send_mock.called)
         self.assertFalse(lookup_jid_mock.called)
 

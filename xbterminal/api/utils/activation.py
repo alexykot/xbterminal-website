@@ -1,5 +1,6 @@
 import datetime
 import logging
+import time
 
 from django.core.cache import cache
 from django.utils import timezone
@@ -48,7 +49,9 @@ def prepare_device(device_key):
     salt.login()
     salt.accept(device.key)
     # Wait for device
-    assert salt.ping(device.key)
+    ping_interval = 30
+    while not salt.ping(device.key):
+        time.sleep(ping_interval)
     # Collect information
     machine = salt.get_grain(device.key, 'machine')
     rpc_package_version = get_latest_version(machine, 'xbterminal-rpc')

@@ -20,7 +20,6 @@ class SaltTimeout(Exception):
 
 class Salt(object):
 
-    MINION_TIMEOUT = 300
     ASYNC_JOB_CHECK_INTERVAL = 15
 
     def __init__(self, server='default'):
@@ -112,7 +111,7 @@ class Salt(object):
         self._send_request('post', '/', data=payload)
         logger.info('minion deleted')
 
-    def ping(self, minion_id, timeout=MINION_TIMEOUT):
+    def ping(self, minion_id, timeout=60):
         payload = {
             'client': 'local_async',
             'fun': 'test.ping',
@@ -127,9 +126,9 @@ class Salt(object):
             if minion_id in job_info:
                 return job_info[minion_id]
             time.sleep(self.ASYNC_JOB_CHECK_INTERVAL)
-        raise SaltTimeout()
+        return False
 
-    def get_grain(self, minion_id, key, timeout=MINION_TIMEOUT):
+    def get_grain(self, minion_id, key, timeout=300):
         payload = {
             'client': 'local_async',
             'fun': 'grains.item',
