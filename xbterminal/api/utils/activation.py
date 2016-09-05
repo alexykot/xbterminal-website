@@ -49,9 +49,10 @@ def prepare_device(device_key):
     salt.login()
     salt.accept(device.key)
     # Wait for device
-    ping_interval = 30
+    ping_interval = 10
     while not salt.ping(device.key):
-        logger.info('device is offline, waiting')
+        logger.info('device is offline, waiting {} seconds'.format(
+            ping_interval))
         time.sleep(ping_interval)
     # Collect information
     machine = salt.get_grain(device.key, 'machine')
