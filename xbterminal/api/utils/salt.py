@@ -141,8 +141,12 @@ class Salt(object):
         start_time = time.time()
         while time.time() < start_time + timeout:
             job_info = self._lookup_jid(jid)
-            if minion_id in job_info:
-                return job_info[minion_id].get(key)
+            try:
+                value = job_info['data'][minion_id].get(key)
+            except KeyError:
+                pass
+            else:
+                return value
             time.sleep(self.ASYNC_JOB_CHECK_INTERVAL)
         raise SaltTimeout()
 

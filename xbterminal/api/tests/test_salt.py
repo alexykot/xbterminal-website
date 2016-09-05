@@ -79,7 +79,9 @@ class SaltTestCase(TestCase):
     @patch('api.utils.salt.Salt._lookup_jid')
     def test_get_grain(self, lookup_jid_mock, send_mock):
         send_mock.return_value = {'jid': 'test'}
-        lookup_jid_mock.return_value = {'m1': {'machine': 'qemuarm'}}
+        lookup_jid_mock.return_value = {
+            'data': {'m1': {'machine': 'qemuarm'}},
+        }
         salt = Salt()
         grain = salt.get_grain('m1', 'machine')
         self.assertEqual(grain, 'qemuarm')
