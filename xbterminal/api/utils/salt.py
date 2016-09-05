@@ -21,6 +21,7 @@ class SaltTimeout(Exception):
 class Salt(object):
 
     MINION_TIMEOUT = 300
+    ASYNC_JOB_CHECK_INTERVAL = 15
 
     def __init__(self, server='default'):
         self.config = settings.SALT_SERVERS[server]
@@ -111,26 +112,40 @@ class Salt(object):
         self._send_request('post', '/', data=payload)
         logger.info('minion deleted')
 
-    def ping(self, minion_id):
+    def ping(self, minion_id, timeout=MINION_TIMEOUT):
         payload = {
-            'client': 'local',
+            'client': 'local_async',
             'fun': 'test.ping',
             'tgt': minion_id,
-            'timeout': self.MINION_TIMEOUT,
         }
         result = self._send_request('post', '/', data=payload)
-        return result.get(minion_id, False)
+        jid = result['jid']
+        # Wait for result
+        start_time = time.time()
+        while time.time() < start_time + timeout:
+            job_info = self._lookup_jid(jid)
+            if minion_id in job_info:
+                return job_info[minion_id]
+            time.sleep(self.ASYNC_JOB_CHECK_INTERVAL)
+        raise SaltTimeout()
 
-    def get_grain(self, minion_id, key):
+    def get_grain(self, minion_id, key, timeout=MINION_TIMEOUT):
         payload = {
-            'client': 'local',
+            'client': 'local_async',
             'fun': 'grains.item',
             'tgt': minion_id,
             'arg': [key],
-            'timeout': self.MINION_TIMEOUT,
         }
         result = self._send_request('post', '/', data=payload)
-        return result[minion_id].get(key)
+        jid = result['jid']
+        # Wait for result
+        start_time = time.time()
+        while time.time() < start_time + timeout:
+            job_info = self._lookup_jid(jid)
+            if minion_id in job_info:
+                return job_info[minion_id].get(key)
+            time.sleep(self.ASYNC_JOB_CHECK_INTERVAL)
+        raise SaltTimeout()
 
     def highstate(self, minion_id, pillar_data, timeout):
         """
@@ -150,7 +165,6 @@ class Salt(object):
         logger.info('highstate execution started, job id {}'.format(jid))
         # Wait for result
         start_time = time.time()
-        interval = 15
         while time.time() < start_time + timeout:
             job_info = self._lookup_jid(jid)
             try:
@@ -172,5 +186,5 @@ class Salt(object):
                 else:
                     logger.info('highstate executed')
                     return
-            time.sleep(interval)
+            time.sleep(self.ASYNC_JOB_CHECK_INTERVAL)
         raise SaltTimeout()

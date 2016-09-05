@@ -53,24 +53,53 @@ class SaltTestCase(TestCase):
             salt.accept('m2')
 
     @patch('api.utils.salt.Salt._send_request')
-    def test_ping(self, send_mock):
-        send_mock.return_value = {'m1': True}
+    @patch('api.utils.salt.Salt._lookup_jid')
+    def test_ping(self, lookup_jid_mock, send_mock):
+        send_mock.return_value = {'jid': 'test'}
+        lookup_jid_mock.return_value = {'m1': True}
         salt = Salt()
         self.assertTrue(salt.ping('m1'))
-        self.assertEqual(send_mock.call_args[1]['data']['client'], 'local')
-        self.assertEqual(send_mock.call_args[1]['data']['timeout'], 300)
-        self.assertFalse(salt.ping('m2'))
+        self.assertEqual(send_mock.call_args[1]['data']['client'],
+                         'local_async')
+        self.assertTrue(lookup_jid_mock.called)
 
     @patch('api.utils.salt.Salt._send_request')
-    def test_get_grain(self, send_mock):
-        send_mock.return_value = {'m1': {'machine': 'qemuarm'}}
+    @patch('api.utils.salt.time.time')
+    @patch('api.utils.salt.Salt._lookup_jid')
+    def test_ping_timeout(self, lookup_jid_mock, time_mock, send_mock):
+        send_mock.return_value = {'jid': 'test'}
+        time_mock.side_effect = [1000, 1000000]
+        lookup_jid_mock.return_value = {}
         salt = Salt()
-        self.assertEqual(salt.get_grain('m1', 'machine'), 'qemuarm')
-        self.assertEqual(send_mock.call_args[1]['data']['client'], 'local')
-        self.assertEqual(send_mock.call_args[1]['data']['timeout'], 300)
-        # Test error
-        with self.assertRaises(KeyError):
-            salt.get_grain('m2', 'machine')
+        with self.assertRaises(SaltTimeout):
+            salt.ping('m1')
+        self.assertTrue(send_mock.called)
+        self.assertFalse(lookup_jid_mock.called)
+
+    @patch('api.utils.salt.Salt._send_request')
+    @patch('api.utils.salt.Salt._lookup_jid')
+    def test_get_grain(self, lookup_jid_mock, send_mock):
+        send_mock.return_value = {'jid': 'test'}
+        lookup_jid_mock.return_value = {'m1': {'machine': 'qemuarm'}}
+        salt = Salt()
+        grain = salt.get_grain('m1', 'machine')
+        self.assertEqual(grain, 'qemuarm')
+        self.assertEqual(send_mock.call_args[1]['data']['client'],
+                         'local_async')
+        self.assertTrue(lookup_jid_mock.called)
+
+    @patch('api.utils.salt.Salt._send_request')
+    @patch('api.utils.salt.time.time')
+    @patch('api.utils.salt.Salt._lookup_jid')
+    def test_get_grain_timeout(self, lookup_jid_mock, time_mock, send_mock):
+        send_mock.return_value = {'jid': 'test'}
+        time_mock.side_effect = [1000, 1000000]
+        lookup_jid_mock.return_value = {}
+        salt = Salt()
+        with self.assertRaises(SaltTimeout):
+            salt.get_grain('m1', 'machine')
+        self.assertTrue(send_mock.called)
+        self.assertFalse(lookup_jid_mock.called)
 
     @patch('api.utils.salt.Salt._send_request')
     @patch('api.utils.salt.Salt._lookup_jid')
