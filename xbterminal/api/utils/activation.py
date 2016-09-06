@@ -12,7 +12,7 @@ from api.utils.aptly import get_latest_version
 from operations import rq_helpers
 
 CACHE_KEY_TEMPLATE = 'activation-{device_key}'
-ACTIVATION_TIMEOUT = datetime.timedelta(minutes=25)
+ACTIVATION_TIMEOUT = datetime.timedelta(minutes=30)
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ def start(device, merchant):
         device.account = merchant.account_set.get(currency__name='BTC')
     device.start_activation()
     device.save()
-    activation_job_timeout = int(ACTIVATION_TIMEOUT.total_seconds()) + 5 * 60
+    activation_job_timeout = int(ACTIVATION_TIMEOUT.total_seconds()) + 600
     job = rq_helpers.run_task(
         prepare_device,
         [device.key],
@@ -49,9 +49,12 @@ def prepare_device(device_key):
     salt.login()
     salt.accept(device.key)
     # Wait for device
-    ping_interval = 30
+    ping_interval = 10
     while not salt.ping(device.key):
+        logger.info('device is offline, waiting {} seconds'.format(
+            ping_interval))
         time.sleep(ping_interval)
+    logger.info('device is online')
     # Collect information
     machine = salt.get_grain(device.key, 'machine')
     rpc_package_version = get_latest_version(machine, 'xbterminal-rpc')
