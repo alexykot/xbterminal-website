@@ -273,7 +273,7 @@ def reverse_payment(order):
         raise exceptions.RefundError
     if order.time_refunded is not None:
         raise exceptions.RefundError
-    if order.time_cancelled is not None and not order.refund_address:
+    if not order.refund_address:
         raise exceptions.RefundError
     bc = blockchain.BlockChain(order.bitcoin_network)
     tx_inputs = []
