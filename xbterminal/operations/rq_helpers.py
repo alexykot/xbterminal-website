@@ -6,7 +6,11 @@ import django_rq
 
 def run_task(func, args, queue='high', timeout=None):
     queue_ = django_rq.get_queue(queue)
-    return queue_.enqueue_call(func, args, timeout=timeout)
+    return queue_.enqueue_call(
+        func,
+        args,
+        timeout=timeout,
+        result_ttl=3600)
 
 
 def run_periodic_task(func, args, queue='high', interval=2, timeout=None):
