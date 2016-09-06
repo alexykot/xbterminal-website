@@ -1,6 +1,7 @@
 import datetime
 from mock import Mock, patch
 from django.test import TestCase
+from rq.job import NoSuchJobError
 
 from api.utils.activation import (
     start,
@@ -127,6 +128,15 @@ class ActivationTestCase(TestCase):
         job_id = 'test'
         wait_for_activation(device.key, job_id)
         self.assertTrue(cancel_mock.called)
+
+    @patch('api.utils.activation.Job.fetch')
+    @patch('api.utils.activation.rq_helpers.cancel_current_task')
+    def test_wait_for_activation_no_such_job(self, cancel_mock, job_fetch_mock):
+        job_fetch_mock.side_effect = NoSuchJobError
+        device = DeviceFactory.create(status='activation')
+        job_id = 'test'
+        wait_for_activation(device.key, job_id)
+        self.assertFalse(cancel_mock.called)
 
     @patch('api.utils.activation.Job.fetch')
     @patch('api.utils.activation.rq_helpers.cancel_current_task')

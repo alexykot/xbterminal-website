@@ -4,7 +4,7 @@ import time
 
 from django.core.cache import cache
 from django.utils import timezone
-from rq.job import Job
+from rq.job import Job, NoSuchJobError
 
 from website.models import Account, Device
 from api.utils.salt import Salt
@@ -105,11 +105,15 @@ def wait_for_activation(device_key, activation_job_id):
     Asynchronous task
     """
     device = Device.objects.get(key=device_key)
-    if device.status != 'activation':
+    if device.status == 'active':
         logger.info('activation finished ({})'.format(device.key))
         rq_helpers.cancel_current_task()
         return
-    job = Job.fetch(activation_job_id)
+    try:
+        job = Job.fetch(activation_job_id)
+    except NoSuchJobError as error:
+        logger.exception(error)
+        return
     if timezone.make_aware(job.started_at, timezone.utc) + \
             datetime.timedelta(seconds=job.timeout) < timezone.now():
         set_status(device, 'error')
