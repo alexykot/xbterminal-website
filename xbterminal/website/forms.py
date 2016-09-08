@@ -309,6 +309,10 @@ class InstantFiatSettingsForm(forms.ModelForm):
             'instantfiat_api_key': 'CryptoPay API key',
         }
 
+    def __init__(self, *args, **kwargs):
+        super(InstantFiatSettingsForm, self).__init__(*args, **kwargs)
+        self.fields['instantfiat_api_key'].required = True
+
     def clean_instantfiat_provider(self):
         return INSTANTFIAT_PROVIDERS.CRYPTOPAY
 

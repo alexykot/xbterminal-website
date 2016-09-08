@@ -206,6 +206,24 @@ class ProfileFormTestCase(TestCase):
         self.assertEqual(merchant_updated.company_name,
                          form_data['company_name'])
 
+    def test_no_instantfiat_api_key(self):
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
+            instantfiat_api_key=None)
+        form_data = {
+            'company_name': 'Test Company',
+            'business_address': 'Test Address',
+            'town': 'Test Town',
+            'country': 'GB',
+            'post_code': '123456',
+            'contact_first_name': 'Test',
+            'contact_last_name': 'Test',
+            'contact_email': 'test@example.net',
+            'contact_phone': '+123456789',
+        }
+        form = ProfileForm(data=form_data, instance=merchant)
+        self.assertTrue(form.is_valid())
+
 
 class InstantFiatSettingsFormTestCase(TestCase):
 
