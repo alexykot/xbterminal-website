@@ -326,15 +326,9 @@ class Account(models.Model):
             balance_str = '{0:.8f}'.format(self.balance)
         else:
             balance_str = '{0:.2f}'.format(self.balance)
-        if self.instantfiat:
-            return u'{name} - {balance} ({provider})'.format(
-                name=self.currency.name,
-                balance=balance_str,
-                provider=self.merchant.get_instantfiat_provider_display())
-        else:
-            return u'{name} - {balance}'.format(
-                name=self.currency.name,
-                balance=balance_str)
+        return u'{name} - {balance}'.format(
+            name=self.currency.name,
+            balance=balance_str)
 
     @property
     def bitcoin_network(self):

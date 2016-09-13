@@ -245,7 +245,7 @@ class AccountTestCase(TestCase):
         self.assertIsNone(account.forward_address)
         self.assertTrue(account.instantfiat)
         self.assertIsNotNone(account.instantfiat_account_id)
-        self.assertEqual(str(account), 'GBP - 0.00 (CryptoPay)')
+        self.assertEqual(str(account), 'GBP - 0.00')
 
     def test_unique_together(self):
         merchant = MerchantAccountFactory.create()
