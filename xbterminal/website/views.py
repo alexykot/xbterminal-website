@@ -261,39 +261,6 @@ class DeviceList(TemplateResponseMixin, CabinetView):
         return self.render_to_response(context)
 
 
-class CreateDeviceView(TemplateResponseMixin, CabinetView):
-    """
-    Create device page
-    """
-    template_name = "cabinet/device_form.html"
-
-    def get(self, *args, **kwargs):
-        device_types = dict(models.Device.DEVICE_TYPES)
-        device_type = self.request.GET.get('device_type', 'hardware')
-        if device_type not in device_types:
-            return HttpResponseBadRequest('')
-        count = self.merchant.device_set.count()
-        context = self.get_context_data(**kwargs)
-        context['form'] = forms.DeviceForm(
-            merchant=self.merchant,
-            initial={
-                'device_type': device_type,
-                'name': u'{0} #{1}'.format(device_types[device_type], count + 1),
-            })
-        return self.render_to_response(context)
-
-    def post(self, *args, **kwargs):
-        form = forms.DeviceForm(self.request.POST, merchant=self.merchant)
-        if form.is_valid():
-            device = form.save()
-            return redirect(reverse('website:device',
-                                    kwargs={'device_key': device.key}))
-        else:
-            context = self.get_context_data(**kwargs)
-            context['form'] = form
-            return self.render_to_response(context)
-
-
 class ActivateDeviceView(TemplateResponseMixin, CabinetView):
 
     template_name = 'cabinet/activation.html'
