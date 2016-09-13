@@ -36,7 +36,7 @@ urlpatterns = [
     url(r'^devices/(?P<device_key>[0-9a-zA-Z]{8,64})/$',
         views.UpdateDeviceView.as_view(),
         name='device'),
-    url(r'^devices/(?P<device_key>[0-9a-zA-Z]{8,64})/recon/$',
+    url(r'^devices/(?P<device_key>[0-9a-zA-Z]{8,64})/transactions/$',
         views.ReconciliationView.as_view(),
         name='reconciliation'),
     url(r'^devices/(?P<device_key>[0-9a-zA-Z]{8,64})/recon_time/(?P<pk>\d+)$',
