@@ -473,3 +473,9 @@ class SendDailyReconciliationForm(forms.ModelForm):
     class Meta:
         model = ReconciliationTime
         fields = ['email', 'time']
+
+
+class TransactionSearchForm(forms.Form):
+
+    date_1 = forms.DateField()
+    date_2 = forms.DateField()

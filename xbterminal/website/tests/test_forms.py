@@ -18,7 +18,8 @@ from website.forms import (
     KYCDocumentUploadForm,
     DeviceForm,
     DeviceActivationForm,
-    AccountForm)
+    AccountForm,
+    TransactionSearchForm)
 from website.tests.factories import (
     create_uploaded_image,
     CurrencyFactory,
@@ -397,3 +398,24 @@ class AccountFormTestCase(TestCase):
         account_updated = form.save()
         self.assertEqual(account_updated.currency.pk,
                          account.currency.pk)
+
+
+class TransactionSearchFormTestCase(TestCase):
+
+    def test_valid_data(self):
+        data = {
+            'date_1': '2016-10-25',
+            'date_2': '2016-10-27',
+        }
+        form = TransactionSearchForm(data=data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['date_1'].day, 25)
+        self.assertEqual(form.cleaned_data['date_2'].day, 27)
+
+    def test_required(self):
+        form = TransactionSearchForm(data={})
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['date_1'][0],
+                         'This field is required.')
+        self.assertEqual(form.errors['date_2'][0],
+                         'This field is required.')
