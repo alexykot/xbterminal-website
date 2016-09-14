@@ -775,26 +775,6 @@ class ReportViewTestCase(TestCase):
         self.assertTrue(response.has_header('Content-Disposition'))
 
 
-class ReceiptsViewTestCase(TestCase):
-
-    def setUp(self):
-        self.merchant = MerchantAccountFactory.create()
-
-    def test_view(self):
-        device = DeviceFactory.create(merchant=self.merchant)
-        PaymentOrderFactory.create(
-            device=device,
-            incoming_tx_ids=['0' * 64],
-            time_notified=timezone.now())
-        self.client.login(username=self.merchant.user.email,
-                          password='password')
-        url = reverse('website:receipts',
-                      kwargs={'device_key': device.key})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.has_header('Content-Disposition'))
-
-
 class AddFundsViewTestCase(TestCase):
 
     def setUp(self):

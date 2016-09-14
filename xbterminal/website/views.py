@@ -638,33 +638,6 @@ class ReportView(DeviceMixin, CabinetView):
         return response
 
 
-class ReceiptsView(DeviceMixin, CabinetView):
-    """
-    Download receipts
-    """
-    def get(self, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-        year = self.kwargs.get('year')
-        month = self.kwargs.get('month')
-        day = self.kwargs.get('day')
-        if year and month and day:
-            try:
-                date = datetime.date(int(year), int(month), int(day))
-            except ValueError:
-                raise Http404
-            payment_orders = context['device'].get_payments_by_date(date)
-            content_disposition = 'attachment; filename="{0}"'.format(
-                reconciliation.get_receipts_archive_filename(context['device'], date))
-        else:
-            payment_orders = context['device'].get_payments()
-            content_disposition = 'attachment; filename="{0}"'.format(
-                reconciliation.get_receipts_archive_filename(context['device']))
-        response = HttpResponse(content_type='application/x-zip-compressed')
-        response['Content-Disposition'] = content_disposition
-        reconciliation.get_receipts_archive(payment_orders, response)
-        return response
-
-
 class AddFundsView(TemplateResponseMixin, CabinetView):
     """
     Add funds to account

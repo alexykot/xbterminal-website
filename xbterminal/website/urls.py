@@ -42,13 +42,4 @@ urlpatterns = [
     url(r'^devices/(?P<device_key>[0-9a-zA-Z]{8,64})/report/$',
         views.ReportView.as_view(),
         name='report'),
-    url(r'^devices/(?P<device_key>[0-9a-zA-Z]{8,64})/report/(?P<year>\d{4})/(?P<month>\d{1,2})/(?P<day>\d{1,2})/$',
-        views.ReportView.as_view(),
-        name='dated_report'),
-    url(r'^devices/(?P<device_key>[0-9a-zA-Z]{8,64})/receipts/$',
-        views.ReceiptsView.as_view(),
-        name='receipts'),
-    url(r'^devices/(?P<device_key>[0-9a-zA-Z]{8,64})/receipts/(?P<year>\d{4})/(?P<month>\d{1,2})/(?P<day>\d{1,2})/$',
-        views.ReceiptsView.as_view(),
-        name='dated_receipts'),
 ]

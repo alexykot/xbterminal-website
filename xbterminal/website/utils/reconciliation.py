@@ -1,11 +1,9 @@
 from cStringIO import StringIO
 import unicodecsv
-from zipfile import ZipFile
 from decimal import Decimal
 
 from django.utils.text import get_valid_filename
 
-from api.utils.pdf import generate_pdf
 
 REPORT_FIELDS = [
     ('ID', 'id'),
@@ -63,38 +61,10 @@ def get_report_csv(payment_orders, csv_file=None, short=False):
     return csv_file
 
 
-def get_receipts_archive(payment_orders, to_file=None):
-    if to_file is None:
-        to_file = StringIO()
-    archive = ZipFile(to_file, "w")
-
-    for payment_order in payment_orders:
-        result = generate_pdf(
-            'pdf/receipt.html',
-            {'order': payment_order})
-        archive.writestr(
-            'receipt #{0}.pdf'.format(payment_order.id),
-            result.getvalue())
-        result.close()
-
-    archive.close()
-
-    return to_file
-
-
 def get_report_filename(device, date=None):
     s = "XBTerminal transactions, {0}".format(
         device.merchant.company_name)
     if date is not None:
         s += ", {0}".format(date.strftime('%d %b %Y'))
     s += ".csv"
-    return get_valid_filename(s)
-
-
-def get_receipts_archive_filename(device, date=None):
-    s = "XBTerminal receipts, {0}".format(
-        device.merchant.company_name)
-    if date is not None:
-        s += ", {0}".format(date.strftime('%d %b %Y'))
-    s += ".zip"
     return get_valid_filename(s)

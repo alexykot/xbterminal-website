@@ -55,10 +55,6 @@
 <a href="{% url 'website:report' device.key %}">
     {% trans 'download transactions as CSV' %}
 </a>
-<br>
-<a href="{% url 'website:receipts' device.key %}">
-    {% trans 'download receipts' %}
-</a>
 {% endif %}
 
 {% endblock %}
