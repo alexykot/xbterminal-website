@@ -16,6 +16,7 @@ from website.tests.factories import (
     MerchantAccountFactory,
     KYCDocumentFactory,
     AccountFactory,
+    TransactionFactory,
     DeviceFactory,
     ReconciliationTimeFactory)
 from operations.tests.factories import PaymentOrderFactory
@@ -694,6 +695,11 @@ class ReconciliationViewTestCase(TestCase):
             5,
             device=device,
             time_notified=timezone.now())
+        for order in orders:
+            TransactionFactory.create(
+                payment=order,
+                account=order.account,
+                amount=order.merchant_btc_amount)
         self.client.login(username=self.merchant.user.email,
                           password='password')
         url = reverse('website:reconciliation',
@@ -709,6 +715,12 @@ class ReconciliationViewTestCase(TestCase):
                          sum(po.fiat_amount for po in orders))
         self.assertEqual(payments[0]['instantfiat_fiat_amount'],
                          sum(po.instantfiat_fiat_amount for po in orders))
+        # New
+        self.assertIn('search_form', response.context)
+        transactions = response.context['transactions']
+        self.assertEqual(transactions.count(), len(orders))
+        self.assertEqual(transactions[0].amount,
+                         orders[0].merchant_btc_amount)
 
 
 class ReconciliationTimeViewTestCase(TestCase):

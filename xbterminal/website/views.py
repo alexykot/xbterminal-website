@@ -611,6 +611,9 @@ class ReconciliationView(DeviceMixin, TemplateResponseMixin, CabinetView):
         context['send_form'] = forms.SendReconciliationForm(
             initial={'email': self.merchant.contact_email})
         context['search_form'] = forms.TransactionSearchForm()
+        context['transactions'] = context['device'].get_transactions_by_range(
+            datetime.date.today(),
+            datetime.date.today())
         return self.render_to_response(context)
 
 
