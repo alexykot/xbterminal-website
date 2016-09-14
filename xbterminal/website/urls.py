@@ -39,9 +39,6 @@ urlpatterns = [
     url(r'^devices/(?P<device_key>[0-9a-zA-Z]{8,64})/transactions/$',
         views.ReconciliationView.as_view(),
         name='reconciliation'),
-    url(r'^devices/(?P<device_key>[0-9a-zA-Z]{8,64})/recon_time/(?P<pk>\d+)$',
-        views.ReconciliationTimeView.as_view(),
-        name='reconciliation_time'),
     url(r'^devices/(?P<device_key>[0-9a-zA-Z]{8,64})/report/$',
         views.ReportView.as_view(),
         name='report'),
@@ -54,7 +51,4 @@ urlpatterns = [
     url(r'^devices/(?P<device_key>[0-9a-zA-Z]{8,64})/receipts/(?P<year>\d{4})/(?P<month>\d{1,2})/(?P<day>\d{1,2})/$',
         views.ReceiptsView.as_view(),
         name='dated_receipts'),
-    url(r'^devices/(?P<device_key>[0-9a-zA-Z]{8,64})/send_all_to_email/$',
-        views.SendAllToEmailView.as_view(),
-        name='send_all_to_email'),
 ]

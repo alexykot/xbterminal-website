@@ -19,18 +19,6 @@ def create_html_message(subject, template, context,
     return email
 
 
-def send_reconciliation_email(recipient, date, context, files):
-    message = create_html_message(
-        _('XBTerminal reconciliation report, {0}').format(
-            date.strftime('%d %b %Y')),
-        'email/reconciliation.html',
-        context,
-        settings.DEFAULT_FROM_EMAIL,
-        [recipient],
-        attachments=files)
-    message.send(fail_silently=False)
-
-
 def send_registration_email(email, password):
     """
     Send merchant registration email

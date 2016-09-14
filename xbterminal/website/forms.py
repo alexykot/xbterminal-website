@@ -21,14 +21,12 @@ from website.models import (
     MerchantAccount,
     Account,
     Device,
-    ReconciliationTime,
     KYCDocument,
     get_language,
     get_currency,
     INSTANTFIAT_PROVIDERS,
     KYC_DOCUMENT_TYPES)
 from website.widgets import (
-    TimeWidget,
     FileWidget,
     ForeignKeyWidget)
 from website.validators import validate_bitcoin_address
@@ -461,20 +459,6 @@ class AccountForm(forms.ModelForm):
                 for error_message in error.messages:
                     self.add_error('forward_address', error_message)
         return cleaned_data
-
-
-class SendReconciliationForm(forms.Form):
-    email = forms.EmailField()
-    date = forms.DateField(widget=forms.HiddenInput)
-
-
-class SendDailyReconciliationForm(forms.ModelForm):
-    time = forms.TimeField(input_formats=['%I:%M %p'],
-                           widget=TimeWidget(format='%I:%M %p'))
-
-    class Meta:
-        model = ReconciliationTime
-        fields = ['email', 'time']
 
 
 class TransactionSearchForm(forms.Form):

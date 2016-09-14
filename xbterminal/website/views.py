@@ -13,8 +13,6 @@ from django.views.generic.base import ContextMixin, TemplateResponseMixin
 from django.utils.decorators import method_decorator
 from django.core.urlresolvers import resolve, reverse
 from django.db.transaction import atomic
-from django.contrib import messages
-from django.utils import timezone
 from django.utils.translation import ugettext as _
 
 from ipware.ip import get_real_ip
@@ -609,33 +607,6 @@ class ReconciliationView(DeviceMixin, TemplateResponseMixin, CabinetView):
         return self.render_to_response(context)
 
 
-class ReconciliationTimeView(DeviceMixin, CabinetView):
-    """
-    Edit reconciliation schedule
-    """
-    def post(self, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-        # Add time
-        form = forms.SendDailyReconciliationForm(self.request.POST)
-        if form.is_valid():
-            rectime = form.save(commit=False)
-            context['device'].rectime_set.add(rectime)
-            return redirect('website:reconciliation',
-                            context['device'].key)
-        else:
-            return HttpResponse('')
-
-    def delete(self, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-        # Remove time
-        try:
-            context['device'].rectime_set.get(
-                pk=self.kwargs.get('pk')).delete()
-        except models.ReconciliationTime.DoesNotExist:
-            raise Http404
-        return HttpResponse('')
-
-
 class ReportView(DeviceMixin, CabinetView):
     """
     Download csv report
@@ -689,38 +660,6 @@ class ReceiptsView(DeviceMixin, CabinetView):
         response['Content-Disposition'] = content_disposition
         reconciliation.get_receipts_archive(payment_orders, response)
         return response
-
-
-class SendAllToEmailView(DeviceMixin, CabinetView):
-    """
-    Send reports and receipts to email
-    """
-    def post(self, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-        form = forms.SendReconciliationForm(self.request.POST)
-        if form.is_valid():
-            email = form.cleaned_data['email']
-            date = form.cleaned_data['date']
-            # Calculate datetime range
-            now = timezone.localtime(timezone.now())
-            rec_range_beg = timezone.make_aware(
-                datetime.datetime.combine(date, datetime.time.min),
-                timezone.get_current_timezone())
-            if date < now.date():
-                rec_range_end = timezone.make_aware(
-                    datetime.datetime.combine(date, datetime.time.max),
-                    timezone.get_current_timezone())
-            else:
-                rec_range_end = now
-            reconciliation.send_reconciliation(
-                email, context['device'],
-                (rec_range_beg, rec_range_end))
-            messages.success(self.request,
-                             _('Email has been sent successfully.'))
-        else:
-            messages.error(self.request,
-                           _('Error: Invalid email. Please, try again.'))
-        return redirect('website:reconciliation', context['device'].key)
 
 
 class AddFundsView(TemplateResponseMixin, CabinetView):

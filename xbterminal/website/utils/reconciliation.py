@@ -4,10 +4,8 @@ from zipfile import ZipFile
 from decimal import Decimal
 
 from django.utils.text import get_valid_filename
-from django.db.models import Sum, F
 
 from api.utils.pdf import generate_pdf
-from website.utils.email import send_reconciliation_email
 
 REPORT_FIELDS = [
     ('ID', 'id'),
@@ -100,35 +98,3 @@ def get_receipts_archive_filename(device, date=None):
         s += ", {0}".format(date.strftime('%d %b %Y'))
     s += ".zip"
     return get_valid_filename(s)
-
-
-def send_reconciliation(recipient, device, rec_range):
-    """
-    Send reconciliation email
-    """
-    payment_orders = device.get_payments_by_date(rec_range)
-    btc_sum = payment_orders.aggregate(sum=Sum(
-        F('merchant_btc_amount') +
-        F('instantfiat_btc_amount') +
-        F('fee_btc_amount') +
-        F('tx_fee_btc_amount')))['sum']
-    fiat_sum = payment_orders.aggregate(sum=Sum('fiat_amount'))['sum']
-    context = {
-        'device': device,
-        'payment_orders': payment_orders,
-        'btc_amount': 0 if btc_sum is None else btc_sum,
-        'fiat_amount': 0 if fiat_sum is None else fiat_sum,
-        'rec_datetime': rec_range[1],
-    }
-    files = []
-    if payment_orders:
-        csv = get_report_csv(payment_orders, short=True)
-        csv.seek(0)
-        csv_data = csv.read()
-        csv_filename = get_report_filename(device, rec_range[1])
-        files.append([csv_filename, csv_data, 'text/csv'])
-        archive = get_receipts_archive(payment_orders)
-        archive_data = archive.getvalue()
-        archive_filename = get_receipts_archive_filename(device, rec_range[1])
-        files.append([archive_filename, archive_data, 'application/x-zip-compressed'])
-    send_reconciliation_email(recipient, rec_range[1], context, files)

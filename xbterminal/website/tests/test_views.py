@@ -17,8 +17,7 @@ from website.tests.factories import (
     KYCDocumentFactory,
     AccountFactory,
     TransactionFactory,
-    DeviceFactory,
-    ReconciliationTimeFactory)
+    DeviceFactory)
 from operations.tests.factories import PaymentOrderFactory
 
 
@@ -750,44 +749,6 @@ class ReconciliationViewTestCase(TestCase):
         self.assertNotIn('transactions', response.context)
 
 
-class ReconciliationTimeViewTestCase(TestCase):
-
-    def setUp(self):
-        self.merchant = MerchantAccountFactory.create()
-
-    def test_post(self):
-        device = DeviceFactory.create(merchant=self.merchant)
-        self.client.login(username=self.merchant.user.email,
-                          password='password')
-        url = reverse('website:reconciliation_time',
-                      kwargs={'device_key': device.key, 'pk': 0})
-        form_data = {
-            'email': 'test@example.net',
-            'time': '4:30 AM',
-        }
-        response = self.client.post(url, form_data)
-        self.assertEqual(response.status_code, 302)
-        rectime = device.rectime_set.first()
-        self.assertEqual(rectime.email, form_data['email'])
-        self.assertEqual(rectime.time.hour, 4)
-
-    def test_delete(self):
-        device = DeviceFactory.create(merchant=self.merchant)
-        rectime = ReconciliationTimeFactory(device=device)
-        self.client.login(username=self.merchant.user.email,
-                          password='password')
-        url = reverse('website:reconciliation_time',
-                      kwargs={'device_key': device.key, 'pk': rectime.pk})
-        response = self.client.delete(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(device.rectime_set.count(), 0)
-
-        url = reverse('website:reconciliation_time',
-                      kwargs={'device_key': device.key, 'pk': rectime.pk})
-        response = self.client.delete(url)
-        self.assertEqual(response.status_code, 404)
-
-
 class ReportViewTestCase(TestCase):
 
     def setUp(self):
@@ -826,60 +787,6 @@ class ReceiptsViewTestCase(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header('Content-Disposition'))
-
-
-class SendAllToEmailViewTestCase(TestCase):
-
-    def setUp(self):
-        self.merchant = MerchantAccountFactory.create()
-
-    def test_view(self):
-        device = DeviceFactory.create(merchant=self.merchant)
-        payment_order = PaymentOrderFactory.create(
-            device=device,
-            incoming_tx_ids=['0' * 64],
-            time_notified=timezone.now())
-        self.client.login(username=self.merchant.user.email,
-                          password='password')
-        url = reverse('website:send_all_to_email',
-                      kwargs={'device_key': device.key})
-        form_data = {
-            'email': 'test@example.net',
-            'date': payment_order.time_notified.strftime('%Y-%m-%d'),
-        }
-        response = self.client.post(url, data=form_data)
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].to[0], form_data['email'])
-
-    @patch('website.utils.email.create_html_message')
-    def test_data(self, create_mock):
-        device = DeviceFactory.create(merchant=self.merchant)
-        orders = PaymentOrderFactory.create_batch(
-            5,
-            device=device,
-            incoming_tx_ids=['0' * 64],
-            time_notified=timezone.now())
-        self.client.login(username=self.merchant.user.email,
-                          password='password')
-        url = reverse('website:send_all_to_email',
-                      kwargs={'device_key': device.key})
-        form_data = {
-            'email': 'test@example.net',
-            'date': orders[0].time_notified.strftime('%Y-%m-%d'),
-        }
-        self.client.post(url, data=form_data)
-        self.assertTrue(create_mock.called)
-        context = create_mock.call_args[0][2]
-        self.assertEqual(context['device'].pk, device.pk)
-        self.assertEqual(context['btc_amount'],
-                         sum(po.btc_amount for po in orders))
-        self.assertEqual(context['fiat_amount'],
-                         sum(po.fiat_amount for po in orders))
-        attachments = create_mock.call_args[1]['attachments']
-        self.assertEqual(len(attachments), 2)
-        self.assertEqual(attachments[0][2], 'text/csv')
-        self.assertEqual(attachments[1][2], 'application/x-zip-compressed')
 
 
 class AddFundsViewTestCase(TestCase):
