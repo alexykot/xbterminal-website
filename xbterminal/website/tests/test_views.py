@@ -708,6 +708,8 @@ class ReconciliationViewTestCase(TestCase):
         self.assertTemplateUsed(response, 'cabinet/reconciliation.html')
         # New
         self.assertIn('search_form', response.context)
+        self.assertEqual(response.context['range_beg'],
+                         response.context['range_end'])
         transactions = response.context['transactions']
         self.assertEqual(transactions.count(), len(orders))
         self.assertEqual(transactions[0].amount,
@@ -732,6 +734,8 @@ class ReconciliationViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'cabinet/reconciliation.html')
         self.assertIn('search_form', response.context)
+        self.assertEqual(response.context['range_beg'], now.date())
+        self.assertEqual(response.context['range_end'], now.date())
         transactions = response.context['transactions']
         self.assertEqual(transactions.count(), 1)
         self.assertEqual(transactions[0].pk, tx.pk)
@@ -746,6 +750,8 @@ class ReconciliationViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'cabinet/reconciliation.html')
         self.assertIn('search_form', response.context)
+        self.assertNotIn('range_beg', response.context)
+        self.assertNotIn('range_end', response.context)
         self.assertNotIn('transactions', response.context)
 
 

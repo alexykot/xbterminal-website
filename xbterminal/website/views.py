@@ -591,18 +591,21 @@ class ReconciliationView(DeviceMixin, TemplateResponseMixin, CabinetView):
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         context['search_form'] = forms.TransactionSearchForm()
+        context['range_beg'] = context['range_end'] = datetime.date.today()
         context['transactions'] = context['device'].get_transactions_by_range(
-            datetime.date.today(),
-            datetime.date.today())
+            context['range_beg'],
+            context['range_end'])
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         form = forms.TransactionSearchForm(self.request.POST)
         if form.is_valid():
+            context['range_beg'] = form.cleaned_data['date_1']
+            context['range_end'] = form.cleaned_data['date_2']
             context['transactions'] = context['device'].get_transactions_by_range(
-                form.cleaned_data['date_1'],
-                form.cleaned_data['date_2'])
+                context['range_beg'],
+                context['range_end'])
         context['search_form'] = form
         return self.render_to_response(context)
 

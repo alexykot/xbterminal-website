@@ -51,12 +51,14 @@
     {% endfor %}
 </table>
 
-<div>
-    <a href="{% url 'website:report' device.key %}" class="pull-right">
-        {% trans 'download all transactions' %}
-    </a>
-    <a href="{% url 'website:receipts' device.key %}" style="clear: both;" class="pull-right">
-        {% trans 'download all receipts' %}
-    </a>
-</div>
+{% if transactions %}
+<a href="{% url 'website:report' device.key %}">
+    {% trans 'download transactions as CSV' %}
+</a>
+<br>
+<a href="{% url 'website:receipts' device.key %}">
+    {% trans 'download receipts' %}
+</a>
+{% endif %}
+
 {% endblock %}
