@@ -15,6 +15,24 @@
 {% endif %}
 
 <h3>{{ device.name }}</h3>
+
+<form action="" method="POST">
+    {% csrf_token %}
+    <h4>{% trans 'Search transactions by date' %}</h4>
+    <div class="row">
+        <div class="col-sm-4">
+            {% bootstrap_field search_form.date_1 %}
+        </div>
+        <div class="col-sm-4">
+            {% bootstrap_field search_form.date_2 %}
+        </div>
+        <div class="col-sm-4">
+            <label>&nbsp;</label>
+            <button type="submit" class="btn btn-default btn-block">{% trans 'Search' %}</button>
+        </div>
+    </div>
+</form>
+
 <div class="form-title">{% trans 'send daily reconciliation to email every day at' %}</div>
 <form action="{% url 'website:reconciliation_time' device.key 0 %}" method="POST" class="rectime-add">
     {% csrf_token %}

@@ -610,6 +610,7 @@ class ReconciliationView(DeviceMixin, TemplateResponseMixin, CabinetView):
             order_by('-date')
         context['send_form'] = forms.SendReconciliationForm(
             initial={'email': self.merchant.contact_email})
+        context['search_form'] = forms.TransactionSearchForm()
         return self.render_to_response(context)
 
 

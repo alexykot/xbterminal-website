@@ -1,3 +1,5 @@
+import datetime
+
 from django import forms
 from django.core.cache import cache
 from django.contrib.auth import get_user_model
@@ -477,5 +479,9 @@ class SendDailyReconciliationForm(forms.ModelForm):
 
 class TransactionSearchForm(forms.Form):
 
-    date_1 = forms.DateField()
-    date_2 = forms.DateField()
+    date_1 = forms.DateField(
+        label=_('From'),
+        initial=datetime.date.today)
+    date_2 = forms.DateField(
+        label=_('To'),
+        initial=datetime.date.today)
