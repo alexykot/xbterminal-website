@@ -12,7 +12,6 @@ from django.views.generic import View
 from django.views.generic.base import ContextMixin, TemplateResponseMixin
 from django.utils.decorators import method_decorator
 from django.core.urlresolvers import resolve, reverse
-from django.db.models import Count, Sum, F
 from django.db.transaction import atomic
 from django.contrib import messages
 from django.utils import timezone
@@ -593,23 +592,6 @@ class ReconciliationView(DeviceMixin, TemplateResponseMixin, CabinetView):
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        context['form'] = forms.SendDailyReconciliationForm()
-        context['daily_payments_info'] = context['device'].\
-            get_payments().\
-            extra({'date': "date(time_notified)"}).\
-            values('date', 'fiat_currency').\
-            annotate(
-                count=Count('id'),
-                btc_amount=Sum(
-                    F('merchant_btc_amount') +
-                    F('instantfiat_btc_amount') +
-                    F('fee_btc_amount') +
-                    F('tx_fee_btc_amount')),
-                fiat_amount=Sum('fiat_amount'),
-                instantfiat_fiat_amount=Sum('instantfiat_fiat_amount')).\
-            order_by('-date')
-        context['send_form'] = forms.SendReconciliationForm(
-            initial={'email': self.merchant.contact_email})
         context['search_form'] = forms.TransactionSearchForm()
         context['transactions'] = context['device'].get_transactions_by_range(
             datetime.date.today(),

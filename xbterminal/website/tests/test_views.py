@@ -707,14 +707,6 @@ class ReconciliationViewTestCase(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'cabinet/reconciliation.html')
-        payments = response.context['daily_payments_info']
-        self.assertEqual(payments[0]['count'], len(orders))
-        self.assertEqual(payments[0]['btc_amount'],
-                         sum(po.btc_amount for po in orders))
-        self.assertEqual(payments[0]['fiat_amount'],
-                         sum(po.fiat_amount for po in orders))
-        self.assertEqual(payments[0]['instantfiat_fiat_amount'],
-                         sum(po.instantfiat_fiat_amount for po in orders))
         # New
         self.assertIn('search_form', response.context)
         transactions = response.context['transactions']
