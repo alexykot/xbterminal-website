@@ -16,10 +16,10 @@
     <h4>{% trans 'Search transactions by date' %}</h4>
     <div class="row">
         <div class="col-sm-4">
-            {% bootstrap_field search_form.date_1 %}
+            {% bootstrap_field search_form.range_beg %}
         </div>
         <div class="col-sm-4">
-            {% bootstrap_field search_form.date_2 %}
+            {% bootstrap_field search_form.range_end %}
         </div>
         <div class="col-sm-4">
             <label>&nbsp;</label>
@@ -52,7 +52,7 @@
 </table>
 
 {% if transactions %}
-<a href="{% url 'website:report' device.key %}?date_1={{ range_beg|date:'Y-m-d' }}&date_2={{ range_end|date:'Y-m-d' }}">
+<a href="{% url 'website:report' device.key %}?range_beg={{ range_beg|date:'Y-m-d' }}&range_end={{ range_end|date:'Y-m-d' }}">
     {% trans 'download transactions as CSV' %}
 </a>
 {% endif %}

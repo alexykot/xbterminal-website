@@ -404,28 +404,28 @@ class TransactionSearchFormTestCase(TestCase):
 
     def test_valid_data(self):
         data = {
-            'date_1': '2016-10-25',
-            'date_2': '2016-10-27',
+            'range_beg': '2016-10-25',
+            'range_end': '2016-10-27',
         }
         form = TransactionSearchForm(data=data)
         self.assertTrue(form.is_valid())
-        self.assertEqual(form.cleaned_data['date_1'].day, 25)
-        self.assertEqual(form.cleaned_data['date_2'].day, 27)
+        self.assertEqual(form.cleaned_data['range_beg'].day, 25)
+        self.assertEqual(form.cleaned_data['range_end'].day, 27)
 
     def test_required(self):
         form = TransactionSearchForm(data={})
         self.assertFalse(form.is_valid())
-        self.assertEqual(form.errors['date_1'][0],
+        self.assertEqual(form.errors['range_beg'][0],
                          'This field is required.')
-        self.assertEqual(form.errors['date_2'][0],
+        self.assertEqual(form.errors['range_end'][0],
                          'This field is required.')
 
     def test_compare(self):
         data = {
-            'date_1': '2016-10-20',
-            'date_2': '2016-09-29',
+            'range_beg': '2016-10-20',
+            'range_end': '2016-09-29',
         }
         form = TransactionSearchForm(data=data)
         self.assertFalse(form.is_valid())
-        self.assertEqual(form.errors['date_2'][0],
+        self.assertEqual(form.errors['range_end'][0],
                          'Second date must not be earlier than the first.')

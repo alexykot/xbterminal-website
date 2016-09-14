@@ -630,18 +630,18 @@ class Device(models.Model):
             models.Q(payment__device=self) |
             models.Q(withdrawal__device=self)).order_by('created_at')
 
-    def get_transactions_by_range(self, date_1, date_2):
+    def get_transactions_by_date(self, range_beg, range_end):
         """
         Returns list of device transactions for date range
         Accepts:
-            date_1: beginning of range, datetime.date instance
-            date_2: end of range, datetime.date instance
+            range_beg: beginning of range, datetime.date instance
+            range_end: end of range, datetime.date instance
         """
         beg = timezone.make_aware(
-            datetime.datetime.combine(date_1, datetime.time.min),
+            datetime.datetime.combine(range_beg, datetime.time.min),
             timezone.get_current_timezone())
         end = timezone.make_aware(
-            datetime.datetime.combine(date_2, datetime.time.max),
+            datetime.datetime.combine(range_end, datetime.time.max),
             timezone.get_current_timezone())
         return self.get_transactions().\
             filter(created_at__range=(beg, end)).\

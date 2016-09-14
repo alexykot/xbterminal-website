@@ -463,19 +463,19 @@ class AccountForm(forms.ModelForm):
 
 class TransactionSearchForm(forms.Form):
 
-    date_1 = forms.DateField(
+    range_beg = forms.DateField(
         label=_('From'),
         initial=datetime.date.today)
-    date_2 = forms.DateField(
+    range_end = forms.DateField(
         label=_('To'),
         initial=datetime.date.today)
 
     def clean(self):
         cleaned_data = super(TransactionSearchForm, self).clean()
-        date_1 = cleaned_data.get('date_1')
-        date_2 = cleaned_data.get('date_2')
-        if date_1 and date_2 and date_2 < date_1:
+        range_beg = cleaned_data.get('range_beg')
+        range_end = cleaned_data.get('range_end')
+        if range_beg and range_end and range_end < range_beg:
             self.add_error(
-                'date_2',
+                'range_end',
                 'Second date must not be earlier than the first.')
         return cleaned_data

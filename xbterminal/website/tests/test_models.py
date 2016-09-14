@@ -503,7 +503,7 @@ class DeviceTestCase(TestCase):
         self.assertEqual(transactions[0].amount, Decimal('0.2'))
         self.assertEqual(transactions[1].amount, Decimal('-0.1'))
 
-    def test_get_transactions_by_range(self):
+    def test_get_transactions_by_date(self):
         device = DeviceFactory.create()
         now = timezone.now()
         date_1 = (now - datetime.timedelta(days=5)).date()
@@ -524,7 +524,7 @@ class DeviceTestCase(TestCase):
             payment=PaymentOrderFactory.create(device=device),
             account=device.account,
             created_at=now - datetime.timedelta(days=4))
-        transactions = device.get_transactions_by_range(date_1, date_2)
+        transactions = device.get_transactions_by_date(date_1, date_2)
         self.assertEqual(transactions.count(), 2)
         self.assertEqual(transactions[0].pk, tx_1.pk)
         self.assertEqual(transactions[1].pk, tx_2.pk)

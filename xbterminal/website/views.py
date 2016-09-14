@@ -591,7 +591,7 @@ class DeviceTransactionsView(DeviceMixin, TemplateResponseMixin, CabinetView):
         context = self.get_context_data(**kwargs)
         context['search_form'] = forms.TransactionSearchForm()
         context['range_beg'] = context['range_end'] = datetime.date.today()
-        context['transactions'] = context['device'].get_transactions_by_range(
+        context['transactions'] = context['device'].get_transactions_by_date(
             context['range_beg'],
             context['range_end'])
         return self.render_to_response(context)
@@ -600,9 +600,9 @@ class DeviceTransactionsView(DeviceMixin, TemplateResponseMixin, CabinetView):
         context = self.get_context_data(**kwargs)
         form = forms.TransactionSearchForm(self.request.POST)
         if form.is_valid():
-            context['range_beg'] = form.cleaned_data['date_1']
-            context['range_end'] = form.cleaned_data['date_2']
-            context['transactions'] = context['device'].get_transactions_by_range(
+            context['range_beg'] = form.cleaned_data['range_beg']
+            context['range_end'] = form.cleaned_data['range_end']
+            context['transactions'] = context['device'].get_transactions_by_date(
                 context['range_beg'],
                 context['range_end'])
         context['search_form'] = form
@@ -619,9 +619,9 @@ class ReportView(DeviceMixin, CabinetView):
         form = forms.TransactionSearchForm(data=self.request.GET)
         if not form.is_valid():
             raise Http404
-        transactions = context['device'].get_transactions_by_range(
-            form.cleaned_data['date_1'],
-            form.cleaned_data['date_2'])
+        transactions = context['device'].get_transactions_by_date(
+            form.cleaned_data['range_beg'],
+            form.cleaned_data['range_end'])
         content_disposition = 'attachment; filename="{0}"'.format(
             reports.get_report_filename(context['device']))
         response = HttpResponse(content_type='text/csv')

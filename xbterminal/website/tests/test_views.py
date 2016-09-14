@@ -727,8 +727,8 @@ class DeviceTransactionsViewTestCase(TestCase):
         url = reverse('website:device_transactions',
                       kwargs={'device_key': device.key})
         data = {
-            'date_1': now.strftime('%Y-%m-%d'),
-            'date_2': now.strftime('%Y-%m-%d'),
+            'range_beg': now.strftime('%Y-%m-%d'),
+            'range_end': now.strftime('%Y-%m-%d'),
         }
         response = self.client.post(url, data=data)
         self.assertEqual(response.status_code, 200)
@@ -770,7 +770,7 @@ class ReportViewTestCase(TestCase):
         url = reverse('website:report',
                       kwargs={'device_key': device.key})
         date_str = tx.created_at.strftime('%Y-%m-%d')
-        url += '?date_1={date}&date_2={date}'.format(date=date_str)
+        url += '?range_beg={date}&range_end={date}'.format(date=date_str)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header('Content-Disposition'))
