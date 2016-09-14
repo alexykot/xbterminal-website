@@ -689,7 +689,7 @@ class ReconciliationViewTestCase(TestCase):
     def setUp(self):
         self.merchant = MerchantAccountFactory.create()
 
-    def test_view(self):
+    def test_get(self):
         device = DeviceFactory.create(merchant=self.merchant)
         orders = PaymentOrderFactory.create_batch(
             5,
@@ -721,6 +721,41 @@ class ReconciliationViewTestCase(TestCase):
         self.assertEqual(transactions.count(), len(orders))
         self.assertEqual(transactions[0].amount,
                          orders[0].merchant_btc_amount)
+
+    def test_post(self):
+        device = DeviceFactory.create(merchant=self.merchant)
+        now = timezone.now()
+        tx = TransactionFactory.create(
+            payment=PaymentOrderFactory.create(device=device),
+            account=device.account,
+            created_at=now)
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:reconciliation',
+                      kwargs={'device_key': device.key})
+        data = {
+            'date_1': now.strftime('%Y-%m-%d'),
+            'date_2': now.strftime('%Y-%m-%d'),
+        }
+        response = self.client.post(url, data=data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/reconciliation.html')
+        self.assertIn('search_form', response.context)
+        transactions = response.context['transactions']
+        self.assertEqual(transactions.count(), 1)
+        self.assertEqual(transactions[0].pk, tx.pk)
+
+    def test_post_error(self):
+        device = DeviceFactory.create(merchant=self.merchant)
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:reconciliation',
+                      kwargs={'device_key': device.key})
+        response = self.client.post(url, data={})
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/reconciliation.html')
+        self.assertIn('search_form', response.context)
+        self.assertNotIn('transactions', response.context)
 
 
 class ReconciliationTimeViewTestCase(TestCase):

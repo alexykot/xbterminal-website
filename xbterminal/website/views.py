@@ -616,6 +616,16 @@ class ReconciliationView(DeviceMixin, TemplateResponseMixin, CabinetView):
             datetime.date.today())
         return self.render_to_response(context)
 
+    def post(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        form = forms.TransactionSearchForm(self.request.POST)
+        if form.is_valid():
+            context['transactions'] = context['device'].get_transactions_by_range(
+                form.cleaned_data['date_1'],
+                form.cleaned_data['date_2'])
+        context['search_form'] = form
+        return self.render_to_response(context)
+
 
 class ReconciliationTimeView(DeviceMixin, CabinetView):
     """

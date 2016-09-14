@@ -11,7 +11,7 @@
 
 <h3>{{ device.name }}</h3>
 
-<form action="" method="POST">
+<form action="{% url 'website:reconciliation' device.key %}" method="POST">
     {% csrf_token %}
     <h4>{% trans 'Search transactions by date' %}</h4>
     <div class="row">

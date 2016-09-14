@@ -485,3 +485,13 @@ class TransactionSearchForm(forms.Form):
     date_2 = forms.DateField(
         label=_('To'),
         initial=datetime.date.today)
+
+    def clean(self):
+        cleaned_data = super(TransactionSearchForm, self).clean()
+        date_1 = cleaned_data.get('date_1')
+        date_2 = cleaned_data.get('date_2')
+        if date_1 and date_2 and date_2 < date_1:
+            self.add_error(
+                'date_2',
+                'Second date must not be earlier than the first.')
+        return cleaned_data

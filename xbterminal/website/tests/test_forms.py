@@ -419,3 +419,13 @@ class TransactionSearchFormTestCase(TestCase):
                          'This field is required.')
         self.assertEqual(form.errors['date_2'][0],
                          'This field is required.')
+
+    def test_compare(self):
+        data = {
+            'date_1': '2016-10-20',
+            'date_2': '2016-09-29',
+        }
+        form = TransactionSearchForm(data=data)
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['date_2'][0],
+                         'Second date must not be earlier than the first.')
