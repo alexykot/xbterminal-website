@@ -188,6 +188,12 @@ class TransactionFactory(factory.DjangoModelFactory):
     account = factory.SubFactory(AccountFactory)
     amount = fuzzy.FuzzyDecimal(0.01, 0.95)
 
+    @factory.post_generation
+    def created_at(self, create, extracted, **kwargs):
+        if create and extracted:
+            self.created_at = extracted
+            self.save()
+
 
 class DeviceBatchFactory(factory.DjangoModelFactory):
 

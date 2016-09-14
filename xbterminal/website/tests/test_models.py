@@ -1,3 +1,4 @@
+import datetime
 from decimal import Decimal
 import os
 
@@ -502,6 +503,32 @@ class DeviceTestCase(TestCase):
         transactions = device.get_transactions()
         self.assertEqual(transactions[0].amount, Decimal('0.2'))
         self.assertEqual(transactions[1].amount, Decimal('-0.1'))
+
+    def test_get_transactions_by_range(self):
+        device = DeviceFactory.create()
+        now = timezone.now()
+        date_1 = (now - datetime.timedelta(days=5)).date()
+        date_2 = (now - datetime.timedelta(days=4)).date()
+        TransactionFactory.create(
+            payment=PaymentOrderFactory.create(device=device),
+            account=device.account,
+            created_at=now - datetime.timedelta(days=6))
+        TransactionFactory.create(
+            payment=PaymentOrderFactory.create(device=device),
+            account=device.account,
+            created_at=now - datetime.timedelta(days=3))
+        tx_1 = TransactionFactory.create(
+            payment=PaymentOrderFactory.create(device=device),
+            account=device.account,
+            created_at=now - datetime.timedelta(days=5))
+        tx_2 = TransactionFactory.create(
+            payment=PaymentOrderFactory.create(device=device),
+            account=device.account,
+            created_at=now - datetime.timedelta(days=4))
+        transactions = device.get_transactions_by_range(date_1, date_2)
+        self.assertEqual(transactions.count(), 2)
+        self.assertEqual(transactions[0].pk, tx_1.pk)
+        self.assertEqual(transactions[1].pk, tx_2.pk)
 
 
 class DeviceBatchTestCase(TestCase):
