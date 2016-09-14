@@ -14,7 +14,7 @@ from website.utils.accounts import (
     update_balances)
 from website.utils.kyc import upload_documents, check_documents
 from website.utils.files import encode_base64, decode_base64
-from website.utils.reconciliation import (
+from website.utils.reports import (
     get_report_csv,
     get_report_filename)
 from website.tests.factories import (
@@ -327,7 +327,7 @@ class FileUtilsTestCase(TestCase):
             decode_base64(data)
 
 
-class TransactionUtilsTestCase(TestCase):
+class ReportUtilsTestCase(TestCase):
 
     def test_get_report_csv(self):
         transactions = TransactionFactory.create_batch(3)

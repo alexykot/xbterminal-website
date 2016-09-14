@@ -683,7 +683,7 @@ class EditAccountViewTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
 
 
-class ReconciliationViewTestCase(TestCase):
+class DeviceTransactionsViewTestCase(TestCase):
 
     def setUp(self):
         self.merchant = MerchantAccountFactory.create()
@@ -701,11 +701,11 @@ class ReconciliationViewTestCase(TestCase):
                 amount=order.merchant_btc_amount)
         self.client.login(username=self.merchant.user.email,
                           password='password')
-        url = reverse('website:reconciliation',
+        url = reverse('website:device_transactions',
                       kwargs={'device_key': device.key})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/reconciliation.html')
+        self.assertTemplateUsed(response, 'cabinet/transactions.html')
         # New
         self.assertIn('search_form', response.context)
         self.assertEqual(response.context['range_beg'],
@@ -724,7 +724,7 @@ class ReconciliationViewTestCase(TestCase):
             created_at=now)
         self.client.login(username=self.merchant.user.email,
                           password='password')
-        url = reverse('website:reconciliation',
+        url = reverse('website:device_transactions',
                       kwargs={'device_key': device.key})
         data = {
             'date_1': now.strftime('%Y-%m-%d'),
@@ -732,7 +732,7 @@ class ReconciliationViewTestCase(TestCase):
         }
         response = self.client.post(url, data=data)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/reconciliation.html')
+        self.assertTemplateUsed(response, 'cabinet/transactions.html')
         self.assertIn('search_form', response.context)
         self.assertEqual(response.context['range_beg'], now.date())
         self.assertEqual(response.context['range_end'], now.date())
@@ -744,11 +744,11 @@ class ReconciliationViewTestCase(TestCase):
         device = DeviceFactory.create(merchant=self.merchant)
         self.client.login(username=self.merchant.user.email,
                           password='password')
-        url = reverse('website:reconciliation',
+        url = reverse('website:device_transactions',
                       kwargs={'device_key': device.key})
         response = self.client.post(url, data={})
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/reconciliation.html')
+        self.assertTemplateUsed(response, 'cabinet/transactions.html')
         self.assertIn('search_form', response.context)
         self.assertNotIn('range_beg', response.context)
         self.assertNotIn('range_end', response.context)

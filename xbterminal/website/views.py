@@ -20,8 +20,7 @@ from ipware.ip import get_real_ip
 from api.utils import activation
 
 from website import forms, models
-from website.utils import reconciliation, email
-from website.utils import kyc
+from website.utils import email, kyc, reports
 
 
 class LandingView(TemplateResponseMixin, View):
@@ -582,11 +581,11 @@ class EditAccountView(TemplateResponseMixin, CabinetView):
             return self.render_to_response(context)
 
 
-class ReconciliationView(DeviceMixin, TemplateResponseMixin, CabinetView):
+class DeviceTransactionsView(DeviceMixin, TemplateResponseMixin, CabinetView):
     """
-    Reconciliation page
+    List device transactions
     """
-    template_name = "cabinet/reconciliation.html"
+    template_name = 'cabinet/transactions.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -624,10 +623,10 @@ class ReportView(DeviceMixin, CabinetView):
             form.cleaned_data['date_1'],
             form.cleaned_data['date_2'])
         content_disposition = 'attachment; filename="{0}"'.format(
-            reconciliation.get_report_filename(context['device']))
+            reports.get_report_filename(context['device']))
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = content_disposition
-        reconciliation.get_report_csv(transactions, response)
+        reports.get_report_csv(transactions, response)
         return response
 
 
