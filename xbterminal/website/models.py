@@ -585,7 +585,6 @@ class Device(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     last_activity = models.DateTimeField(blank=True, null=True)
-    last_reconciliation = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-id']
@@ -621,25 +620,6 @@ class Device(models.Model):
             return self.account.bitcoin_network
         else:
             return 'mainnet'
-
-    def get_payments(self):
-        return self.paymentorder_set.filter(time_notified__isnull=False)
-
-    def get_payments_by_date(self, date):
-        """
-        Accepts:
-            date: tuple or single date
-        """
-        if isinstance(date, datetime.date):
-            beg = timezone.make_aware(
-                datetime.datetime.combine(date, datetime.time.min),
-                timezone.get_current_timezone())
-            end = timezone.make_aware(
-                datetime.datetime.combine(date, datetime.time.max),
-                timezone.get_current_timezone())
-        else:
-            beg, end = date
-        return self.paymentorder_set.filter(time_notified__range=(beg, end))
 
     def get_transactions(self):
         """
@@ -686,15 +666,6 @@ def device_generate_activation_code(sender, instance, **kwargs):
             if not sender.objects.filter(activation_code=code).exists():
                 instance.activation_code = code
                 break
-
-
-class ReconciliationTime(models.Model):
-    device = models.ForeignKey(Device, related_name="rectime_set")
-    email = models.EmailField(max_length=254)
-    time = models.TimeField()
-
-    class Meta:
-        ordering = ['time']
 
 
 # TODO: remove this functions

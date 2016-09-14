@@ -31,8 +31,7 @@ from website.tests.factories import (
     AddressFactory,
     TransactionFactory,
     DeviceBatchFactory,
-    DeviceFactory,
-    ReconciliationTimeFactory)
+    DeviceFactory)
 from operations.tests.factories import (
     PaymentOrderFactory,
     WithdrawalOrderFactory)
@@ -543,10 +542,3 @@ class DeviceBatchTestCase(TestCase):
     def test_factory(self):
         batch = DeviceBatchFactory.create()
         self.assertEqual(len(batch.batch_number), 32)
-
-
-class ReconciliationTimeTestCase(TestCase):
-
-    def test_reconciliation_time_factory(self):
-        rectime = ReconciliationTimeFactory.create()
-        self.assertEqual(rectime.email, rectime.device.merchant.user.email)
