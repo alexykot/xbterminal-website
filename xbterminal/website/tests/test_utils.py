@@ -1,4 +1,5 @@
 from decimal import Decimal
+import unicodecsv
 
 from mock import patch, Mock
 from django.conf import settings
@@ -13,11 +14,15 @@ from website.utils.accounts import (
     update_balances)
 from website.utils.kyc import upload_documents, check_documents
 from website.utils.files import encode_base64, decode_base64
+from website.utils.reconciliation import (
+    get_report_csv,
+    get_report_filename)
 from website.tests.factories import (
     MerchantAccountFactory,
     KYCDocumentFactory,
     AccountFactory,
-    TransactionFactory)
+    TransactionFactory,
+    DeviceFactory)
 from operations.tests.factories import (
     PaymentOrderFactory,
     WithdrawalOrderFactory)
@@ -320,3 +325,23 @@ class FileUtilsTestCase(TestCase):
         data = 'data:xxxx/yyy;base64,ZCBmaWxl'
         with self.assertRaises(AssertionError):
             decode_base64(data)
+
+
+class TransactionUtilsTestCase(TestCase):
+
+    def test_get_report_csv(self):
+        transactions = TransactionFactory.create_batch(3)
+        report = get_report_csv(transactions)
+        report.seek(0)
+        rows = list(unicodecsv.reader(report, encoding='utf-8'))
+        self.assertEqual(len(rows), 5)
+        self.assertEqual(rows[0][0], 'ID')
+        self.assertEqual(rows[1][0], str(transactions[0].pk))
+        self.assertEqual(rows[1][3], str(transactions[0].amount))
+        self.assertEqual(rows[4][3],
+                         str(sum(t.amount for t in transactions)))
+
+    def test_get_report_filename(self):
+        device = DeviceFactory.create(merchant__company_name='TestCo')
+        result = get_report_filename(device)
+        self.assertEqual(result, 'XBTerminal_transactions_TestCo.csv')

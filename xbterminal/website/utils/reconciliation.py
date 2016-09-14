@@ -5,59 +5,25 @@ from decimal import Decimal
 from django.utils.text import get_valid_filename
 
 
-REPORT_FIELDS = [
-    ('ID', 'id'),
-    ('datetime', lambda p: p.time_notified.strftime('%d-%b-%Y %l:%M %p')),
-    ('POS', lambda p: p.device.name),
-    ('currency', 'fiat_currency'),
-    ('amount', lambda p: "{0:.2f}".format(p.fiat_amount)),
-    ('amount mBTC', lambda p: "{0:.5f}".format(p.scaled_btc_amount)),
-    ('exchange rate', lambda p: "{0:.4f}".format(p.scaled_effective_exchange_rate)),
-    ('incoming transactions', lambda p: '\n'.join(p.incoming_tx_ids)),
-    ('outgoing transactions', 'outgoing_tx_id'),
-]
-
-REPORT_FIELDS_SHORT = [
-    ('ID', 'id'),
-    ('datetime', lambda t: t.time_notified.strftime('%d-%b-%Y %l:%M %p')),
-    ('currency', 'fiat_currency'),
-    ('amount', 'fiat_amount'),
-]
-
-
-def get_report_csv(payment_orders, csv_file=None, short=False):
+def get_report_csv(transactions, csv_file=None):
     if csv_file is None:
         csv_file = StringIO()
     writer = unicodecsv.writer(csv_file, encoding='utf-8')
-    fields = REPORT_FIELDS_SHORT if short else REPORT_FIELDS
     # Write header
-    field_names = [field[0] for field in fields]
-    writer.writerow(field_names)
+    writer.writerow(['ID', 'Date', 'Currency', 'Amount'])
     # Write data
-    totals = {
-        'amount': Decimal(0),
-        'amount mBTC': Decimal(0),
-    }
-    for payment_order in payment_orders:
-        row = []
-        for field_name, field_getter in fields:
-            if isinstance(field_getter, str):
-                value = getattr(payment_order, field_getter)
-            else:
-                value = field_getter(payment_order)
-            if field_name in totals:
-                totals[field_name] += Decimal(value)
-            row.append(unicode(value))
+    total_amount = Decimal(0)
+    for transaction in transactions:
+        row = [
+            transaction.pk,
+            transaction.created_at.strftime('%d-%b-%Y %l:%M %p'),
+            transaction.account.currency.name,
+            transaction.amount,
+        ]
+        total_amount += transaction.amount
         writer.writerow(row)
     # Write totals
-    totals_row = []
-    for field_name in field_names:
-        if field_name in totals:
-            value = '{0:g}'.format(totals[field_name])
-        else:
-            value = ''
-        totals_row.append(value)
-    writer.writerow(totals_row)
+    writer.writerow(['', '', '', total_amount])
     return csv_file
 
 

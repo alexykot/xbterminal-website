@@ -617,24 +617,17 @@ class ReportView(DeviceMixin, CabinetView):
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        year = self.kwargs.get('year')
-        month = self.kwargs.get('month')
-        day = self.kwargs.get('day')
-        if year and month and day:
-            try:
-                date = datetime.date(int(year), int(month), int(day))
-            except ValueError:
-                raise Http404
-            payment_orders = context['device'].get_payments_by_date(date)
-            content_disposition = 'attachment; filename="{0}"'.format(
-                reconciliation.get_report_filename(context['device'], date))
-        else:
-            payment_orders = context['device'].get_payments()
-            content_disposition = 'attachment; filename="{0}"'.format(
-                reconciliation.get_report_filename(context['device']))
+        form = forms.TransactionSearchForm(data=self.request.GET)
+        if not form.is_valid():
+            raise Http404
+        transactions = context['device'].get_transactions_by_range(
+            form.cleaned_data['date_1'],
+            form.cleaned_data['date_2'])
+        content_disposition = 'attachment; filename="{0}"'.format(
+            reconciliation.get_report_filename(context['device']))
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = content_disposition
-        reconciliation.get_report_csv(payment_orders, response)
+        reconciliation.get_report_csv(transactions, response)
         return response
 
 

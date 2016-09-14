@@ -762,17 +762,27 @@ class ReportViewTestCase(TestCase):
 
     def test_view(self):
         device = DeviceFactory.create(merchant=self.merchant)
-        PaymentOrderFactory.create(
-            device=device,
-            incoming_tx_ids=['0' * 64],
-            time_notified=timezone.now())
+        tx = TransactionFactory.create(
+            payment=PaymentOrderFactory.create(device=device),
+            account=device.account)
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:report',
+                      kwargs={'device_key': device.key})
+        date_str = tx.created_at.strftime('%Y-%m-%d')
+        url += '?date_1={date}&date_2={date}'.format(date=date_str)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header('Content-Disposition'))
+
+    def test_no_dates(self):
+        device = DeviceFactory.create(merchant=self.merchant)
         self.client.login(username=self.merchant.user.email,
                           password='password')
         url = reverse('website:report',
                       kwargs={'device_key': device.key})
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.has_header('Content-Disposition'))
+        self.assertEqual(response.status_code, 404)
 
 
 class AddFundsViewTestCase(TestCase):

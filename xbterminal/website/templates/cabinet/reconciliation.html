@@ -52,7 +52,7 @@
 </table>
 
 {% if transactions %}
-<a href="{% url 'website:report' device.key %}">
+<a href="{% url 'website:report' device.key %}?date_1={{ range_beg|date:'Y-m-d' }}&date_2={{ range_end|date:'Y-m-d' }}">
     {% trans 'download transactions as CSV' %}
 </a>
 {% endif %}
