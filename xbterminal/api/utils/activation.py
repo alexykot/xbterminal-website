@@ -34,7 +34,7 @@ def start(device, merchant):
     rq_helpers.run_periodic_task(
         wait_for_activation,
         [device.key, job.get_id()])
-    logger.info('activation started ({})'.format(device.key))
+    logger.info('activation started (%s)', device.key)
 
 
 def prepare_device(device_key):
@@ -106,7 +106,7 @@ def wait_for_activation(device_key, activation_job_id):
     """
     device = Device.objects.get(key=device_key)
     if device.status == 'active':
-        logger.info('activation finished ({})'.format(device.key))
+        logger.info('activation finished (%s)', device.key)
         rq_helpers.cancel_current_task()
         return
     try:
@@ -117,11 +117,11 @@ def wait_for_activation(device_key, activation_job_id):
     if timezone.make_aware(job.started_at, timezone.utc) + \
             datetime.timedelta(seconds=job.timeout) < timezone.now():
         set_status(device, 'error')
-        logger.error('activation timeout ({})'.format(device.key))
+        logger.error('activation timeout (%s)', device.key)
         rq_helpers.cancel_current_task()
         return
     if job.is_failed:
         set_status(device, 'error')
-        logger.error('activation failed ({})'.format(device.key))
+        logger.error('activation failed (%s)', device.key)
         rq_helpers.cancel_current_task()
         return
