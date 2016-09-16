@@ -19,6 +19,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
+from constance import config
 from django_countries.fields import CountryField
 from django_fsm import FSMField, transition
 from extended_choices import Choices
@@ -253,12 +254,12 @@ class MerchantAccount(models.Model):
         """
         Get email address for CryptoPay registration
         """
-        if settings.DEBUG:
-            return self.user.email
-        else:
+        if config.CRYPTOPAY_USE_FAKE_EMAIL:
             return 'merchant-{0}-{1}@xbterminal.io'.format(
                 self.pk,
                 slugify(self.company_name))
+        else:
+            return self.user.email
 
     def get_kyc_document(self, document_type, status):
         """

@@ -4,9 +4,10 @@ import os
 
 from django.conf import settings
 from django.db import IntegrityError
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.utils import timezone
 
+from constance.test import override_config
 from oauth2_provider.models import Application
 from django_fsm import TransitionNotAllowed
 
@@ -148,7 +149,7 @@ class MerchantAccountTestCase(TestCase):
             instantfiat_merchant_id='test')
         self.assertTrue(merchant.has_managed_cryptopay_profile)
 
-    @override_settings(DEBUG=False)
+    @override_config(CRYPTOPAY_USE_FAKE_EMAIL=True)
     def test_get_cryptopay_email(self):
         merchant = MerchantAccountFactory.create(
             company_name='Test Co Ltd.')
@@ -156,8 +157,8 @@ class MerchantAccountTestCase(TestCase):
             merchant.pk)
         self.assertEqual(merchant.get_cryptopay_email(), expected_email)
 
-    @override_settings(DEBUG=True)
-    def test_get_cryptopay_email_debug(self):
+    @override_config(CRYPTOPAY_USE_FAKE_EMAIL=False)
+    def test_get_cryptopay_email_real(self):
         merchant = MerchantAccountFactory.create(
             company_name='Test Co Ltd.')
         self.assertEqual(merchant.get_cryptopay_email(),
