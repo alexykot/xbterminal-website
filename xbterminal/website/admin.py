@@ -55,7 +55,6 @@ class DeviceAdmin(FSMTransitionMixin, admin.ModelAdmin):
         'key',
         'device_key_qr_code',
         'activation_code',
-        'last_reconciliation',
         'is_online',
     ]
     fsm_field = ['status']

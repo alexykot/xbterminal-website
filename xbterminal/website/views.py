@@ -12,10 +12,7 @@ from django.views.generic import View
 from django.views.generic.base import ContextMixin, TemplateResponseMixin
 from django.utils.decorators import method_decorator
 from django.core.urlresolvers import resolve, reverse
-from django.db.models import Count, Sum, F
 from django.db.transaction import atomic
-from django.contrib import messages
-from django.utils import timezone
 from django.utils.translation import ugettext as _
 
 from ipware.ip import get_real_ip
@@ -23,8 +20,7 @@ from ipware.ip import get_real_ip
 from api.utils import activation
 
 from website import forms, models
-from website.utils import reconciliation, email
-from website.utils import kyc
+from website.utils import email, kyc, reports
 
 
 class LandingView(TemplateResponseMixin, View):
@@ -259,39 +255,6 @@ class DeviceList(TemplateResponseMixin, CabinetView):
         context = self.get_context_data(**kwargs)
         context['devices'] = self.merchant.device_set.order_by('-id')
         return self.render_to_response(context)
-
-
-class CreateDeviceView(TemplateResponseMixin, CabinetView):
-    """
-    Create device page
-    """
-    template_name = "cabinet/device_form.html"
-
-    def get(self, *args, **kwargs):
-        device_types = dict(models.Device.DEVICE_TYPES)
-        device_type = self.request.GET.get('device_type', 'hardware')
-        if device_type not in device_types:
-            return HttpResponseBadRequest('')
-        count = self.merchant.device_set.count()
-        context = self.get_context_data(**kwargs)
-        context['form'] = forms.DeviceForm(
-            merchant=self.merchant,
-            initial={
-                'device_type': device_type,
-                'name': u'{0} #{1}'.format(device_types[device_type], count + 1),
-            })
-        return self.render_to_response(context)
-
-    def post(self, *args, **kwargs):
-        form = forms.DeviceForm(self.request.POST, merchant=self.merchant)
-        if form.is_valid():
-            device = form.save()
-            return redirect(reverse('website:device',
-                                    kwargs={'device_key': device.key}))
-        else:
-            context = self.get_context_data(**kwargs)
-            context['form'] = form
-            return self.render_to_response(context)
 
 
 class ActivateDeviceView(TemplateResponseMixin, CabinetView):
@@ -618,59 +581,32 @@ class EditAccountView(TemplateResponseMixin, CabinetView):
             return self.render_to_response(context)
 
 
-class ReconciliationView(DeviceMixin, TemplateResponseMixin, CabinetView):
+class DeviceTransactionsView(DeviceMixin, TemplateResponseMixin, CabinetView):
     """
-    Reconciliation page
+    List device transactions
     """
-    template_name = "cabinet/reconciliation.html"
+    template_name = 'cabinet/transactions.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        context['form'] = forms.SendDailyReconciliationForm()
-        context['daily_payments_info'] = context['device'].\
-            get_payments().\
-            extra({'date': "date(time_notified)"}).\
-            values('date', 'fiat_currency').\
-            annotate(
-                count=Count('id'),
-                btc_amount=Sum(
-                    F('merchant_btc_amount') +
-                    F('instantfiat_btc_amount') +
-                    F('fee_btc_amount') +
-                    F('tx_fee_btc_amount')),
-                fiat_amount=Sum('fiat_amount'),
-                instantfiat_fiat_amount=Sum('instantfiat_fiat_amount')).\
-            order_by('-date')
-        context['send_form'] = forms.SendReconciliationForm(
-            initial={'email': self.merchant.contact_email})
+        context['search_form'] = forms.TransactionSearchForm()
+        context['range_beg'] = context['range_end'] = datetime.date.today()
+        context['transactions'] = context['device'].get_transactions_by_date(
+            context['range_beg'],
+            context['range_end'])
         return self.render_to_response(context)
 
-
-class ReconciliationTimeView(DeviceMixin, CabinetView):
-    """
-    Edit reconciliation schedule
-    """
     def post(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        # Add time
-        form = forms.SendDailyReconciliationForm(self.request.POST)
+        form = forms.TransactionSearchForm(self.request.POST)
         if form.is_valid():
-            rectime = form.save(commit=False)
-            context['device'].rectime_set.add(rectime)
-            return redirect('website:reconciliation',
-                            context['device'].key)
-        else:
-            return HttpResponse('')
-
-    def delete(self, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-        # Remove time
-        try:
-            context['device'].rectime_set.get(
-                pk=self.kwargs.get('pk')).delete()
-        except models.ReconciliationTime.DoesNotExist:
-            raise Http404
-        return HttpResponse('')
+            context['range_beg'] = form.cleaned_data['range_beg']
+            context['range_end'] = form.cleaned_data['range_end']
+            context['transactions'] = context['device'].get_transactions_by_date(
+                context['range_beg'],
+                context['range_end'])
+        context['search_form'] = form
+        return self.render_to_response(context)
 
 
 class ReportView(DeviceMixin, CabinetView):
@@ -680,84 +616,18 @@ class ReportView(DeviceMixin, CabinetView):
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        year = self.kwargs.get('year')
-        month = self.kwargs.get('month')
-        day = self.kwargs.get('day')
-        if year and month and day:
-            try:
-                date = datetime.date(int(year), int(month), int(day))
-            except ValueError:
-                raise Http404
-            payment_orders = context['device'].get_payments_by_date(date)
-            content_disposition = 'attachment; filename="{0}"'.format(
-                reconciliation.get_report_filename(context['device'], date))
-        else:
-            payment_orders = context['device'].get_payments()
-            content_disposition = 'attachment; filename="{0}"'.format(
-                reconciliation.get_report_filename(context['device']))
+        form = forms.TransactionSearchForm(data=self.request.GET)
+        if not form.is_valid():
+            raise Http404
+        transactions = context['device'].get_transactions_by_date(
+            form.cleaned_data['range_beg'],
+            form.cleaned_data['range_end'])
+        content_disposition = 'attachment; filename="{0}"'.format(
+            reports.get_report_filename(context['device']))
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = content_disposition
-        reconciliation.get_report_csv(payment_orders, response)
+        reports.get_report_csv(transactions, response)
         return response
-
-
-class ReceiptsView(DeviceMixin, CabinetView):
-    """
-    Download receipts
-    """
-    def get(self, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-        year = self.kwargs.get('year')
-        month = self.kwargs.get('month')
-        day = self.kwargs.get('day')
-        if year and month and day:
-            try:
-                date = datetime.date(int(year), int(month), int(day))
-            except ValueError:
-                raise Http404
-            payment_orders = context['device'].get_payments_by_date(date)
-            content_disposition = 'attachment; filename="{0}"'.format(
-                reconciliation.get_receipts_archive_filename(context['device'], date))
-        else:
-            payment_orders = context['device'].get_payments()
-            content_disposition = 'attachment; filename="{0}"'.format(
-                reconciliation.get_receipts_archive_filename(context['device']))
-        response = HttpResponse(content_type='application/x-zip-compressed')
-        response['Content-Disposition'] = content_disposition
-        reconciliation.get_receipts_archive(payment_orders, response)
-        return response
-
-
-class SendAllToEmailView(DeviceMixin, CabinetView):
-    """
-    Send reports and receipts to email
-    """
-    def post(self, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-        form = forms.SendReconciliationForm(self.request.POST)
-        if form.is_valid():
-            email = form.cleaned_data['email']
-            date = form.cleaned_data['date']
-            # Calculate datetime range
-            now = timezone.localtime(timezone.now())
-            rec_range_beg = timezone.make_aware(
-                datetime.datetime.combine(date, datetime.time.min),
-                timezone.get_current_timezone())
-            if date < now.date():
-                rec_range_end = timezone.make_aware(
-                    datetime.datetime.combine(date, datetime.time.max),
-                    timezone.get_current_timezone())
-            else:
-                rec_range_end = now
-            reconciliation.send_reconciliation(
-                email, context['device'],
-                (rec_range_beg, rec_range_end))
-            messages.success(self.request,
-                             _('Email has been sent successfully.'))
-        else:
-            messages.error(self.request,
-                           _('Error: Invalid email. Please, try again.'))
-        return redirect('website:reconciliation', context['device'].key)
 
 
 class AddFundsView(TemplateResponseMixin, CabinetView):

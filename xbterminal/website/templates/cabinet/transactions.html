@@ -1,0 +1,60 @@
+{% extends "cabinet/base.html" %}
+{% load bootstrap3 i18n %}
+
+{% block cabinet_content %}
+
+{% if device.status == 'suspended' %}
+<div class="alert alert-danger">
+    This device currently is not operational
+</div>
+{% endif %}
+
+<h3>{{ device.name }}</h3>
+
+<form action="{% url 'website:device_transactions' device.key %}" method="POST">
+    {% csrf_token %}
+    <h4>{% trans 'Search transactions by date' %}</h4>
+    <div class="row">
+        <div class="col-sm-4">
+            {% bootstrap_field search_form.range_beg %}
+        </div>
+        <div class="col-sm-4">
+            {% bootstrap_field search_form.range_end %}
+        </div>
+        <div class="col-sm-4">
+            <label>&nbsp;</label>
+            <button type="submit" class="btn btn-default btn-block">{% trans 'Search' %}</button>
+        </div>
+    </div>
+</form>
+
+<table class="table table-striped table-bordered table-responsive">
+    <tr>
+        <th>{% trans 'Date' %}</th>
+        <th>{% trans 'Amount' %}</th>
+        <th>{% trans 'Confirmed' %}</th>
+    </tr>
+    {% for transaction in transactions %}
+    <tr>
+        <td>{{ transaction.created_at|date:'DATETIME_FORMAT' }}</td>
+        <td>{{ transaction.amount }} {{ transaction.account.currency.name }}</td>
+        <td>
+            {% if transaction.is_confirmed %}
+            <span class="glyphicon glyphicon-ok text-success"></span>
+            {% else %}
+            <span class="glyphicon glyphicon-remove text-danger"></span>
+            {% endif %}
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4">{% trans 'no transactions for given period' %}</td></tr>
+    {% endfor %}
+</table>
+
+{% if transactions %}
+<a href="{% url 'website:report' device.key %}?range_beg={{ range_beg|date:'Y-m-d' }}&range_end={{ range_end|date:'Y-m-d' }}">
+    {% trans 'download transactions as CSV' %}
+</a>
+{% endif %}
+
+{% endblock %}

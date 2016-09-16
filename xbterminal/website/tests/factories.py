@@ -1,4 +1,3 @@
-import datetime
 import hashlib
 import StringIO
 import tempfile
@@ -23,7 +22,6 @@ from website.models import (
     Transaction,
     DeviceBatch,
     Device,
-    ReconciliationTime,
     KYC_DOCUMENT_TYPES)
 from website.tests.utils import generate_bitcoin_address
 
@@ -188,6 +186,12 @@ class TransactionFactory(factory.DjangoModelFactory):
     account = factory.SubFactory(AccountFactory)
     amount = fuzzy.FuzzyDecimal(0.01, 0.95)
 
+    @factory.post_generation
+    def created_at(self, create, extracted, **kwargs):
+        if create and extracted:
+            self.created_at = extracted
+            self.save()
+
 
 class DeviceBatchFactory(factory.DjangoModelFactory):
 
@@ -232,13 +236,3 @@ class DeviceFactory(factory.DjangoModelFactory):
             self.key = hashlib.sha256(uuid.uuid4().bytes).hexdigest()
             if created:
                 self.save()
-
-
-class ReconciliationTimeFactory(factory.DjangoModelFactory):
-
-    class Meta:
-        model = ReconciliationTime
-
-    device = factory.SubFactory(DeviceFactory)
-    email = factory.LazyAttribute(lambda rt: rt.device.merchant.user.email)
-    time = datetime.time(10, 0)

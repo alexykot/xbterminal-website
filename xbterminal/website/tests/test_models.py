@@ -1,3 +1,4 @@
+import datetime
 from decimal import Decimal
 import os
 
@@ -30,8 +31,7 @@ from website.tests.factories import (
     AddressFactory,
     TransactionFactory,
     DeviceBatchFactory,
-    DeviceFactory,
-    ReconciliationTimeFactory)
+    DeviceFactory)
 from operations.tests.factories import (
     PaymentOrderFactory,
     WithdrawalOrderFactory)
@@ -245,7 +245,7 @@ class AccountTestCase(TestCase):
         self.assertIsNone(account.forward_address)
         self.assertTrue(account.instantfiat)
         self.assertIsNotNone(account.instantfiat_account_id)
-        self.assertEqual(str(account), 'GBP - 0.00 (CryptoPay)')
+        self.assertEqual(str(account), 'GBP - 0.00')
 
     def test_unique_together(self):
         merchant = MerchantAccountFactory.create()
@@ -503,6 +503,32 @@ class DeviceTestCase(TestCase):
         self.assertEqual(transactions[0].amount, Decimal('0.2'))
         self.assertEqual(transactions[1].amount, Decimal('-0.1'))
 
+    def test_get_transactions_by_date(self):
+        device = DeviceFactory.create()
+        now = timezone.now()
+        date_1 = (now - datetime.timedelta(days=5)).date()
+        date_2 = (now - datetime.timedelta(days=4)).date()
+        TransactionFactory.create(
+            payment=PaymentOrderFactory.create(device=device),
+            account=device.account,
+            created_at=now - datetime.timedelta(days=6))
+        TransactionFactory.create(
+            payment=PaymentOrderFactory.create(device=device),
+            account=device.account,
+            created_at=now - datetime.timedelta(days=3))
+        tx_1 = TransactionFactory.create(
+            payment=PaymentOrderFactory.create(device=device),
+            account=device.account,
+            created_at=now - datetime.timedelta(days=5))
+        tx_2 = TransactionFactory.create(
+            payment=PaymentOrderFactory.create(device=device),
+            account=device.account,
+            created_at=now - datetime.timedelta(days=4))
+        transactions = device.get_transactions_by_date(date_1, date_2)
+        self.assertEqual(transactions.count(), 2)
+        self.assertEqual(transactions[0].pk, tx_1.pk)
+        self.assertEqual(transactions[1].pk, tx_2.pk)
+
 
 class DeviceBatchTestCase(TestCase):
 
@@ -516,10 +542,3 @@ class DeviceBatchTestCase(TestCase):
     def test_factory(self):
         batch = DeviceBatchFactory.create()
         self.assertEqual(len(batch.batch_number), 32)
-
-
-class ReconciliationTimeTestCase(TestCase):
-
-    def test_reconciliation_time_factory(self):
-        rectime = ReconciliationTimeFactory.create()
-        self.assertEqual(rectime.email, rectime.device.merchant.user.email)

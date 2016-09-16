@@ -326,15 +326,9 @@ class Account(models.Model):
             balance_str = '{0:.8f}'.format(self.balance)
         else:
             balance_str = '{0:.2f}'.format(self.balance)
-        if self.instantfiat:
-            return u'{name} - {balance} ({provider})'.format(
-                name=self.currency.name,
-                balance=balance_str,
-                provider=self.merchant.get_instantfiat_provider_display())
-        else:
-            return u'{name} - {balance}'.format(
-                name=self.currency.name,
-                balance=balance_str)
+        return u'{name} - {balance}'.format(
+            name=self.currency.name,
+            balance=balance_str)
 
     @property
     def bitcoin_network(self):
@@ -591,7 +585,6 @@ class Device(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     last_activity = models.DateTimeField(blank=True, null=True)
-    last_reconciliation = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-id']
@@ -628,25 +621,6 @@ class Device(models.Model):
         else:
             return 'mainnet'
 
-    def get_payments(self):
-        return self.paymentorder_set.filter(time_notified__isnull=False)
-
-    def get_payments_by_date(self, date):
-        """
-        Accepts:
-            date: tuple or single date
-        """
-        if isinstance(date, datetime.date):
-            beg = timezone.make_aware(
-                datetime.datetime.combine(date, datetime.time.min),
-                timezone.get_current_timezone())
-            end = timezone.make_aware(
-                datetime.datetime.combine(date, datetime.time.max),
-                timezone.get_current_timezone())
-        else:
-            beg, end = date
-        return self.paymentorder_set.filter(time_notified__range=(beg, end))
-
     def get_transactions(self):
         """
         Returns list of device transactions
@@ -655,6 +629,23 @@ class Device(models.Model):
         return Transaction.objects.filter(
             models.Q(payment__device=self) |
             models.Q(withdrawal__device=self)).order_by('created_at')
+
+    def get_transactions_by_date(self, range_beg, range_end):
+        """
+        Returns list of device transactions for date range
+        Accepts:
+            range_beg: beginning of range, datetime.date instance
+            range_end: end of range, datetime.date instance
+        """
+        beg = timezone.make_aware(
+            datetime.datetime.combine(range_beg, datetime.time.min),
+            timezone.get_current_timezone())
+        end = timezone.make_aware(
+            datetime.datetime.combine(range_end, datetime.time.max),
+            timezone.get_current_timezone())
+        return self.get_transactions().\
+            filter(created_at__range=(beg, end)).\
+            order_by('created_at')
 
     def is_online(self):
         if self.last_activity is None:
@@ -675,15 +666,6 @@ def device_generate_activation_code(sender, instance, **kwargs):
             if not sender.objects.filter(activation_code=code).exists():
                 instance.activation_code = code
                 break
-
-
-class ReconciliationTime(models.Model):
-    device = models.ForeignKey(Device, related_name="rectime_set")
-    email = models.EmailField(max_length=254)
-    time = models.TimeField()
-
-    class Meta:
-        ordering = ['time']
 
 
 # TODO: remove this functions

@@ -1,3 +1,5 @@
+import datetime
+
 from django import forms
 from django.core.cache import cache
 from django.contrib.auth import get_user_model
@@ -19,14 +21,12 @@ from website.models import (
     MerchantAccount,
     Account,
     Device,
-    ReconciliationTime,
     KYCDocument,
     get_language,
     get_currency,
     INSTANTFIAT_PROVIDERS,
     KYC_DOCUMENT_TYPES)
 from website.widgets import (
-    TimeWidget,
     FileWidget,
     ForeignKeyWidget)
 from website.validators import validate_bitcoin_address
@@ -461,15 +461,21 @@ class AccountForm(forms.ModelForm):
         return cleaned_data
 
 
-class SendReconciliationForm(forms.Form):
-    email = forms.EmailField()
-    date = forms.DateField(widget=forms.HiddenInput)
+class TransactionSearchForm(forms.Form):
 
+    range_beg = forms.DateField(
+        label=_('From'),
+        initial=datetime.date.today)
+    range_end = forms.DateField(
+        label=_('To'),
+        initial=datetime.date.today)
 
-class SendDailyReconciliationForm(forms.ModelForm):
-    time = forms.TimeField(input_formats=['%I:%M %p'],
-                           widget=TimeWidget(format='%I:%M %p'))
-
-    class Meta:
-        model = ReconciliationTime
-        fields = ['email', 'time']
+    def clean(self):
+        cleaned_data = super(TransactionSearchForm, self).clean()
+        range_beg = cleaned_data.get('range_beg')
+        range_end = cleaned_data.get('range_end')
+        if range_beg and range_end and range_end < range_beg:
+            self.add_error(
+                'range_end',
+                'Second date must not be earlier than the first.')
+        return cleaned_data
