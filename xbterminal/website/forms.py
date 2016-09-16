@@ -463,12 +463,20 @@ class AccountForm(forms.ModelForm):
 
 class TransactionSearchForm(forms.Form):
 
+    WIDGET_ATTRS = {
+        'data-provide': 'datepicker',
+        'data-date-format': 'yyyy-mm-dd',
+        'data-date-autoclose': 'true',
+    }
+
     range_beg = forms.DateField(
         label=_('From'),
-        initial=datetime.date.today)
+        initial=datetime.date.today,
+        widget=forms.TextInput(attrs=WIDGET_ATTRS))
     range_end = forms.DateField(
         label=_('To'),
-        initial=datetime.date.today)
+        initial=datetime.date.today,
+        widget=forms.TextInput(attrs=WIDGET_ATTRS))
 
     def clean(self):
         cleaned_data = super(TransactionSearchForm, self).clean()

@@ -63,6 +63,8 @@ def bower():
         'bower_components/blueimp-file-upload/js/vendor/jquery.ui.widget.js',
         'bower_components/jquery-validation/dist/jquery.validate.min.js',
         'bower_components/skrollr/dist/skrollr.min.js',
+        'bower_components/bootstrap-datepicker/dist/css/bootstrap-datepicker3.min.css',
+        'bower_components/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js',
     ]
     for file_name in libs:
         local('cp {} xbterminal/website/static/lib/'.format(file_name))

@@ -10,6 +10,7 @@
     "jquery.cookie": "jquery-cookie#1.4.1",
     "blueimp-file-upload": "9.12.5",
     "jquery-validation": "1.13.0",
-    "skrollr": "0.6.26"
+    "skrollr": "0.6.26",
+    "bootstrap-datepicker": "^1.6.4"
   }
 }
