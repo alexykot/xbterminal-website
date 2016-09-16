@@ -42,10 +42,9 @@ class AccountsUtilsTestCase(TestCase):
             instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
             instantfiat_api_key='test-key')
         create_managed_accounts(merchant)
-        self.assertEqual(merchant.account_set.count(), 4)
-        account_btc = merchant.account_set.get(currency__name='BTC',
-                                               instantfiat=True)
-        self.assertEqual(account_btc.instantfiat_account_id, 'a1')
+        self.assertEqual(merchant.account_set.count(), 3)
+        self.assertFalse(merchant.account_set.filter(
+            currency__name='BTC', instantfiat=True).exists())
         account_eur = merchant.account_set.get(currency__name='EUR',
                                                instantfiat=True)
         self.assertEqual(account_eur.instantfiat_account_id, 'a4')
@@ -66,10 +65,9 @@ class AccountsUtilsTestCase(TestCase):
                               instantfiat=True,
                               instantfiat_account_id='test')
         update_managed_accounts(merchant)
-        self.assertEqual(merchant.account_set.count(), 4)
-        account_btc = merchant.account_set.get(currency__name='BTC',
-                                               instantfiat=True)
-        self.assertEqual(account_btc.instantfiat_account_id, 'a1')
+        self.assertEqual(merchant.account_set.count(), 3)
+        self.assertFalse(merchant.account_set.filter(
+            currency__name='BTC', instantfiat=True).exists())
         account_eur = merchant.account_set.get(currency__name='EUR',
                                                instantfiat=True)
         self.assertEqual(account_eur.instantfiat_account_id, 'a4')

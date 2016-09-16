@@ -45,6 +45,9 @@ def create_managed_accounts(merchant):
     assert merchant.instantfiat_provider == INSTANTFIAT_PROVIDERS.CRYPTOPAY
     results = cryptopay.list_accounts(merchant.instantfiat_api_key)
     for item in results:
+        if item['currency'] == 'BTC':
+            # Skip CryptoPay BTC accounts
+            continue
         merchant.account_set.create(
             currency=Currency.objects.get(name=item['currency']),
             instantfiat=True,
@@ -60,6 +63,9 @@ def update_managed_accounts(merchant):
     assert merchant.instantfiat_provider == INSTANTFIAT_PROVIDERS.CRYPTOPAY
     results = cryptopay.list_accounts(merchant.instantfiat_api_key)
     for item in results:
+        if item['currency'] == 'BTC':
+            # Skip CryptoPay BTC accounts
+            continue
         currency = Currency.objects.get(name=item['currency'])
         account, created = merchant.account_set.get_or_create(
             currency=currency, instantfiat=True)
