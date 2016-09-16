@@ -2,12 +2,13 @@ import base64
 import mimetypes
 import os
 import re
-import unicodedata
 
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import FileSystemStorage
 from django.utils.deconstruct import deconstructible
+
+from slugify import slugify
 
 
 def verification_file_path_gen(instance, filename):
@@ -17,9 +18,11 @@ def verification_file_path_gen(instance, filename):
         filename: filename
     """
     merchant_id = instance.merchant.id
-    normalized = unicodedata.normalize('NFKD', unicode(filename)).\
-        encode('ascii', 'ignore')
-    prefixed = '{0}__{1}'.format(instance.document_type, normalized)
+    filename, ext = os.path.splitext(filename)
+    prefixed = '{0}__{1}{2}'.format(
+        instance.document_type,
+        slugify(filename, separator='_'),
+        ext.encode('ascii', 'ignore'))
     return os.path.join('verification', str(merchant_id), prefixed)
 
 
