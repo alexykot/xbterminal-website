@@ -4,7 +4,7 @@ import os
 
 from django.conf import settings
 from django.db import IntegrityError
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from oauth2_provider.models import Application
@@ -137,6 +137,21 @@ class MerchantAccountTestCase(TestCase):
             instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
             instantfiat_merchant_id='test')
         self.assertTrue(merchant.has_managed_cryptopay_profile)
+
+    @override_settings(DEBUG=False)
+    def test_get_cryptopay_email(self):
+        merchant = MerchantAccountFactory.create(
+            company_name='Test Co Ltd.')
+        expected_email = 'merchant-{}-test-co-ltd@xbterminal.io'.format(
+            merchant.pk)
+        self.assertEqual(merchant.get_cryptopay_email(), expected_email)
+
+    @override_settings(DEBUG=True)
+    def test_get_cryptopay_email_debug(self):
+        merchant = MerchantAccountFactory.create(
+            company_name='Test Co Ltd.')
+        self.assertEqual(merchant.get_cryptopay_email(),
+                         merchant.contact_email)
 
     def test_get_kyc_document(self):
         merchant = MerchantAccountFactory.create()

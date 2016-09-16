@@ -22,6 +22,7 @@ from django.utils.translation import ugettext_lazy as _
 from django_countries.fields import CountryField
 from django_fsm import FSMField, transition
 from extended_choices import Choices
+from slugify import slugify
 
 from website.validators import (
     validate_phone,
@@ -243,6 +244,17 @@ class MerchantAccount(models.Model):
         return (self.instantfiat_provider ==
                 INSTANTFIAT_PROVIDERS.CRYPTOPAY and
                 self.instantfiat_merchant_id)
+
+    def get_cryptopay_email(self):
+        """
+        Get email address for CryptoPay registration
+        """
+        if settings.DEBUG:
+            return self.user.email
+        else:
+            return 'merchant-{0}-{1}@xbterminal.io'.format(
+                self.pk,
+                slugify(self.company_name))
 
     def get_kyc_document(self, document_type, status):
         """
