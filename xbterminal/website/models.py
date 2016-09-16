@@ -200,6 +200,10 @@ class MerchantAccount(models.Model):
         max_length=50,
         blank=True,
         null=True)
+    instantfiat_email = models.EmailField(
+        _('InstantFiat merchant email'),
+        blank=True,
+        null=True)
     instantfiat_api_key = models.CharField(
         _('InstantFiat API key'),
         max_length=200,

@@ -111,6 +111,11 @@ class MerchantAccountFactory(factory.DjangoModelFactory):
     instantfiat_provider = None
 
     @factory.lazy_attribute
+    def instantfiat_email(self):
+        if self.instantfiat_provider:
+            return self.user.email
+
+    @factory.lazy_attribute
     def instantfiat_api_key(self):
         if self.instantfiat_provider:
             return fake.sha256(raw_output=False)

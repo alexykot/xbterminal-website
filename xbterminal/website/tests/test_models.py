@@ -107,6 +107,7 @@ class MerchantAccountTestCase(TestCase):
         self.assertFalse(merchant.can_activate_device)
         self.assertIsNone(merchant.instantfiat_provider)
         self.assertIsNone(merchant.instantfiat_merchant_id)
+        self.assertIsNone(merchant.instantfiat_email)
         self.assertIsNone(merchant.instantfiat_api_key)
         self.assertEqual(merchant.verification_status, 'unverified')
 
@@ -117,7 +118,16 @@ class MerchantAccountTestCase(TestCase):
         self.assertEqual(merchant.currency.name, 'GBP')
         self.assertIsNone(merchant.instantfiat_provider)
         self.assertIsNone(merchant.instantfiat_merchant_id)
+        self.assertIsNone(merchant.instantfiat_email)
         self.assertIsNone(merchant.instantfiat_api_key)
+
+    def test_merchant_factory_instantfiat(self):
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY)
+        self.assertIsNotNone(merchant.instantfiat_provider)
+        self.assertEqual(merchant.instantfiat_email,
+                         merchant.contact_email)
+        self.assertIsNotNone(merchant.instantfiat_api_key)
 
     def test_is_profile_complete(self):
         merchant = MerchantAccountFactory.create(
