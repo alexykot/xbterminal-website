@@ -50,6 +50,16 @@ def compilemessages():
 
 
 @task
+def bower():
+    local('bower install')
+    libs = [
+        'bower_components/jquery-qrcode/dist/jquery-qrcode.min.js',
+    ]
+    for file_name in libs:
+        local('cp {} xbterminal/website/static/lib/'.format(file_name))
+
+
+@task
 def clean():
     env.run("find . -name '*.pyc' -delete")
 
