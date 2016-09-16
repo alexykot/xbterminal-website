@@ -20,6 +20,11 @@ LOGGING = {
             'format': '%(asctime)s %(message)s',
         },
     },
+    'filters': {
+        'ggt': {
+            '()': 'utils.log.GeneratingGrammarTablesFilter',
+        },
+    },
     'handlers': {
         'console': {
             'level': 'INFO',
@@ -31,6 +36,7 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, '..', 'logs', 'django.log'),
             'formatter': 'default',
+            'filters': ['ggt'],
         },
         'rq': {
             'level': 'INFO',
