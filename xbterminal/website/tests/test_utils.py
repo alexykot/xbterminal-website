@@ -9,7 +9,6 @@ from constance.test import override_config
 
 from website.models import INSTANTFIAT_PROVIDERS, KYC_DOCUMENT_TYPES
 from website.utils.accounts import (
-    create_managed_accounts,
     update_managed_accounts,
     update_balances)
 from website.utils.kyc import upload_documents, check_documents
@@ -31,25 +30,6 @@ from operations.tests.factories import (
 class AccountsUtilsTestCase(TestCase):
 
     @patch('website.utils.accounts.cryptopay.list_accounts')
-    def test_create_managed_accounts(self, list_mock):
-        list_mock.return_value = [
-            {'id': 'a1', 'currency': 'BTC'},
-            {'id': 'a2', 'currency': 'GBP'},
-            {'id': 'a3', 'currency': 'USD'},
-            {'id': 'a4', 'currency': 'EUR'},
-        ]
-        merchant = MerchantAccountFactory.create(
-            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-            instantfiat_api_key='test-key')
-        create_managed_accounts(merchant)
-        self.assertEqual(merchant.account_set.count(), 3)
-        self.assertFalse(merchant.account_set.filter(
-            currency__name='BTC', instantfiat=True).exists())
-        account_eur = merchant.account_set.get(currency__name='EUR',
-                                               instantfiat=True)
-        self.assertEqual(account_eur.instantfiat_account_id, 'a4')
-
-    @patch('website.utils.accounts.cryptopay.list_accounts')
     def test_update_managed_accounts(self, list_mock):
         list_mock.return_value = [
             {'id': 'a1', 'currency': 'BTC'},
@@ -68,6 +48,12 @@ class AccountsUtilsTestCase(TestCase):
         self.assertEqual(merchant.account_set.count(), 3)
         self.assertFalse(merchant.account_set.filter(
             currency__name='BTC', instantfiat=True).exists())
+        account_gbp = merchant.account_set.get(currency__name='GBP',
+                                               instantfiat=True)
+        self.assertEqual(account_gbp.instantfiat_account_id, 'a2')
+        account_usd = merchant.account_set.get(currency__name='USD',
+                                               instantfiat=True)
+        self.assertEqual(account_usd.instantfiat_account_id, 'a3')
         account_eur = merchant.account_set.get(currency__name='EUR',
                                                instantfiat=True)
         self.assertEqual(account_eur.instantfiat_account_id, 'a4')
