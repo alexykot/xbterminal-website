@@ -53,10 +53,24 @@ def compilemessages():
 def bower():
     local('bower install')
     libs = [
+        'bower_components/jquery/dist/jquery.min.js',
         'bower_components/jquery-qrcode/dist/jquery-qrcode.min.js',
+        'bower_components/bootstrap/dist/css/bootstrap.min.css',
+        'bower_components/bootstrap/dist/js/bootstrap.min.js',
+        'bower_components/jquery.cookie/jquery.cookie.js',
+        'bower_components/blueimp-file-upload/js/jquery.fileupload.js',
+        'bower_components/blueimp-file-upload/js/jquery.iframe-transport.js',
+        'bower_components/blueimp-file-upload/js/vendor/jquery.ui.widget.js',
+        'bower_components/jquery-validation/dist/jquery.validate.min.js',
+        'bower_components/skrollr/dist/skrollr.min.js',
     ]
     for file_name in libs:
         local('cp {} xbterminal/website/static/lib/'.format(file_name))
+    fonts = [
+        'bower_components/bootstrap/dist/fonts/*',
+    ]
+    for file_name in fonts:
+        local('cp {} xbterminal/website/static/fonts/'.format(file_name))
 
 
 @task
