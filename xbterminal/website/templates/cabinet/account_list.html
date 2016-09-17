@@ -13,7 +13,6 @@
         <th>{% trans 'Balance' %}</th>
         <th>{% trans 'Balance min.' %}</th>
         <th>{% trans 'Balance max.' %}</th>
-        <th>{% trans 'Payment processor' %}</th>
         <th>{% trans 'Actions' %}</th>
     </tr>
     {% for account in accounts %}
@@ -24,13 +23,6 @@
         </td>
         <td>{{ account.balance_min|amount:account.currency.name }}</td>
         <td>{{ account.balance_max|amount:account.currency.name }}</td>
-        <td>
-            {% if account.instantfiat %}
-            {{ account.merchant.get_instantfiat_provider_display }}
-            {% else %}
-            -
-            {% endif %}
-        </td>
         <td><a href="{% url 'website:add_funds' pk=account.pk %}" target="_blank">Add funds</a></td>
     </tr>
     {% endfor %}
