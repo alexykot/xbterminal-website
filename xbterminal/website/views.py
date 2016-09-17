@@ -518,14 +518,12 @@ class AccountListView(TemplateResponseMixin, CabinetView):
         return self.render_to_response(context)
 
 
-class EditAccountView(TemplateResponseMixin, CabinetView):
+class AccountMixin(ContextMixin):
     """
-    Edit account
+    Adds account to the context
     """
-    template_name = 'cabinet/account_form.html'
-
     def get_context_data(self, **kwargs):
-        context = super(EditAccountView, self).get_context_data(**kwargs)
+        context = super(AccountMixin, self).get_context_data(**kwargs)
         currency_code = self.kwargs.get('currency_code', '').upper()
         try:
             context['account'] = self.merchant.account_set.\
@@ -533,6 +531,13 @@ class EditAccountView(TemplateResponseMixin, CabinetView):
         except models.Account.DoesNotExist:
             raise Http404
         return context
+
+
+class EditAccountView(AccountMixin, TemplateResponseMixin, CabinetView):
+    """
+    Edit account
+    """
+    template_name = 'cabinet/account_form.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -616,7 +621,7 @@ class DeviceReportView(DeviceMixin, ReportView):
     pass
 
 
-class AddFundsView(TemplateResponseMixin, CabinetView):
+class AddFundsView(AccountMixin, TemplateResponseMixin, CabinetView):
     """
     Add funds to account
     """
@@ -624,11 +629,5 @@ class AddFundsView(TemplateResponseMixin, CabinetView):
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        currency_code = self.kwargs.get('currency_code', '').upper()
-        try:
-            context['account'] = self.merchant.account_set.\
-                get(currency__name=currency_code)
-        except models.Account.DoesNotExist:
-            raise Http404
         context['amount'] = Decimal('0.00')
         return self.render_to_response(context)
