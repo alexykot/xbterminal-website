@@ -364,6 +364,31 @@ class AccountTestCase(TestCase):
         self.assertEqual(account_gbp.balance_min, 0)
         self.assertEqual(account_gbp.balance_max, 0)
 
+    def test_get_transactions_by_date(self):
+        account = AccountFactory.create()
+        now = timezone.now()
+        range_beg = (now - datetime.timedelta(days=5)).date()
+        range_end = (now - datetime.timedelta(days=4)).date()
+        TransactionFactory.create(
+            account=account,
+            created_at=now - datetime.timedelta(days=6))
+        TransactionFactory.create(
+            account=account,
+            created_at=now - datetime.timedelta(days=3))
+        TransactionFactory.create(
+            created_at=now - datetime.timedelta(days=5))
+        tx_1 = TransactionFactory.create(
+            account=account,
+            created_at=now - datetime.timedelta(days=5))
+        tx_2 = TransactionFactory.create(
+            account=account,
+            created_at=now - datetime.timedelta(days=4))
+        transactions = account.get_transactions_by_date(range_beg,
+                                                        range_end)
+        self.assertEqual(transactions.count(), 2)
+        self.assertEqual(transactions[0].pk, tx_1.pk)
+        self.assertEqual(transactions[1].pk, tx_2.pk)
+
 
 class AddressTestCase(TestCase):
 
