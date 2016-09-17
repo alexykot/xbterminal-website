@@ -17,7 +17,6 @@ urlpatterns = [
     url(r'^registration/$', views.RegistrationView.as_view(), name='registration'),
     url(r'^registration/validate/$', views.RegValidationView.as_view(), name='reg_validation'),
     url(r'^profile/$', views.UpdateProfileView.as_view(), name='profile'),
-    url(r'^instantfiat/$', views.InstantFiatSettingsView.as_view(), name='instantfiat'),
     url(r'^change_password/$', views.ChangePasswordView.as_view(), name='change_password'),
     url(r'^verification/$', views.VerificationView.as_view(), name='verification'),
     url(r'^verification/(?P<merchant_pk>\d+)/(?P<name>.+)$',

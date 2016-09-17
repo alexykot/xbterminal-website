@@ -2,11 +2,6 @@
 {% load i18n website_tags %}
 
 {% block cabinet_content %}
-<div>
-    {% if can_edit_ift_settings %}
-    <a class="btn btn-default" href="{% url 'website:instantfiat' %}">{% trans 'Edit CryptoPay settings' %}</a>
-    {% endif %}
-</div>
 <table id="accounts" class="table table-striped table-bordered table-responsive">
     <tr>
         <th>{% trans 'Currency' %}</th>

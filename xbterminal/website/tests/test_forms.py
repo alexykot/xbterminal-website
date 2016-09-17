@@ -14,7 +14,6 @@ from website.forms import (
     MerchantRegistrationForm,
     ResetPasswordForm,
     ProfileForm,
-    InstantFiatSettingsForm,
     KYCDocumentUploadForm,
     DeviceForm,
     DeviceActivationForm,
@@ -212,30 +211,6 @@ class ProfileFormTestCase(TestCase):
         }
         form = ProfileForm(data=form_data, instance=merchant)
         self.assertTrue(form.is_valid())
-
-
-class InstantFiatSettingsFormTestCase(TestCase):
-
-    def test_valid_data(self):
-        merchant = MerchantAccountFactory.create()
-        form_data = {
-            'instantfiat_api_key': 'test123456',
-        }
-        form = InstantFiatSettingsForm(data=form_data, instance=merchant)
-        self.assertTrue(form.is_valid())
-        merchant_updated = form.save()
-        self.assertEqual(merchant_updated.pk, merchant.pk)
-        self.assertEqual(merchant_updated.instantfiat_provider,
-                         INSTANTFIAT_PROVIDERS.CRYPTOPAY)
-        self.assertEqual(merchant_updated.instantfiat_api_key,
-                         form_data['instantfiat_api_key'])
-
-    def test_required(self):
-        merchant = MerchantAccountFactory.create()
-        form = InstantFiatSettingsForm(data={}, instance=merchant)
-        self.assertFalse(form.is_valid())
-        self.assertNotIn('instantfiat_provider', form.errors)
-        self.assertIn('instantfiat_api_key', form.errors)
 
 
 class KYCDocumentUploadFormTestCase(TestCase):

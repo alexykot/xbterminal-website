@@ -352,40 +352,6 @@ class UpdateProfileViewTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
 
 
-class InstantFiatSettingsViewTestCase(TestCase):
-
-    def test_get(self):
-        merchant = MerchantAccountFactory.create()
-        self.client.login(username=merchant.user.email,
-                          password='password')
-        url = reverse('website:instantfiat')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/instantfiat_form.html')
-        self.assertEqual(response.context['form'].instance.pk,
-                         merchant.pk)
-
-    def test_get_managed_profile(self):
-        merchant = MerchantAccountFactory.create(
-            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-            instantfiat_merchant_id='test-id',
-            instantfiat_api_key='xxxyyyzzz')
-        self.client.login(username=merchant.user.email,
-                          password='password')
-        url = reverse('website:instantfiat')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 404)
-
-    def test_post(self):
-        merchant = MerchantAccountFactory.create()
-        self.client.login(username=merchant.user.email,
-                          password='password')
-        url = reverse('website:instantfiat')
-        form_data = {'instantfiat_api_key': 'xxx'}
-        response = self.client.post(url, data=form_data)
-        self.assertEqual(response.status_code, 302)
-
-
 class ResetPasswordViewTestCase(TestCase):
 
     def setUp(self):
@@ -634,18 +600,6 @@ class AccountListViewTestCase(TestCase):
         self.assertTemplateUsed(response, 'cabinet/account_list.html')
         self.assertEqual(response.context['accounts'].first().pk,
                          account.pk)
-        self.assertTrue(response.context['can_edit_ift_settings'])
-
-    def test_get_managed_profile(self):
-        merchant = MerchantAccountFactory.create(
-            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-            instantfiat_merchant_id='test-id',
-            instantfiat_api_key='xxxyyyzzz')
-        self.client.login(username=merchant.user.email,
-                          password='password')
-        url = reverse('website:accounts')
-        response = self.client.get(url)
-        self.assertFalse(response.context['can_edit_ift_settings'])
 
 
 class EditAccountViewTestCase(TestCase):
