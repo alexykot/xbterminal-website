@@ -273,12 +273,22 @@ class AccountTestCase(TestCase):
         self.assertIsNotNone(account.instantfiat_account_id)
         self.assertEqual(str(account), 'GBP - 0.00')
 
-    def test_unique_together(self):
+    def test_unique_together_1(self):
         merchant = MerchantAccountFactory.create()
         AccountFactory.create(merchant=merchant, currency__name='TBTC')
         with self.assertRaises(IntegrityError):
             AccountFactory.create(merchant=merchant,
                                   currency__name='TBTC')
+
+    def test_unique_together_2(self):
+        merchant = MerchantAccountFactory.create()
+        AccountFactory.create(merchant=merchant,
+                              instantfiat=False,
+                              currency__name='BTC')
+        with self.assertRaises(IntegrityError):
+            AccountFactory.create(merchant=merchant,
+                                  instantfiat=True,
+                                  currency__name='BTC')
 
     def test_bitcoin_network(self):
         account_1 = AccountFactory.create(currency__name='BTC')

@@ -336,7 +336,7 @@ class Account(models.Model):
 
     class Meta:
         ordering = ('merchant', 'instantfiat', 'currency')
-        unique_together = ('merchant', 'instantfiat', 'currency')
+        unique_together = ('merchant', 'currency')
 
     def __unicode__(self):
         if self.currency.name in ['BTC', 'TBTC']:
