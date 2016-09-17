@@ -551,32 +551,41 @@ class EditAccountView(TemplateResponseMixin, CabinetView):
             return self.render_to_response(context)
 
 
-class DeviceTransactionsView(DeviceMixin, TemplateResponseMixin, CabinetView):
+class TransactionListView(TemplateResponseMixin, CabinetView):
     """
-    List device transactions
+    Base class
     """
     template_name = 'cabinet/transactions.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
+        device_or_account = (context.get('device') or context.get('account'))
         context['search_form'] = forms.TransactionSearchForm()
         context['range_beg'] = context['range_end'] = datetime.date.today()
-        context['transactions'] = context['device'].get_transactions_by_date(
-            context['range_beg'],
-            context['range_end'])
+        context['transactions'] = device_or_account.\
+            get_transactions_by_date(context['range_beg'],
+                                     context['range_end'])
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
+        device_or_account = context.get('device') or context.get('account')
         form = forms.TransactionSearchForm(self.request.POST)
         if form.is_valid():
             context['range_beg'] = form.cleaned_data['range_beg']
             context['range_end'] = form.cleaned_data['range_end']
-            context['transactions'] = context['device'].get_transactions_by_date(
-                context['range_beg'],
-                context['range_end'])
+            context['transactions'] = device_or_account.\
+                get_transactions_by_date(context['range_beg'],
+                                         context['range_end'])
         context['search_form'] = form
         return self.render_to_response(context)
+
+
+class DeviceTransactionListView(DeviceMixin, TransactionListView):
+    """
+    List device transactions
+    """
+    pass
 
 
 class ReportView(DeviceMixin, CabinetView):
