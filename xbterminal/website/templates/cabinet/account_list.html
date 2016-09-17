@@ -12,13 +12,17 @@
     </tr>
     {% for account in accounts %}
     <tr>
-        <td><a href="{% url 'website:account' pk=account.pk %}">{{ account.currency.name }}</a></td>
+        <td><a href="{% url 'website:account' currency_code=account.currency.name|lower %}">
+            {{ account.currency.name }}
+        </a></td>
         <td {% if account.balance < account.balance_min %}class="balance-too-low"{% endif %}>
             {{ account.balance|amount:account.currency.name }}
         </td>
         <td>{{ account.balance_min|amount:account.currency.name }}</td>
         <td>{{ account.balance_max|amount:account.currency.name }}</td>
-        <td><a href="{% url 'website:add_funds' pk=account.pk %}" target="_blank">Add funds</a></td>
+        <td><a href="{% url 'website:add_funds' currency_code=account.currency.name|lower %}" target="_blank">
+            Add funds
+        </a></td>
     </tr>
     {% endfor %}
 </table>

@@ -23,9 +23,15 @@ urlpatterns = [
         views.VerificationFileView.as_view(),
         name='verification_file'),
 
-    url(r'^accounts/$', views.AccountListView.as_view(), name='accounts'),
-    url(r'^accounts/(?P<pk>\d+)/$', views.EditAccountView.as_view(), name='account'),
-    url(r'^accounts/(?P<pk>\d+)/add_funds/$', views.AddFundsView.as_view(), name='add_funds'),
+    url(r'^accounts/$',
+        views.AccountListView.as_view(),
+        name='accounts'),
+    url(r'^accounts/(?P<currency_code>\w{3,4})/$',
+        views.EditAccountView.as_view(),
+        name='account'),
+    url(r'^accounts/(?P<currency_code>\w{3,4})/add_funds/$',
+        views.AddFundsView.as_view(),
+        name='add_funds'),
 
     url(r'^devices/$', views.DeviceList.as_view(), name='devices'),
     url(r'^devices/activate/$', views.ActivateDeviceView.as_view(), name='activate_device'),

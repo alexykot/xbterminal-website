@@ -605,10 +605,11 @@ class AccountListViewTestCase(TestCase):
 class EditAccountViewTestCase(TestCase):
 
     def test_get(self):
-        account = AccountFactory.create()
+        account = AccountFactory.create(currency__name='BTC')
         self.client.login(username=account.merchant.user.email,
                           password='password')
-        url = reverse('website:account', kwargs={'pk': account.pk})
+        url = reverse('website:account',
+                      kwargs={'currency_code': 'btc'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'cabinet/account_form.html')
@@ -616,10 +617,11 @@ class EditAccountViewTestCase(TestCase):
 
     def test_get_account_not_found(self):
         merchant = MerchantAccountFactory.create()
-        account = AccountFactory.create()
+        AccountFactory.create()
         self.client.login(username=merchant.user.email,
                           password='password')
-        url = reverse('website:account', kwargs={'pk': account.pk})
+        url = reverse('website:account',
+                      kwargs={'currency_code': 'yzx'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
@@ -627,7 +629,8 @@ class EditAccountViewTestCase(TestCase):
         account = AccountFactory.create()
         self.client.login(username=account.merchant.user.email,
                           password='password')
-        url = reverse('website:account', kwargs={'pk': account.pk})
+        url = reverse('website:account',
+                      kwargs={'currency_code': 'btc'})
         form_data = {
             'max_payout': '0.05',
             'forward_address': '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
@@ -748,16 +751,16 @@ class AddFundsViewTestCase(TestCase):
         self.client.login(username=self.merchant.user.email,
                           password='password')
         url = reverse('website:add_funds',
-                      kwargs={'pk': account.pk})
+                      kwargs={'currency_code': 'btc'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'payment/payment.html')
         self.assertEqual(response.context['account'].pk, account.pk)
 
-    def test_invalid_account_id(self):
+    def test_invalid_currency_code(self):
         self.client.login(username=self.merchant.user.email,
                           password='password')
         url = reverse('website:add_funds',
-                      kwargs={'pk': 1276617276})
+                      kwargs={'currency_code': 'xxx'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)

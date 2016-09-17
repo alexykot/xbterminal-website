@@ -526,9 +526,10 @@ class EditAccountView(TemplateResponseMixin, CabinetView):
 
     def get_context_data(self, **kwargs):
         context = super(EditAccountView, self).get_context_data(**kwargs)
+        currency_code = self.kwargs.get('currency_code', '').upper()
         try:
             context['account'] = self.merchant.account_set.\
-                get(pk=self.kwargs.get('pk'))
+                get(currency__name=currency_code)
         except models.Account.DoesNotExist:
             raise Http404
         return context
@@ -607,9 +608,10 @@ class AddFundsView(TemplateResponseMixin, CabinetView):
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
+        currency_code = self.kwargs.get('currency_code', '').upper()
         try:
             context['account'] = self.merchant.account_set.\
-                get(pk=self.kwargs.get('pk'))
+                get(currency__name=currency_code)
         except models.Account.DoesNotExist:
             raise Http404
         context['amount'] = Decimal('0.00')
