@@ -27,9 +27,9 @@ def get_report_csv(transactions, csv_file=None):
     return csv_file
 
 
-def get_report_filename(device, date=None):
+def get_report_filename(device_or_account, date=None):
     s = "XBTerminal transactions, {0}".format(
-        device.merchant.company_name)
+        device_or_account.merchant.company_name)
     if date is not None:
         s += ", {0}".format(date.strftime('%d %b %Y'))
     s += ".csv"

@@ -711,7 +711,7 @@ class DeviceTransactionListViewTestCase(TestCase):
         self.assertNotIn('transactions', response.context)
 
 
-class ReportViewTestCase(TestCase):
+class DeviceReportViewTestCase(TestCase):
 
     def setUp(self):
         self.merchant = MerchantAccountFactory.create()
@@ -723,7 +723,7 @@ class ReportViewTestCase(TestCase):
             account=device.account)
         self.client.login(username=self.merchant.user.email,
                           password='password')
-        url = reverse('website:report',
+        url = reverse('website:device_report',
                       kwargs={'device_key': device.key})
         date_str = tx.created_at.strftime('%Y-%m-%d')
         url += '?range_beg={date}&range_end={date}'.format(date=date_str)
@@ -735,7 +735,7 @@ class ReportViewTestCase(TestCase):
         device = DeviceFactory.create(merchant=self.merchant)
         self.client.login(username=self.merchant.user.email,
                           password='password')
-        url = reverse('website:report',
+        url = reverse('website:device_report',
                       kwargs={'device_key': device.key})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)

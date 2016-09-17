@@ -45,6 +45,6 @@ urlpatterns = [
         views.DeviceTransactionListView.as_view(),
         name='device_transactions'),
     url(r'^devices/(?P<device_key>[0-9a-zA-Z]{8,64})/report/$',
-        views.ReportView.as_view(),
-        name='report'),
+        views.DeviceReportView.as_view(),
+        name='device_report'),
 ]

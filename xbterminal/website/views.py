@@ -588,25 +588,32 @@ class DeviceTransactionListView(DeviceMixin, TransactionListView):
     pass
 
 
-class ReportView(DeviceMixin, CabinetView):
+class ReportView(CabinetView):
     """
-    Download csv report
+    Base class
     """
-
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         form = forms.TransactionSearchForm(data=self.request.GET)
         if not form.is_valid():
             raise Http404
-        transactions = context['device'].get_transactions_by_date(
+        device_or_account = context.get('device') or context.get('account')
+        transactions = device_or_account.get_transactions_by_date(
             form.cleaned_data['range_beg'],
             form.cleaned_data['range_end'])
         content_disposition = 'attachment; filename="{0}"'.format(
-            reports.get_report_filename(context['device']))
+            reports.get_report_filename(device_or_account))
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = content_disposition
         reports.get_report_csv(transactions, response)
         return response
+
+
+class DeviceReportView(DeviceMixin, ReportView):
+    """
+    Download CSV file with device transactions
+    """
+    pass
 
 
 class AddFundsView(TemplateResponseMixin, CabinetView):
