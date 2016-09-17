@@ -711,6 +711,51 @@ class DeviceTransactionListViewTestCase(TestCase):
         self.assertNotIn('transactions', response.context)
 
 
+class AccountTransactionListViewTestCase(TestCase):
+
+    def setUp(self):
+        self.merchant = MerchantAccountFactory.create()
+
+    def test_get(self):
+        account = AccountFactory.create(merchant=self.merchant)
+        tx = TransactionFactory.create(account=account)
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:account_transactions',
+                      kwargs={'currency_code': 'btc'})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/transactions.html')
+        self.assertIn('search_form', response.context)
+        self.assertEqual(response.context['range_beg'],
+                         response.context['range_end'])
+        transactions = response.context['transactions']
+        self.assertEqual(transactions.count(), 1)
+        self.assertEqual(transactions[0].pk, tx.pk)
+
+    def test_post(self):
+        account = AccountFactory.create(merchant=self.merchant)
+        now = timezone.now()
+        tx = TransactionFactory.create(account=account, created_at=now)
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:account_transactions',
+                      kwargs={'currency_code': 'btc'})
+        data = {
+            'range_beg': now.strftime('%Y-%m-%d'),
+            'range_end': now.strftime('%Y-%m-%d'),
+        }
+        response = self.client.post(url, data=data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/transactions.html')
+        self.assertIn('search_form', response.context)
+        self.assertEqual(response.context['range_beg'], now.date())
+        self.assertEqual(response.context['range_end'], now.date())
+        transactions = response.context['transactions']
+        self.assertEqual(transactions.count(), 1)
+        self.assertEqual(transactions[0].pk, tx.pk)
+
+
 class DeviceReportViewTestCase(TestCase):
 
     def setUp(self):
@@ -739,6 +784,25 @@ class DeviceReportViewTestCase(TestCase):
                       kwargs={'device_key': device.key})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
+
+
+class AccountReportViewTestCase(TestCase):
+
+    def setUp(self):
+        self.merchant = MerchantAccountFactory.create()
+
+    def test_view(self):
+        account = AccountFactory.create(merchant=self.merchant)
+        tx = TransactionFactory.create(account=account)
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:account_report',
+                      kwargs={'currency_code': 'btc'})
+        date_str = tx.created_at.strftime('%Y-%m-%d')
+        url += '?range_beg={date}&range_end={date}'.format(date=date_str)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header('Content-Disposition'))
 
 
 class AddFundsViewTestCase(TestCase):

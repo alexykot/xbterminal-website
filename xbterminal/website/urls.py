@@ -32,6 +32,12 @@ urlpatterns = [
     url(r'^accounts/(?P<currency_code>\w{3,4})/add_funds/$',
         views.AddFundsView.as_view(),
         name='add_funds'),
+    url(r'^accounts/(?P<currency_code>\w{3,4})/transactions/$',
+        views.AccountTransactionListView.as_view(),
+        name='account_transactions'),
+    url(r'^accounts/(?P<currency_code>\w{3,4})/report/$',
+        views.AccountReportView.as_view(),
+        name='account_report'),
 
     url(r'^devices/$', views.DeviceList.as_view(), name='devices'),
     url(r'^devices/activate/$', views.ActivateDeviceView.as_view(), name='activate_device'),

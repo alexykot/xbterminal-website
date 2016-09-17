@@ -593,6 +593,13 @@ class DeviceTransactionListView(DeviceMixin, TransactionListView):
     pass
 
 
+class AccountTransactionListView(AccountMixin, TransactionListView):
+    """
+    List account transactions
+    """
+    pass
+
+
 class ReportView(CabinetView):
     """
     Base class
@@ -617,6 +624,13 @@ class ReportView(CabinetView):
 class DeviceReportView(DeviceMixin, ReportView):
     """
     Download CSV file with device transactions
+    """
+    pass
+
+
+class AccountReportView(AccountMixin, ReportView):
+    """
+    Download CSV file with account transactions
     """
     pass
 
