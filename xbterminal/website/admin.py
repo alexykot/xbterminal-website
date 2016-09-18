@@ -259,6 +259,7 @@ class MerchantAccountAdmin(admin.ModelAdmin):
         'verification_status',
         'date_joined_l',
     ]
+    search_fields = ['company_name']
     readonly_fields = ['date_joined', 'last_login']
     ordering = ['id']
 
