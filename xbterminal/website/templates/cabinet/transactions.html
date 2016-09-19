@@ -1,5 +1,14 @@
 {% extends "cabinet/base.html" %}
-{% load bootstrap3 i18n %}
+{% load bootstrap3 staticfiles i18n %}
+
+{% block js %}
+<script src="{% static 'lib/bootstrap-datepicker.min.js' %}"></script>
+{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'lib/bootstrap-datepicker3.min.css' %}">
+<link rel="stylesheet" href="{% static 'css/website.css' %}">
+{% endblock %}
 
 {% block cabinet_content %}
 

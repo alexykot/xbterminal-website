@@ -4,7 +4,7 @@ from django.forms.widgets import (
     RadioChoiceInput,
     RendererMixin,
     Widget,
-    Select, TextInput, TimeInput,
+    Select,
     FileInput)
 from django.utils.encoding import force_text
 from django.utils.html import format_html
@@ -54,20 +54,6 @@ class ButtonGroupRadioSelect(RendererMixin, Select):
 
     def render(self, name, value, attrs=None, choices=()):
         return self.get_renderer(name, value, attrs, choices).render()
-
-
-class PercentWidget(TextInput):
-
-    class Media:
-        js = ['lib/jquery-ui.min.js', 'js/percent_widget.js']
-        css = {'all': ['lib/jquery-ui.min.css']}
-
-
-class TimeWidget(TimeInput):
-
-    class Media:
-        js = ['lib/jquery.ptTimeSelect.js']
-        css = {'all': ['lib/jquery-ui.min.css', 'lib/jquery.ptTimeSelect.css']}
 
 
 class FileWidget(FileInput):
