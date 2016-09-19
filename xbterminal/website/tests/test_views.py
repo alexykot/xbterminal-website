@@ -1,11 +1,13 @@
+from decimal import Decimal
 import json
+from mock import patch
+
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.test import TestCase
 from django.core import mail
 from django.core.cache import cache
 from django.utils import timezone
-from mock import patch
 
 from website.models import (
     MerchantAccount,
@@ -828,3 +830,76 @@ class AddFundsViewTestCase(TestCase):
                       kwargs={'currency_code': 'xxx'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
+
+
+class WithdrawToBankAccountForm(TestCase):
+
+    def setUp(self):
+        self.merchant = MerchantAccountFactory.create()
+
+    def test_get(self):
+        account = AccountFactory.create(merchant=self.merchant,
+                                        instantfiat=True,
+                                        currency__name='GBP')
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:account_withdrawal',
+                      kwargs={'currency_code': 'gbp'})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/withdrawal_form.html')
+        self.assertEqual(response.context['account'].pk, account.pk)
+        self.assertEqual(response.context['form'].account.pk, account.pk)
+
+    def test_get_btc(self):
+        AccountFactory.create(merchant=self.merchant,
+                              instantfiat=False,
+                              currency__name='BTC')
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:account_withdrawal',
+                      kwargs={'currency_code': 'btc'})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_post(self):
+        account = AccountFactory.create(merchant=self.merchant,
+                                        instantfiat=True,
+                                        currency__name='GBP')
+        TransactionFactory.create(account=account, amount=Decimal('1.0'))
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:account_withdrawal',
+                      kwargs={'currency_code': 'gbp'})
+        data = {'amount': '0.5'}
+        response = self.client.post(url, data=data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0],
+                         settings.CONTACT_EMAIL_RECIPIENTS[0])
+
+    def test_post_btc(self):
+        AccountFactory.create(merchant=self.merchant,
+                              instantfiat=False,
+                              currency__name='BTC')
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:account_withdrawal',
+                      kwargs={'currency_code': 'btc'})
+        data = {'amount': '0.5'}
+        response = self.client.post(url, data=data)
+        self.assertEqual(response.status_code, 404)
+
+    def test_post_invalid_amount(self):
+        AccountFactory.create(merchant=self.merchant,
+                              instantfiat=True,
+                              currency__name='GBP')
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:account_withdrawal',
+                      kwargs={'currency_code': 'gbp'})
+        data = {'amount': '0.5'}
+        response = self.client.post(url, data=data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/withdrawal_form.html')
+        self.assertEqual(len(mail.outbox), 0)

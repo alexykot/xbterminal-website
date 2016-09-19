@@ -86,6 +86,19 @@ def send_verification_notification(merchant):
     message.send(fail_silently=False)
 
 
+def send_withdrawal_request(account, amount):
+    """
+    Send withdrawal request details to admin
+    """
+    message = create_html_message(
+        _('Withdrawal request'),
+        'email/withdrawal.html',
+        {'account': account, 'amount': amount},
+        settings.DEFAULT_FROM_EMAIL,
+        settings.CONTACT_EMAIL_RECIPIENTS)
+    message.send(fail_silently=False)
+
+
 def send_contact_email(form_data):
     message = create_html_message(
         _('Message from xbterminal.io'),

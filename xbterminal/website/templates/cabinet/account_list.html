@@ -21,12 +21,18 @@
         <td>{{ account.balance_min|amount:account.currency.name }}</td>
         <td>{{ account.balance_max|amount:account.currency.name }}</td>
         <td>
-            <a href="{% url 'website:account_transactions' currency_code=account.currency.name|lower %}">
-                View transactions
-            </a>
-            <br>
             <a href="{% url 'website:add_funds' currency_code=account.currency.name|lower %}" target="_blank">
                 Add funds
+            </a>
+            <br>
+            {% if account.instantfiat %}
+            <a href="{% url 'website:account_withdrawal' currency_code=account.currency.name|lower %}">
+                Withdraw
+            </a>
+            <br>
+            {% endif %}
+            <a href="{% url 'website:account_transactions' currency_code=account.currency.name|lower %}">
+                View transactions
             </a>
         </td>
     </tr>

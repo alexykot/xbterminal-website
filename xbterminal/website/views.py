@@ -645,3 +645,38 @@ class AddFundsView(AccountMixin, TemplateResponseMixin, CabinetView):
         context = self.get_context_data(**kwargs)
         context['amount'] = Decimal('0.00')
         return self.render_to_response(context)
+
+
+class WithdrawToBankAccountView(AccountMixin,
+                                TemplateResponseMixin,
+                                CabinetView):
+    """
+    Withdraw funds from instantfiat account
+    """
+    template_name = 'cabinet/withdrawal_form.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(WithdrawToBankAccountView, self).\
+            get_context_data(**kwargs)
+        if not context['account'].instantfiat:
+            raise Http404
+        return context
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['form'] = forms.WithdrawToBankAccountForm(
+            account=context['account'])
+        return self.render_to_response(context)
+
+    def post(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        form = forms.WithdrawToBankAccountForm(
+            self.request.POST,
+            account=context['account'])
+        if form.is_valid():
+            email.send_withdrawal_request(context['account'],
+                                          form.cleaned_data['amount'])
+            return redirect(reverse('website:accounts'))
+        else:
+            context['form'] = form
+            return self.render_to_response(context)
