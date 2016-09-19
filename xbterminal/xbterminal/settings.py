@@ -98,6 +98,7 @@ INSTALLED_APPS = (
     'django_fsm',
     'fsm_admin',
     'raven.contrib.django.raven_compat',
+    'formtools',
 
     'website',
     'operations',
