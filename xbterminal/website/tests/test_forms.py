@@ -357,7 +357,12 @@ class AccountFormTestCase(TestCase):
     def test_update_gbp(self):
         account = AccountFactory.create(currency__name='GBP')
         btc = CurrencyFactory.create(name='BTC')
-        form_data = {'currency': btc.pk}
+        form_data = {
+            'currency': btc.pk,
+            'bank_account_name': 'test',
+            'bank_account_bic': 'test',
+            'bank_account_iban': 'test',
+        }
         form = AccountForm(data=form_data, instance=account)
         self.assertTrue(form.is_valid())
         account_updated = form.save()

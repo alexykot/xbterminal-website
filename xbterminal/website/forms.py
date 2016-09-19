@@ -393,12 +393,21 @@ class DeviceAdminForm(forms.ModelForm):
 
 class AccountForm(forms.ModelForm):
 
+    bank_account_name = forms.CharField()
+    bank_account_bic = forms.CharField(
+        label=_('Bank account BIC'))
+    bank_account_iban = forms.CharField(
+        label=_('Bank account IBAN'))
+
     class Meta:
         model = Account
         fields = [
             'currency',
             'max_payout',
             'forward_address',
+            'bank_account_name',
+            'bank_account_bic',
+            'bank_account_iban',
         ]
 
     def __init__(self, *args, **kwargs):
@@ -409,6 +418,13 @@ class AccountForm(forms.ModelForm):
         if self.instance.currency.name not in ['BTC', 'TBTC']:
             del self.fields['max_payout']
             del self.fields['forward_address']
+            self.fields['bank_account_name'].required = True
+            self.fields['bank_account_bic'].required = True
+            self.fields['bank_account_iban'].required = True
+        else:
+            del self.fields['bank_account_name']
+            del self.fields['bank_account_bic']
+            del self.fields['bank_account_iban']
 
     def clean_currency(self):
         return self.instance.currency
