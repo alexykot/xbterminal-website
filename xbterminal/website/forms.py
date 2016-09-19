@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 
 from django import forms
 from django.core.cache import cache
@@ -452,3 +453,27 @@ class TransactionSearchForm(forms.Form):
                 'range_end',
                 'Second date must not be earlier than the first.')
         return cleaned_data
+
+
+class WithdrawToBankAccountForm(forms.Form):
+
+    amount = forms.DecimalField(
+        label=_('Amount'),
+        min_value=Decimal('0.01'),
+        max_digits=12,
+        decimal_places=2)
+
+    def __init__(self, *args, **kwargs):
+        self.account = kwargs.pop('account')
+        assert self.account.instantfiat
+        super(WithdrawToBankAccountForm, self).__init__(*args, **kwargs)
+
+    def clean_amount(self):
+        amount = self.cleaned_data['amount']
+        if self.account.balance_confirmed - amount < 0:
+            raise forms.ValidationError(
+                'Insufficient balance on account.')
+        if self.account.balance_confirmed - amount < self.account.balance_min:
+            raise forms.ValidationError(
+                'Account balance can not go below the minimum value.')
+        return amount

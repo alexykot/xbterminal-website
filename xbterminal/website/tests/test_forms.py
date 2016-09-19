@@ -18,12 +18,14 @@ from website.forms import (
     DeviceForm,
     DeviceActivationForm,
     AccountForm,
-    TransactionSearchForm)
+    TransactionSearchForm,
+    WithdrawToBankAccountForm)
 from website.tests.factories import (
     create_uploaded_image,
     CurrencyFactory,
     MerchantAccountFactory,
     AccountFactory,
+    TransactionFactory,
     DeviceFactory)
 from operations.exceptions import CryptoPayUserAlreadyExists
 
@@ -392,3 +394,46 @@ class TransactionSearchFormTestCase(TestCase):
         self.assertFalse(form.is_valid())
         self.assertEqual(form.errors['range_end'][0],
                          'Second date must not be earlier than the first.')
+
+
+class WithdrawToBankAccountFormTestCase(TestCase):
+
+    def test_valid_data(self):
+        account = AccountFactory.create(max_payout=Decimal('0.2'),
+                                        instantfiat=True)
+        TransactionFactory.create(account=account, amount=Decimal('1.0'))
+        DeviceFactory.create(merchant=account.merchant, account=account)
+        self.assertEqual(account.balance_confirmed, Decimal('1.0'))
+        self.assertEqual(account.balance_min, Decimal('0.2'))
+        data = {'amount': '0.5'}
+        form = WithdrawToBankAccountForm(data=data, account=account)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['amount'], Decimal('0.5'))
+
+    def test_required(self):
+        account = AccountFactory.create(instantfiat=True)
+        form = WithdrawToBankAccountForm(data={}, account=account)
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['amount'][0],
+                         'This field is required.')
+
+    def test_insufficient_balance(self):
+        account = AccountFactory.create(instantfiat=True)
+        TransactionFactory.create(account=account, amount=Decimal('0.1'))
+        data = {'amount': '0.2'}
+        form = WithdrawToBankAccountForm(data=data, account=account)
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['amount'][0],
+                         'Insufficient balance on account.')
+
+    def test_min_balance(self):
+        account = AccountFactory.create(max_payout=Decimal('0.2'),
+                                        instantfiat=True)
+        TransactionFactory.create(account=account, amount=Decimal('0.5'))
+        DeviceFactory.create(merchant=account.merchant, account=account)
+        self.assertEqual(account.balance_min, Decimal('0.2'))
+        data = {'amount': '0.4'}
+        form = WithdrawToBankAccountForm(data=data, account=account)
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['amount'][0],
+                         'Account balance can not go below the minimum value.')
