@@ -1,0 +1,10 @@
+{% extends 'email/base.html' %}
+{% load i18n website_tags %}
+
+{% block content %}
+{% trans 'Bank account details modified by the merchant' %}.<br>
+{% trans 'Account' %}: {{ account|admin_url }}<br>
+{% trans 'Bank account name' %}: {{ account.bank_account_name }}<br>
+{% trans 'Bank account BIC' %}: {{ account.bank_account_bic }}<br>
+{% trans 'Bank account IBAN' %}: {{ account.bank_account_iban }}
+{% endblock %}

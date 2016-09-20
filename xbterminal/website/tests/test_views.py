@@ -627,7 +627,7 @@ class EditAccountViewTestCase(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
-    def test_post(self):
+    def test_post_btc_account(self):
         account = AccountFactory.create()
         self.client.login(username=account.merchant.user.email,
                           password='password')
@@ -639,6 +639,25 @@ class EditAccountViewTestCase(TestCase):
         }
         response = self.client.post(url, data=form_data)
         self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_post_usd_account(self):
+        account = AccountFactory.create(instantfiat=True,
+                                        currency__name='USD')
+        self.client.login(username=account.merchant.user.email,
+                          password='password')
+        url = reverse('website:account',
+                      kwargs={'currency_code': 'usd'})
+        form_data = {
+            'bank_account_name': 'Test',
+            'bank_account_bic': 'DEUTDEFF000',
+            'bank_account_iban': 'GB82WEST12345698765432',
+        }
+        response = self.client.post(url, data=form_data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0],
+                         settings.CONTACT_EMAIL_RECIPIENTS[0])
 
     def test_post_errors(self):
         account = AccountFactory.create(instantfiat=True,
@@ -650,6 +669,7 @@ class EditAccountViewTestCase(TestCase):
         response = self.client.post(url, data={})
         self.assertEqual(response.status_code, 200)
         self.assertIn('form', response.context)
+        self.assertEqual(len(mail.outbox), 0)
 
 
 class DeviceTransactionListViewTestCase(TestCase):

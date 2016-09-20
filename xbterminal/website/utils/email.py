@@ -86,6 +86,19 @@ def send_verification_notification(merchant):
     message.send(fail_silently=False)
 
 
+def send_bank_account_info(account):
+    """
+    Send notification about modified bank account details to admin
+    """
+    message = create_html_message(
+        _('Bank account details modified'),
+        'email/admin_bank_account_info.html',
+        {'account': account},
+        settings.DEFAULT_FROM_EMAIL,
+        settings.CONTACT_EMAIL_RECIPIENTS)
+    message.send(fail_silently=False)
+
+
 def send_withdrawal_request(account, amount):
     """
     Send withdrawal request details to admin

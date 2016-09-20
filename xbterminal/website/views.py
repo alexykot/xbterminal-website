@@ -549,7 +549,9 @@ class EditAccountView(AccountMixin, TemplateResponseMixin, CabinetView):
         form = forms.AccountForm(self.request.POST,
                                  instance=context['account'])
         if form.is_valid():
-            form.save()
+            account = form.save()
+            if account.instantfiat:
+                email.send_bank_account_info(account)
             return redirect(reverse('website:accounts'))
         else:
             context['form'] = form
