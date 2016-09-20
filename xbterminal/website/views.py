@@ -4,7 +4,7 @@ import datetime
 import re
 
 from django.shortcuts import get_object_or_404, redirect
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, StreamingHttpResponse
+from django.http import HttpResponse, Http404, StreamingHttpResponse
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
@@ -188,25 +188,6 @@ class RegistrationView(TemplateResponseMixin, View):
         email.send_registration_info(merchant)
         login(self.request, merchant.user)
         return redirect(reverse('website:devices'))
-
-
-class RegValidationView(View):
-    """
-    Helper view for server-side validation
-    """
-    def get(self, *args, **kwargs):
-        field_name = self.request.GET.get('field_name')
-        if field_name not in ['company_name', 'contact_email']:
-            return HttpResponseBadRequest()
-        kwargs = {field_name + '__iexact': self.request.GET.get('value', '')}
-        try:
-            models.MerchantAccount.objects.get(**kwargs)
-        except models.MerchantAccount.DoesNotExist:
-            response = {'is_valid': True}
-        else:
-            response = {'is_valid': False}
-        return HttpResponse(json.dumps(response),
-                            content_type='application/json')
 
 
 def get_current_merchant(request):
