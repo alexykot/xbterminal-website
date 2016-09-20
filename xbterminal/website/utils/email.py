@@ -105,7 +105,7 @@ def send_withdrawal_request(account, amount):
     """
     message = create_html_message(
         _('Withdrawal request'),
-        'email/withdrawal.html',
+        'email/admin_withdrawal_request.html',
         {'account': account, 'amount': amount},
         settings.DEFAULT_FROM_EMAIL,
         settings.CONTACT_EMAIL_RECIPIENTS)
