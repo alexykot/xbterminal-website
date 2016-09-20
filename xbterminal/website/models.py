@@ -19,9 +19,11 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
+from constance import config
 from django_countries.fields import CountryField
 from django_fsm import FSMField, transition
 from extended_choices import Choices
+from slugify import slugify
 
 from website.validators import (
     validate_phone,
@@ -187,7 +189,6 @@ class MerchantAccount(models.Model):
     # Display currency
     currency = models.ForeignKey(Currency, default=1)  # by default, GBP, see fixtures
     ui_theme = models.ForeignKey(UITheme, default=1)  # 'default' theme, see fixtures
-    can_activate_device = models.BooleanField(default=False)
 
     instantfiat_provider = models.PositiveSmallIntegerField(
         _('InstantFiat provider'),
@@ -197,6 +198,10 @@ class MerchantAccount(models.Model):
     instantfiat_merchant_id = models.CharField(
         _('InstantFiat merchant ID'),
         max_length=50,
+        blank=True,
+        null=True)
+    instantfiat_email = models.EmailField(
+        _('InstantFiat merchant email'),
         blank=True,
         null=True)
     instantfiat_api_key = models.CharField(
@@ -243,6 +248,17 @@ class MerchantAccount(models.Model):
         return (self.instantfiat_provider ==
                 INSTANTFIAT_PROVIDERS.CRYPTOPAY and
                 self.instantfiat_merchant_id)
+
+    def get_cryptopay_email(self):
+        """
+        Get email address for CryptoPay registration
+        """
+        if config.CRYPTOPAY_USE_FAKE_EMAIL:
+            return 'merchant-{0}-{1}@xbterminal.io'.format(
+                self.pk,
+                slugify(self.company_name))
+        else:
+            return self.user.email
 
     def get_kyc_document(self, document_type, status):
         """
@@ -319,7 +335,7 @@ class Account(models.Model):
 
     class Meta:
         ordering = ('merchant', 'instantfiat', 'currency')
-        unique_together = ('merchant', 'instantfiat', 'currency')
+        unique_together = ('merchant', 'currency')
 
     def __unicode__(self):
         if self.currency.name in ['BTC', 'TBTC']:

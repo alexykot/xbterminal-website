@@ -30,7 +30,6 @@ from website.widgets import (
     FileWidget,
     ForeignKeyWidget)
 from website.validators import validate_bitcoin_address
-from website.utils.accounts import create_managed_accounts
 from website.utils.email import (
     send_registration_email,
     send_reset_password_email)
@@ -158,32 +157,6 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
         cleaned_data = super(SimpleMerchantRegistrationForm, self).clean()
         return {key: val.strip() for key, val in cleaned_data.items()}
 
-    def _create_default_accounts(self, merchant):
-        # Create BTC account
-        Account.objects.create(
-            merchant=merchant,
-            currency=Currency.objects.get(name='BTC'),
-            instantfiat=False)
-        # Create CryptoPay accounts
-        try:
-            cryptopay_merchant_id, cryptopay_api_key = cryptopay.create_merchant(
-                merchant.contact_first_name,
-                merchant.contact_last_name,
-                merchant.contact_email,
-                config.CRYPTOPAY_API_KEY)
-        except CryptoPayUserAlreadyExists:
-            # TODO: ask merchant for CryptoPay API key later
-            pass
-        else:
-            merchant.instantfiat_provider = INSTANTFIAT_PROVIDERS.CRYPTOPAY
-            merchant.instantfiat_merchant_id = cryptopay_merchant_id
-            merchant.instantfiat_api_key = cryptopay_api_key
-            merchant.save()
-            if not merchant.instantfiat_api_key:
-                # Skip account sync if API key is not available
-                return
-            create_managed_accounts(merchant)
-
     @atomic
     def save(self):
         """
@@ -211,8 +184,23 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             client_type='confidential',
             authorization_grant_type='password',
             client_secret='AFoUFXG8orJ2H5ztnycc5a95')
-        # Create accounts
-        self._create_default_accounts(merchant)
+        # Create internal BTC account
+        Account.objects.create(
+            merchant=merchant,
+            currency=Currency.objects.get(name='BTC'),
+            instantfiat=False)
+        # Perform registration on CryptoPay
+        merchant.instantfiat_provider = INSTANTFIAT_PROVIDERS.CRYPTOPAY
+        merchant.instantfiat_email = merchant.get_cryptopay_email()
+        try:
+            merchant.instantfiat_merchant_id = cryptopay.create_merchant(
+                merchant.contact_first_name,
+                merchant.contact_last_name,
+                merchant.instantfiat_email,
+                config.CRYPTOPAY_API_KEY)
+        except CryptoPayUserAlreadyExists:
+            pass
+        merchant.save()
         # Send email
         send_registration_email(merchant.contact_email, password)
         return merchant

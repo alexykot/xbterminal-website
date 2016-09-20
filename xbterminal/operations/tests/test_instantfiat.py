@@ -154,7 +154,6 @@ class CryptoPayTestCase(TestCase):
             'json.return_value': {
                 'id': '4437b1ac-d1e7-4a26-92bb-933d930d50b8',
                 'email': 'john@example.com',
-                'apikey': 'abcd1234',
             },
             'status_code': 201,
         })
@@ -162,11 +161,10 @@ class CryptoPayTestCase(TestCase):
         last_name = 'Doe'
         email = 'john@example.com'
         api_key = 'test-api-key'
-        merchant_id, merchant_api_key = instantfiat.cryptopay.create_merchant(
+        merchant_id = instantfiat.cryptopay.create_merchant(
             first_name, last_name, email, api_key)
         self.assertEqual(merchant_id,
                          '4437b1ac-d1e7-4a26-92bb-933d930d50b8')
-        self.assertEqual(merchant_api_key, 'abcd1234')
         self.assertEqual(post_mock.call_args[1]['headers']['X-Api-Key'],
                          'test-api-key')
 

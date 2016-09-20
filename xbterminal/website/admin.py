@@ -258,8 +258,8 @@ class MerchantAccountAdmin(admin.ModelAdmin):
         'contact_phone_',
         'verification_status',
         'date_joined_l',
-        'can_activate_device',
     ]
+    search_fields = ['company_name']
     readonly_fields = ['date_joined', 'last_login']
     ordering = ['id']
 

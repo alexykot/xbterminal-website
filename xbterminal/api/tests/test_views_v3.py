@@ -57,9 +57,8 @@ class SwaggerViewTestCase(APITestCase):
 class MerchantViewSetTestCase(APITestCase):
 
     @patch('website.forms.cryptopay.create_merchant')
-    @patch('website.forms.create_managed_accounts')
-    def test_create(self, create_acc_mock, cryptopay_mock):
-        cryptopay_mock.return_value = ('merchant_id', 'zxwvyx')
+    def test_create(self, cryptopay_mock):
+        cryptopay_mock.return_value = 'merchant_id'
         url = reverse('api:v3:merchant-list')
         data = {
             'company_name': 'TestMerchant',

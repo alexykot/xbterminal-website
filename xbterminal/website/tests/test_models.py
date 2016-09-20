@@ -7,6 +7,7 @@ from django.db import IntegrityError
 from django.test import TestCase
 from django.utils import timezone
 
+from constance.test import override_config
 from oauth2_provider.models import Application
 from django_fsm import TransitionNotAllowed
 
@@ -104,9 +105,9 @@ class MerchantAccountTestCase(TestCase):
         self.assertEqual(merchant.language.code, 'en')
         self.assertEqual(merchant.currency.name, 'GBP')
         self.assertEqual(merchant.ui_theme.name, 'default')
-        self.assertFalse(merchant.can_activate_device)
         self.assertIsNone(merchant.instantfiat_provider)
         self.assertIsNone(merchant.instantfiat_merchant_id)
+        self.assertIsNone(merchant.instantfiat_email)
         self.assertIsNone(merchant.instantfiat_api_key)
         self.assertEqual(merchant.verification_status, 'unverified')
 
@@ -117,7 +118,16 @@ class MerchantAccountTestCase(TestCase):
         self.assertEqual(merchant.currency.name, 'GBP')
         self.assertIsNone(merchant.instantfiat_provider)
         self.assertIsNone(merchant.instantfiat_merchant_id)
+        self.assertIsNone(merchant.instantfiat_email)
         self.assertIsNone(merchant.instantfiat_api_key)
+
+    def test_merchant_factory_instantfiat(self):
+        merchant = MerchantAccountFactory.create(
+            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY)
+        self.assertIsNotNone(merchant.instantfiat_provider)
+        self.assertEqual(merchant.instantfiat_email,
+                         merchant.contact_email)
+        self.assertIsNotNone(merchant.instantfiat_api_key)
 
     def test_is_profile_complete(self):
         merchant = MerchantAccountFactory.create(
@@ -137,6 +147,21 @@ class MerchantAccountTestCase(TestCase):
             instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
             instantfiat_merchant_id='test')
         self.assertTrue(merchant.has_managed_cryptopay_profile)
+
+    @override_config(CRYPTOPAY_USE_FAKE_EMAIL=True)
+    def test_get_cryptopay_email(self):
+        merchant = MerchantAccountFactory.create(
+            company_name='Test Co Ltd.')
+        expected_email = 'merchant-{}-test-co-ltd@xbterminal.io'.format(
+            merchant.pk)
+        self.assertEqual(merchant.get_cryptopay_email(), expected_email)
+
+    @override_config(CRYPTOPAY_USE_FAKE_EMAIL=False)
+    def test_get_cryptopay_email_real(self):
+        merchant = MerchantAccountFactory.create(
+            company_name='Test Co Ltd.')
+        self.assertEqual(merchant.get_cryptopay_email(),
+                         merchant.contact_email)
 
     def test_get_kyc_document(self):
         merchant = MerchantAccountFactory.create()
@@ -247,12 +272,22 @@ class AccountTestCase(TestCase):
         self.assertIsNotNone(account.instantfiat_account_id)
         self.assertEqual(str(account), 'GBP - 0.00')
 
-    def test_unique_together(self):
+    def test_unique_together_1(self):
         merchant = MerchantAccountFactory.create()
         AccountFactory.create(merchant=merchant, currency__name='TBTC')
         with self.assertRaises(IntegrityError):
             AccountFactory.create(merchant=merchant,
                                   currency__name='TBTC')
+
+    def test_unique_together_2(self):
+        merchant = MerchantAccountFactory.create()
+        AccountFactory.create(merchant=merchant,
+                              instantfiat=False,
+                              currency__name='BTC')
+        with self.assertRaises(IntegrityError):
+            AccountFactory.create(merchant=merchant,
+                                  instantfiat=True,
+                                  currency__name='BTC')
 
     def test_bitcoin_network(self):
         account_1 = AccountFactory.create(currency__name='BTC')

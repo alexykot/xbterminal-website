@@ -286,6 +286,8 @@ CONSTANCE_CONFIG = {
     'OUR_FEE_TESTNET_ADDRESS': ("mqhQfj9e57SNEYWNvULegMWfM9DQ8UGi9b", 'Bitcoin address'),
     'OUR_FEE_SHARE': (0.005, ' '),
     'CRYPTOPAY_API_KEY': ('', 'CryptoPay API key'),
+    'CRYPTOPAY_USE_FAKE_EMAIL': (True,
+                                 'Use fake email for CryptoPay registration'),
     'GOCOIN_MERCHANT_ID': ('', 'GoCoin Merchant ID'),
     'GOCOIN_AUTH_TOKEN': ('', 'GoCoin access token'),
     'BLOCKCYPHER_API_TOKEN': ('', 'BlockCypher API token'),
