@@ -177,29 +177,17 @@ class RegistrationView(TemplateResponseMixin, View):
     def get(self, *args, **kwargs):
         if hasattr(self.request.user, 'merchant'):
             return redirect(reverse('website:devices'))
-        context = {
-            'form': forms.MerchantRegistrationForm(),
-        }
-        return self.render_to_response(context)
+        form = forms.MerchantRegistrationForm()
+        return self.render_to_response({'form': form})
 
     def post(self, *args, **kwags):
         form = forms.MerchantRegistrationForm(self.request.POST)
         if not form.is_valid():
-            response = {
-                'result': 'error',
-                'errors': form.errors,
-            }
-            return HttpResponse(json.dumps(response),
-                                content_type='application/json')
+            return self.render_to_response({'form': form})
         merchant = form.save()
         email.send_registration_info(merchant)
-        response = {
-            'result': 'ok',
-            'next': reverse('website:devices'),
-        }
         login(self.request, merchant.user)
-        return HttpResponse(json.dumps(response),
-                            content_type='application/json')
+        return redirect(reverse('website:devices'))
 
 
 class RegValidationView(View):

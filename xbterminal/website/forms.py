@@ -152,10 +152,13 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
 
     def clean(self):
         """
-        Trim whitespaces for all fields
+        Trim whitespaces for all text fields
         """
         cleaned_data = super(SimpleMerchantRegistrationForm, self).clean()
-        return {key: val.strip() for key, val in cleaned_data.items()}
+        for key, value in cleaned_data.items():
+            if isinstance(value, basestring):
+                cleaned_data[key] = value.strip()
+        return cleaned_data
 
     @atomic
     def save(self):
@@ -210,10 +213,7 @@ class MerchantRegistrationForm(SimpleMerchantRegistrationForm):
     """
     Merchant registration form
     """
-    # Used at registration step 1
-    company_name_copy = forms.CharField(
-        label=_('Company name'),
-        required=False)
+    terms = forms.BooleanField()
 
     class Meta:
         model = MerchantAccount

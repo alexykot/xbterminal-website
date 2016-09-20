@@ -145,7 +145,7 @@ class RegistrationViewTestCase(TestCase):
         self.assertTemplateUsed(response, 'website/registration.html')
 
     @patch('website.forms.cryptopay.create_merchant')
-    def test_post_default(self, cryptopay_mock):
+    def test_post(self, cryptopay_mock):
         cryptopay_mock.return_value = 'merchant_id'
         form_data = {
             'company_name': 'Test Company 1',
@@ -157,11 +157,10 @@ class RegistrationViewTestCase(TestCase):
             'contact_last_name': 'Test',
             'contact_email': 'test1@example.net',
             'contact_phone': '+123456789',
+            'terms': 'on',
         }
         response = self.client.post(self.url, data=form_data)
-        self.assertEqual(response.status_code, 200)
-        data = json.loads(response.content)
-        self.assertEqual(data['result'], 'ok')
+        self.assertEqual(response.status_code, 302)
 
         merchant = MerchantAccount.objects.get(
             company_name=form_data['company_name'])
