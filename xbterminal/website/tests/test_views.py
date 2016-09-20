@@ -175,6 +175,12 @@ class RegistrationViewTestCase(TestCase):
         self.assertEqual(mail.outbox[1].to[0],
                          settings.CONTACT_EMAIL_RECIPIENTS[0])
 
+    def test_post_errors(self):
+        response = self.client.post(self.url, data={})
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'website/registration.html')
+        self.assertIn('company_name', response.context['form'].errors)
+
 
 class DeviceListViewTestCase(TestCase):
 
