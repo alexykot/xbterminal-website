@@ -95,6 +95,7 @@ INSTALLED_APPS = (
     'django_rq',
     'oauth2_provider',
     'captcha',
+    'localflavor',
     'django_fsm',
     'fsm_admin',
     'raven.contrib.django.raven_compat',
