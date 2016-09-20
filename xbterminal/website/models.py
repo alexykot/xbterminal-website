@@ -23,6 +23,7 @@ from constance import config
 from django_countries.fields import CountryField
 from django_fsm import FSMField, transition
 from extended_choices import Choices
+from localflavor.generic.models import BICField, IBANField
 from slugify import slugify
 
 from website.validators import (
@@ -330,6 +331,18 @@ class Account(models.Model):
     instantfiat_account_id = models.CharField(
         _('InstantFiat account ID'),
         max_length=50,
+        blank=True,
+        null=True)
+    bank_account_name = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True)
+    bank_account_bic = BICField(
+        _('Bank account BIC'),
+        blank=True,
+        null=True)
+    bank_account_iban = IBANField(
+        _('Bank account IBAN'),
         blank=True,
         null=True)
 

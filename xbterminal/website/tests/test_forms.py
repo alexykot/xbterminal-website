@@ -359,15 +359,57 @@ class AccountFormTestCase(TestCase):
         btc = CurrencyFactory.create(name='BTC')
         form_data = {
             'currency': btc.pk,
-            'bank_account_name': 'test',
-            'bank_account_bic': 'test',
-            'bank_account_iban': 'test',
+            'bank_account_name': 'Test',
+            'bank_account_bic': 'DEUTDEFF000',
+            'bank_account_iban': 'GB82WEST12345698765432',
         }
         form = AccountForm(data=form_data, instance=account)
         self.assertTrue(form.is_valid())
         account_updated = form.save()
         self.assertEqual(account_updated.currency.pk,
-                         account.currency.pk)
+                         account.currency.pk)  # Not changed
+        self.assertEqual(account_updated.bank_account_name,
+                         form_data['bank_account_name'])
+        self.assertEqual(account_updated.bank_account_bic,
+                         form_data['bank_account_bic'])
+        self.assertEqual(account_updated.bank_account_iban,
+                         form_data['bank_account_iban'])
+
+    def test_update_gbp_no_data(self):
+        account = AccountFactory.create(currency__name='GBP')
+        form_data = {}
+        form = AccountForm(data=form_data, instance=account)
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['bank_account_name'][0],
+                         'This field is required.')
+        self.assertEqual(form.errors['bank_account_bic'][0],
+                         'This field is required.')
+        self.assertEqual(form.errors['bank_account_iban'][0],
+                         'This field is required.')
+
+    def test_update_gbp_invalid_bic(self):
+        account = AccountFactory.create(currency__name='GBP')
+        form_data = {
+            'currency': account.currency.pk,
+            'bank_account_name': 'Test',
+            'bank_account_bic': 'XXX000AAA',
+            'bank_account_iban': 'GB82WEST12345698765432',
+        }
+        form = AccountForm(data=form_data, instance=account)
+        self.assertFalse(form.is_valid())
+        self.assertIn('bank_account_bic', form.errors)
+
+    def test_update_gbp_invalid_iban(self):
+        account = AccountFactory.create(currency__name='GBP')
+        form_data = {
+            'currency': account.currency.pk,
+            'bank_account_name': 'Test',
+            'bank_account_bic': 'DEUTDEFF000',
+            'bank_account_iban': 'GB82WEST12345698765433',
+        }
+        form = AccountForm(data=form_data, instance=account)
+        self.assertFalse(form.is_valid())
+        self.assertIn('bank_account_iban', form.errors)
 
 
 class TransactionSearchFormTestCase(TestCase):

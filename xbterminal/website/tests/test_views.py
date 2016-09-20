@@ -640,6 +640,17 @@ class EditAccountViewTestCase(TestCase):
         response = self.client.post(url, data=form_data)
         self.assertEqual(response.status_code, 302)
 
+    def test_post_errors(self):
+        account = AccountFactory.create(instantfiat=True,
+                                        currency__name='GBP')
+        self.client.login(username=account.merchant.user.email,
+                          password='password')
+        url = reverse('website:account',
+                      kwargs={'currency_code': 'gbp'})
+        response = self.client.post(url, data={})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('form', response.context)
+
 
 class DeviceTransactionListViewTestCase(TestCase):
 

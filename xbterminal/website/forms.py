@@ -393,12 +393,6 @@ class DeviceAdminForm(forms.ModelForm):
 
 class AccountForm(forms.ModelForm):
 
-    bank_account_name = forms.CharField()
-    bank_account_bic = forms.CharField(
-        label=_('Bank account BIC'))
-    bank_account_iban = forms.CharField(
-        label=_('Bank account IBAN'))
-
     class Meta:
         model = Account
         fields = [

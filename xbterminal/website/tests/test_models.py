@@ -248,6 +248,9 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.balance, 0)
         self.assertFalse(account.instantfiat)
         self.assertIsNone(account.instantfiat_account_id)
+        self.assertIsNone(account.bank_account_name)
+        self.assertIsNone(account.bank_account_bic)
+        self.assertIsNone(account.bank_account_iban)
         self.assertEqual(str(account), 'BTC - 0.00000000')
 
     def test_factory_btc(self):
@@ -258,6 +261,9 @@ class AccountTestCase(TestCase):
         self.assertIsNotNone(account.forward_address)
         self.assertFalse(account.instantfiat)
         self.assertIsNone(account.instantfiat_account_id)
+        self.assertIsNone(account.bank_account_name)
+        self.assertIsNone(account.bank_account_bic)
+        self.assertIsNone(account.bank_account_iban)
         self.assertEqual(str(account), 'BTC - 0.00000000')
 
     def test_factory_gbp(self):
@@ -270,6 +276,9 @@ class AccountTestCase(TestCase):
         self.assertIsNone(account.forward_address)
         self.assertTrue(account.instantfiat)
         self.assertIsNotNone(account.instantfiat_account_id)
+        self.assertIsNone(account.bank_account_name)
+        self.assertIsNone(account.bank_account_bic)
+        self.assertIsNone(account.bank_account_iban)
         self.assertEqual(str(account), 'GBP - 0.00')
 
     def test_unique_together_1(self):
