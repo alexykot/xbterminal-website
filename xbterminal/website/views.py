@@ -216,6 +216,11 @@ class ActivationWizard(CookieWizardView):
         '3': show_registration_form_condition,
     }
 
+    def dispatch(self, *args, **kwargs):
+        if get_current_merchant(self.request):
+            return redirect(reverse('website:activate_device'))
+        return super(ActivationWizard, self).dispatch(*args, **kwargs)
+
     @atomic
     def done(self, form_list, **kwargs):
         # Get device

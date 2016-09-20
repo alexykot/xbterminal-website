@@ -193,6 +193,13 @@ class ActivationWizardTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'website/activation.html')
 
+    def test_redirect(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
     @patch('api.utils.activation.rq_helpers')
     def test_login(self, rq_helpers_mock):
         merchant = MerchantAccountFactory.create()
