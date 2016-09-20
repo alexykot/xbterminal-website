@@ -213,7 +213,18 @@ class MerchantRegistrationForm(SimpleMerchantRegistrationForm):
     """
     Merchant registration form
     """
-    terms = forms.BooleanField()
+    terms = forms.BooleanField(
+        label=_(
+            'I agree to XBTerminal <a href="%(privacy_url)s" target="_blank">'
+            'Privacy Policy</a> and <a href="%(terms_url)s" target="_blank">'
+            'Terms & Conditions</a> of use.'
+        ) % {
+            'privacy_url': '/privacy/',
+            'terms_url': '/terms/',
+        },
+        error_messages={
+            'required': _('Please accept terms & conditions.'),
+        })
 
     class Meta:
         model = MerchantAccount

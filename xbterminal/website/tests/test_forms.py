@@ -109,7 +109,8 @@ class MerchantRegistrationFormTestCase(TestCase):
         self.assertIn('contact_last_name', form.errors)
         self.assertIn('contact_email', form.errors)
         self.assertIn('contact_phone', form.errors)
-        self.assertIn('terms', form.errors)
+        self.assertEqual(form.errors['terms'][0],
+                         'Please accept terms & conditions.')
 
     def test_invalid_names(self):
         form_data = {

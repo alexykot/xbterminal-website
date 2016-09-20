@@ -1,9 +1,7 @@
 {% extends "website/base.html" %}
-{% load bootstrap3 staticfiles i18n l10n %}
+{% load bootstrap3 i18n %}
 
 {% block website_content %}
-{% url 'website:privacy' as privacy_url %}
-{% url 'website:terms' as terms_url %}
 <div class="row">
     <div class="col-md-10 col-md-offset-1">
         <div class="clearfix">
@@ -36,13 +34,7 @@
                 <div class="col-md-6">{% bootstrap_field form.country %}</div>
             </div>
             <div class="form-group text-center">
-                <div class="checkbox">
-                    <label for="id_terms"><input id="id_terms" name="terms" type="checkbox">
-                        {% blocktrans %}
-                        I agree to XBTerminal <a href="{{ privacy_url }}" target="_blank">Privacy Policy</a> and <a href="{{ terms_url }}" target="_blank">Terms & Conditions</a> of use.
-                        {% endblocktrans %}
-                    </label>
-                </div>
+                {% bootstrap_field form.terms %}
             </div>
             <div class="row">
                 <div class="col-md-6">
