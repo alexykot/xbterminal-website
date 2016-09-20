@@ -396,7 +396,6 @@ class AccountForm(forms.ModelForm):
     class Meta:
         model = Account
         fields = [
-            'currency',
             'max_payout',
             'forward_address',
             'bank_account_name',
@@ -407,21 +406,17 @@ class AccountForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(AccountForm, self).__init__(*args, **kwargs)
         assert self.instance and self.instance.pk
-        self.fields['currency'].widget.attrs['disabled'] = True
-        self.fields['currency'].required = False
-        if self.instance.currency.name not in ['BTC', 'TBTC']:
+        if self.instance.currency.name in ['BTC', 'TBTC']:
+            del self.fields['bank_account_name']
+            del self.fields['bank_account_bic']
+            del self.fields['bank_account_iban']
+        else:
+            assert self.instance.instantfiat
             del self.fields['max_payout']
             del self.fields['forward_address']
             self.fields['bank_account_name'].required = True
             self.fields['bank_account_bic'].required = True
             self.fields['bank_account_iban'].required = True
-        else:
-            del self.fields['bank_account_name']
-            del self.fields['bank_account_bic']
-            del self.fields['bank_account_iban']
-
-    def clean_currency(self):
-        return self.instance.currency
 
     def clean(self):
         cleaned_data = super(AccountForm, self).clean()

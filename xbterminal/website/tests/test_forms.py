@@ -22,7 +22,6 @@ from website.forms import (
     WithdrawToBankAccountForm)
 from website.tests.factories import (
     create_uploaded_image,
-    CurrencyFactory,
     MerchantAccountFactory,
     AccountFactory,
     TransactionFactory,
@@ -322,6 +321,11 @@ class AccountFormTestCase(TestCase):
         with self.assertRaises(AssertionError):
             AccountForm()
 
+        account = AccountFactory.create(currency__name='USD',
+                                        instantfiat=False)
+        with self.assertRaises(AssertionError):
+            AccountForm(instance=account)
+
     def test_update_btc(self):
         account = AccountFactory.create()
         form_data = {
@@ -356,9 +360,7 @@ class AccountFormTestCase(TestCase):
 
     def test_update_gbp(self):
         account = AccountFactory.create(currency__name='GBP')
-        btc = CurrencyFactory.create(name='BTC')
         form_data = {
-            'currency': btc.pk,
             'bank_account_name': 'Test',
             'bank_account_bic': 'DEUTDEFF000',
             'bank_account_iban': 'GB82WEST12345698765432',
@@ -366,8 +368,6 @@ class AccountFormTestCase(TestCase):
         form = AccountForm(data=form_data, instance=account)
         self.assertTrue(form.is_valid())
         account_updated = form.save()
-        self.assertEqual(account_updated.currency.pk,
-                         account.currency.pk)  # Not changed
         self.assertEqual(account_updated.bank_account_name,
                          form_data['bank_account_name'])
         self.assertEqual(account_updated.bank_account_bic,
@@ -390,7 +390,6 @@ class AccountFormTestCase(TestCase):
     def test_update_gbp_invalid_bic(self):
         account = AccountFactory.create(currency__name='GBP')
         form_data = {
-            'currency': account.currency.pk,
             'bank_account_name': 'Test',
             'bank_account_bic': 'XXX000AAA',
             'bank_account_iban': 'GB82WEST12345698765432',
@@ -402,7 +401,6 @@ class AccountFormTestCase(TestCase):
     def test_update_gbp_invalid_iban(self):
         account = AccountFactory.create(currency__name='GBP')
         form_data = {
-            'currency': account.currency.pk,
             'bank_account_name': 'Test',
             'bank_account_bic': 'DEUTDEFF000',
             'bank_account_iban': 'GB82WEST12345698765433',
