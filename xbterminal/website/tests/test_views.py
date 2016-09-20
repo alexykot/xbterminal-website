@@ -1,11 +1,13 @@
+from decimal import Decimal
 import json
+from mock import patch
+
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.test import TestCase
 from django.core import mail
 from django.core.cache import cache
 from django.utils import timezone
-from mock import patch
 
 from website.models import (
     MerchantAccount,
@@ -468,40 +470,6 @@ class UpdateProfileViewTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
 
 
-class InstantFiatSettingsViewTestCase(TestCase):
-
-    def test_get(self):
-        merchant = MerchantAccountFactory.create()
-        self.client.login(username=merchant.user.email,
-                          password='password')
-        url = reverse('website:instantfiat')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/instantfiat_form.html')
-        self.assertEqual(response.context['form'].instance.pk,
-                         merchant.pk)
-
-    def test_get_managed_profile(self):
-        merchant = MerchantAccountFactory.create(
-            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-            instantfiat_merchant_id='test-id',
-            instantfiat_api_key='xxxyyyzzz')
-        self.client.login(username=merchant.user.email,
-                          password='password')
-        url = reverse('website:instantfiat')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 404)
-
-    def test_post(self):
-        merchant = MerchantAccountFactory.create()
-        self.client.login(username=merchant.user.email,
-                          password='password')
-        url = reverse('website:instantfiat')
-        form_data = {'instantfiat_api_key': 'xxx'}
-        response = self.client.post(url, data=form_data)
-        self.assertEqual(response.status_code, 302)
-
-
 class ResetPasswordViewTestCase(TestCase):
 
     def setUp(self):
@@ -750,27 +718,16 @@ class AccountListViewTestCase(TestCase):
         self.assertTemplateUsed(response, 'cabinet/account_list.html')
         self.assertEqual(response.context['accounts'].first().pk,
                          account.pk)
-        self.assertTrue(response.context['can_edit_ift_settings'])
-
-    def test_get_managed_profile(self):
-        merchant = MerchantAccountFactory.create(
-            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-            instantfiat_merchant_id='test-id',
-            instantfiat_api_key='xxxyyyzzz')
-        self.client.login(username=merchant.user.email,
-                          password='password')
-        url = reverse('website:accounts')
-        response = self.client.get(url)
-        self.assertFalse(response.context['can_edit_ift_settings'])
 
 
 class EditAccountViewTestCase(TestCase):
 
     def test_get(self):
-        account = AccountFactory.create()
+        account = AccountFactory.create(currency__name='BTC')
         self.client.login(username=account.merchant.user.email,
                           password='password')
-        url = reverse('website:account', kwargs={'pk': account.pk})
+        url = reverse('website:account',
+                      kwargs={'currency_code': 'btc'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'cabinet/account_form.html')
@@ -778,27 +735,60 @@ class EditAccountViewTestCase(TestCase):
 
     def test_get_account_not_found(self):
         merchant = MerchantAccountFactory.create()
-        account = AccountFactory.create()
+        AccountFactory.create()
         self.client.login(username=merchant.user.email,
                           password='password')
-        url = reverse('website:account', kwargs={'pk': account.pk})
+        url = reverse('website:account',
+                      kwargs={'currency_code': 'yzx'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
-    def test_post(self):
+    def test_post_btc_account(self):
         account = AccountFactory.create()
         self.client.login(username=account.merchant.user.email,
                           password='password')
-        url = reverse('website:account', kwargs={'pk': account.pk})
+        url = reverse('website:account',
+                      kwargs={'currency_code': 'btc'})
         form_data = {
             'max_payout': '0.05',
             'forward_address': '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
         }
         response = self.client.post(url, data=form_data)
         self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_post_usd_account(self):
+        account = AccountFactory.create(instantfiat=True,
+                                        currency__name='USD')
+        self.client.login(username=account.merchant.user.email,
+                          password='password')
+        url = reverse('website:account',
+                      kwargs={'currency_code': 'usd'})
+        form_data = {
+            'bank_account_name': 'Test',
+            'bank_account_bic': 'DEUTDEFF000',
+            'bank_account_iban': 'GB82WEST12345698765432',
+        }
+        response = self.client.post(url, data=form_data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0],
+                         settings.CONTACT_EMAIL_RECIPIENTS[0])
+
+    def test_post_errors(self):
+        account = AccountFactory.create(instantfiat=True,
+                                        currency__name='GBP')
+        self.client.login(username=account.merchant.user.email,
+                          password='password')
+        url = reverse('website:account',
+                      kwargs={'currency_code': 'gbp'})
+        response = self.client.post(url, data={})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('form', response.context)
+        self.assertEqual(len(mail.outbox), 0)
 
 
-class DeviceTransactionsViewTestCase(TestCase):
+class DeviceTransactionListViewTestCase(TestCase):
 
     def setUp(self):
         self.merchant = MerchantAccountFactory.create()
@@ -870,7 +860,52 @@ class DeviceTransactionsViewTestCase(TestCase):
         self.assertNotIn('transactions', response.context)
 
 
-class ReportViewTestCase(TestCase):
+class AccountTransactionListViewTestCase(TestCase):
+
+    def setUp(self):
+        self.merchant = MerchantAccountFactory.create()
+
+    def test_get(self):
+        account = AccountFactory.create(merchant=self.merchant)
+        tx = TransactionFactory.create(account=account)
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:account_transactions',
+                      kwargs={'currency_code': 'btc'})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/transactions.html')
+        self.assertIn('search_form', response.context)
+        self.assertEqual(response.context['range_beg'],
+                         response.context['range_end'])
+        transactions = response.context['transactions']
+        self.assertEqual(transactions.count(), 1)
+        self.assertEqual(transactions[0].pk, tx.pk)
+
+    def test_post(self):
+        account = AccountFactory.create(merchant=self.merchant)
+        now = timezone.now()
+        tx = TransactionFactory.create(account=account, created_at=now)
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:account_transactions',
+                      kwargs={'currency_code': 'btc'})
+        data = {
+            'range_beg': now.strftime('%Y-%m-%d'),
+            'range_end': now.strftime('%Y-%m-%d'),
+        }
+        response = self.client.post(url, data=data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/transactions.html')
+        self.assertIn('search_form', response.context)
+        self.assertEqual(response.context['range_beg'], now.date())
+        self.assertEqual(response.context['range_end'], now.date())
+        transactions = response.context['transactions']
+        self.assertEqual(transactions.count(), 1)
+        self.assertEqual(transactions[0].pk, tx.pk)
+
+
+class DeviceReportViewTestCase(TestCase):
 
     def setUp(self):
         self.merchant = MerchantAccountFactory.create()
@@ -882,7 +917,7 @@ class ReportViewTestCase(TestCase):
             account=device.account)
         self.client.login(username=self.merchant.user.email,
                           password='password')
-        url = reverse('website:report',
+        url = reverse('website:device_report',
                       kwargs={'device_key': device.key})
         date_str = tx.created_at.strftime('%Y-%m-%d')
         url += '?range_beg={date}&range_end={date}'.format(date=date_str)
@@ -894,10 +929,29 @@ class ReportViewTestCase(TestCase):
         device = DeviceFactory.create(merchant=self.merchant)
         self.client.login(username=self.merchant.user.email,
                           password='password')
-        url = reverse('website:report',
+        url = reverse('website:device_report',
                       kwargs={'device_key': device.key})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
+
+
+class AccountReportViewTestCase(TestCase):
+
+    def setUp(self):
+        self.merchant = MerchantAccountFactory.create()
+
+    def test_view(self):
+        account = AccountFactory.create(merchant=self.merchant)
+        tx = TransactionFactory.create(account=account)
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:account_report',
+                      kwargs={'currency_code': 'btc'})
+        date_str = tx.created_at.strftime('%Y-%m-%d')
+        url += '?range_beg={date}&range_end={date}'.format(date=date_str)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header('Content-Disposition'))
 
 
 class AddFundsViewTestCase(TestCase):
@@ -910,16 +964,89 @@ class AddFundsViewTestCase(TestCase):
         self.client.login(username=self.merchant.user.email,
                           password='password')
         url = reverse('website:add_funds',
-                      kwargs={'pk': account.pk})
+                      kwargs={'currency_code': 'btc'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'payment/payment.html')
         self.assertEqual(response.context['account'].pk, account.pk)
 
-    def test_invalid_account_id(self):
+    def test_invalid_currency_code(self):
         self.client.login(username=self.merchant.user.email,
                           password='password')
         url = reverse('website:add_funds',
-                      kwargs={'pk': 1276617276})
+                      kwargs={'currency_code': 'xxx'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
+
+
+class WithdrawToBankAccountForm(TestCase):
+
+    def setUp(self):
+        self.merchant = MerchantAccountFactory.create()
+
+    def test_get(self):
+        account = AccountFactory.create(merchant=self.merchant,
+                                        instantfiat=True,
+                                        currency__name='GBP')
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:account_withdrawal',
+                      kwargs={'currency_code': 'gbp'})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/withdrawal_form.html')
+        self.assertEqual(response.context['account'].pk, account.pk)
+        self.assertEqual(response.context['form'].account.pk, account.pk)
+
+    def test_get_btc(self):
+        AccountFactory.create(merchant=self.merchant,
+                              instantfiat=False,
+                              currency__name='BTC')
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:account_withdrawal',
+                      kwargs={'currency_code': 'btc'})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_post(self):
+        account = AccountFactory.create(merchant=self.merchant,
+                                        instantfiat=True,
+                                        currency__name='GBP')
+        TransactionFactory.create(account=account, amount=Decimal('1.0'))
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:account_withdrawal',
+                      kwargs={'currency_code': 'gbp'})
+        data = {'amount': '0.5'}
+        response = self.client.post(url, data=data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to[0],
+                         settings.CONTACT_EMAIL_RECIPIENTS[0])
+
+    def test_post_btc(self):
+        AccountFactory.create(merchant=self.merchant,
+                              instantfiat=False,
+                              currency__name='BTC')
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:account_withdrawal',
+                      kwargs={'currency_code': 'btc'})
+        data = {'amount': '0.5'}
+        response = self.client.post(url, data=data)
+        self.assertEqual(response.status_code, 404)
+
+    def test_post_invalid_amount(self):
+        AccountFactory.create(merchant=self.merchant,
+                              instantfiat=True,
+                              currency__name='GBP')
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:account_withdrawal',
+                      kwargs={'currency_code': 'gbp'})
+        data = {'amount': '0.5'}
+        response = self.client.post(url, data=data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/withdrawal_form.html')
+        self.assertEqual(len(mail.outbox), 0)

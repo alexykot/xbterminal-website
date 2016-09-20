@@ -382,35 +382,6 @@ class UpdateProfileView(TemplateResponseMixin, CabinetView):
             return self.render_to_response(context)
 
 
-class InstantFiatSettingsView(TemplateResponseMixin, CabinetView):
-
-    template_name = 'cabinet/instantfiat_form.html'
-
-    def get_context_data(self, **kwargs):
-        context = super(InstantFiatSettingsView, self).get_context_data(**kwargs)
-        if self.merchant.instantfiat_merchant_id:
-            raise Http404
-        return context
-
-    def get(self, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-        context['form'] = forms.InstantFiatSettingsForm(
-            instance=self.merchant)
-        return self.render_to_response(context)
-
-    def post(self, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-        form = forms.InstantFiatSettingsForm(
-            self.request.POST,
-            instance=self.merchant)
-        if form.is_valid():
-            form.save()
-            return redirect(reverse('website:accounts'))
-        else:
-            context['form'] = form
-            return self.render_to_response(context)
-
-
 class ChangePasswordView(TemplateResponseMixin, CabinetView):
     """
     Change password
@@ -562,25 +533,29 @@ class AccountListView(TemplateResponseMixin, CabinetView):
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         context['accounts'] = self.merchant.account_set.all()
-        context['can_edit_ift_settings'] = \
-            not self.merchant.instantfiat_merchant_id
         return self.render_to_response(context)
 
 
-class EditAccountView(TemplateResponseMixin, CabinetView):
+class AccountMixin(ContextMixin):
+    """
+    Adds account to the context
+    """
+    def get_context_data(self, **kwargs):
+        context = super(AccountMixin, self).get_context_data(**kwargs)
+        currency_code = self.kwargs.get('currency_code', '').upper()
+        try:
+            context['account'] = self.merchant.account_set.\
+                get(currency__name=currency_code)
+        except models.Account.DoesNotExist:
+            raise Http404
+        return context
+
+
+class EditAccountView(AccountMixin, TemplateResponseMixin, CabinetView):
     """
     Edit account
     """
     template_name = 'cabinet/account_form.html'
-
-    def get_context_data(self, **kwargs):
-        context = super(EditAccountView, self).get_context_data(**kwargs)
-        try:
-            context['account'] = self.merchant.account_set.\
-                get(pk=self.kwargs.get('pk'))
-        except models.Account.DoesNotExist:
-            raise Http404
-        return context
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -592,63 +567,95 @@ class EditAccountView(TemplateResponseMixin, CabinetView):
         form = forms.AccountForm(self.request.POST,
                                  instance=context['account'])
         if form.is_valid():
-            form.save()
+            account = form.save()
+            if account.instantfiat:
+                email.send_bank_account_info(account)
             return redirect(reverse('website:accounts'))
         else:
             context['form'] = form
             return self.render_to_response(context)
 
 
-class DeviceTransactionsView(DeviceMixin, TemplateResponseMixin, CabinetView):
+class TransactionListView(TemplateResponseMixin, CabinetView):
     """
-    List device transactions
+    Base class
     """
     template_name = 'cabinet/transactions.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
+        device_or_account = (context.get('device') or context.get('account'))
         context['search_form'] = forms.TransactionSearchForm()
         context['range_beg'] = context['range_end'] = datetime.date.today()
-        context['transactions'] = context['device'].get_transactions_by_date(
-            context['range_beg'],
-            context['range_end'])
+        context['transactions'] = device_or_account.\
+            get_transactions_by_date(context['range_beg'],
+                                     context['range_end'])
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
+        device_or_account = context.get('device') or context.get('account')
         form = forms.TransactionSearchForm(self.request.POST)
         if form.is_valid():
             context['range_beg'] = form.cleaned_data['range_beg']
             context['range_end'] = form.cleaned_data['range_end']
-            context['transactions'] = context['device'].get_transactions_by_date(
-                context['range_beg'],
-                context['range_end'])
+            context['transactions'] = device_or_account.\
+                get_transactions_by_date(context['range_beg'],
+                                         context['range_end'])
         context['search_form'] = form
         return self.render_to_response(context)
 
 
-class ReportView(DeviceMixin, CabinetView):
+class DeviceTransactionListView(DeviceMixin, TransactionListView):
     """
-    Download csv report
+    List device transactions
     """
+    pass
 
+
+class AccountTransactionListView(AccountMixin, TransactionListView):
+    """
+    List account transactions
+    """
+    pass
+
+
+class ReportView(CabinetView):
+    """
+    Base class
+    """
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         form = forms.TransactionSearchForm(data=self.request.GET)
         if not form.is_valid():
             raise Http404
-        transactions = context['device'].get_transactions_by_date(
+        device_or_account = context.get('device') or context.get('account')
+        transactions = device_or_account.get_transactions_by_date(
             form.cleaned_data['range_beg'],
             form.cleaned_data['range_end'])
         content_disposition = 'attachment; filename="{0}"'.format(
-            reports.get_report_filename(context['device']))
+            reports.get_report_filename(device_or_account))
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = content_disposition
         reports.get_report_csv(transactions, response)
         return response
 
 
-class AddFundsView(TemplateResponseMixin, CabinetView):
+class DeviceReportView(DeviceMixin, ReportView):
+    """
+    Download CSV file with device transactions
+    """
+    pass
+
+
+class AccountReportView(AccountMixin, ReportView):
+    """
+    Download CSV file with account transactions
+    """
+    pass
+
+
+class AddFundsView(AccountMixin, TemplateResponseMixin, CabinetView):
     """
     Add funds to account
     """
@@ -656,10 +663,40 @@ class AddFundsView(TemplateResponseMixin, CabinetView):
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        try:
-            context['account'] = self.merchant.account_set.\
-                get(pk=self.kwargs.get('pk'))
-        except models.Account.DoesNotExist:
-            raise Http404
         context['amount'] = Decimal('0.00')
         return self.render_to_response(context)
+
+
+class WithdrawToBankAccountView(AccountMixin,
+                                TemplateResponseMixin,
+                                CabinetView):
+    """
+    Withdraw funds from instantfiat account
+    """
+    template_name = 'cabinet/withdrawal_form.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(WithdrawToBankAccountView, self).\
+            get_context_data(**kwargs)
+        if not context['account'].instantfiat:
+            raise Http404
+        return context
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['form'] = forms.WithdrawToBankAccountForm(
+            account=context['account'])
+        return self.render_to_response(context)
+
+    def post(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        form = forms.WithdrawToBankAccountForm(
+            self.request.POST,
+            account=context['account'])
+        if form.is_valid():
+            email.send_withdrawal_request(context['account'],
+                                          form.cleaned_data['amount'])
+            return redirect(reverse('website:accounts'))
+        else:
+            context['form'] = form
+            return self.render_to_response(context)

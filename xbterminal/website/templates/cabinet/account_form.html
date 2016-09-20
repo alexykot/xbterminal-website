@@ -4,14 +4,18 @@
 {% block cabinet_content %}
 <div class="row">
     <div class="col-md-8 col-md-offset-2">
-        <h3>{% if account %}{% trans 'Edit account' %}{% else %}{% trans 'Create account' %}{% endif %}</h3>
+        <h3>
+            {% blocktrans with currency_name=account.currency.name %}
+            Edit {{ currency_name }} account settings
+            {% endblocktrans %}
+        </h3>
         <form id="account-form" action="" method="post">
             {% csrf_token %}
             {% bootstrap_form form %}
             <div class="row">
                 <div class="col-md-6">
                     <button type="submit" class="btn btn-default pull-right">
-                        {% if account %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %}
+                        {% trans 'Update' %}
                     </button>
                 </div>
                 <div class="col-md-6">

@@ -106,6 +106,12 @@ label[for="id_3-county"]:after {
     color: red;
 }
 
+/* Account page */
+
+#account-form {
+    margin-bottom: 10px;
+}
+
 /* Contact page */
 
 #contact-form {

@@ -248,6 +248,9 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.balance, 0)
         self.assertFalse(account.instantfiat)
         self.assertIsNone(account.instantfiat_account_id)
+        self.assertIsNone(account.bank_account_name)
+        self.assertIsNone(account.bank_account_bic)
+        self.assertIsNone(account.bank_account_iban)
         self.assertEqual(str(account), 'BTC - 0.00000000')
 
     def test_factory_btc(self):
@@ -258,6 +261,9 @@ class AccountTestCase(TestCase):
         self.assertIsNotNone(account.forward_address)
         self.assertFalse(account.instantfiat)
         self.assertIsNone(account.instantfiat_account_id)
+        self.assertIsNone(account.bank_account_name)
+        self.assertIsNone(account.bank_account_bic)
+        self.assertIsNone(account.bank_account_iban)
         self.assertEqual(str(account), 'BTC - 0.00000000')
 
     def test_factory_gbp(self):
@@ -270,6 +276,9 @@ class AccountTestCase(TestCase):
         self.assertIsNone(account.forward_address)
         self.assertTrue(account.instantfiat)
         self.assertIsNotNone(account.instantfiat_account_id)
+        self.assertIsNone(account.bank_account_name)
+        self.assertIsNone(account.bank_account_bic)
+        self.assertIsNone(account.bank_account_iban)
         self.assertEqual(str(account), 'GBP - 0.00')
 
     def test_unique_together_1(self):
@@ -363,6 +372,31 @@ class AccountTestCase(TestCase):
             3, merchant=account_gbp.merchant, account=account_gbp)
         self.assertEqual(account_gbp.balance_min, 0)
         self.assertEqual(account_gbp.balance_max, 0)
+
+    def test_get_transactions_by_date(self):
+        account = AccountFactory.create()
+        now = timezone.now()
+        range_beg = (now - datetime.timedelta(days=5)).date()
+        range_end = (now - datetime.timedelta(days=4)).date()
+        TransactionFactory.create(
+            account=account,
+            created_at=now - datetime.timedelta(days=6))
+        TransactionFactory.create(
+            account=account,
+            created_at=now - datetime.timedelta(days=3))
+        TransactionFactory.create(
+            created_at=now - datetime.timedelta(days=5))
+        tx_1 = TransactionFactory.create(
+            account=account,
+            created_at=now - datetime.timedelta(days=5))
+        tx_2 = TransactionFactory.create(
+            account=account,
+            created_at=now - datetime.timedelta(days=4))
+        transactions = account.get_transactions_by_date(range_beg,
+                                                        range_end)
+        self.assertEqual(transactions.count(), 2)
+        self.assertEqual(transactions[0].pk, tx_1.pk)
+        self.assertEqual(transactions[1].pk, tx_2.pk)
 
 
 class AddressTestCase(TestCase):

@@ -23,6 +23,7 @@ from constance import config
 from django_countries.fields import CountryField
 from django_fsm import FSMField, transition
 from extended_choices import Choices
+from localflavor.generic.models import BICField, IBANField
 from slugify import slugify
 
 from website.validators import (
@@ -332,6 +333,18 @@ class Account(models.Model):
         max_length=50,
         blank=True,
         null=True)
+    bank_account_name = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True)
+    bank_account_bic = BICField(
+        _('Bank account BIC'),
+        blank=True,
+        null=True)
+    bank_account_iban = IBANField(
+        _('Bank account IBAN'),
+        blank=True,
+        null=True)
 
     class Meta:
         ordering = ('merchant', 'instantfiat', 'currency')
@@ -383,6 +396,23 @@ class Account(models.Model):
     def balance_max(self):
         multiplier = 3
         return self.balance_min * multiplier
+
+    def get_transactions_by_date(self, range_beg, range_end):
+        """
+        Returns list of account transactions for date range
+        Accepts:
+            range_beg: beginning of range, datetime.date instance
+            range_end: end of range, datetime.date instance
+        """
+        beg = timezone.make_aware(
+            datetime.datetime.combine(range_beg, datetime.time.min),
+            timezone.get_current_timezone())
+        end = timezone.make_aware(
+            datetime.datetime.combine(range_end, datetime.time.max),
+            timezone.get_current_timezone())
+        return self.transaction_set.\
+            filter(created_at__range=(beg, end)).\
+            order_by('created_at')
 
     def clean(self):
         if not hasattr(self, 'instantfiat'):
@@ -641,7 +671,6 @@ class Device(models.Model):
         """
         Returns list of device transactions
         """
-        # TODO: replace get_payments and get_payments_by_date
         return Transaction.objects.filter(
             models.Q(payment__device=self) |
             models.Q(withdrawal__device=self)).order_by('created_at')
