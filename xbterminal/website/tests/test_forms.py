@@ -11,6 +11,7 @@ from website.models import (
     MerchantAccount,
     INSTANTFIAT_PROVIDERS)
 from website.forms import (
+    LoginMethodForm,
     MerchantRegistrationForm,
     ResetPasswordForm,
     ProfileForm,
@@ -27,6 +28,21 @@ from website.tests.factories import (
     AccountFactory,
     DeviceFactory)
 from operations.exceptions import CryptoPayUserAlreadyExists
+
+
+class LoginMethodFormTestCase(TestCase):
+
+    def test_valid_data(self):
+        form_data = {'method': 'login'}
+        form = LoginMethodForm(data=form_data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['method'], 'login')
+
+    def test_required(self):
+        form = LoginMethodForm(data={})
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['method'][0],
+                         'Please choose how to login.')
 
 
 class MerchantRegistrationFormTestCase(TestCase):

@@ -58,6 +58,22 @@ class AuthenticationForm(DjangoAuthenticationForm):
         return email.lower()
 
 
+class LoginMethodForm(forms.Form):
+    """
+    Choose how to login
+    """
+    method = forms.ChoiceField(
+        label='',
+        choices=(
+            ('login', _('Log in as existing merchant')),
+            ('register', _('Register a new merchant')),
+        ),
+        widget=forms.RadioSelect,
+        error_messages={
+            'required': _('Please choose how to login.'),
+        })
+
+
 class ResetPasswordForm(forms.Form):
 
     email = forms.EmailField()
