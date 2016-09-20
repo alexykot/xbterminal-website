@@ -386,7 +386,7 @@ class ActivateDeviceViewTestCase(TestCase):
         self.assertTrue(run_mock.called)
         self.assertEqual(run_mock.call_args[1]['queue'], 'low')
         self.assertTrue(run_periodic_mock.called)
-        expected_url = reverse('website:activation',
+        expected_url = reverse('website:device_activation',
                                kwargs={'device_key': device.key})
         self.assertRedirects(response, expected_url)
         self.assertEqual(merchant.device_set.count(), 1)
@@ -406,7 +406,7 @@ class ActivateDeviceViewTestCase(TestCase):
                       response.context['form'].errors)
 
 
-class ActivationViewTestCase(TestCase):
+class DeviceActivationViewTestCase(TestCase):
 
     def setUp(self):
         self.merchant = MerchantAccountFactory.create()
@@ -414,7 +414,7 @@ class ActivationViewTestCase(TestCase):
     def test_get(self):
         device = DeviceFactory.create(merchant=self.merchant,
                                       status='activation')
-        url = reverse('website:activation',
+        url = reverse('website:device_activation',
                       kwargs={'device_key': device.key})
         self.client.login(username=self.merchant.user.email,
                           password='password')
@@ -427,7 +427,7 @@ class ActivationViewTestCase(TestCase):
     def test_already_active(self):
         device = DeviceFactory.create(merchant=self.merchant,
                                       status='active')
-        url = reverse('website:activation',
+        url = reverse('website:device_activation',
                       kwargs={'device_key': device.key})
         self.client.login(username=self.merchant.user.email,
                           password='password')
@@ -963,7 +963,7 @@ class AddFundsViewTestCase(TestCase):
         account = AccountFactory.create(merchant=self.merchant)
         self.client.login(username=self.merchant.user.email,
                           password='password')
-        url = reverse('website:add_funds',
+        url = reverse('website:account_add_funds',
                       kwargs={'currency_code': 'btc'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -973,7 +973,7 @@ class AddFundsViewTestCase(TestCase):
     def test_invalid_currency_code(self):
         self.client.login(username=self.merchant.user.email,
                           password='password')
-        url = reverse('website:add_funds',
+        url = reverse('website:account_add_funds',
                       kwargs={'currency_code': 'xxx'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)

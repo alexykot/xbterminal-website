@@ -235,7 +235,7 @@ class ActivationWizard(CookieWizardView):
         activation.start(device, merchant)
         # Login & redirect
         login(self.request, merchant.user)
-        return redirect(reverse('website:activation',
+        return redirect(reverse('website:device_activation',
                                 kwargs={'device_key': device.key}))
 
 
@@ -288,7 +288,7 @@ class ActivateDeviceView(TemplateResponseMixin, CabinetView):
         form = forms.DeviceActivationForm(self.request.POST)
         if form.is_valid():
             activation.start(form.device, self.merchant)
-            return redirect(reverse('website:activation',
+            return redirect(reverse('website:device_activation',
                                     kwargs={'device_key': form.device.key}))
         else:
             context = self.get_context_data(**kwargs)
@@ -296,7 +296,7 @@ class ActivateDeviceView(TemplateResponseMixin, CabinetView):
             return self.render_to_response(context)
 
 
-class ActivationView(TemplateResponseMixin, CabinetView):
+class DeviceActivationView(TemplateResponseMixin, CabinetView):
 
     template_name = 'cabinet/activation.html'
 
