@@ -15,6 +15,10 @@ urlpatterns = [
     url(r'^logout/$', views.LogoutView.as_view(), name='logout'),
     url(r'^reset_password/$', views.ResetPasswordView.as_view(), name='reset_password'),
     url(r'^registration/$', views.RegistrationView.as_view(), name='registration'),
+    url(r'^activate/$',
+        views.ActivationWizard.as_view(),
+        name='activation_wizard'),
+
     url(r'^profile/$', views.UpdateProfileView.as_view(), name='profile'),
     url(r'^instantfiat/$', views.InstantFiatSettingsView.as_view(), name='instantfiat'),
     url(r'^change_password/$', views.ChangePasswordView.as_view(), name='change_password'),

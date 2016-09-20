@@ -1,0 +1,23 @@
+{% extends 'website/base.html' %}
+
+{% load bootstrap3 i18n %}
+
+{% block website_content %}
+<div class="row">
+    <div class="col-md-10 col-md-offset-1">
+        <h3>
+            {% if wizard.steps.step0 == 0 %}{% trans 'Device activation' %}
+            {% elif wizard.steps.step0 == 1 %}{% trans 'Choose auth method' %}
+            {% elif wizard.steps.step0 == 2 %}{% trans 'Merchant login' %}
+            {% elif wizard.steps.step0 == 3 %}{% trans 'Merchant registration' %}
+            {% endif %}
+        </h3>
+        <form id="activation-wizard" action="" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ wizard.management_form }}
+            {% bootstrap_form wizard.form %}
+            <button type="submit" class="btn btn-info">Continue</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

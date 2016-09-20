@@ -15,6 +15,7 @@ from django.core.urlresolvers import resolve, reverse
 from django.db.transaction import atomic
 from django.utils.translation import ugettext as _
 
+from formtools.wizard.views import CookieWizardView
 from ipware.ip import get_real_ip
 
 from api.utils import activation
@@ -188,6 +189,49 @@ class RegistrationView(TemplateResponseMixin, View):
         email.send_registration_info(merchant)
         login(self.request, merchant.user)
         return redirect(reverse('website:devices'))
+
+
+class ActivationWizard(CookieWizardView):
+    """
+    Activate device and login
+    """
+    template_name = 'website/activation.html'
+    form_list = [
+        forms.DeviceActivationForm,
+        forms.LoginMethodForm,
+        forms.AuthenticationForm,
+        forms.MerchantRegistrationForm,
+    ]
+
+    def show_login_form_condition(self):
+        data = self.get_cleaned_data_for_step('1') or {}
+        return data.get('method') == 'login'
+
+    def show_registration_form_condition(self):
+        data = self.get_cleaned_data_for_step('1') or {}
+        return data.get('method') == 'register'
+
+    condition_dict = {
+        '2': show_login_form_condition,
+        '3': show_registration_form_condition,
+    }
+
+    @atomic
+    def done(self, form_list, **kwargs):
+        # Get device
+        device = form_list[0].device
+        # Get merchant
+        if self.show_login_form_condition():
+            merchant = form_list[2].get_user().merchant
+        elif self.show_registration_form_condition():
+            merchant = form_list[2].save()
+            email.send_registration_info(merchant)
+        # Start activation
+        activation.start(device, merchant)
+        # Login & redirect
+        login(self.request, merchant.user)
+        return redirect(reverse('website:activation',
+                                kwargs={'device_key': device.key}))
 
 
 def get_current_merchant(request):
