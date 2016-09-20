@@ -1,22 +1,42 @@
 {% extends 'website/base.html' %}
-
 {% load bootstrap3 i18n %}
 
 {% block website_content %}
 <div class="row">
     <div class="col-md-10 col-md-offset-1">
         <h3>
-            {% if wizard.steps.step0 == 0 %}{% trans 'Device activation' %}
-            {% elif wizard.steps.step0 == 1 %}{% trans 'Choose auth method' %}
-            {% elif wizard.steps.step0 == 2 %}{% trans 'Merchant login' %}
-            {% elif wizard.steps.step0 == 3 %}{% trans 'Merchant registration' %}
+            {% if wizard.steps.current == '0' %}{% trans 'Device activation' %}
+            {% elif wizard.steps.current == '1' %}{% trans 'Choose how to login' %}
+            {% elif wizard.steps.current == '2' %}{% trans 'Merchant login' %}
+            {% elif wizard.steps.current == '3' %}{% trans 'Merchant registration' %}
             {% endif %}
         </h3>
-        <form id="activation-wizard" action="" method="POST" enctype="multipart/form-data">
+        <form id="activation-wizard" action="" method="POST" enctype="multipart/form-data" novalidate>
             {% csrf_token %}
             {{ wizard.management_form }}
-            {% bootstrap_form wizard.form %}
-            <button type="submit" class="btn btn-info">Continue</button>
+            {% if wizard.steps.current == '3' %}
+                {% include 'website/_registration_form_layout.html' %}
+            {% else %}
+                {% bootstrap_form wizard.form %}
+            {% endif %}
+            <div class="row">
+                <div class="col-md-6">
+                    <button type="submit" class="btn btn-default pull-right" value="">
+                        {% trans 'Continue' %}
+                    </button>
+                </div>
+                <div class="col-md-6">
+                    {% if wizard.steps.prev %}
+                    <button name="wizard_goto_step" type="submit" class="btn btn-default" value="{{ wizard.steps.prev }}">
+                        {% trans 'Back' %}
+                    </button>
+                    {% else %}
+                    <a href="{% url 'website:landing' %}" class="btn btn-default">
+                        {% trans 'Cancel' %}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
         </form>
     </div>
 </div>

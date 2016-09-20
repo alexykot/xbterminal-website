@@ -24,25 +24,24 @@ input:-ms-input-placeholder {
 
 /* Registration */
 
-#step {
-    color: #ccc;
-}
-
 #merchant-form {
     margin-bottom: 10px;
 }
 
-#registration-step-2,
-#loading-image {
-    display: none;
-}
-
-label[for="id_business_address1"] {
-    display: none;
-}
-
 label[for="id_trading_name"]:after,
 label[for="id_county"]:after {
+    color: #ccc;
+    content: " (optional)";
+}
+
+/* Activation wizard */
+
+#activation-wizard {
+    margin-bottom: 10px;
+}
+
+label[for="id_3-trading_name"]:after,
+label[for="id_3-county"]:after {
     color: #ccc;
     content: " (optional)";
 }
