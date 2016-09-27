@@ -1,0 +1,8 @@
+{% extends 'email/base.html' %}
+{% load i18n website_tags %}
+
+{% block content %}
+{% trans 'Withdrawal request received' %}.<br>
+{% trans 'Account' %}: {{ account|admin_url }}<br>
+{% trans 'Amount' %}: {{ amount }}
+{% endblock %}

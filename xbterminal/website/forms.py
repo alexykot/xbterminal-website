@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 
 from django import forms
 from django.core.cache import cache
@@ -282,29 +283,6 @@ class ProfileForm(forms.ModelForm):
         return instance
 
 
-class InstantFiatSettingsForm(forms.ModelForm):
-
-    class Meta:
-        model = MerchantAccount
-        fields = [
-            'instantfiat_provider',
-            'instantfiat_api_key',
-        ]
-        widgets = {
-            'instantfiat_provider': forms.HiddenInput,
-        }
-        labels = {
-            'instantfiat_api_key': 'CryptoPay API key',
-        }
-
-    def __init__(self, *args, **kwargs):
-        super(InstantFiatSettingsForm, self).__init__(*args, **kwargs)
-        self.fields['instantfiat_api_key'].required = True
-
-    def clean_instantfiat_provider(self):
-        return INSTANTFIAT_PROVIDERS.CRYPTOPAY
-
-
 class KYCDocumentUploadForm(forms.ModelForm):
 
     class Meta:
@@ -418,22 +396,27 @@ class AccountForm(forms.ModelForm):
     class Meta:
         model = Account
         fields = [
-            'currency',
             'max_payout',
             'forward_address',
+            'bank_account_name',
+            'bank_account_bic',
+            'bank_account_iban',
         ]
 
     def __init__(self, *args, **kwargs):
         super(AccountForm, self).__init__(*args, **kwargs)
         assert self.instance and self.instance.pk
-        self.fields['currency'].widget.attrs['disabled'] = True
-        self.fields['currency'].required = False
-        if self.instance.currency.name not in ['BTC', 'TBTC']:
+        if self.instance.currency.name in ['BTC', 'TBTC']:
+            del self.fields['bank_account_name']
+            del self.fields['bank_account_bic']
+            del self.fields['bank_account_iban']
+        else:
+            assert self.instance.instantfiat
             del self.fields['max_payout']
             del self.fields['forward_address']
-
-    def clean_currency(self):
-        return self.instance.currency
+            self.fields['bank_account_name'].required = True
+            self.fields['bank_account_bic'].required = True
+            self.fields['bank_account_iban'].required = True
 
     def clean(self):
         cleaned_data = super(AccountForm, self).clean()
@@ -475,3 +458,27 @@ class TransactionSearchForm(forms.Form):
                 'range_end',
                 'Second date must not be earlier than the first.')
         return cleaned_data
+
+
+class WithdrawToBankAccountForm(forms.Form):
+
+    amount = forms.DecimalField(
+        label=_('Amount'),
+        min_value=Decimal('0.01'),
+        max_digits=12,
+        decimal_places=2)
+
+    def __init__(self, *args, **kwargs):
+        self.account = kwargs.pop('account')
+        assert self.account.instantfiat
+        super(WithdrawToBankAccountForm, self).__init__(*args, **kwargs)
+
+    def clean_amount(self):
+        amount = self.cleaned_data['amount']
+        if self.account.balance_confirmed - amount < 0:
+            raise forms.ValidationError(
+                'Insufficient balance on account.')
+        if self.account.balance_confirmed - amount < self.account.balance_min:
+            raise forms.ValidationError(
+                'Account balance can not go below the minimum value.')
+        return amount

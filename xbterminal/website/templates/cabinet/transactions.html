@@ -12,15 +12,18 @@
 
 {% block cabinet_content %}
 
-{% if device.status == 'suspended' %}
-<div class="alert alert-danger">
-    This device currently is not operational
-</div>
+{% if device %}
+    {% if device.status == 'suspended' %}
+    <div class="alert alert-danger">
+        This device currently is not operational
+    </div>
+    {% endif %}
+    <h3>{{ device.name }}</h3>
+{% elif account %}
+    <h3>{{ account.currency.name }}</h3>
 {% endif %}
 
-<h3>{{ device.name }}</h3>
-
-<form action="{% url 'website:device_transactions' device.key %}" method="POST">
+<form action="" method="POST">
     {% csrf_token %}
     <h4>{% trans 'Search transactions by date' %}</h4>
     <div class="row">
@@ -61,7 +64,12 @@
 </table>
 
 {% if transactions %}
-<a href="{% url 'website:report' device.key %}?range_beg={{ range_beg|date:'Y-m-d' }}&range_end={{ range_end|date:'Y-m-d' }}">
+{% if device %}
+    {% url 'website:device_report' device_key=device.key as report_url %}
+{% elif account %}
+    {% url 'website:account_report' currency_code=account.currency.name|lower as report_url %}
+{% endif %}
+<a href="{{ report_url }}?range_beg={{ range_beg|date:'Y-m-d' }}&range_end={{ range_end|date:'Y-m-d' }}">
     {% trans 'download transactions as CSV' %}
 </a>
 {% endif %}

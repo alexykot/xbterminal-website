@@ -14,17 +14,17 @@ from website.forms import (
     MerchantRegistrationForm,
     ResetPasswordForm,
     ProfileForm,
-    InstantFiatSettingsForm,
     KYCDocumentUploadForm,
     DeviceForm,
     DeviceActivationForm,
     AccountForm,
-    TransactionSearchForm)
+    TransactionSearchForm,
+    WithdrawToBankAccountForm)
 from website.tests.factories import (
     create_uploaded_image,
-    CurrencyFactory,
     MerchantAccountFactory,
     AccountFactory,
+    TransactionFactory,
     DeviceFactory)
 from operations.exceptions import CryptoPayUserAlreadyExists
 
@@ -214,30 +214,6 @@ class ProfileFormTestCase(TestCase):
         self.assertTrue(form.is_valid())
 
 
-class InstantFiatSettingsFormTestCase(TestCase):
-
-    def test_valid_data(self):
-        merchant = MerchantAccountFactory.create()
-        form_data = {
-            'instantfiat_api_key': 'test123456',
-        }
-        form = InstantFiatSettingsForm(data=form_data, instance=merchant)
-        self.assertTrue(form.is_valid())
-        merchant_updated = form.save()
-        self.assertEqual(merchant_updated.pk, merchant.pk)
-        self.assertEqual(merchant_updated.instantfiat_provider,
-                         INSTANTFIAT_PROVIDERS.CRYPTOPAY)
-        self.assertEqual(merchant_updated.instantfiat_api_key,
-                         form_data['instantfiat_api_key'])
-
-    def test_required(self):
-        merchant = MerchantAccountFactory.create()
-        form = InstantFiatSettingsForm(data={}, instance=merchant)
-        self.assertFalse(form.is_valid())
-        self.assertNotIn('instantfiat_provider', form.errors)
-        self.assertIn('instantfiat_api_key', form.errors)
-
-
 class KYCDocumentUploadFormTestCase(TestCase):
 
     def test_upload(self):
@@ -345,6 +321,11 @@ class AccountFormTestCase(TestCase):
         with self.assertRaises(AssertionError):
             AccountForm()
 
+        account = AccountFactory.create(currency__name='USD',
+                                        instantfiat=False)
+        with self.assertRaises(AssertionError):
+            AccountForm(instance=account)
+
     def test_update_btc(self):
         account = AccountFactory.create()
         form_data = {
@@ -379,13 +360,54 @@ class AccountFormTestCase(TestCase):
 
     def test_update_gbp(self):
         account = AccountFactory.create(currency__name='GBP')
-        btc = CurrencyFactory.create(name='BTC')
-        form_data = {'currency': btc.pk}
+        form_data = {
+            'bank_account_name': 'Test',
+            'bank_account_bic': 'DEUTDEFF000',
+            'bank_account_iban': 'GB82WEST12345698765432',
+        }
         form = AccountForm(data=form_data, instance=account)
         self.assertTrue(form.is_valid())
         account_updated = form.save()
-        self.assertEqual(account_updated.currency.pk,
-                         account.currency.pk)
+        self.assertEqual(account_updated.bank_account_name,
+                         form_data['bank_account_name'])
+        self.assertEqual(account_updated.bank_account_bic,
+                         form_data['bank_account_bic'])
+        self.assertEqual(account_updated.bank_account_iban,
+                         form_data['bank_account_iban'])
+
+    def test_update_gbp_no_data(self):
+        account = AccountFactory.create(currency__name='GBP')
+        form_data = {}
+        form = AccountForm(data=form_data, instance=account)
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['bank_account_name'][0],
+                         'This field is required.')
+        self.assertEqual(form.errors['bank_account_bic'][0],
+                         'This field is required.')
+        self.assertEqual(form.errors['bank_account_iban'][0],
+                         'This field is required.')
+
+    def test_update_gbp_invalid_bic(self):
+        account = AccountFactory.create(currency__name='GBP')
+        form_data = {
+            'bank_account_name': 'Test',
+            'bank_account_bic': 'XXX000AAA',
+            'bank_account_iban': 'GB82WEST12345698765432',
+        }
+        form = AccountForm(data=form_data, instance=account)
+        self.assertFalse(form.is_valid())
+        self.assertIn('bank_account_bic', form.errors)
+
+    def test_update_gbp_invalid_iban(self):
+        account = AccountFactory.create(currency__name='GBP')
+        form_data = {
+            'bank_account_name': 'Test',
+            'bank_account_bic': 'DEUTDEFF000',
+            'bank_account_iban': 'GB82WEST12345698765433',
+        }
+        form = AccountForm(data=form_data, instance=account)
+        self.assertFalse(form.is_valid())
+        self.assertIn('bank_account_iban', form.errors)
 
 
 class TransactionSearchFormTestCase(TestCase):
@@ -417,3 +439,46 @@ class TransactionSearchFormTestCase(TestCase):
         self.assertFalse(form.is_valid())
         self.assertEqual(form.errors['range_end'][0],
                          'Second date must not be earlier than the first.')
+
+
+class WithdrawToBankAccountFormTestCase(TestCase):
+
+    def test_valid_data(self):
+        account = AccountFactory.create(max_payout=Decimal('0.2'),
+                                        instantfiat=True)
+        TransactionFactory.create(account=account, amount=Decimal('1.0'))
+        DeviceFactory.create(merchant=account.merchant, account=account)
+        self.assertEqual(account.balance_confirmed, Decimal('1.0'))
+        self.assertEqual(account.balance_min, Decimal('0.2'))
+        data = {'amount': '0.5'}
+        form = WithdrawToBankAccountForm(data=data, account=account)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['amount'], Decimal('0.5'))
+
+    def test_required(self):
+        account = AccountFactory.create(instantfiat=True)
+        form = WithdrawToBankAccountForm(data={}, account=account)
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['amount'][0],
+                         'This field is required.')
+
+    def test_insufficient_balance(self):
+        account = AccountFactory.create(instantfiat=True)
+        TransactionFactory.create(account=account, amount=Decimal('0.1'))
+        data = {'amount': '0.2'}
+        form = WithdrawToBankAccountForm(data=data, account=account)
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['amount'][0],
+                         'Insufficient balance on account.')
+
+    def test_min_balance(self):
+        account = AccountFactory.create(max_payout=Decimal('0.2'),
+                                        instantfiat=True)
+        TransactionFactory.create(account=account, amount=Decimal('0.5'))
+        DeviceFactory.create(merchant=account.merchant, account=account)
+        self.assertEqual(account.balance_min, Decimal('0.2'))
+        data = {'amount': '0.4'}
+        form = WithdrawToBankAccountForm(data=data, account=account)
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['amount'][0],
+                         'Account balance can not go below the minimum value.')
