@@ -11,6 +11,7 @@ from website.models import (
     MerchantAccount,
     INSTANTFIAT_PROVIDERS)
 from website.forms import (
+    LoginMethodForm,
     MerchantRegistrationForm,
     ResetPasswordForm,
     ProfileForm,
@@ -29,13 +30,28 @@ from website.tests.factories import (
 from operations.exceptions import CryptoPayUserAlreadyExists
 
 
+class LoginMethodFormTestCase(TestCase):
+
+    def test_valid_data(self):
+        form_data = {'method': 'login'}
+        form = LoginMethodForm(data=form_data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['method'], 'login')
+
+    def test_required(self):
+        form = LoginMethodForm(data={})
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['method'][0],
+                         'Please choose how to login.')
+
+
 class MerchantRegistrationFormTestCase(TestCase):
 
     @patch('website.forms.cryptopay.create_merchant')
     def test_valid_data(self, cp_create_mock):
         cp_create_mock.return_value = 'merchant_id'
         form_data = {
-            'company_name': 'Test Company',
+            'company_name': 'Test Company ',
             'business_address': 'Test Address',
             'town': 'Test Town',
             'country': 'GB',
@@ -44,11 +60,12 @@ class MerchantRegistrationFormTestCase(TestCase):
             'contact_last_name': u'Тест',
             'contact_email': 'test@example.net',
             'contact_phone': '+123456789',
+            'terms': 'on',
         }
         form = MerchantRegistrationForm(data=form_data)
         self.assertTrue(form.is_valid())
         merchant = form.save()
-        self.assertEqual(merchant.company_name, form_data['company_name'])
+        self.assertEqual(merchant.company_name, 'Test Company')
         self.assertEqual(merchant.contact_first_name,
                          form_data['contact_first_name'])
         self.assertEqual(merchant.contact_last_name,
@@ -88,6 +105,7 @@ class MerchantRegistrationFormTestCase(TestCase):
             'contact_last_name': 'Test',
             'contact_email': 'test@example.net',
             'contact_phone': '+123456789',
+            'terms': 'on',
         }
         form = MerchantRegistrationForm(data=form_data)
         self.assertTrue(form.is_valid())
@@ -107,6 +125,8 @@ class MerchantRegistrationFormTestCase(TestCase):
         self.assertIn('contact_last_name', form.errors)
         self.assertIn('contact_email', form.errors)
         self.assertIn('contact_phone', form.errors)
+        self.assertEqual(form.errors['terms'][0],
+                         'Please accept terms & conditions.')
 
     def test_invalid_names(self):
         form_data = {
@@ -119,6 +139,7 @@ class MerchantRegistrationFormTestCase(TestCase):
             'contact_last_name': 'User.',
             'contact_email': 'test@example.net',
             'contact_phone': '+123456789',
+            'terms': 'on',
         }
         form = MerchantRegistrationForm(data=form_data)
         self.assertFalse(form.is_valid())
@@ -144,6 +165,7 @@ class MerchantRegistrationFormTestCase(TestCase):
             'contact_last_name': 'Test',
             'contact_email': 'test@example.net',
             'contact_phone': '+123456789',
+            'terms': 'on',
         }
         form = MerchantRegistrationForm(data=form_data)
         self.assertTrue(form.is_valid())

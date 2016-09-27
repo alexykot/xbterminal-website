@@ -11,6 +11,7 @@ from django.utils import timezone
 
 from website.models import (
     MerchantAccount,
+    Device,
     INSTANTFIAT_PROVIDERS,
     KYC_DOCUMENT_TYPES)
 from website.tests.factories import (
@@ -147,7 +148,7 @@ class RegistrationViewTestCase(TestCase):
         self.assertTemplateUsed(response, 'website/registration.html')
 
     @patch('website.forms.cryptopay.create_merchant')
-    def test_post_default(self, cryptopay_mock):
+    def test_post(self, cryptopay_mock):
         cryptopay_mock.return_value = 'merchant_id'
         form_data = {
             'company_name': 'Test Company 1',
@@ -159,11 +160,10 @@ class RegistrationViewTestCase(TestCase):
             'contact_last_name': 'Test',
             'contact_email': 'test1@example.net',
             'contact_phone': '+123456789',
+            'terms': 'on',
         }
         response = self.client.post(self.url, data=form_data)
-        self.assertEqual(response.status_code, 200)
-        data = json.loads(response.content)
-        self.assertEqual(data['result'], 'ok')
+        self.assertEqual(response.status_code, 302)
 
         merchant = MerchantAccount.objects.get(
             company_name=form_data['company_name'])
@@ -175,6 +175,122 @@ class RegistrationViewTestCase(TestCase):
         self.assertEqual(len(mail.outbox), 2)
         self.assertEqual(mail.outbox[0].to[0],
                          form_data['contact_email'])
+        self.assertEqual(mail.outbox[1].to[0],
+                         settings.CONTACT_EMAIL_RECIPIENTS[0])
+
+    def test_post_errors(self):
+        response = self.client.post(self.url, data={})
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'website/registration.html')
+        self.assertIn('company_name', response.context['form'].errors)
+
+
+class ActivationWizardTestCase(TestCase):
+
+    def setUp(self):
+        self.url = reverse('website:activation_wizard')
+
+    def test_get(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'website/activation.html')
+
+    def test_redirect(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    @patch('api.utils.activation.rq_helpers')
+    def test_login(self, rq_helpers_mock):
+        merchant = MerchantAccountFactory.create()
+        account_btc = AccountFactory.create(merchant=merchant)
+        device = DeviceFactory.create(status='registered')
+        form_data_0 = {
+            'activation_wizard-current_step': '0',
+            '0-activation_code': device.activation_code,
+        }
+        form_data_1 = {
+            'activation_wizard-current_step': '1',
+            '1-method': 'login',
+        }
+        form_data_2 = {
+            'activation_wizard-current_step': '2',
+            '2-username': merchant.user.email,
+            '2-password': 'password',
+        }
+        response = self.client.post(self.url,
+                                    form_data_0,
+                                    format='multipart')
+        self.assertEqual(response.status_code, 200)
+        response = self.client.post(self.url,
+                                    form_data_1,
+                                    format='multipart')
+        self.assertEqual(response.status_code, 200)
+        response = self.client.post(self.url,
+                                    form_data_2,
+                                    format='multipart')
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(rq_helpers_mock.run_task.called)
+        self.assertTrue(rq_helpers_mock.run_periodic_task.called)
+        self.assertEqual(len(mail.outbox), 0)
+        device = Device.objects.get(pk=device.pk)
+        self.assertEqual(device.merchant.pk, merchant.pk)
+        self.assertEqual(device.status, 'activation')
+        self.assertEqual(device.account.pk, account_btc.pk)
+
+    @patch('api.utils.activation.rq_helpers')
+    @patch('website.forms.cryptopay.create_merchant')
+    def test_register(self, cryptopay_mock, rq_helpers_mock):
+        device = DeviceFactory.create(status='registered')
+        cryptopay_mock.return_value = 'merchant_id'
+        form_data_0 = {
+            'activation_wizard-current_step': '0',
+            '0-activation_code': device.activation_code,
+        }
+        form_data_1 = {
+            'activation_wizard-current_step': '1',
+            '1-method': 'register',
+        }
+        form_data_3 = {
+            'activation_wizard-current_step': '3',
+            '3-company_name': 'Test Company',
+            '3-business_address': 'Test Address',
+            '3-town': 'Test Town',
+            '3-country': 'GB',
+            '3-post_code': '123456',
+            '3-contact_first_name': 'Test',
+            '3-contact_last_name': 'Test',
+            '3-contact_email': 'test@example.net',
+            '3-contact_phone': '+123456789',
+            '3-terms': 'on',
+        }
+        response = self.client.post(self.url,
+                                    form_data_0,
+                                    format='multipart')
+        self.assertEqual(response.status_code, 200)
+        response = self.client.post(self.url,
+                                    form_data_1,
+                                    format='multipart')
+        self.assertEqual(response.status_code, 200)
+        response = self.client.post(self.url,
+                                    form_data_3,
+                                    format='multipart')
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(rq_helpers_mock.run_task.called)
+        self.assertTrue(rq_helpers_mock.run_periodic_task.called)
+        device = Device.objects.get(pk=device.pk)
+        self.assertIsNotNone(device.merchant)
+        self.assertEqual(device.status, 'activation')
+        self.assertEqual(device.account.currency.name, 'BTC')
+        merchant = device.merchant
+        self.assertEqual(merchant.device_set.count(), 1)
+        self.assertEqual(merchant.instantfiat_merchant_id,
+                         'merchant_id')
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(mail.outbox[0].to[0],
+                         form_data_3['3-contact_email'])
         self.assertEqual(mail.outbox[1].to[0],
                          settings.CONTACT_EMAIL_RECIPIENTS[0])
 
@@ -270,7 +386,7 @@ class ActivateDeviceViewTestCase(TestCase):
         self.assertTrue(run_mock.called)
         self.assertEqual(run_mock.call_args[1]['queue'], 'low')
         self.assertTrue(run_periodic_mock.called)
-        expected_url = reverse('website:activation',
+        expected_url = reverse('website:device_activation',
                                kwargs={'device_key': device.key})
         self.assertRedirects(response, expected_url)
         self.assertEqual(merchant.device_set.count(), 1)
@@ -290,7 +406,7 @@ class ActivateDeviceViewTestCase(TestCase):
                       response.context['form'].errors)
 
 
-class ActivationViewTestCase(TestCase):
+class DeviceActivationViewTestCase(TestCase):
 
     def setUp(self):
         self.merchant = MerchantAccountFactory.create()
@@ -298,7 +414,7 @@ class ActivationViewTestCase(TestCase):
     def test_get(self):
         device = DeviceFactory.create(merchant=self.merchant,
                                       status='activation')
-        url = reverse('website:activation',
+        url = reverse('website:device_activation',
                       kwargs={'device_key': device.key})
         self.client.login(username=self.merchant.user.email,
                           password='password')
@@ -311,7 +427,7 @@ class ActivationViewTestCase(TestCase):
     def test_already_active(self):
         device = DeviceFactory.create(merchant=self.merchant,
                                       status='active')
-        url = reverse('website:activation',
+        url = reverse('website:device_activation',
                       kwargs={'device_key': device.key})
         self.client.login(username=self.merchant.user.email,
                           password='password')
@@ -847,7 +963,7 @@ class AddFundsViewTestCase(TestCase):
         account = AccountFactory.create(merchant=self.merchant)
         self.client.login(username=self.merchant.user.email,
                           password='password')
-        url = reverse('website:add_funds',
+        url = reverse('website:account_add_funds',
                       kwargs={'currency_code': 'btc'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -857,7 +973,7 @@ class AddFundsViewTestCase(TestCase):
     def test_invalid_currency_code(self):
         self.client.login(username=self.merchant.user.email,
                           password='password')
-        url = reverse('website:add_funds',
+        url = reverse('website:account_add_funds',
                       kwargs={'currency_code': 'xxx'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)

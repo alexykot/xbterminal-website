@@ -4,7 +4,7 @@ import datetime
 import re
 
 from django.shortcuts import get_object_or_404, redirect
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, StreamingHttpResponse
+from django.http import HttpResponse, Http404, StreamingHttpResponse
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
@@ -15,6 +15,7 @@ from django.core.urlresolvers import resolve, reverse
 from django.db.transaction import atomic
 from django.utils.translation import ugettext as _
 
+from formtools.wizard.views import CookieWizardView
 from ipware.ip import get_real_ip
 
 from api.utils import activation
@@ -177,48 +178,65 @@ class RegistrationView(TemplateResponseMixin, View):
     def get(self, *args, **kwargs):
         if hasattr(self.request.user, 'merchant'):
             return redirect(reverse('website:devices'))
-        context = {
-            'form': forms.MerchantRegistrationForm(),
-        }
-        return self.render_to_response(context)
+        form = forms.MerchantRegistrationForm()
+        return self.render_to_response({'form': form})
 
     def post(self, *args, **kwags):
         form = forms.MerchantRegistrationForm(self.request.POST)
         if not form.is_valid():
-            response = {
-                'result': 'error',
-                'errors': form.errors,
-            }
-            return HttpResponse(json.dumps(response),
-                                content_type='application/json')
+            return self.render_to_response({'form': form})
         merchant = form.save()
         email.send_registration_info(merchant)
-        response = {
-            'result': 'ok',
-            'next': reverse('website:devices'),
-        }
         login(self.request, merchant.user)
-        return HttpResponse(json.dumps(response),
-                            content_type='application/json')
+        return redirect(reverse('website:devices'))
 
 
-class RegValidationView(View):
+class ActivationWizard(CookieWizardView):
     """
-    Helper view for server-side validation
+    Activate device and login
     """
-    def get(self, *args, **kwargs):
-        field_name = self.request.GET.get('field_name')
-        if field_name not in ['company_name', 'contact_email']:
-            return HttpResponseBadRequest()
-        kwargs = {field_name + '__iexact': self.request.GET.get('value', '')}
-        try:
-            models.MerchantAccount.objects.get(**kwargs)
-        except models.MerchantAccount.DoesNotExist:
-            response = {'is_valid': True}
-        else:
-            response = {'is_valid': False}
-        return HttpResponse(json.dumps(response),
-                            content_type='application/json')
+    template_name = 'website/activation.html'
+    form_list = [
+        forms.DeviceActivationForm,
+        forms.LoginMethodForm,
+        forms.AuthenticationForm,
+        forms.MerchantRegistrationForm,
+    ]
+
+    def show_login_form_condition(self):
+        data = self.get_cleaned_data_for_step('1') or {}
+        return data.get('method') == 'login'
+
+    def show_registration_form_condition(self):
+        data = self.get_cleaned_data_for_step('1') or {}
+        return data.get('method') == 'register'
+
+    condition_dict = {
+        '2': show_login_form_condition,
+        '3': show_registration_form_condition,
+    }
+
+    def dispatch(self, *args, **kwargs):
+        if get_current_merchant(self.request):
+            return redirect(reverse('website:activate_device'))
+        return super(ActivationWizard, self).dispatch(*args, **kwargs)
+
+    @atomic
+    def done(self, form_list, **kwargs):
+        # Get device
+        device = form_list[0].device
+        # Get merchant
+        if self.show_login_form_condition():
+            merchant = form_list[2].get_user().merchant
+        elif self.show_registration_form_condition():
+            merchant = form_list[2].save()
+            email.send_registration_info(merchant)
+        # Start activation
+        activation.start(device, merchant)
+        # Login & redirect
+        login(self.request, merchant.user)
+        return redirect(reverse('website:device_activation',
+                                kwargs={'device_key': device.key}))
 
 
 def get_current_merchant(request):
@@ -270,7 +288,7 @@ class ActivateDeviceView(TemplateResponseMixin, CabinetView):
         form = forms.DeviceActivationForm(self.request.POST)
         if form.is_valid():
             activation.start(form.device, self.merchant)
-            return redirect(reverse('website:activation',
+            return redirect(reverse('website:device_activation',
                                     kwargs={'device_key': form.device.key}))
         else:
             context = self.get_context_data(**kwargs)
@@ -278,7 +296,7 @@ class ActivateDeviceView(TemplateResponseMixin, CabinetView):
             return self.render_to_response(context)
 
 
-class ActivationView(TemplateResponseMixin, CabinetView):
+class DeviceActivationView(TemplateResponseMixin, CabinetView):
 
     template_name = 'cabinet/activation.html'
 

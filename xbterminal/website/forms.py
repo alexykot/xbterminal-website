@@ -59,6 +59,22 @@ class AuthenticationForm(DjangoAuthenticationForm):
         return email.lower()
 
 
+class LoginMethodForm(forms.Form):
+    """
+    Choose how to login
+    """
+    method = forms.ChoiceField(
+        label='',
+        choices=(
+            ('login', _('Log in as existing merchant')),
+            ('register', _('Register a new merchant')),
+        ),
+        widget=forms.RadioSelect,
+        error_messages={
+            'required': _('Please choose how to login.'),
+        })
+
+
 class ResetPasswordForm(forms.Form):
 
     email = forms.EmailField()
@@ -153,10 +169,13 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
 
     def clean(self):
         """
-        Trim whitespaces for all fields
+        Trim whitespaces for all text fields
         """
         cleaned_data = super(SimpleMerchantRegistrationForm, self).clean()
-        return {key: val.strip() for key, val in cleaned_data.items()}
+        for key, value in cleaned_data.items():
+            if isinstance(value, basestring):
+                cleaned_data[key] = value.strip()
+        return cleaned_data
 
     @atomic
     def save(self):
@@ -211,10 +230,18 @@ class MerchantRegistrationForm(SimpleMerchantRegistrationForm):
     """
     Merchant registration form
     """
-    # Used at registration step 1
-    company_name_copy = forms.CharField(
-        label=_('Company name'),
-        required=False)
+    terms = forms.BooleanField(
+        label=_(
+            'I agree to XBTerminal <a href="%(privacy_url)s" target="_blank">'
+            'Privacy Policy</a> and <a href="%(terms_url)s" target="_blank">'
+            'Terms & Conditions</a> of use.'
+        ) % {
+            'privacy_url': '/privacy/',
+            'terms_url': '/terms/',
+        },
+        error_messages={
+            'required': _('Please accept terms & conditions.'),
+        })
 
     class Meta:
         model = MerchantAccount
