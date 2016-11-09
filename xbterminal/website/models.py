@@ -649,6 +649,20 @@ class Device(models.Model):
         blank=True,
         null=True)
 
+    # GUI config
+    amount_1 = models.DecimalField(
+        max_digits=12, decimal_places=2,
+        blank=True, null=True)
+    amount_2 = models.DecimalField(
+        max_digits=12, decimal_places=2,
+        blank=True, null=True)
+    amount_3 = models.DecimalField(
+        max_digits=12, decimal_places=2,
+        blank=True, null=True)
+    amount_shift = models.DecimalField(
+        max_digits=12, decimal_places=2,
+        blank=True, null=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     last_activity = models.DateTimeField(blank=True, null=True)
 

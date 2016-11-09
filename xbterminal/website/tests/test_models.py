@@ -500,6 +500,10 @@ class DeviceTestCase(TestCase):
         self.assertEqual(len(device.activation_code), 6)
         self.assertEqual(device.batch.batch_number,
                          settings.DEFAULT_BATCH_NUMBER)
+        self.assertIsNone(device.amount_1)
+        self.assertIsNone(device.amount_2)
+        self.assertIsNone(device.amount_3)
+        self.assertIsNone(device.amount_shift)
         self.assertIsNotNone(device.created_at)
         self.assertIsNone(device.last_activity)
 
