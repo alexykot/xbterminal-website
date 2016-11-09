@@ -164,6 +164,7 @@ class DeviceSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()
     language = serializers.SerializerMethodField()
     currency = serializers.SerializerMethodField()
+    settings = serializers.SerializerMethodField()
 
     class Meta:
         model = Device
@@ -172,6 +173,7 @@ class DeviceSerializer(serializers.ModelSerializer):
             'bitcoin_network',
             'language',
             'currency',
+            'settings',
         ]
 
     def get_status(self, device):
@@ -200,6 +202,14 @@ class DeviceSerializer(serializers.ModelSerializer):
             'name': currency.name,
             'prefix': currency.prefix,
             'postfix': currency.postfix,
+        }
+
+    def get_settings(self, device):
+        return {
+            'amount_1': device.amount_1,
+            'amount_2': device.amount_2,
+            'amount_3': device.amount_3,
+            'amount_shift': device.amount_shift,
         }
 
 
