@@ -336,6 +336,10 @@ class DeviceForm(forms.ModelForm):
             'device_type',
             'name',
             'account',
+            'amount_1',
+            'amount_2',
+            'amount_3',
+            'amount_shift',
         ]
         widgets = {
             'device_type': forms.HiddenInput,
@@ -352,6 +356,18 @@ class DeviceForm(forms.ModelForm):
                 Q(instantfiat=True, currency=self.merchant.currency) |
                 Q(instantfiat=False))
         self.fields['account'].required = True
+        # Configure amounts fields
+        amounts_fields = [
+            'amount_1',
+            'amount_2',
+            'amount_3',
+            'amount_shift',
+        ]
+        for field_name in amounts_fields:
+            if self.instance and self.instance.device_type == 'hardware':
+                self.fields[field_name].required = True
+            else:
+                del self.fields[field_name]
 
     def device_type_verbose(self):
         device_types = dict(Device.DEVICE_TYPES)

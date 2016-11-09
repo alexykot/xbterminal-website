@@ -18,8 +18,18 @@
         <h3>{% if device %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %} {{ form.device_type_verbose|lower }}:</h3>
         <form id="device-form" action="" method="post">
             {% csrf_token %}
-            {% bootstrap_form form %}
-            {% if device and device.device_type == 'mobile' %}
+            {% bootstrap_field form.device_type %}
+            {% bootstrap_field form.name %}
+            {% bootstrap_field form.account %}
+            {% if device and device.device_type == 'hardware' %}
+                {% bootstrap_label 'GUI settings' %}
+                <div class="row">
+                    {% bootstrap_field form.amount_1 show_label=False form_group_class='form-group col-md-3' %}
+                    {% bootstrap_field form.amount_2 show_label=False form_group_class='form-group col-md-3' %}
+                    {% bootstrap_field form.amount_3 show_label=False form_group_class='form-group col-md-3' %}
+                    {% bootstrap_field form.amount_shift show_label=False form_group_class='form-group col-md-3' %}
+                </div>
+            {% elif device and device.device_type == 'mobile' %}
                 <div class="row">
                     <div class="col-md-8">
                         <div class="form-group">
