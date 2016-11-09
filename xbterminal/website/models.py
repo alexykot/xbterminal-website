@@ -113,6 +113,26 @@ class Currency(models.Model):
     name = models.CharField(max_length=50, unique=True)
     postfix = models.CharField(max_length=50, default="")
     prefix = models.CharField(max_length=50, default="")
+    amount_1 = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('1.00'),
+        help_text=_('Default value for payment amount button 1.'))
+    amount_2 = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('2.50'),
+        help_text=_('Default value for payment amount button 2.'))
+    amount_3 = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('10.00'),
+        help_text=_('Default value for payment amount button 3.'))
+    amount_shift = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.05'),
+        help_text=_('Default value for payment amount shift button.'))
 
     class Meta:
         verbose_name_plural = 'currencies'

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import datetime
 from decimal import Decimal
 import os
@@ -63,15 +64,31 @@ class UserTestCase(TestCase):
 
 class CurrencyTestCase(TestCase):
 
-    def test_fixtures(self):
+    def test_fixture_gbp(self):
         gbp = Currency.objects.get(name='GBP')
         self.assertEqual(gbp.pk, 1)
+        self.assertEqual(gbp.prefix, u'£')
+        self.assertEqual(gbp.amount_1, Decimal('1.00'))
+        self.assertEqual(gbp.amount_2, Decimal('2.50'))
+        self.assertEqual(gbp.amount_3, Decimal('10.00'))
+        self.assertEqual(gbp.amount_shift, Decimal('0.05'))
+
+    def test_fixture_usd(self):
         usd = Currency.objects.get(name='USD')
-        self.assertEqual(usd.prefix, '$')
+        self.assertEqual(usd.prefix, u'$')
         self.assertEqual(usd.postfix, '')
+
+    def test_fixture_eur(self):
+        eur = Currency.objects.get(name='EUR')
+        self.assertEqual(eur.prefix, u'€')
+        self.assertEqual(eur.postfix, '')
+
+    def test_fixture_btc(self):
         btc = Currency.objects.get(name='BTC')
         self.assertEqual(btc.prefix, '')
         self.assertEqual(btc.postfix, 'BTC')
+
+    def test_fixture_tbtc(self):
         tbtc = Currency.objects.get(name='TBTC')
         self.assertEqual(tbtc.prefix, '')
         self.assertEqual(tbtc.postfix, 'tBTC')
