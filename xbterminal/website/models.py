@@ -680,7 +680,12 @@ class Device(models.Model):
                 target='activation',
                 conditions=[can_activate])
     def start_activation(self):
-        pass
+        # Copy global defaults
+        self.amount_1 = self.account.currency.amount_1
+        self.amount_2 = self.account.currency.amount_2
+        self.amount_3 = self.account.currency.amount_3
+        self.amount_shift = self.account.currency.amount_shift
+        self.save()
 
     @transition(field=status,
                 source=['activation', 'suspended'],
