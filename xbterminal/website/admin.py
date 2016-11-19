@@ -31,6 +31,12 @@ class LanguageAdmin(admin.ModelAdmin):
 @admin.register(models.Currency)
 class CurrencyAdmin(admin.ModelAdmin):
 
+    readonly_fields = [
+        'name',
+        'prefix',
+        'postfix',
+    ]
+
     def has_add_permission(self, request):
         return False
 

@@ -113,6 +113,26 @@ class Currency(models.Model):
     name = models.CharField(max_length=50, unique=True)
     postfix = models.CharField(max_length=50, default="")
     prefix = models.CharField(max_length=50, default="")
+    amount_1 = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('1.00'),
+        help_text=_('Default value for payment amount button 1.'))
+    amount_2 = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('2.50'),
+        help_text=_('Default value for payment amount button 2.'))
+    amount_3 = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('10.00'),
+        help_text=_('Default value for payment amount button 3.'))
+    amount_shift = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal('0.05'),
+        help_text=_('Default value for payment amount shift button.'))
 
     class Meta:
         verbose_name_plural = 'currencies'
@@ -629,6 +649,20 @@ class Device(models.Model):
         blank=True,
         null=True)
 
+    # GUI config
+    amount_1 = models.DecimalField(
+        max_digits=12, decimal_places=2,
+        blank=True, null=True)
+    amount_2 = models.DecimalField(
+        max_digits=12, decimal_places=2,
+        blank=True, null=True)
+    amount_3 = models.DecimalField(
+        max_digits=12, decimal_places=2,
+        blank=True, null=True)
+    amount_shift = models.DecimalField(
+        max_digits=12, decimal_places=2,
+        blank=True, null=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     last_activity = models.DateTimeField(blank=True, null=True)
 
@@ -646,7 +680,12 @@ class Device(models.Model):
                 target='activation',
                 conditions=[can_activate])
     def start_activation(self):
-        pass
+        # Copy global defaults
+        self.amount_1 = self.account.currency.amount_1
+        self.amount_2 = self.account.currency.amount_2
+        self.amount_3 = self.account.currency.amount_3
+        self.amount_shift = self.account.currency.amount_shift
+        self.save()
 
     @transition(field=status,
                 source=['activation', 'suspended'],

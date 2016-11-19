@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import datetime
 from decimal import Decimal
 import os
@@ -63,15 +64,31 @@ class UserTestCase(TestCase):
 
 class CurrencyTestCase(TestCase):
 
-    def test_fixtures(self):
+    def test_fixture_gbp(self):
         gbp = Currency.objects.get(name='GBP')
         self.assertEqual(gbp.pk, 1)
+        self.assertEqual(gbp.prefix, u'£')
+        self.assertEqual(gbp.amount_1, Decimal('1.00'))
+        self.assertEqual(gbp.amount_2, Decimal('2.50'))
+        self.assertEqual(gbp.amount_3, Decimal('10.00'))
+        self.assertEqual(gbp.amount_shift, Decimal('0.05'))
+
+    def test_fixture_usd(self):
         usd = Currency.objects.get(name='USD')
-        self.assertEqual(usd.prefix, '$')
+        self.assertEqual(usd.prefix, u'$')
         self.assertEqual(usd.postfix, '')
+
+    def test_fixture_eur(self):
+        eur = Currency.objects.get(name='EUR')
+        self.assertEqual(eur.prefix, u'€')
+        self.assertEqual(eur.postfix, '')
+
+    def test_fixture_btc(self):
         btc = Currency.objects.get(name='BTC')
         self.assertEqual(btc.prefix, '')
         self.assertEqual(btc.postfix, 'BTC')
+
+    def test_fixture_tbtc(self):
         tbtc = Currency.objects.get(name='TBTC')
         self.assertEqual(tbtc.prefix, '')
         self.assertEqual(tbtc.postfix, 'tBTC')
@@ -483,6 +500,10 @@ class DeviceTestCase(TestCase):
         self.assertEqual(len(device.activation_code), 6)
         self.assertEqual(device.batch.batch_number,
                          settings.DEFAULT_BATCH_NUMBER)
+        self.assertIsNone(device.amount_1)
+        self.assertIsNone(device.amount_2)
+        self.assertIsNone(device.amount_3)
+        self.assertIsNone(device.amount_shift)
         self.assertIsNotNone(device.created_at)
         self.assertIsNone(device.last_activity)
 
@@ -494,12 +515,24 @@ class DeviceTestCase(TestCase):
         self.assertEqual(device.status, 'registered')
         self.assertEqual(len(device.key), 8)
         self.assertEqual(len(device.activation_code), 6)
+        self.assertIsNone(device.amount_1)
+        self.assertIsNone(device.amount_2)
+        self.assertIsNone(device.amount_3)
+        self.assertIsNone(device.amount_shift)
         # Activation
         device = DeviceFactory.create(status='activation')
         self.assertIsNotNone(device.merchant)
         self.assertIsNotNone(device.account)
         self.assertEqual(device.account.merchant.pk, device.merchant.pk)
         self.assertEqual(device.status, 'activation')
+        self.assertEqual(device.amount_1,
+                         device.account.currency.amount_1)
+        self.assertEqual(device.amount_2,
+                         device.account.currency.amount_2)
+        self.assertEqual(device.amount_3,
+                         device.account.currency.amount_3)
+        self.assertEqual(device.amount_shift,
+                         device.account.currency.amount_shift)
         # Active
         device = DeviceFactory.create(status='active')
         self.assertIsNotNone(device.merchant)

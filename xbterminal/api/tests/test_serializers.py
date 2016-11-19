@@ -219,6 +219,10 @@ class DeviceSerializerTestCase(TestCase):
         self.assertEqual(data['bitcoin_network'], 'mainnet')
         self.assertEqual(data['language']['code'], 'en')
         self.assertEqual(data['currency']['name'], 'GBP')
+        self.assertIsNone(data['settings']['amount_1'])
+        self.assertIsNone(data['settings']['amount_2'])
+        self.assertIsNone(data['settings']['amount_3'])
+        self.assertIsNone(data['settings']['amount_shift'])
 
     def test_activation(self):
         device = DeviceFactory.create(status='activation')
@@ -240,6 +244,10 @@ class DeviceSerializerTestCase(TestCase):
         self.assertEqual(data['language']['thousands_split'], ',')
         self.assertEqual(data['currency']['name'], 'EUR')
         self.assertEqual(data['currency']['prefix'], u'€')
+        self.assertEqual(data['settings']['amount_1'], device.amount_1)
+        self.assertEqual(data['settings']['amount_2'], device.amount_2)
+        self.assertEqual(data['settings']['amount_3'], device.amount_3)
+        self.assertEqual(data['settings']['amount_shift'], device.amount_shift)
 
 
 class DeviceRegistrationSerializerTestCase(TestCase):

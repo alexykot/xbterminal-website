@@ -271,12 +271,16 @@ class DeviceFormTestCase(TestCase):
         self.assertEqual(device.account.pk, account.pk)
         self.assertEqual(device.status, 'active')
 
-    def test_update_valid(self):
-        device = DeviceFactory.create()
+    def test_update_valid_hardware(self):
+        device = DeviceFactory.create(device_type='hardware')
         form_data = {
             'device_type': 'hardware',
             'name': 'New Name',
             'account': device.account.pk,
+            'amount_1': '0.1',
+            'amount_2': '0.2',
+            'amount_3': '0.3',
+            'amount_shift': '0.01',
         }
         form = DeviceForm(data=form_data,
                           merchant=device.merchant,
@@ -287,14 +291,53 @@ class DeviceFormTestCase(TestCase):
         self.assertEqual(device.device_type, 'hardware')
         self.assertEqual(device.name, form_data['name'])
         self.assertEqual(device.status, 'active')
+        self.assertEqual(device.amount_1, Decimal('0.10'))
+        self.assertEqual(device.amount_2, Decimal('0.20'))
+        self.assertEqual(device.amount_3, Decimal('0.30'))
+        self.assertEqual(device.amount_shift, Decimal('0.01'))
 
-    def test_required(self):
+    def test_update_valid_mobile(self):
+        device = DeviceFactory.create(device_type='mobile')
+        form_data = {
+            'device_type': 'mobile',
+            'name': 'New Name',
+            'account': device.account.pk,
+        }
+        form = DeviceForm(data=form_data,
+                          merchant=device.merchant,
+                          instance=device)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.device_type_verbose(), 'Mobile app')
+        device = form.save()
+        self.assertEqual(device.device_type, 'mobile')
+        self.assertEqual(device.name, form_data['name'])
+        self.assertEqual(device.status, 'active')
+
+    def test_required_hardware(self):
         merchant = MerchantAccountFactory.create()
-        form = DeviceForm(data={}, merchant=merchant)
+        device = DeviceFactory.create(device_type='hardware')
+        form = DeviceForm(data={}, merchant=merchant, instance=device)
         self.assertFalse(form.is_valid())
         self.assertIn('device_type', form.errors)
         self.assertIn('name', form.errors)
         self.assertIn('account', form.errors)
+        self.assertIn('amount_1', form.errors)
+        self.assertIn('amount_2', form.errors)
+        self.assertIn('amount_3', form.errors)
+        self.assertIn('amount_shift', form.errors)
+
+    def test_required_mobile(self):
+        merchant = MerchantAccountFactory.create()
+        device = DeviceFactory.create(device_type='mobile')
+        form = DeviceForm(data={}, merchant=merchant, instance=device)
+        self.assertFalse(form.is_valid())
+        self.assertIn('device_type', form.errors)
+        self.assertIn('name', form.errors)
+        self.assertIn('account', form.errors)
+        self.assertNotIn('amount_1', form.errors)
+        self.assertNotIn('amount_2', form.errors)
+        self.assertNotIn('amount_3', form.errors)
+        self.assertNotIn('amount_shift', form.errors)
 
     def test_invalid_account_currency(self):
         merchant = MerchantAccountFactory.create(currency__name='USD')
