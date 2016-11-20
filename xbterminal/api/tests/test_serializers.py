@@ -244,10 +244,14 @@ class DeviceSerializerTestCase(TestCase):
         self.assertEqual(data['language']['thousands_split'], ',')
         self.assertEqual(data['currency']['name'], 'EUR')
         self.assertEqual(data['currency']['prefix'], u'€')
-        self.assertEqual(data['settings']['amount_1'], device.amount_1)
-        self.assertEqual(data['settings']['amount_2'], device.amount_2)
-        self.assertEqual(data['settings']['amount_3'], device.amount_3)
-        self.assertEqual(data['settings']['amount_shift'], device.amount_shift)
+        self.assertEqual(data['settings']['amount_1'],
+                         str(device.amount_1))
+        self.assertEqual(data['settings']['amount_2'],
+                         str(device.amount_2))
+        self.assertEqual(data['settings']['amount_3'],
+                         str(device.amount_3))
+        self.assertEqual(data['settings']['amount_shift'],
+                         str(device.amount_shift))
 
 
 class DeviceRegistrationSerializerTestCase(TestCase):

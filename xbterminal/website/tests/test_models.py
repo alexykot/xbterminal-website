@@ -526,13 +526,13 @@ class DeviceTestCase(TestCase):
         self.assertEqual(device.account.merchant.pk, device.merchant.pk)
         self.assertEqual(device.status, 'activation')
         self.assertEqual(device.amount_1,
-                         device.account.currency.amount_1)
+                         device.merchant.currency.amount_1)
         self.assertEqual(device.amount_2,
-                         device.account.currency.amount_2)
+                         device.merchant.currency.amount_2)
         self.assertEqual(device.amount_3,
-                         device.account.currency.amount_3)
+                         device.merchant.currency.amount_3)
         self.assertEqual(device.amount_shift,
-                         device.account.currency.amount_shift)
+                         device.merchant.currency.amount_shift)
         # Active
         device = DeviceFactory.create(status='active')
         self.assertIsNotNone(device.merchant)

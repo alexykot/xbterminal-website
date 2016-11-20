@@ -205,12 +205,17 @@ class DeviceSerializer(serializers.ModelSerializer):
         }
 
     def get_settings(self, device):
-        return {
-            'amount_1': device.amount_1,
-            'amount_2': device.amount_2,
-            'amount_3': device.amount_3,
-            'amount_shift': device.amount_shift,
-        }
+        amount_fields = [
+            'amount_1',
+            'amount_2',
+            'amount_3',
+            'amount_shift',
+        ]
+        result = {}
+        for field_name in amount_fields:
+            value = getattr(device, field_name)
+            result[field_name] = str(value) if value is not None else None
+        return result
 
 
 class DeviceRegistrationSerializer(serializers.ModelSerializer):
