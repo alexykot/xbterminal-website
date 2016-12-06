@@ -90,6 +90,7 @@ class Salt(object):
         try:
             return fingerprints['minions_pre'][minion_id] == fingerprint
         except KeyError:
+            logger.error('invalid salt minion key fingerprint')
             return False
 
     def accept(self, minion_id):
