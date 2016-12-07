@@ -1,6 +1,8 @@
 import os.path
 from urlparse import urljoin
+
 from django.conf import settings
+from distutils.version import LooseVersion
 import requests
 
 
@@ -25,5 +27,5 @@ def get_latest_version(machine, package_name):
                             cert=certs,
                             verify=ca_cert)
     result = response.json()
-    latest = max(pkg['Version'] for pkg in result)
+    latest = max((pkg['Version'] for pkg in result), key=LooseVersion)
     return latest
