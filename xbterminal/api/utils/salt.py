@@ -90,6 +90,7 @@ class Salt(object):
         try:
             return fingerprints['minions_pre'][minion_id] == fingerprint
         except KeyError:
+            logger.error('invalid salt minion key fingerprint')
             return False
 
     def accept(self, minion_id):
@@ -142,7 +143,7 @@ class Salt(object):
         while time.time() < start_time + timeout:
             job_info = self._lookup_jid(jid)
             try:
-                value = job_info['data'][minion_id].get(key)
+                value = job_info[minion_id].get(key)
             except KeyError:
                 pass
             else:
@@ -171,7 +172,7 @@ class Salt(object):
         while time.time() < start_time + timeout:
             job_info = self._lookup_jid(jid)
             try:
-                results = job_info['data'][minion_id]
+                results = job_info[minion_id]
             except KeyError:
                 # Minion is not ready yet
                 pass
