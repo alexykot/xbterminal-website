@@ -1,7 +1,7 @@
 -r requirements.txt
-flake8==3.2.1
-factory-boy==2.7.0
+factory-boy==2.8.1
 fake-factory==0.5.7
+flake8==3.2.1
 mock==1.0.1
 coverage==4.0
 honcho==0.6.6
