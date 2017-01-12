@@ -158,7 +158,7 @@ def wait_for_payment(payment_order_uid):
     if payment_order.time_created + PAYMENT_TIMEOUT < timezone.now():
         # Timeout, cancel job
         cancel_current_task()
-    if payment_order.time_recieved is not None:
+    if payment_order.time_received is not None:
         # Payment already validated, cancel job
         cancel_current_task()
         return
@@ -196,9 +196,9 @@ def wait_for_payment(payment_order_uid):
             cancel_current_task()
             # Update status
             payment_order.payment_type = 'bip0021'
-            payment_order.time_recieved = timezone.now()
+            payment_order.time_received = timezone.now()
             payment_order.save()
-            logger.info('payment recieved ({0})'.format(payment_order.uid))
+            logger.info('payment received ({0})'.format(payment_order.uid))
 
 
 def parse_payment(payment_order, payment_message):
@@ -236,7 +236,7 @@ def parse_payment(payment_order, payment_message):
     validate_payment(payment_order, transactions)
     # Update status
     payment_order.payment_type = 'bip0070'
-    payment_order.time_recieved = timezone.now()
+    payment_order.time_received = timezone.now()
     payment_order.save()
     logger.info('payment received ({0})'.format(payment_order.uid))
     return payment_ack
@@ -324,7 +324,7 @@ def wait_for_validation(payment_order_uid):
     if payment_order.status == 'cancelled':
         cancel_current_task()
         return
-    if payment_order.time_recieved is not None:
+    if payment_order.time_received is not None:
         for incoming_tx_id in payment_order.incoming_tx_ids:
             if not is_tx_reliable(incoming_tx_id,
                                   payment_order.bitcoin_network):

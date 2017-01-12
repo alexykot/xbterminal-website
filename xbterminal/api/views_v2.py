@@ -94,7 +94,7 @@ class PaymentViewSet(viewsets.GenericViewSet):
     @atomic
     def cancel(self, *args, **kwargs):
         order = self.get_object()
-        if order.status not in ['new', 'underpaid', 'recieved']:
+        if order.status not in ['new', 'underpaid', 'received']:
             raise Http404
         order.time_cancelled = timezone.now()
         order.save()

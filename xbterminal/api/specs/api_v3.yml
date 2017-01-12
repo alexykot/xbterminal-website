@@ -503,7 +503,7 @@ definitions:
         enum:
           - new
           - underpaid
-          - recieved
+          - received
           - forwarded
           - processed
           - notified

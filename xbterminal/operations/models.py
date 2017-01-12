@@ -95,7 +95,7 @@ class PaymentOrder(models.Model):
         max_length=10, choices=PAYMENT_TYPES)
 
     time_created = models.DateTimeField(auto_now_add=True)
-    time_recieved = models.DateTimeField(null=True)
+    time_received = models.DateTimeField(null=True)
     time_forwarded = models.DateTimeField(null=True)
     time_exchanged = models.DateTimeField(null=True)
     time_notified = models.DateTimeField(null=True)
@@ -124,14 +124,14 @@ class PaymentOrder(models.Model):
             new - payment order has just been created
             underpaid - incoming transaction received,
                 but amount is not sufficient
-            recieved - incoming transaction receieved, full amount
+            received - incoming transaction received, full amount
             forwarded - payment forwarded
-            processed - recieved confirmation from instantfiat service
+            processed - received confirmation from instantfiat service
             notified - customer notified about successful payment
             confirmed - outgoing transaction confirmed
             refunded - payment sent back to customer
-            timeout - incoming transaction did not recieved
-            failed - incoming transaction recieved,
+            timeout - incoming transaction did not received
+            failed - incoming transaction received,
                 but payment order is not marked as notified
             unconfirmed - customer notified about successful payment,
                 but outgoing transaction is not confirmed
@@ -149,7 +149,7 @@ class PaymentOrder(models.Model):
                     return 'unconfirmed'
                 else:
                     return 'notified'
-        if not self.time_recieved:
+        if not self.time_received:
             if self.time_created + PAYMENT_TIMEOUT < timezone.now():
                 return 'timeout'
             else:
@@ -168,7 +168,7 @@ class PaymentOrder(models.Model):
             elif self.time_forwarded:
                 return 'forwarded'
             else:
-                return 'recieved'
+                return 'received'
 
     @property
     def receipt_url(self):
