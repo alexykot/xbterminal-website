@@ -153,7 +153,7 @@ class PaymentOrder(models.Model):
             if self.time_created + PAYMENT_TIMEOUT < timezone.now():
                 return 'timeout'
             else:
-                if len(self.incoming_tx_ids) > 0:
+                if 0 < self.paid_btc_amount < self.btc_amount:
                     return 'underpaid'
                 else:
                     return 'new'

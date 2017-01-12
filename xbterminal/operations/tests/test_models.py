@@ -54,9 +54,10 @@ class PaymentOrderTestCase(TestCase):
 
     def test_status(self):
         # Without instantfiat
-        payment_order = PaymentOrderFactory.create()
+        payment_order = PaymentOrderFactory.create(
+            merchant_btc_amount=Decimal('0.10'))
         self.assertEqual(payment_order.status, 'new')
-        payment_order.incoming_tx_ids.append('0' * 64)
+        payment_order.paid_btc_amount = Decimal('0.09')
         self.assertEqual(payment_order.status, 'underpaid')
         payment_order.time_recieved = (payment_order.time_created +
                                        datetime.timedelta(minutes=1))
