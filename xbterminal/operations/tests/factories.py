@@ -1,6 +1,7 @@
 from decimal import Decimal
 import uuid
 
+from django.utils import timezone
 from bitcoin.core import COutPoint
 import factory
 from factory import fuzzy
@@ -15,6 +16,15 @@ class PaymentOrderFactory(factory.DjangoModelFactory):
 
     class Meta:
         model = PaymentOrder
+
+    class Params:
+        received = factory.Trait(
+            incoming_tx_ids=factory.List(['0' * 64]),
+            paid_btc_amount=factory.LazyAttribute(
+                lambda po:
+                    po.merchant_btc_amount + po.instantfiat_btc_amount +
+                    po.fee_btc_amount + po.tx_fee_btc_amount),
+            time_received=factory.LazyFunction(timezone.now))
 
     device = factory.SubFactory(DeviceFactory)
     account = factory.LazyAttribute(

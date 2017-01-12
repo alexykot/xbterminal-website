@@ -34,6 +34,12 @@ class PaymentOrderTestCase(TestCase):
         self.assertEqual(payment_order.paid_btc_amount, 0)
         self.assertEqual(payment_order.extra_btc_amount, 0)
 
+    def test_factory_received(self):
+        order = PaymentOrderFactory.create(received=True)
+        self.assertEqual(order.status, 'received')
+        self.assertEqual(len(order.incoming_tx_ids), 1)
+        self.assertEqual(order.paid_btc_amount, order.btc_amount)
+
     def test_incoming_tx_ids(self):
         order = PaymentOrderFactory.create()
         tx_1 = '1' * 64
