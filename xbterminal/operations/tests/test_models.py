@@ -31,6 +31,8 @@ class PaymentOrderTestCase(TestCase):
                                payment_order.fee_btc_amount +
                                payment_order.tx_fee_btc_amount)
         self.assertEqual(payment_order.btc_amount, expected_btc_amount)
+        self.assertEqual(payment_order.paid_btc_amount, 0)
+        self.assertEqual(payment_order.extra_btc_amount, 0)
 
     def test_incoming_tx_ids(self):
         order = PaymentOrderFactory.create()

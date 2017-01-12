@@ -75,6 +75,8 @@ class PaymentOrder(models.Model):
         max_digits=18, decimal_places=8)
     tx_fee_btc_amount = models.DecimalField(
         max_digits=18, decimal_places=8)
+    paid_btc_amount = models.DecimalField(
+        max_digits=18, decimal_places=8, default=0)
     extra_btc_amount = models.DecimalField(
         max_digits=18, decimal_places=8, default=0)
     instantfiat_invoice_id = models.CharField(
