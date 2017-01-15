@@ -575,6 +575,8 @@ class DeviceTestCase(TestCase):
             device.activate()
         device.start_activation()
         self.assertEqual(device.status, 'activation_in_progress')
+        with self.assertRaises(TransitionNotAllowed):
+            device.reset_activation()
         device.activate()
         self.assertEqual(device.status, 'active')
         device.suspend()
@@ -590,6 +592,10 @@ class DeviceTestCase(TestCase):
         self.assertEqual(device.status, 'activation_in_progress')
         device.set_activation_error()
         self.assertEqual(device.status, 'activation_error')
+        device.reset_activation()
+        self.assertEqual(device.status, 'registered')
+        self.assertIsNone(device.merchant)
+        self.assertIsNone(device.account)
 
     def test_bitcoin_network(self):
         device_1 = DeviceFactory.create(status='registered')

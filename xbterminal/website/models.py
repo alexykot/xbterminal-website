@@ -695,6 +695,14 @@ class Device(models.Model):
         pass
 
     @transition(field=status,
+                source='activation_error',
+                target='registered')
+    def reset_activation(self):
+        self.merchant = None
+        self.account = None
+        self.save()
+
+    @transition(field=status,
                 source=['activation_in_progress', 'suspended'],
                 target='active')
     def activate(self):
