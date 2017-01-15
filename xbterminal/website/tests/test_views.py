@@ -237,7 +237,7 @@ class ActivationWizardTestCase(TestCase):
         self.assertEqual(len(mail.outbox), 0)
         device = Device.objects.get(pk=device.pk)
         self.assertEqual(device.merchant.pk, merchant.pk)
-        self.assertEqual(device.status, 'activation')
+        self.assertEqual(device.status, 'activation_in_progress')
         self.assertEqual(device.account.pk, account_btc.pk)
 
     @patch('api.utils.activation.rq_helpers')
@@ -282,7 +282,7 @@ class ActivationWizardTestCase(TestCase):
         self.assertTrue(rq_helpers_mock.run_periodic_task.called)
         device = Device.objects.get(pk=device.pk)
         self.assertIsNotNone(device.merchant)
-        self.assertEqual(device.status, 'activation')
+        self.assertEqual(device.status, 'activation_in_progress')
         self.assertEqual(device.account.currency.name, 'BTC')
         merchant = device.merchant
         self.assertEqual(merchant.device_set.count(), 1)
@@ -332,7 +332,7 @@ class UpdateDeviceView(TestCase):
 
     def test_get_activation(self):
         device = DeviceFactory.create(merchant=self.merchant,
-                                      status='activation')
+                                      status='activation_in_progress')
         self.client.login(username=self.merchant.user.email,
                           password='password')
         url = reverse('website:device',
@@ -391,7 +391,7 @@ class ActivateDeviceViewTestCase(TestCase):
         self.assertRedirects(response, expected_url)
         self.assertEqual(merchant.device_set.count(), 1)
         active_device = merchant.device_set.first()
-        self.assertEqual(active_device.status, 'activation')
+        self.assertEqual(active_device.status, 'activation_in_progress')
         self.assertEqual(active_device.account.pk, account.pk)
 
     def test_post_error(self):
@@ -413,7 +413,7 @@ class DeviceActivationViewTestCase(TestCase):
 
     def test_get(self):
         device = DeviceFactory.create(merchant=self.merchant,
-                                      status='activation')
+                                      status='activation_in_progress')
         url = reverse('website:device_activation',
                       kwargs={'device_key': device.key})
         self.client.login(username=self.merchant.user.email,

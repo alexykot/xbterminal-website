@@ -370,7 +370,7 @@ class DeviceActivationFormTestCase(TestCase):
         self.assertIn('activation_code', form.errors)
 
     def test_already_activated(self):
-        device = DeviceFactory.create(status='activation')
+        device = DeviceFactory.create(status='activation_in_progress')
         form_data = {
             'activation_code': device.activation_code,
         }

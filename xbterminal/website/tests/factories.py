@@ -226,12 +226,17 @@ class DeviceFactory(factory.DjangoModelFactory):
         elif extracted == 'registered':
             self.merchant = None
             self.account = None
-        elif extracted == 'activation':
+        elif extracted == 'activation_in_progress':
             self.start_activation()
+        elif extracted == 'activation_error':
+            self.start_activation()
+            self.set_activation_error()
         elif extracted == 'suspended':
             self.start_activation()
             self.activate()
             self.suspend()
+        else:
+            raise AssertionError
         if create:
             self.save()
 

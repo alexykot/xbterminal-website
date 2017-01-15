@@ -128,7 +128,7 @@ class PaymentViewSetTestCase(APITestCase):
                          'Invalid device key.')
 
     def test_create_not_active(self):
-        device = DeviceFactory.create(status='activation')
+        device = DeviceFactory.create(status='activation_in_progress')
         url = reverse('api:v2:payment-list')
         form_data = {
             'device': device.key,
@@ -356,7 +356,7 @@ class WithdrawalViewSetTestCase(APITestCase):
                          'Invalid device key.')
 
     def test_create_device_not_active(self):
-        device = DeviceFactory.create(status='activation')
+        device = DeviceFactory.create(status='activation_in_progress')
         form_data = {
             'device': device.key,
             'amount': '1.00',
@@ -572,7 +572,7 @@ class DeviceViewSetTestCase(APITestCase):
         self.assertEqual(response.data['currency']['name'], 'GBP')
 
     def test_retrieve_activation(self):
-        device = DeviceFactory.create(status='activation')
+        device = DeviceFactory.create(status='activation_in_progress')
         url = reverse('api:v2:device-detail',
                       kwargs={'key': device.key})
         response = self.client.get(url)
@@ -599,7 +599,7 @@ class DeviceViewSetTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_confirm_activation(self):
-        device = DeviceFactory.create(status='activation')
+        device = DeviceFactory.create(status='activation_in_progress')
         url = reverse('api:v2:device-confirm-activation',
                       kwargs={'key': device.key})
         response = self.client.post(url)

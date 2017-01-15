@@ -247,7 +247,7 @@ class DeviceViewSet(viewsets.GenericViewSet):
     def get_queryset(self):
         queryset = Device.objects.exclude(status='suspended')
         if self.action == 'confirm_activation':
-            queryset = queryset.filter(status='activation')
+            queryset = queryset.filter(status='activation_in_progress')
         return queryset
 
     def get_serializer_class(self):

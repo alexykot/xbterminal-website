@@ -27,7 +27,6 @@ from api.serializers import (
     DeviceRegistrationSerializer,
     ThirdPartyDeviceSerializer,
     TransactionSerializer)
-from api.utils import activation
 from api.utils.crypto import create_test_public_key
 
 
@@ -228,10 +227,11 @@ class DeviceSerializerTestCase(TestCase):
         self.assertIsNone(data['settings']['amount_shift'])
 
     def test_activation(self):
-        device = DeviceFactory.create(status='activation')
+        device = DeviceFactory.create(status='activation_in_progress')
         data = DeviceSerializer(device).data
         self.assertEqual(data['status'], 'activation_in_progress')
-        activation.set_status(device, 'error')
+        device.set_activation_error()
+        device.save()
         data = DeviceSerializer(device).data
         self.assertEqual(data['status'], 'activation_error')
 

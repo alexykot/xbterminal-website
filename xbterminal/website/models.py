@@ -610,7 +610,8 @@ class Device(models.Model):
     ]
     DEVICE_STATUSES = [
         ('registered', _('Registered')),
-        ('activation', _('Activation in progress')),
+        ('activation_in_progress', _('Activation in progress')),
+        ('activation_error', _('Activation error')),
         ('active', _('Operational')),
         ('suspended', _('Suspended')),
     ]
@@ -677,7 +678,7 @@ class Device(models.Model):
 
     @transition(field=status,
                 source='registered',
-                target='activation',
+                target='activation_in_progress',
                 conditions=[can_activate])
     def start_activation(self):
         # Copy global defaults
@@ -688,7 +689,13 @@ class Device(models.Model):
         self.save()
 
     @transition(field=status,
-                source=['activation', 'suspended'],
+                source='activation_in_progress',
+                target='activation_error')
+    def set_activation_error(self):
+        pass
+
+    @transition(field=status,
+                source=['activation_in_progress', 'suspended'],
                 target='active')
     def activate(self):
         pass

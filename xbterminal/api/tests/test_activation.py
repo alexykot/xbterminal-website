@@ -6,8 +6,6 @@ from rq.job import NoSuchJobError
 from api.utils.activation import (
     start,
     prepare_device,
-    get_status,
-    set_status,
     wait_for_activation)
 from website.models import Device
 from website.tests.factories import (
@@ -32,7 +30,7 @@ class ActivationTestCase(TestCase):
         self.assertEqual(run_mock.call_args[1]['timeout'], 2400)
         self.assertTrue(run_periodic_mock.called)
         device_updated = Device.objects.get(pk=device.pk)
-        self.assertEqual(device_updated.status, 'activation')
+        self.assertEqual(device_updated.status, 'activation_in_progress')
         self.assertEqual(device_updated.merchant.pk, merchant.pk)
         self.assertEqual(device_updated.account.pk, account_usd.pk)
         self.assertEqual(device.amount_1,
@@ -74,7 +72,7 @@ class ActivationTestCase(TestCase):
             'get_grain.return_value': 'qemuarm',
         })
         get_version_mock.side_effect = ['1.0', '1.1', '1.1-theme']
-        device = DeviceFactory.create(status='activation')
+        device = DeviceFactory.create(status='activation_in_progress')
 
         prepare_device(device.key)
         self.assertTrue(salt_mock.accept.called)
@@ -103,20 +101,8 @@ class ActivationTestCase(TestCase):
         self.assertFalse(salt_mock.reboot.called)
 
         device_updated = Device.objects.get(key=device.key)
-        self.assertEqual(device_updated.status, 'activation')  # Not changed
-
-    def test_get_status_default(self):
-        device = DeviceFactory.create(status='activation')
-        status = get_status(device)
-        self.assertEqual(status, 'in_progress')
-
-    def test_get_status_error(self):
-        device = DeviceFactory.create(status='activation')
-        with self.assertRaises(AssertionError):
-            set_status(device, 'test')
-        set_status(device, 'error')
-        status = get_status(device)
-        self.assertEqual(status, 'error')
+        self.assertEqual(device_updated.status,
+                         'activation_in_progress')  # Not changed
 
     @patch('api.utils.activation.Job.fetch')
     @patch('api.utils.activation.rq_helpers.cancel_current_task')
@@ -125,7 +111,7 @@ class ActivationTestCase(TestCase):
             is_failed=False,
             started_at=datetime.datetime.now(),
             timeout=600)
-        device = DeviceFactory.create(status='activation')
+        device = DeviceFactory.create(status='activation_in_progress')
         job_id = 'test'
         wait_for_activation(device.key, job_id)
         self.assertFalse(cancel_mock.called)
@@ -141,7 +127,7 @@ class ActivationTestCase(TestCase):
     @patch('api.utils.activation.rq_helpers.cancel_current_task')
     def test_wait_for_activation_no_such_job(self, cancel_mock, job_fetch_mock):
         job_fetch_mock.side_effect = NoSuchJobError
-        device = DeviceFactory.create(status='activation')
+        device = DeviceFactory.create(status='activation_in_progress')
         job_id = 'test'
         wait_for_activation(device.key, job_id)
         self.assertFalse(cancel_mock.called)
@@ -152,12 +138,12 @@ class ActivationTestCase(TestCase):
         job_fetch_mock.return_value = Mock(
             started_at=datetime.datetime.now() - datetime.timedelta(minutes=20),
             timeout=600)
-        device = DeviceFactory.create(status='activation')
+        device = DeviceFactory.create(status='activation_in_progress')
         job_id = 'test'
         wait_for_activation(device.key, job_id)
         self.assertTrue(cancel_mock.called)
-        status = get_status(device)
-        self.assertEqual(status, 'error')
+        device_updated = Device.objects.get(pk=device.pk)
+        self.assertEqual(device_updated.status, 'activation_error')
 
     @patch('api.utils.activation.Job.fetch')
     @patch('api.utils.activation.rq_helpers.cancel_current_task')
@@ -166,9 +152,9 @@ class ActivationTestCase(TestCase):
             is_failed=True,
             started_at=datetime.datetime.now(),
             timeout=600)
-        device = DeviceFactory.create(status='activation')
+        device = DeviceFactory.create(status='activation_in_progress')
         job_id = 'test'
         wait_for_activation(device.key, job_id)
         self.assertTrue(cancel_mock.called)
-        status = get_status(device)
-        self.assertEqual(status, 'error')
+        device_updated = Device.objects.get(pk=device.pk)
+        self.assertEqual(device_updated.status, 'activation_error')
