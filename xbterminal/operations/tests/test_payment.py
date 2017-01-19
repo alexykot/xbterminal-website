@@ -65,6 +65,7 @@ class PreparePaymentTestCase(TestCase):
                          Decimal('0.0001'))
         self.assertEqual(payment_order.btc_amount,
                          expected_btc_amount)
+        self.assertEqual(payment_order.paid_btc_amount, 0)
         self.assertIsNone(payment_order.instantfiat_invoice_id)
         self.assertEqual(len(payment_order.incoming_tx_ids), 0)
         self.assertIsNone(payment_order.outgoing_tx_id)
@@ -228,7 +229,7 @@ class WaitForPaymentTestCase(TestCase):
     @patch('operations.payment.blockchain.BlockChain')
     def test_payment_already_validated(self, bc_mock, cancel_mock):
         payment_order = PaymentOrderFactory.create(
-            time_recieved=timezone.now(),
+            time_received=timezone.now(),
             incoming_tx_ids=['0' * 64])
         payment.wait_for_payment(payment_order.uid)
         self.assertTrue(cancel_mock.called)
@@ -289,7 +290,7 @@ class WaitForPaymentTestCase(TestCase):
         self.assertEqual(order.refund_address, customer_address)
         self.assertEqual(order.incoming_tx_ids[0], incoming_tx_id)
         self.assertEqual(order.payment_type, 'bip0021')
-        self.assertEqual(order.status, 'recieved')
+        self.assertEqual(order.status, 'received')
 
     @patch('operations.payment.cancel_current_task')
     @patch('operations.payment.blockchain.BlockChain')
@@ -338,7 +339,7 @@ class WaitForPaymentTestCase(TestCase):
         order.refresh_from_db()
         self.assertEqual(order.incoming_tx_ids[0], incoming_tx_id)
         self.assertEqual(order.refund_address, customer_address)
-        self.assertIsNone(order.time_recieved)
+        self.assertIsNone(order.time_received)
 
     @patch('operations.payment.cancel_current_task')
     @patch('operations.payment.blockchain.BlockChain')
@@ -361,7 +362,7 @@ class WaitForPaymentTestCase(TestCase):
         self.assertTrue(cancel_mock.called)
         order.refresh_from_db()
         self.assertEqual(order.incoming_tx_ids[0], incoming_tx_id)
-        self.assertIsNone(order.time_recieved)
+        self.assertIsNone(order.time_received)
 
     @patch('operations.payment.cancel_current_task')
     @patch('operations.payment.blockchain.BlockChain')
@@ -420,7 +421,7 @@ class ParsePaymentTestCase(TestCase):
         self.assertEqual(order.refund_address, 'test_address')
         self.assertEqual(order.incoming_tx_ids[0], incoming_tx_id)
         self.assertEqual(order.payment_type, 'bip0070')
-        self.assertEqual(order.status, 'recieved')
+        self.assertEqual(order.status, 'received')
 
     @patch('operations.payment.blockchain.BlockChain')
     @patch('operations.payment.protocol.parse_payment')
@@ -477,7 +478,7 @@ class ParsePaymentTestCase(TestCase):
         self.assertFalse(validate_mock.called)
         order.refresh_from_db()
         self.assertEqual(len(order.incoming_tx_ids), 0)
-        self.assertIsNone(order.time_recieved)
+        self.assertIsNone(order.time_received)
 
     @patch('operations.payment.blockchain.BlockChain')
     @patch('operations.payment.protocol.parse_payment')
@@ -499,7 +500,7 @@ class ParsePaymentTestCase(TestCase):
         self.assertTrue(validate_mock.called)
         order.refresh_from_db()
         self.assertEqual(order.incoming_tx_ids[0], incoming_tx_id)
-        self.assertIsNone(order.time_recieved)
+        self.assertIsNone(order.time_received)
 
 
 class ValidatePaymentTestCase(TestCase):
@@ -605,14 +606,14 @@ class ReversePaymentTestCase(TestCase):
 
     def test_already_forwarded(self):
         order = PaymentOrderFactory.create(
-            time_recieved=timezone.now(),
+            time_received=timezone.now(),
             time_forwarded=timezone.now())
         with self.assertRaises(exceptions.RefundError):
             payment.reverse_payment(order)
 
     def test_already_refunded(self):
         order = PaymentOrderFactory.create(
-            time_recieved=timezone.now(),
+            time_received=timezone.now(),
             time_refunded=timezone.now())
         with self.assertRaises(exceptions.RefundError):
             payment.reverse_payment(order)
@@ -651,7 +652,7 @@ class WaitForValidationTestCase(TestCase):
     @patch('operations.payment.forward_transaction')
     def test_payment_not_validated(self, forward_mock, cancel_mock):
         payment_order = PaymentOrderFactory.create()
-        self.assertIsNone(payment_order.time_recieved)
+        self.assertIsNone(payment_order.time_received)
         payment.wait_for_validation(payment_order.uid)
         self.assertFalse(cancel_mock.called)
         self.assertFalse(forward_mock.called)
@@ -660,7 +661,7 @@ class WaitForValidationTestCase(TestCase):
     @patch('operations.payment.forward_transaction')
     def test_payment_already_forwarded(self, forward_mock, cancel_mock):
         payment_order = PaymentOrderFactory.create(
-            time_recieved=timezone.now(),
+            time_received=timezone.now(),
             time_forwarded=timezone.now(),
             incoming_tx_ids=['0' * 64],
             outgoing_tx_id='0' * 64)
@@ -684,7 +685,7 @@ class WaitForValidationTestCase(TestCase):
     def test_payment_cancelled_2(self, run_task_mock, forward_mock,
                                  conf_chk_mock, cancel_mock):
         order = PaymentOrderFactory.create(
-            time_recieved=timezone.now(),
+            time_received=timezone.now(),
             incoming_tx_ids=['0' * 64])
 
         def cancel_order(*args):
@@ -707,7 +708,7 @@ class WaitForValidationTestCase(TestCase):
     def test_tx_not_reliable(self, forward_mock, conf_chk_mock, cancel_mock):
         conf_chk_mock.return_value = False
         payment_order = PaymentOrderFactory.create(
-            time_recieved=timezone.now(),
+            time_received=timezone.now(),
             incoming_tx_ids=['0' * 64])
         payment.wait_for_validation(payment_order.uid)
         self.assertFalse(cancel_mock.called)
@@ -720,7 +721,7 @@ class WaitForValidationTestCase(TestCase):
                                       conf_chk_mock, cancel_mock):
         conf_chk_mock.side_effect = [False, False]
         payment_order = PaymentOrderFactory.create(
-            time_recieved=timezone.now(),
+            time_received=timezone.now(),
             incoming_tx_ids=['0' * 64, '1' * 64])
         payment.wait_for_validation(payment_order.uid)
         self.assertEqual(conf_chk_mock.call_count, 1)
@@ -735,7 +736,7 @@ class WaitForValidationTestCase(TestCase):
                          cancel_mock):
         conf_chk_mock.return_value = True
         payment_order = PaymentOrderFactory.create(
-            time_recieved=timezone.now(),
+            time_received=timezone.now(),
             incoming_tx_ids=['0' * 64])
         payment.wait_for_validation(payment_order.uid)
 
@@ -755,7 +756,7 @@ class WaitForValidationTestCase(TestCase):
                                      conf_chk_mock, cancel_mock):
         conf_chk_mock.side_effect = [True, True]
         payment_order = PaymentOrderFactory.create(
-            time_recieved=timezone.now(),
+            time_received=timezone.now(),
             incoming_tx_ids=['0' * 64, '1' * 64])
         payment.wait_for_validation(payment_order.uid)
         self.assertTrue(cancel_mock.called)
@@ -769,7 +770,7 @@ class WaitForValidationTestCase(TestCase):
                                  conf_chk_mock, cancel_mock):
         conf_chk_mock.return_value = True
         payment_order = PaymentOrderFactory.create(
-            time_recieved=timezone.now(),
+            time_received=timezone.now(),
             incoming_tx_ids=['0' * 64],
             instantfiat_invoice_id='test_invoice')
         payment.wait_for_validation(payment_order.uid)
@@ -1081,7 +1082,7 @@ class CheckPaymentStatusTestCase(TestCase):
     def test_failed(self, reverse_mock, cancel_mock):
         order = PaymentOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=2),
-            time_recieved=timezone.now() - datetime.timedelta(hours=1))
+            time_received=timezone.now() - datetime.timedelta(hours=1))
         payment.check_payment_status(order.uid)
         self.assertTrue(cancel_mock.called)
         self.assertTrue(reverse_mock.called)
@@ -1090,7 +1091,7 @@ class CheckPaymentStatusTestCase(TestCase):
     def test_unconfirmed(self, cancel_mock):
         order = PaymentOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=4),
-            time_recieved=timezone.now() - datetime.timedelta(hours=3),
+            time_received=timezone.now() - datetime.timedelta(hours=3),
             time_forwarded=timezone.now() - datetime.timedelta(hours=3),
             time_notified=timezone.now() - datetime.timedelta(hours=3))
         self.assertEqual(order.status, 'unconfirmed')
@@ -1101,7 +1102,7 @@ class CheckPaymentStatusTestCase(TestCase):
     def test_refunded(self, cancel_mock):
         order = PaymentOrderFactory.create(
             time_created=timezone.now(),
-            time_recieved=timezone.now(),
+            time_received=timezone.now(),
             time_refunded=timezone.now())
         payment.check_payment_status(order.uid)
         self.assertTrue(cancel_mock.called)

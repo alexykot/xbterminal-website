@@ -31,6 +31,14 @@ class PaymentOrderTestCase(TestCase):
                                payment_order.fee_btc_amount +
                                payment_order.tx_fee_btc_amount)
         self.assertEqual(payment_order.btc_amount, expected_btc_amount)
+        self.assertEqual(payment_order.paid_btc_amount, 0)
+        self.assertEqual(payment_order.extra_btc_amount, 0)
+
+    def test_factory_received(self):
+        order = PaymentOrderFactory.create(received=True)
+        self.assertEqual(order.status, 'received')
+        self.assertEqual(len(order.incoming_tx_ids), 1)
+        self.assertEqual(order.paid_btc_amount, order.btc_amount)
 
     def test_incoming_tx_ids(self):
         order = PaymentOrderFactory.create()
@@ -52,14 +60,15 @@ class PaymentOrderTestCase(TestCase):
 
     def test_status(self):
         # Without instantfiat
-        payment_order = PaymentOrderFactory.create()
+        payment_order = PaymentOrderFactory.create(
+            merchant_btc_amount=Decimal('0.10'))
         self.assertEqual(payment_order.status, 'new')
-        payment_order.incoming_tx_ids.append('0' * 64)
+        payment_order.paid_btc_amount = Decimal('0.09')
         self.assertEqual(payment_order.status, 'underpaid')
-        payment_order.time_recieved = (payment_order.time_created +
+        payment_order.time_received = (payment_order.time_created +
                                        datetime.timedelta(minutes=1))
-        self.assertEqual(payment_order.status, 'recieved')
-        payment_order.time_forwarded = (payment_order.time_recieved +
+        self.assertEqual(payment_order.status, 'received')
+        payment_order.time_forwarded = (payment_order.time_received +
                                         datetime.timedelta(minutes=1))
         self.assertEqual(payment_order.status, 'processed')
         payment_order.time_notified = (payment_order.time_forwarded +
@@ -72,10 +81,10 @@ class PaymentOrderTestCase(TestCase):
         payment_order = PaymentOrderFactory.create(
             instantfiat_invoice_id='invoice01')
         self.assertEqual(payment_order.status, 'new')
-        payment_order.time_recieved = (payment_order.time_created +
+        payment_order.time_received = (payment_order.time_created +
                                        datetime.timedelta(minutes=1))
-        self.assertEqual(payment_order.status, 'recieved')
-        payment_order.time_forwarded = (payment_order.time_recieved +
+        self.assertEqual(payment_order.status, 'received')
+        payment_order.time_forwarded = (payment_order.time_received +
                                         datetime.timedelta(minutes=1))
         self.assertEqual(payment_order.status, 'forwarded')
         payment_order.time_exchanged = (payment_order.time_forwarded +
@@ -94,21 +103,21 @@ class PaymentOrderTestCase(TestCase):
         # Failed
         payment_order = PaymentOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=2),
-            time_recieved=timezone.now() - datetime.timedelta(hours=1))
+            time_received=timezone.now() - datetime.timedelta(hours=1))
         self.assertEqual(payment_order.status, 'failed')
         # Unconfirmed
         payment_order = PaymentOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=5),
-            time_recieved=timezone.now() - datetime.timedelta(hours=5),
+            time_received=timezone.now() - datetime.timedelta(hours=5),
             time_forwarded=timezone.now() - datetime.timedelta(hours=5),
             time_notified=timezone.now() - datetime.timedelta(hours=5))
         self.assertEqual(payment_order.status, 'unconfirmed')
         # Refunded
         payment_order = PaymentOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=2),
-            time_recieved=timezone.now() - datetime.timedelta(hours=1))
+            time_received=timezone.now() - datetime.timedelta(hours=1))
         self.assertEqual(payment_order.status, 'failed')
-        payment_order.time_refunded = (payment_order.time_recieved +
+        payment_order.time_refunded = (payment_order.time_received +
                                        datetime.timedelta(minutes=10))
         self.assertEqual(payment_order.status, 'refunded')
         # Cancelled

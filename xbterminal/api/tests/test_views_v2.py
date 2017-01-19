@@ -167,7 +167,7 @@ class PaymentViewSetTestCase(APITestCase):
 
     def test_retrieve_notified(self):
         payment_order = PaymentOrderFactory.create(
-            time_recieved=timezone.now(),
+            time_received=timezone.now(),
             time_forwarded=timezone.now())
         self.assertIsNone(payment_order.time_notified)
         url = reverse('api:v2:payment-detail',
@@ -189,7 +189,7 @@ class PaymentViewSetTestCase(APITestCase):
         self.assertEqual(order.status, 'cancelled')
 
     def test_cancel_already_received(self):
-        order = PaymentOrderFactory.create(time_recieved=timezone.now())
+        order = PaymentOrderFactory.create(time_received=timezone.now())
         url = reverse('api:v2:payment-cancel', kwargs={'uid': order.uid})
         response = self.client.post(url, {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
@@ -198,7 +198,7 @@ class PaymentViewSetTestCase(APITestCase):
 
     def test_cancel_already_forwarded(self):
         order = PaymentOrderFactory.create(
-            time_recieved=timezone.now(),
+            time_received=timezone.now(),
             time_forwarded=timezone.now())
         url = reverse('api:v2:payment-cancel', kwargs={'uid': order.uid})
         response = self.client.post(url, {}, format='json')
@@ -261,7 +261,7 @@ class PaymentViewSetTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_payment_response_already_received(self):
-        order = PaymentOrderFactory.create(time_recieved=timezone.now())
+        order = PaymentOrderFactory.create(time_received=timezone.now())
         url = reverse('api:v2:payment-response', kwargs={'uid': order.uid})
         response = self.client.post(
             url, '',

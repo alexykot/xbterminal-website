@@ -117,6 +117,7 @@ class PaymentOrderSerializer(serializers.ModelSerializer):
             'uid',
             'fiat_amount',
             'btc_amount',
+            'paid_btc_amount',
             'exchange_rate',
             'status',
         ]

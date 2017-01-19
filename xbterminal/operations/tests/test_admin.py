@@ -45,7 +45,7 @@ class PaymentOrderAdminTestCase(TestCase):
         self.assertEqual(order_1.status, 'new')
         order_2 = PaymentOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=5),
-            time_recieved=timezone.now() - datetime.timedelta(hours=5),
+            time_received=timezone.now() - datetime.timedelta(hours=5),
             time_forwarded=timezone.now() - datetime.timedelta(hours=5),
             time_notified=timezone.now() - datetime.timedelta(hours=5))
         self.assertEqual(order_2.status, 'unconfirmed')

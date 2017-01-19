@@ -12,10 +12,10 @@ def python():
 
 
 @task
-def django():
+def django(apps='website operations api'):
     with prefix('. venv/bin/activate'):
         local('coverage run '
-              'xbterminal/manage.py test website operations api')
+              'xbterminal/manage.py test {}'.format(apps))
         local('coverage report -i')
 
 
