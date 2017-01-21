@@ -155,6 +155,7 @@ class WithdrawalOrderSerializer(serializers.ModelSerializer):
             'uid',
             'fiat_amount',
             'btc_amount',
+            'tx_fee_btc_amount',
             'exchange_rate',
             'status',
         ]

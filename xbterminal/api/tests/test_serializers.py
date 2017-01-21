@@ -206,6 +206,8 @@ class WithdrawalOrderSerializerTestCase(TestCase):
         self.assertEqual(data['uid'], order.uid)
         self.assertEqual(data['fiat_amount'], str(order.fiat_amount))
         self.assertEqual(data['btc_amount'], str(order.btc_amount))
+        self.assertEqual(data['tx_fee_btc_amount'].rstrip('0'),
+                         str(order.tx_fee_btc_amount))
         self.assertEqual(data['exchange_rate'],
                          str(order.effective_exchange_rate))
         self.assertEqual(data['status'], order.status)
