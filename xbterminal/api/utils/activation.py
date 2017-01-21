@@ -2,7 +2,6 @@ import datetime
 import logging
 import time
 
-from django.core.cache import cache
 from django.utils import timezone
 from rq.job import Job, NoSuchJobError
 
@@ -81,25 +80,6 @@ def prepare_device(device_key):
                    int(ACTIVATION_TIMEOUT.total_seconds()))
 
 
-def set_status(device, activation_status):
-    """
-    Save activation status to cache
-    """
-    assert device.status == 'activation'
-    assert activation_status in ['in_progress', 'error']
-    cache_key = CACHE_KEY_TEMPLATE.format(device_key=device.key)
-    cache.set(cache_key, activation_status, timeout=None)
-
-
-def get_status(device):
-    """
-    Get activation status from cache
-    """
-    assert device.status == 'activation'
-    cache_key = CACHE_KEY_TEMPLATE.format(device_key=device.key)
-    return cache.get(cache_key, 'in_progress')
-
-
 def wait_for_activation(device_key, activation_job_id):
     """
     Asynchronous task
@@ -116,12 +96,14 @@ def wait_for_activation(device_key, activation_job_id):
         return
     if timezone.make_aware(job.started_at, timezone.utc) + \
             datetime.timedelta(seconds=job.timeout) < timezone.now():
-        set_status(device, 'error')
+        device.set_activation_error()
+        device.save()
         logger.error('activation timeout (%s)', device.key)
         rq_helpers.cancel_current_task()
         return
     if job.is_failed:
-        set_status(device, 'error')
+        device.set_activation_error()
+        device.save()
         logger.error('activation failed (%s)', device.key)
         rq_helpers.cancel_current_task()
         return

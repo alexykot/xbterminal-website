@@ -178,7 +178,7 @@ class PaymentInitViewTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_not_active(self):
-        device = DeviceFactory.create(status='activation')
+        device = DeviceFactory.create(status='activation_in_progress')
         form_data = {
             'device_key': device.key,
             'amount': '0.5',
