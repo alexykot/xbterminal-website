@@ -11,4 +11,4 @@ def get_exchange_rate(currency_code):
     response = requests.get(api_url.format(currency_code))
     response.raise_for_status()
     data = response.json()
-    return Decimal(data['bpi'][currency_code]['rate'])
+    return Decimal(data['bpi'][currency_code]['rate_float'])
