@@ -86,6 +86,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     def get_short_name(self):
         return self.email
 
+    @property
+    def role(self):
+        if self.is_staff:
+            return 'administrator'
+        elif hasattr(self, 'merchant'):
+            return 'merchant'
+        elif self.groups.filter(name='controllers').exists():
+            return 'controller'
+
 
 class Language(models.Model):
     name = models.CharField(max_length=50, unique=True)

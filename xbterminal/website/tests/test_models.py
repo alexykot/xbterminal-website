@@ -4,6 +4,7 @@ from decimal import Decimal
 import os
 
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.db import IntegrityError
 from django.test import TestCase
 from django.utils import timezone
@@ -60,6 +61,24 @@ class UserTestCase(TestCase):
     def test_get_full_name(self):
         user = UserFactory.create()
         self.assertEqual(user.get_full_name(), user.email)
+
+    def test_role(self):
+        user_1 = UserFactory.create()
+        self.assertIsNone(user_1.role)
+        user_2 = UserFactory.create(is_staff=True)
+        self.assertEqual(user_2.role, 'administrator')
+        user_3 = UserFactory.create()
+        MerchantAccountFactory.create(user=user_3)
+        self.assertEqual(user_3.role, 'merchant')
+        user_4 = UserFactory.create(groups__names=['controllers'])
+        self.assertEqual(user_4.role, 'controller')
+
+
+class GroupTestCase(TestCase):
+
+    def test_fixtures(self):
+        self.assertTrue(Group.objects.filter(
+            name='controllers').exists())
 
 
 class CurrencyTestCase(TestCase):
