@@ -124,9 +124,18 @@ class LoginView(ContextMixin, TemplateResponseMixin, View):
             'next', self.request.GET.get('next', ''))
         return context
 
+    def _redirect_after_login(self, user):
+        if user.role == 'administrator':
+            url = reverse('admin:index')
+        elif user.role == 'merchant':
+            url = reverse('website:devices')
+        else:
+            url = reverse('website:landing')
+        return redirect(url)
+
     def get(self, *args, **kwargs):
-        if hasattr(self.request.user, 'merchant'):
-            return redirect(reverse('website:devices'))
+        if self.request.user.is_authenticated():
+            return self._redirect_after_login(self.request.user)
         context = self.get_context_data(**kwargs)
         context['form'] = forms.AuthenticationForm
         return self.render_to_response(context)
@@ -135,8 +144,9 @@ class LoginView(ContextMixin, TemplateResponseMixin, View):
         context = self.get_context_data(**kwargs)
         form = forms.AuthenticationForm(self.request, data=self.request.POST)
         if form.is_valid():
-            login(self.request, form.get_user())
-            return redirect(context['next'] or reverse('website:devices'))
+            user = form.get_user()
+            login(self.request, user)
+            return self._redirect_after_login(user)
         context['form'] = form
         return self.render_to_response(context)
 

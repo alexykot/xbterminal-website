@@ -16,6 +16,7 @@ from website.models import (
     KYC_DOCUMENT_TYPES)
 from website.tests.factories import (
     create_image,
+    UserFactory,
     MerchantAccountFactory,
     KYCDocumentFactory,
     AccountFactory,
@@ -120,21 +121,33 @@ class LoginViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'website/login.html')
 
-    def test_get_merchant(self):
+    def test_get_merchant_logged_in(self):
         merchant = MerchantAccountFactory.create()
         self.client.login(username=merchant.user.email,
                           password='password')
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(
+            response, reverse('website:devices'), status_code=302)
 
-    def test_post(self):
+    def test_post_merchant(self):
         merchant = MerchantAccountFactory.create()
         form_data = {
             'username': merchant.user.email,
             'password': 'password',
         }
         response = self.client.post(self.url, form_data)
-        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(
+            response, reverse('website:devices'), status_code=302)
+
+    def test_post_administrator(self):
+        user = UserFactory.create(is_staff=True)
+        form_data = {
+            'username': user.email,
+            'password': 'password',
+        }
+        response = self.client.post(self.url, form_data)
+        self.assertRedirects(
+            response, reverse('admin:index'), status_code=302)
 
 
 class RegistrationViewTestCase(TestCase):
