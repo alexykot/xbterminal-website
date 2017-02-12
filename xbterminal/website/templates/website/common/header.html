@@ -30,7 +30,7 @@
                     {% endif %}
                 </ul>
                 <div class="user-block">
-                    {% if not user.merchant %}
+                    {% if not user.is_authenticated %}
                     <a class="login-form-title" href="{% url 'website:login' %}">{% trans 'merchant login' %}</a>
                     <form class="login-form" action="{% url 'website:login' %}" method="POST">
                         {% csrf_token %}
@@ -41,6 +41,7 @@
                     <a class="xbt-btn-secondary login" href="{% url 'website:login' %}">{% trans 'login' %}</a>
                     <a class="xbt-btn-primary register" href="{% url 'website:registration' %}">{% trans 'register' %}</a>
                     {% else %}
+                    {% if user.role == 'merchant' %}
                     <div id="merchant-info">
                         {% with user.merchant.info as info %}
                         <div>
@@ -53,6 +54,7 @@
                         <div id="merchant-info-tx">{% trans 'transactions today:' %} {{ info.tx_count }} / {{ user.merchant.currency.prefix }}{{ info.tx_sum|floatformat:2 }}</div>
                         {% endwith %}
                     </div>
+                    {% endif %}
                     <a class="xbt-btn-secondary logout" href="{% url 'website:logout' %}">{% trans 'logout' %}</a>
                     {% endif %}
                 </div>

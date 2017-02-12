@@ -18,12 +18,12 @@
                     </div>
                     {% endfor %}
                 {% endif %}
-                {% if user.merchant.has_managed_cryptopay_profile and user.merchant.verification_status == 'unverified' and cabinet_page != 'verification' %}
+                {% if user.role == 'merchant' and user.merchant.has_managed_cryptopay_profile and user.merchant.verification_status == 'unverified' and cabinet_page != 'verification' %}
                     <div class="alert alert-info">
                         Your account is not verified - <a href="{% url 'website:verification' %}">upload documents</a>
                     </div>
                 {% endif %}
-                {% if not user.merchant.is_profile_complete %}
+                {% if user.role == 'merchant' and not user.merchant.is_profile_complete %}
                     <div class="alert alert-info">
                         Your profile is not complete - <a href="{% url 'website:profile' %}">update profile</a>
                     </div>

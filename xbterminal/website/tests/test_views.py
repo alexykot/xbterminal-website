@@ -1063,3 +1063,28 @@ class WithdrawToBankAccountForm(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'cabinet/withdrawal_form.html')
         self.assertEqual(len(mail.outbox), 0)
+
+
+class MerchantListViewTestCase(TestCase):
+
+    def setUp(self):
+        self.url = reverse('website:merchants')
+
+    def test_get(self):
+        user = UserFactory.create(groups__names=['controllers'])
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=user.email,
+                          password='password')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'cabinet/merchant_list.html')
+        merchants = response.context['merchants']
+        self.assertEqual(merchants.count(), 1)
+        self.assertIn(merchant, merchants)
+
+    def test_get_as_merchant(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 404)

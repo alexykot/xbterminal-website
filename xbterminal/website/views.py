@@ -129,6 +129,8 @@ class LoginView(ContextMixin, TemplateResponseMixin, View):
             url = reverse('admin:index')
         elif user.role == 'merchant':
             url = reverse('website:devices')
+        elif user.role == 'controller':
+            url = reverse('website:merchants')
         else:
             url = reverse('website:landing')
         return redirect(url)
@@ -711,3 +713,28 @@ class WithdrawToBankAccountView(AccountMixin,
         else:
             context['form'] = form
             return self.render_to_response(context)
+
+
+class ControllerCabinetView(ContextMixin, View):
+    """
+    Base class for controller cabinet views
+    """
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.role == 'controller':
+            raise Http404
+        return super(ControllerCabinetView, self).dispatch(
+            request, *args, **kwargs)
+
+
+class MerchantListView(TemplateResponseMixin, ControllerCabinetView):
+    """
+    Merchant list page
+    """
+    template_name = 'cabinet/merchant_list.html'
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['merchants'] = models.MerchantAccount.objects.all()
+        return self.render_to_response(context)
