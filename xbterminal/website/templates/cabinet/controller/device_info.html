@@ -4,7 +4,6 @@
 {% block cabinet_content %}
 <div class="row">
   <div class="col-md-8 col-md-offset-2">
-    <h3>{% trans 'Device info' %}</h3>
     <table class="table table-striped">
       <tr>
         <th scope="row">Name</th>
@@ -27,6 +26,9 @@
         <td>{{ device.last_activity }}</td>
       </tr>
     </table>
+    <div class="text-center">
+      <a href="{% url 'website:merchant_device_list' merchant.pk %}" class="btn btn-default">{% trans 'Back' %}</a>
+    </div>
   </div>
 </div>
 

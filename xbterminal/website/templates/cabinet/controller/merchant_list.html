@@ -13,7 +13,9 @@
       <a href="{% url 'website:merchant_info' merchant.pk %}">{{ merchant.company_name }}</a>
     </td>
     <td>
+      {% if merchant.device_count %}
       <a href="{% url 'website:merchant_device_list' merchant.pk %}">{% trans 'show devices' %} ({{ merchant.device_count }})</a>
+      {% endif %}
     </td>
   </tr>
   {% endfor %}

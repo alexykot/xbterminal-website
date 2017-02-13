@@ -4,7 +4,6 @@
 {% block cabinet_content %}
 <div class="row">
   <div class="col-md-8 col-md-offset-2">
-    <h3>{% trans 'Merchant info' %}</h3>
     <table class="table table-striped">
       <tr>
         <th scope="row">Company name</th>
@@ -39,6 +38,9 @@
         <td>{{ merchant.get_verification_status_display }}</td>
       </tr>
     </table>
+    <div class="text-center">
+      <a href="{% url 'website:merchant_list' %}" class="btn btn-default">{% trans 'Back' %}</a>
+    </div>
   </div>
 </div>
 
