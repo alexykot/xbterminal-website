@@ -257,9 +257,9 @@ def get_current_merchant(request):
     return request.user.merchant
 
 
-class CabinetView(ContextMixin, View):
+class MerchantCabinetView(ContextMixin, View):
     """
-    Base class for cabinet views
+    Base class for merchant cabinet views
     """
 
     @method_decorator(login_required)
@@ -267,15 +267,17 @@ class CabinetView(ContextMixin, View):
         self.merchant = get_current_merchant(request)
         if not self.merchant:
             raise Http404
-        return super(CabinetView, self).dispatch(request, *args, **kwargs)
+        return super(MerchantCabinetView,
+                     self).dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        context = super(CabinetView, self).get_context_data(**kwargs)
+        context = super(MerchantCabinetView,
+                        self).get_context_data(**kwargs)
         context['cabinet_page'] = resolve(self.request.path_info).url_name
         return context
 
 
-class DeviceList(TemplateResponseMixin, CabinetView):
+class DeviceListView(TemplateResponseMixin, MerchantCabinetView):
     """
     Device list page
     """
@@ -287,7 +289,7 @@ class DeviceList(TemplateResponseMixin, CabinetView):
         return self.render_to_response(context)
 
 
-class ActivateDeviceView(TemplateResponseMixin, CabinetView):
+class ActivateDeviceView(TemplateResponseMixin, MerchantCabinetView):
 
     template_name = 'cabinet/activation.html'
 
@@ -308,7 +310,7 @@ class ActivateDeviceView(TemplateResponseMixin, CabinetView):
             return self.render_to_response(context)
 
 
-class DeviceActivationView(TemplateResponseMixin, CabinetView):
+class DeviceActivationView(TemplateResponseMixin, MerchantCabinetView):
 
     template_name = 'cabinet/activation.html'
 
@@ -345,7 +347,9 @@ class DeviceMixin(ContextMixin):
         return context
 
 
-class UpdateDeviceView(DeviceMixin, TemplateResponseMixin, CabinetView):
+class UpdateDeviceView(DeviceMixin,
+                       TemplateResponseMixin,
+                       MerchantCabinetView):
     """
     Update device
     """
@@ -372,7 +376,7 @@ class UpdateDeviceView(DeviceMixin, TemplateResponseMixin, CabinetView):
             return self.render_to_response(context)
 
 
-class UpdateProfileView(TemplateResponseMixin, CabinetView):
+class UpdateProfileView(TemplateResponseMixin, MerchantCabinetView):
     """
     Update profile
     """
@@ -395,7 +399,7 @@ class UpdateProfileView(TemplateResponseMixin, CabinetView):
             return self.render_to_response(context)
 
 
-class ChangePasswordView(TemplateResponseMixin, CabinetView):
+class ChangePasswordView(TemplateResponseMixin, MerchantCabinetView):
     """
     Change password
     """
@@ -417,7 +421,7 @@ class ChangePasswordView(TemplateResponseMixin, CabinetView):
             return self.render_to_response(context)
 
 
-class VerificationView(TemplateResponseMixin, CabinetView):
+class VerificationView(TemplateResponseMixin, MerchantCabinetView):
     """
     Verification page
     """
@@ -537,7 +541,7 @@ class VerificationFileView(View):
                             content_type='application/json')
 
 
-class AccountListView(TemplateResponseMixin, CabinetView):
+class AccountListView(TemplateResponseMixin, MerchantCabinetView):
     """
     Account list page
     """
@@ -564,7 +568,9 @@ class AccountMixin(ContextMixin):
         return context
 
 
-class EditAccountView(AccountMixin, TemplateResponseMixin, CabinetView):
+class EditAccountView(AccountMixin,
+                      TemplateResponseMixin,
+                      MerchantCabinetView):
     """
     Edit account
     """
@@ -589,7 +595,7 @@ class EditAccountView(AccountMixin, TemplateResponseMixin, CabinetView):
             return self.render_to_response(context)
 
 
-class TransactionListView(TemplateResponseMixin, CabinetView):
+class TransactionListView(TemplateResponseMixin, MerchantCabinetView):
     """
     Base class
     """
@@ -633,7 +639,7 @@ class AccountTransactionListView(AccountMixin, TransactionListView):
     pass
 
 
-class ReportView(CabinetView):
+class ReportView(MerchantCabinetView):
     """
     Base class
     """
@@ -668,7 +674,9 @@ class AccountReportView(AccountMixin, ReportView):
     pass
 
 
-class AddFundsView(AccountMixin, TemplateResponseMixin, CabinetView):
+class AddFundsView(AccountMixin,
+                   TemplateResponseMixin,
+                   MerchantCabinetView):
     """
     Add funds to account
     """
@@ -682,7 +690,7 @@ class AddFundsView(AccountMixin, TemplateResponseMixin, CabinetView):
 
 class WithdrawToBankAccountView(AccountMixin,
                                 TemplateResponseMixin,
-                                CabinetView):
+                                MerchantCabinetView):
     """
     Withdraw funds from instantfiat account
     """
