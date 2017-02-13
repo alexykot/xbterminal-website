@@ -281,7 +281,7 @@ class DeviceListView(TemplateResponseMixin, MerchantCabinetView):
     """
     Device list page
     """
-    template_name = "cabinet/device_list.html"
+    template_name = 'cabinet/merchant/device_list.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -291,7 +291,7 @@ class DeviceListView(TemplateResponseMixin, MerchantCabinetView):
 
 class ActivateDeviceView(TemplateResponseMixin, MerchantCabinetView):
 
-    template_name = 'cabinet/activation.html'
+    template_name = 'cabinet/merchant/activation.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -312,7 +312,7 @@ class ActivateDeviceView(TemplateResponseMixin, MerchantCabinetView):
 
 class DeviceActivationView(TemplateResponseMixin, MerchantCabinetView):
 
-    template_name = 'cabinet/activation.html'
+    template_name = 'cabinet/merchant/activation.html'
 
     def get(self, *args, **kwargs):
         try:
@@ -353,7 +353,7 @@ class UpdateDeviceView(DeviceMixin,
     """
     Update device
     """
-    template_name = "cabinet/device_form.html"
+    template_name = 'cabinet/merchant/device_form.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -380,7 +380,7 @@ class UpdateProfileView(TemplateResponseMixin, MerchantCabinetView):
     """
     Update profile
     """
-    template_name = "cabinet/profile_form.html"
+    template_name = 'cabinet/merchant/profile_form.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -403,7 +403,7 @@ class ChangePasswordView(TemplateResponseMixin, MerchantCabinetView):
     """
     Change password
     """
-    template_name = "cabinet/change_password.html"
+    template_name = 'cabinet/merchant/change_password.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -425,7 +425,7 @@ class VerificationView(TemplateResponseMixin, MerchantCabinetView):
     """
     Verification page
     """
-    template_name = 'cabinet/verification.html'
+    template_name = 'cabinet/merchant/verification.html'
 
     def get(self, *args, **kwargs):
         if not self.merchant.has_managed_cryptopay_profile:
@@ -545,7 +545,7 @@ class AccountListView(TemplateResponseMixin, MerchantCabinetView):
     """
     Account list page
     """
-    template_name = "cabinet/account_list.html"
+    template_name = 'cabinet/merchant/account_list.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -574,7 +574,7 @@ class EditAccountView(AccountMixin,
     """
     Edit account
     """
-    template_name = 'cabinet/account_form.html'
+    template_name = 'cabinet/merchant/account_form.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -599,7 +599,7 @@ class TransactionListView(TemplateResponseMixin, MerchantCabinetView):
     """
     Base class
     """
-    template_name = 'cabinet/transactions.html'
+    template_name = 'cabinet/merchant/transactions.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -694,7 +694,7 @@ class WithdrawToBankAccountView(AccountMixin,
     """
     Withdraw funds from instantfiat account
     """
-    template_name = 'cabinet/withdrawal_form.html'
+    template_name = 'cabinet/merchant/withdrawal_form.html'
 
     def get_context_data(self, **kwargs):
         context = super(WithdrawToBankAccountView, self).\
@@ -740,7 +740,7 @@ class MerchantListView(TemplateResponseMixin, ControllerCabinetView):
     """
     Merchant list page
     """
-    template_name = 'cabinet/merchant_list.html'
+    template_name = 'cabinet/controller/merchant_list.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
