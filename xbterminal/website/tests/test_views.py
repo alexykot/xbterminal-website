@@ -1162,6 +1162,7 @@ class MerchantDeviceListViewTestCase(TestCase):
         url = reverse('website:merchant_device_list',
                       kwargs={'pk': merchant.pk})
         response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
             response, 'cabinet/controller/device_list.html')
         self.assertEqual(response.context['merchant'].pk,
@@ -1169,3 +1170,36 @@ class MerchantDeviceListViewTestCase(TestCase):
         devices = response.context['devices']
         self.assertEqual(devices.count(), 1)
         self.assertEqual(devices[0].pk, device.pk)
+
+
+class MerchantDeviceInfoViewTestCase(TestCase):
+
+    def setUp(self):
+        self.controller = UserFactory.create(
+            groups__names=['controllers'])
+
+    def test_get(self):
+        device = DeviceFactory.create()
+        self.client.login(username=self.controller.email,
+                          password='password')
+        url = reverse('website:merchant_device_info', kwargs={
+            'pk': device.merchant.pk, 'device_key': device.key,
+        })
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, 'cabinet/controller/device_info.html')
+        self.assertEqual(response.context['merchant'].pk,
+                         device.merchant.pk)
+        self.assertEqual(response.context['device'].pk,
+                         device.pk)
+
+    def test_get_device_not_found(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=self.controller.email,
+                          password='password')
+        url = reverse('website:merchant_device_info', kwargs={
+            'pk': merchant.pk, 'device_key': '12345678',
+        })
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)

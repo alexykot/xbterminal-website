@@ -788,3 +788,22 @@ class MerchantDeviceListView(TemplateResponseMixin,
         context = self.get_context_data(**kwargs)
         context['devices'] = context['merchant'].device_set.all()
         return self.render_to_response(context)
+
+
+class MerchantDeviceInfoView(TemplateResponseMixin,
+                             MerchantMixin,
+                             ControllerCabinetView):
+    """
+    Merchant's device info page
+    """
+    template_name = 'cabinet/controller/device_info.html'
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        device_key = self.kwargs.get('device_key')
+        try:
+            context['device'] = context['merchant'].device_set.\
+                get(key=device_key)
+        except models.Device.DoesNotExist:
+            raise Http404
+        return self.render_to_response(context)

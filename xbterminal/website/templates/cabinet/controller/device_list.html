@@ -10,7 +10,7 @@
   {% for device in devices %}
   <tr>
     <td>
-      <a href="">{{ device.name }}</a>
+      <a href="{% url 'website:merchant_device_info' merchant.pk device.key %}">{{ device.name }}</a>
     </td>
     <td>
       {{ device.get_status_display }}

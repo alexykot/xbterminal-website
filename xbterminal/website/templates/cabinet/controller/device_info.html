@@ -1,0 +1,33 @@
+{% extends 'cabinet/base.html' %}
+{% load i18n %}
+
+{% block cabinet_content %}
+<div class="row">
+  <div class="col-md-8 col-md-offset-2">
+    <h3>{% trans 'Device info' %}</h3>
+    <table class="table table-striped">
+      <tr>
+        <th scope="row">Name</th>
+        <td>{{ device.name }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Account</th>
+        <td>{{ device.account }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Amounts</th>
+        <td>{{ device.amount_1 }} / {{ device.amount_2 }} / {{ device.amount_3 }} / {{ device.amount_shift }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Status</th>
+        <td>{{ device.get_status_display }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Last activity</th>
+        <td>{{ device.last_activity }}</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

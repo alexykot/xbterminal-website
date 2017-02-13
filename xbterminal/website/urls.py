@@ -73,4 +73,7 @@ urlpatterns = [
     url(r'^merchants/(?P<pk>\d+)/devices/$',
         views.MerchantDeviceListView.as_view(),
         name='merchant_device_list'),
+    url(r'^merchants/(?P<pk>\d+)/devices/(?P<device_key>[0-9a-zA-Z]{8,64})/$',
+        views.MerchantDeviceInfoView.as_view(),
+        name='merchant_device_info'),
 ]
