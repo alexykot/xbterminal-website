@@ -1087,12 +1087,12 @@ class WithdrawToBankAccountForm(TestCase):
 class MerchantListViewTestCase(TestCase):
 
     def setUp(self):
-        self.url = reverse('website:merchants')
+        self.url = reverse('website:merchant_list')
 
     def test_get(self):
-        user = UserFactory.create(groups__names=['controllers'])
+        controller = UserFactory.create(groups__names=['controllers'])
         merchant = MerchantAccountFactory.create()
-        self.client.login(username=user.email,
+        self.client.login(username=controller.email,
                           password='password')
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -1107,4 +1107,41 @@ class MerchantListViewTestCase(TestCase):
         self.client.login(username=merchant.user.email,
                           password='password')
         response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 404)
+
+
+class MerchantInfoViewTestCase(TestCase):
+
+    def setUp(self):
+        self.controller = UserFactory.create(
+            groups__names=['controllers'])
+
+    def test_get(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=self.controller.email,
+                          password='password')
+        url = reverse('website:merchant_info',
+                      kwargs={'pk': merchant.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, 'cabinet/controller/merchant_info.html')
+        self.assertEqual(response.context['merchant'].pk,
+                         merchant.pk)
+
+    def test_get_merchant_not_found(self):
+        self.client.login(username=self.controller.email,
+                          password='password')
+        url = reverse('website:merchant_info',
+                      kwargs={'pk': 1371498})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_as_merchant(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:merchant_info',
+                      kwargs={'pk': merchant.pk})
+        response = self.client.get(url)
         self.assertEqual(response.status_code, 404)

@@ -1,0 +1,45 @@
+{% extends 'cabinet/base.html' %}
+{% load i18n %}
+
+{% block cabinet_content %}
+<div class="row">
+  <div class="col-md-8 col-md-offset-2">
+    <h3>{% trans 'Merchant info' %}</h3>
+    <table class="table table-striped">
+      <tr>
+        <th scope="row">Company name</th>
+        <td>{{ merchant.company_name }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Country</th>
+        <td>{{ merchant.country.name }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Contact email</th>
+        <td>{{ merchant.contact_email }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Contact name</th>
+        <td>{{ merchant.contact_name }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Contact phone</th>
+        <td>{{ merchant.contact_phone }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Language</th>
+        <td>{{ merchant.language.name }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Currency</th>
+        <td>{{ merchant.currency.name }}</td>
+      </tr>
+      <tr>
+        <th scope="row">KYC status</th>
+        <td>{{ merchant.get_verification_status_display }}</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

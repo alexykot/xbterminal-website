@@ -746,3 +746,24 @@ class MerchantListView(TemplateResponseMixin, ControllerCabinetView):
         context = self.get_context_data(**kwargs)
         context['merchants'] = models.MerchantAccount.objects.all()
         return self.render_to_response(context)
+
+
+class MerchantInfoView(TemplateResponseMixin, ControllerCabinetView):
+    """
+    Merchant details page
+    """
+    template_name = 'cabinet/controller/merchant_info.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(MerchantInfoView, self).get_context_data(**kwargs)
+        merchant_id = self.kwargs.get('pk')
+        try:
+            context['merchant'] = models.MerchantAccount.objects.\
+                get(pk=merchant_id)
+        except models.MerchantAccount.DoesNotExist:
+            raise Http404
+        return context
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)

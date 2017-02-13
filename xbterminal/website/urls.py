@@ -66,5 +66,8 @@ urlpatterns = [
 
     url(r'^merchants/$',
         views.MerchantListView.as_view(),
-        name='merchants'),
+        name='merchant_list'),
+    url(r'^merchants/(?P<pk>\d+)/$',
+        views.MerchantInfoView.as_view(),
+        name='merchant_info'),
 ]
