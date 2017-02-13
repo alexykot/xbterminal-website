@@ -70,4 +70,7 @@ urlpatterns = [
     url(r'^merchants/(?P<pk>\d+)/$',
         views.MerchantInfoView.as_view(),
         name='merchant_info'),
+    url(r'^merchants/(?P<pk>\d+)/devices/$',
+        views.MerchantDeviceListView.as_view(),
+        name='merchant_device_list'),
 ]

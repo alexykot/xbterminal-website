@@ -3,6 +3,7 @@ import json
 import datetime
 import re
 
+from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect
 from django.http import HttpResponse, Http404, StreamingHttpResponse
 from django.contrib.auth import login, logout
@@ -744,18 +745,15 @@ class MerchantListView(TemplateResponseMixin, ControllerCabinetView):
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        context['merchants'] = models.MerchantAccount.objects.all()
+        context['merchants'] = models.MerchantAccount.objects.\
+            annotate(device_count=Count('device'))
         return self.render_to_response(context)
 
 
-class MerchantInfoView(TemplateResponseMixin, ControllerCabinetView):
-    """
-    Merchant details page
-    """
-    template_name = 'cabinet/controller/merchant_info.html'
+class MerchantMixin(ContextMixin):
 
     def get_context_data(self, **kwargs):
-        context = super(MerchantInfoView, self).get_context_data(**kwargs)
+        context = super(MerchantMixin, self).get_context_data(**kwargs)
         merchant_id = self.kwargs.get('pk')
         try:
             context['merchant'] = models.MerchantAccount.objects.\
@@ -764,6 +762,29 @@ class MerchantInfoView(TemplateResponseMixin, ControllerCabinetView):
             raise Http404
         return context
 
+
+class MerchantInfoView(TemplateResponseMixin,
+                       MerchantMixin,
+                       ControllerCabinetView):
+    """
+    Merchant details page
+    """
+    template_name = 'cabinet/controller/merchant_info.html'
+
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+
+class MerchantDeviceListView(TemplateResponseMixin,
+                             MerchantMixin,
+                             ControllerCabinetView):
+    """
+    Merchant's device list
+    """
+    template_name = 'cabinet/controller/device_list.html'
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['devices'] = context['merchant'].device_set.all()
         return self.render_to_response(context)

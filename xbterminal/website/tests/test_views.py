@@ -1100,7 +1100,8 @@ class MerchantListViewTestCase(TestCase):
             response, 'cabinet/controller/merchant_list.html')
         merchants = response.context['merchants']
         self.assertEqual(merchants.count(), 1)
-        self.assertIn(merchant, merchants)
+        self.assertEqual(merchants[0].pk, merchant.pk)
+        self.assertEqual(merchants[0].device_count, 0)
 
     def test_get_as_merchant(self):
         merchant = MerchantAccountFactory.create()
@@ -1145,3 +1146,26 @@ class MerchantInfoViewTestCase(TestCase):
                       kwargs={'pk': merchant.pk})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
+
+
+class MerchantDeviceListViewTestCase(TestCase):
+
+    def setUp(self):
+        self.controller = UserFactory.create(
+            groups__names=['controllers'])
+
+    def test_get(self):
+        merchant = MerchantAccountFactory.create()
+        device = DeviceFactory.create(merchant=merchant)
+        self.client.login(username=self.controller.email,
+                          password='password')
+        url = reverse('website:merchant_device_list',
+                      kwargs={'pk': merchant.pk})
+        response = self.client.get(url)
+        self.assertTemplateUsed(
+            response, 'cabinet/controller/device_list.html')
+        self.assertEqual(response.context['merchant'].pk,
+                         merchant.pk)
+        devices = response.context['devices']
+        self.assertEqual(devices.count(), 1)
+        self.assertEqual(devices[0].pk, device.pk)
