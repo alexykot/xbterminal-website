@@ -672,6 +672,17 @@ class DeviceTestCase(TestCase):
         self.assertEqual(transactions[0].pk, tx_1.pk)
         self.assertEqual(transactions[1].pk, tx_2.pk)
 
+    def test_is_online(self):
+        device = DeviceFactory.create()
+        self.assertIsNone(device.last_activity)
+        self.assertIs(device.is_online(), False)
+        device.last_activity = (timezone.now() -
+                                datetime.timedelta(minutes=5))
+        self.assertIs(device.is_online(), False)
+        device.last_activity = (timezone.now() -
+                                datetime.timedelta(minutes=1))
+        self.assertIs(device.is_online(), True)
+
 
 class DeviceBatchTestCase(TestCase):
 

@@ -756,10 +756,11 @@ class Device(models.Model):
             order_by('created_at')
 
     def is_online(self):
+        timeout = 120  # seconds
         if self.last_activity is None:
             return False
         delta = timezone.now() - self.last_activity
-        return delta < datetime.timedelta(minutes=2)
+        return delta.total_seconds() < timeout
 
     is_online.boolean = True
 
