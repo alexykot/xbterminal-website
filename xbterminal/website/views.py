@@ -131,7 +131,7 @@ class LoginView(ContextMixin, TemplateResponseMixin, View):
         elif user.role == 'merchant':
             url = reverse('website:devices')
         elif user.role == 'controller':
-            url = reverse('website:merchants')
+            url = reverse('website:merchant_list')
         else:
             url = reverse('website:landing')
         return redirect(url)

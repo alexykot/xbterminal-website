@@ -149,6 +149,16 @@ class LoginViewTestCase(TestCase):
         self.assertRedirects(
             response, reverse('admin:index'), status_code=302)
 
+    def test_post_controller(self):
+        user = UserFactory.create(groups__names=['controllers'])
+        form_data = {
+            'username': user.email,
+            'password': 'password',
+        }
+        response = self.client.post(self.url, form_data)
+        self.assertRedirects(
+            response, reverse('website:merchant_list'), status_code=302)
+
 
 class RegistrationViewTestCase(TestCase):
 
