@@ -79,7 +79,7 @@ LOGGING = {
 
 # Applications
 
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -104,7 +104,7 @@ INSTALLED_APPS = (
     'website',
     'operations',
     'api',
-)
+]
 
 MIDDLEWARE_CLASSES = [
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -199,9 +199,9 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-LOCALE_PATHS = (
+LOCALE_PATHS = [
     os.path.join(BASE_DIR, 'locale'),
-)
+]
 
 
 # Static files (CSS, JavaScript, Images)
