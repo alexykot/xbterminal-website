@@ -561,7 +561,8 @@ class DeviceViewSetTestCase(APITestCase):
         self.assertEqual(response.data['api_key'][0],
                          'This field is required.')
 
-    def test_retrieve_registered(self):
+    @patch('api.views_v2.rq_helpers.run_task')
+    def test_retrieve_registered(self, run_mock):
         device = DeviceFactory.create(status='registered')
         url = reverse('api:v2:device-detail',
                       kwargs={'key': device.key})
@@ -571,7 +572,8 @@ class DeviceViewSetTestCase(APITestCase):
         self.assertEqual(response.data['language']['code'], 'en')
         self.assertEqual(response.data['currency']['name'], 'GBP')
 
-    def test_retrieve_activation(self):
+    @patch('api.views_v2.rq_helpers.run_task')
+    def test_retrieve_activation(self, run_mock):
         device = DeviceFactory.create(status='activation_in_progress')
         url = reverse('api:v2:device-detail',
                       kwargs={'key': device.key})
@@ -579,7 +581,8 @@ class DeviceViewSetTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['status'], 'activation_in_progress')
 
-    def test_retrieve_active(self):
+    @patch('api.views_v2.rq_helpers.run_task')
+    def test_retrieve_active(self, run_mock):
         device = DeviceFactory.create(status='active')
         url = reverse('api:v2:device-detail',
                       kwargs={'key': device.key})
@@ -590,6 +593,9 @@ class DeviceViewSetTestCase(APITestCase):
 
         updated_device = Device.objects.get(pk=device.pk)
         self.assertTrue(updated_device.is_online())
+
+        self.assertIs(run_mock.called, True)
+        self.assertEqual(run_mock.call_args[0][1][0], device.key)
 
     def test_retrieve_suspended(self):
         device = DeviceFactory.create(status='suspended')

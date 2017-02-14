@@ -201,5 +201,5 @@ class Salt(object):
             'arg': packages,
         }
         results = self._send_request('post', '/', data=payload)
-        return [(name, info['version']) for name, info
-                in results[minion_id].items()]
+        return {name: info['version'] for name, info
+                in results[minion_id].items()}

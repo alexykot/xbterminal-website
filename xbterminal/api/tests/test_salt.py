@@ -147,4 +147,4 @@ class SaltTestCase(TestCase):
                          'local')
         self.assertEqual(send_mock.call_args[1]['data']['arg'],
                          ['xbterminal-rpc'])
-        self.assertEqual(versions, [('xbterminal-rpc', '1.0.0')])
+        self.assertEqual(versions, {'xbterminal-rpc': '1.0.0'})

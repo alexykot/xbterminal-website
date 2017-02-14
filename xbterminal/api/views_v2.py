@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 from constance import config
 
 from website.models import Device, DeviceBatch
+from website.utils.devices import get_device_info
 
 from api.serializers import (
     PaymentInitSerializer,
@@ -29,7 +30,12 @@ from api.utils.crypto import verify_signature
 from api.utils.pdf import generate_pdf
 from api.utils.urls import construct_absolute_url
 
-from operations import payment, blockchain, withdrawal, exceptions
+from operations import (
+    payment,
+    blockchain,
+    withdrawal,
+    exceptions,
+    rq_helpers)
 from operations.models import PaymentOrder, WithdrawalOrder
 
 logger = logging.getLogger(__name__)
@@ -258,6 +264,11 @@ class DeviceViewSet(viewsets.GenericViewSet):
 
     def retrieve(self, *args, **kwargs):
         device = self.get_object()
+        if not device.is_online():
+            # Get info when device has been turned on
+            rq_helpers.run_task(get_device_info,
+                                [device.key],
+                                queue='low')
         device.last_activity = timezone.now()
         device.save()
         serializer = self.get_serializer(device)

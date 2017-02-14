@@ -7,10 +7,14 @@ from django.core import mail
 from django.test import TestCase
 from constance.test import override_config
 
-from website.models import INSTANTFIAT_PROVIDERS, KYC_DOCUMENT_TYPES
+from website.models import (
+    Device,
+    INSTANTFIAT_PROVIDERS,
+    KYC_DOCUMENT_TYPES)
 from website.utils.accounts import (
     update_managed_accounts,
     update_balances)
+from website.utils.devices import get_device_info, MAIN_PACKAGES
 from website.utils.kyc import upload_documents, check_documents
 from website.utils.files import encode_base64, decode_base64
 from website.utils.reports import (
@@ -102,6 +106,30 @@ class AccountsUtilsTestCase(TestCase):
         self.assertEqual(payment_tx.instantfiat_tx_id, '110')
         withdrawal_tx.refresh_from_db()
         self.assertEqual(withdrawal_tx.instantfiat_tx_id, '112')
+
+
+class DeviceUtilsTestCase(TestCase):
+
+    @patch('website.utils.devices.Salt')
+    def test_get_device_info(self, salt_cls_mock):
+        versions = {
+            'xbterminal-rpc': '1.0.0',
+            'xbterminal-gui': '1.0.0',
+        }
+        salt_cls_mock.return_value = salt_mock = Mock(**{
+            'get_pkg_versions.return_value': versions,
+        })
+        device = DeviceFactory.create()
+
+        get_device_info(device.key)
+        self.assertIs(salt_mock.login.called, True)
+        self.assertEqual(salt_mock.get_pkg_versions.call_args[0][0],
+                         device.key)
+        self.assertEqual(salt_mock.get_pkg_versions.call_args[0][1],
+                         MAIN_PACKAGES)
+        updated_device = Device.objects.get(pk=device.pk)
+        self.assertEqual(updated_device.system_info,
+                         {'versions': versions})
 
 
 class KYCUtilsTestCase(TestCase):
