@@ -129,7 +129,7 @@ class DeviceUtilsTestCase(TestCase):
                          MAIN_PACKAGES)
         updated_device = Device.objects.get(pk=device.pk)
         self.assertEqual(updated_device.system_info,
-                         {'versions': versions})
+                         {'packages': versions})
 
 
 class KYCUtilsTestCase(TestCase):

@@ -28,7 +28,7 @@
       <tr>
         <th scope="row">Packages</th>
         <td>
-          {% for package, version in device.system_info.versions.items %}
+          {% for package, version in device.system_info.packages.items %}
           <div>{{ package }} {{ version }}</div>
           {% endfor %}
         </td>
