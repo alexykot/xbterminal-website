@@ -133,3 +133,18 @@ class SaltTestCase(TestCase):
             salt.highstate('m1', {'test': 'test'}, 1200)
         self.assertTrue(send_mock.called)
         self.assertFalse(lookup_jid_mock.called)
+
+    @patch('api.utils.salt.Salt._send_request')
+    def test_get_pkg_versions(self, send_mock):
+        send_mock.return_value = {
+            'm1': {
+                'xbterminal-rpc': {'version': '1.0.0'},
+            },
+        }
+        salt = Salt()
+        versions = salt.get_pkg_versions('m1', ['xbterminal-rpc'])
+        self.assertEqual(send_mock.call_args[1]['data']['client'],
+                         'local')
+        self.assertEqual(send_mock.call_args[1]['data']['arg'],
+                         ['xbterminal-rpc'])
+        self.assertEqual(versions, [('xbterminal-rpc', '1.0.0')])
