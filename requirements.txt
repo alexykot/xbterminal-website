@@ -13,7 +13,7 @@ django-oauth-toolkit==0.10.0
 django-picklefield==0.3.2
 django-recaptcha==1.0.5
 django-redis==4.3.0
-django-rq==0.9.1
+django-rq==0.9.4
 django-storages==1.4.1
 djangorestframework==3.3.3
 djangorestframework-jwt==1.8.0
@@ -34,7 +34,7 @@ raven==5.18.0
 redis==2.10.5
 reportlab==2.7
 requests==2.9.1
-rq==0.6.0
+rq==0.7.1
 rq-scheduler==0.6.1
 unicodecsv==0.9.4
 xhtml2pdf==0.0.6
