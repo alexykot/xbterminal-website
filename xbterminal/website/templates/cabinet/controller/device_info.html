@@ -25,6 +25,14 @@
         <th scope="row">Last activity</th>
         <td>{{ device.last_activity }}</td>
       </tr>
+      <tr>
+        <th scope="row">Packages</th>
+        <td>
+          {% for package, version in device.system_info.versions.items %}
+          <div>{{ package }} {{ version }}</div>
+          {% endfor %}
+        </td>
+      </tr>
     </table>
     <div class="text-center">
       <a href="{% url 'website:merchant_device_list' merchant.pk %}" class="btn btn-default">{% trans 'Back' %}</a>
