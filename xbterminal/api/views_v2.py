@@ -34,9 +34,10 @@ from operations import (
     payment,
     blockchain,
     withdrawal,
-    exceptions,
-    rq_helpers)
+    exceptions)
 from operations.models import PaymentOrder, WithdrawalOrder
+
+from common import rq_helpers
 
 logger = logging.getLogger(__name__)
 

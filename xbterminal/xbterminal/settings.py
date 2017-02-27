@@ -22,7 +22,7 @@ LOGGING = {
     },
     'filters': {
         'ggt': {
-            '()': 'utils.log.GeneratingGrammarTablesFilter',
+            '()': 'common.log.GeneratingGrammarTablesFilter',
         },
     },
     'handlers': {
@@ -189,7 +189,7 @@ RQ_QUEUES = {
     },
 }
 
-RQ_EXCEPTION_HANDLERS = ['operations.rq_helpers.sentry_exc_handler']
+RQ_EXCEPTION_HANDLERS = ['common.rq_helpers.sentry_exc_handler']
 
 # Internationalization
 
