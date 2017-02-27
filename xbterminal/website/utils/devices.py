@@ -8,7 +8,6 @@ logger = logging.getLogger(__name__)
 MAIN_PACKAGES = [
     'python-core',
     'xserver-xorg',
-    'qt4-x11-free',
     'python-pyqt',
     'python-qrcode',
     'python-requests',
