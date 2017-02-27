@@ -41,8 +41,8 @@
                     <a class="xbt-btn-secondary login" href="{% url 'website:login' %}">{% trans 'login' %}</a>
                     <a class="xbt-btn-primary register" href="{% url 'website:registration' %}">{% trans 'register' %}</a>
                     {% else %}
-                    {% if user.role == 'merchant' %}
-                    <div id="merchant-info">
+                    <div id="user-info">
+                        {% if user.role == 'merchant' %}
                         {% with user.merchant.info as info %}
                         <div>
                             <a id="merchant-info-name" href="{% url 'website:profile' %}">{{ info.name }}</a>
@@ -53,8 +53,10 @@
                         <div id="merchant-info-devices">{% trans 'POS active/total:' %} {{ info.active }} / {{ info.total }}</div>
                         <div id="merchant-info-tx">{% trans 'transactions today:' %} {{ info.tx_count }} / {{ user.merchant.currency.prefix }}{{ info.tx_sum|floatformat:2 }}</div>
                         {% endwith %}
+                        {% else %}
+                        <div>{{ user.email }}</div>
+                        {% endif %}
                     </div>
-                    {% endif %}
                     <a class="xbt-btn-secondary logout" href="{% url 'website:logout' %}">{% trans 'logout' %}</a>
                     {% endif %}
                 </div>
