@@ -1,3 +1,4 @@
+import datetime
 import logging
 
 from django.conf import settings
@@ -267,9 +268,11 @@ class DeviceViewSet(viewsets.GenericViewSet):
         device = self.get_object()
         if not device.is_online() and config.ENABLE_SALT:
             # Get info when device has been turned on
-            rq_helpers.run_task(get_device_info,
-                                [device.key],
-                                queue='low')
+            rq_helpers.run_task(
+                get_device_info,
+                [device.key],
+                queue='low',
+                time_delta=datetime.timedelta(minutes=3))
         device.last_activity = timezone.now()
         device.save()
         serializer = self.get_serializer(device)

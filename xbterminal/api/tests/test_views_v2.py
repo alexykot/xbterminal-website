@@ -597,6 +597,8 @@ class DeviceViewSetTestCase(APITestCase):
 
         self.assertIs(run_mock.called, True)
         self.assertEqual(run_mock.call_args[0][1][0], device.key)
+        self.assertEqual(run_mock.call_args[1]['time_delta'],
+                         datetime.timedelta(minutes=3))
 
     @override_config(ENABLE_SALT=False)
     @patch('api.views_v2.rq_helpers.run_task')

@@ -3,14 +3,26 @@ from raven.contrib.django.raven_compat.models import client
 import rq
 import django_rq
 
+RESULT_TTL = 3600
 
-def run_task(func, args, queue='high', timeout=None):
-    queue_ = django_rq.get_queue(queue)
-    return queue_.enqueue_call(
-        func,
-        args,
-        timeout=timeout,
-        result_ttl=3600)
+
+def run_task(func, args, queue='high', timeout=None, time_delta=None):
+    if time_delta:
+        # Use scheduler
+        scheduler = django_rq.get_scheduler(queue)
+        scheduler.enqueue_in(
+            time_delta,
+            func=func,
+            args=args,
+            timeout=timeout,
+            result_ttl=RESULT_TTL)
+    else:
+        queue_ = django_rq.get_queue(queue)
+        return queue_.enqueue_call(
+            func,
+            args,
+            timeout=timeout,
+            result_ttl=RESULT_TTL)
 
 
 def run_periodic_task(func, args, queue='high', interval=2, timeout=None):
@@ -21,7 +33,7 @@ def run_periodic_task(func, args, queue='high', interval=2, timeout=None):
         args=args,
         interval=interval,
         repeat=None,
-        result_ttl=3600,
+        result_ttl=RESULT_TTL,
         timeout=timeout)
 
 
