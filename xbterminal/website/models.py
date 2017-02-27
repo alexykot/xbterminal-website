@@ -674,7 +674,7 @@ class Device(models.Model):
         max_digits=12, decimal_places=2,
         blank=True, null=True)
 
-    system_info = JSONField(default=dict)
+    system_info = JSONField(default=dict, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     last_activity = models.DateTimeField(blank=True, null=True)
