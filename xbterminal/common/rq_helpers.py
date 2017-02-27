@@ -12,10 +12,9 @@ def run_task(func, args, queue='high', timeout=None, time_delta=None):
         scheduler = django_rq.get_scheduler(queue)
         scheduler.enqueue_in(
             time_delta,
-            func=func,
-            args=args,
+            func,
             timeout=timeout,
-            result_ttl=RESULT_TTL)
+            *args)
     else:
         queue_ = django_rq.get_queue(queue)
         return queue_.enqueue_call(
