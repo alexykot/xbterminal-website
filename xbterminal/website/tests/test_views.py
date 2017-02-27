@@ -16,6 +16,7 @@ from website.models import (
     KYC_DOCUMENT_TYPES)
 from website.tests.factories import (
     create_image,
+    UserFactory,
     MerchantAccountFactory,
     KYCDocumentFactory,
     AccountFactory,
@@ -120,21 +121,43 @@ class LoginViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'website/login.html')
 
-    def test_get_merchant(self):
+    def test_get_merchant_logged_in(self):
         merchant = MerchantAccountFactory.create()
         self.client.login(username=merchant.user.email,
                           password='password')
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(
+            response, reverse('website:devices'), status_code=302)
 
-    def test_post(self):
+    def test_post_merchant(self):
         merchant = MerchantAccountFactory.create()
         form_data = {
             'username': merchant.user.email,
             'password': 'password',
         }
         response = self.client.post(self.url, form_data)
-        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(
+            response, reverse('website:devices'), status_code=302)
+
+    def test_post_administrator(self):
+        user = UserFactory.create(is_staff=True)
+        form_data = {
+            'username': user.email,
+            'password': 'password',
+        }
+        response = self.client.post(self.url, form_data)
+        self.assertRedirects(
+            response, reverse('admin:index'), status_code=302)
+
+    def test_post_controller(self):
+        user = UserFactory.create(groups__names=['controllers'])
+        form_data = {
+            'username': user.email,
+            'password': 'password',
+        }
+        response = self.client.post(self.url, form_data)
+        self.assertRedirects(
+            response, reverse('website:merchant_list'), status_code=302)
 
 
 class RegistrationViewTestCase(TestCase):
@@ -309,7 +332,8 @@ class DeviceListViewTestCase(TestCase):
         url = reverse('website:devices')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/device_list.html')
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/device_list.html')
         devices = response.context['devices']
         self.assertIn(device_1, devices)
         self.assertIn(device_2, devices)
@@ -328,7 +352,8 @@ class UpdateDeviceView(TestCase):
                       kwargs={'device_key': device.key})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/device_form.html')
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/device_form.html')
 
     def test_get_activation(self):
         device = DeviceFactory.create(merchant=self.merchant,
@@ -349,7 +374,8 @@ class UpdateDeviceView(TestCase):
                       kwargs={'device_key': device.key})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/device_form.html')
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/device_form.html')
 
 
 class ActivateDeviceViewTestCase(TestCase):
@@ -367,7 +393,8 @@ class ActivateDeviceViewTestCase(TestCase):
                           password='password')
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/activation.html')
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/activation.html')
 
     @patch('api.utils.activation.rq_helpers.run_task')
     @patch('api.utils.activation.rq_helpers.run_periodic_task')
@@ -401,7 +428,8 @@ class ActivateDeviceViewTestCase(TestCase):
 
         response = self.client.post(self.url, {})
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/activation.html')
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/activation.html')
         self.assertIn('activation_code',
                       response.context['form'].errors)
 
@@ -420,7 +448,8 @@ class DeviceActivationViewTestCase(TestCase):
                           password='password')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/activation.html')
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/activation.html')
         self.assertEqual(response.context['device'].pk,
                          device.pk)
 
@@ -446,7 +475,8 @@ class UpdateProfileViewTestCase(TestCase):
         url = reverse('website:profile')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/profile_form.html')
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/profile_form.html')
         self.assertEqual(response.context['form'].instance.pk,
                          merchant.pk)
 
@@ -503,7 +533,8 @@ class ChangePasswordViewTestCase(TestCase):
                           password='password')
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/change_password.html')
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/change_password.html')
 
     def test_post(self):
         merchant = MerchantAccountFactory.create()
@@ -545,7 +576,8 @@ class VerificationViewTestCase(TestCase):
                           password='password')
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/verification.html')
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/verification.html')
         self.assertEqual(len(response.context['forms']), 3)
         (form_1, form_2, form_3) = response.context['forms']
         self.assertEqual(form_1.document_type, KYC_DOCUMENT_TYPES.ID_FRONT)
@@ -592,7 +624,8 @@ class VerificationViewTestCase(TestCase):
                           password='password')
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/verification.html')
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/verification.html')
         self.assertNotIn('forms', response.context)
         self.assertEqual(len(response.context['documents']), 3)
         self.assertEqual(response.context['documents'][0].pk,
@@ -715,7 +748,8 @@ class AccountListViewTestCase(TestCase):
         url = reverse('website:accounts')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/account_list.html')
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/account_list.html')
         self.assertEqual(response.context['accounts'].first().pk,
                          account.pk)
 
@@ -730,7 +764,8 @@ class EditAccountViewTestCase(TestCase):
                       kwargs={'currency_code': 'btc'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/account_form.html')
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/account_form.html')
         self.assertEqual(response.context['account'].pk, account.pk)
 
     def test_get_account_not_found(self):
@@ -810,7 +845,8 @@ class DeviceTransactionListViewTestCase(TestCase):
                       kwargs={'device_key': device.key})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/transactions.html')
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/transactions.html')
         # New
         self.assertIn('search_form', response.context)
         self.assertEqual(response.context['range_beg'],
@@ -837,7 +873,8 @@ class DeviceTransactionListViewTestCase(TestCase):
         }
         response = self.client.post(url, data=data)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/transactions.html')
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/transactions.html')
         self.assertIn('search_form', response.context)
         self.assertEqual(response.context['range_beg'], now.date())
         self.assertEqual(response.context['range_end'], now.date())
@@ -853,7 +890,8 @@ class DeviceTransactionListViewTestCase(TestCase):
                       kwargs={'device_key': device.key})
         response = self.client.post(url, data={})
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/transactions.html')
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/transactions.html')
         self.assertIn('search_form', response.context)
         self.assertNotIn('range_beg', response.context)
         self.assertNotIn('range_end', response.context)
@@ -874,7 +912,8 @@ class AccountTransactionListViewTestCase(TestCase):
                       kwargs={'currency_code': 'btc'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/transactions.html')
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/transactions.html')
         self.assertIn('search_form', response.context)
         self.assertEqual(response.context['range_beg'],
                          response.context['range_end'])
@@ -896,7 +935,8 @@ class AccountTransactionListViewTestCase(TestCase):
         }
         response = self.client.post(url, data=data)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/transactions.html')
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/transactions.html')
         self.assertIn('search_form', response.context)
         self.assertEqual(response.context['range_beg'], now.date())
         self.assertEqual(response.context['range_end'], now.date())
@@ -994,7 +1034,8 @@ class WithdrawToBankAccountForm(TestCase):
                       kwargs={'currency_code': 'gbp'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/withdrawal_form.html')
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/withdrawal_form.html')
         self.assertEqual(response.context['account'].pk, account.pk)
         self.assertEqual(response.context['form'].account.pk, account.pk)
 
@@ -1048,5 +1089,127 @@ class WithdrawToBankAccountForm(TestCase):
         data = {'amount': '0.5'}
         response = self.client.post(url, data=data)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'cabinet/withdrawal_form.html')
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/withdrawal_form.html')
         self.assertEqual(len(mail.outbox), 0)
+
+
+class MerchantListViewTestCase(TestCase):
+
+    def setUp(self):
+        self.url = reverse('website:merchant_list')
+
+    def test_get(self):
+        controller = UserFactory.create(groups__names=['controllers'])
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=controller.email,
+                          password='password')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, 'cabinet/controller/merchant_list.html')
+        merchants = response.context['merchants']
+        self.assertEqual(merchants.count(), 1)
+        self.assertEqual(merchants[0].pk, merchant.pk)
+        self.assertEqual(merchants[0].device_count, 0)
+
+    def test_get_as_merchant(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 404)
+
+
+class MerchantInfoViewTestCase(TestCase):
+
+    def setUp(self):
+        self.controller = UserFactory.create(
+            groups__names=['controllers'])
+
+    def test_get(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=self.controller.email,
+                          password='password')
+        url = reverse('website:merchant_info',
+                      kwargs={'pk': merchant.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, 'cabinet/controller/merchant_info.html')
+        self.assertEqual(response.context['merchant'].pk,
+                         merchant.pk)
+
+    def test_get_merchant_not_found(self):
+        self.client.login(username=self.controller.email,
+                          password='password')
+        url = reverse('website:merchant_info',
+                      kwargs={'pk': 1371498})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_as_merchant(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=merchant.user.email,
+                          password='password')
+        url = reverse('website:merchant_info',
+                      kwargs={'pk': merchant.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+
+class MerchantDeviceListViewTestCase(TestCase):
+
+    def setUp(self):
+        self.controller = UserFactory.create(
+            groups__names=['controllers'])
+
+    def test_get(self):
+        merchant = MerchantAccountFactory.create()
+        device = DeviceFactory.create(merchant=merchant)
+        self.client.login(username=self.controller.email,
+                          password='password')
+        url = reverse('website:merchant_device_list',
+                      kwargs={'pk': merchant.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, 'cabinet/controller/device_list.html')
+        self.assertEqual(response.context['merchant'].pk,
+                         merchant.pk)
+        devices = response.context['devices']
+        self.assertEqual(devices.count(), 1)
+        self.assertEqual(devices[0].pk, device.pk)
+
+
+class MerchantDeviceInfoViewTestCase(TestCase):
+
+    def setUp(self):
+        self.controller = UserFactory.create(
+            groups__names=['controllers'])
+
+    def test_get(self):
+        device = DeviceFactory.create()
+        self.client.login(username=self.controller.email,
+                          password='password')
+        url = reverse('website:merchant_device_info', kwargs={
+            'pk': device.merchant.pk, 'device_key': device.key,
+        })
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, 'cabinet/controller/device_info.html')
+        self.assertEqual(response.context['merchant'].pk,
+                         device.merchant.pk)
+        self.assertEqual(response.context['device'].pk,
+                         device.pk)
+
+    def test_get_device_not_found(self):
+        merchant = MerchantAccountFactory.create()
+        self.client.login(username=self.controller.email,
+                          password='password')
+        url = reverse('website:merchant_device_info', kwargs={
+            'pk': merchant.pk, 'device_key': '12345678',
+        })
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)

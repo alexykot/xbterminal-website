@@ -45,7 +45,9 @@ urlpatterns = [
         views.AccountReportView.as_view(),
         name='account_report'),
 
-    url(r'^devices/$', views.DeviceList.as_view(), name='devices'),
+    url(r'^devices/$',
+        views.DeviceListView.as_view(),
+        name='devices'),
     url(r'^devices/activate/$',
         views.ActivateDeviceView.as_view(),
         name='activate_device'),
@@ -61,4 +63,17 @@ urlpatterns = [
     url(r'^devices/(?P<device_key>[0-9a-zA-Z]{8,64})/report/$',
         views.DeviceReportView.as_view(),
         name='device_report'),
+
+    url(r'^merchants/$',
+        views.MerchantListView.as_view(),
+        name='merchant_list'),
+    url(r'^merchants/(?P<pk>\d+)/$',
+        views.MerchantInfoView.as_view(),
+        name='merchant_info'),
+    url(r'^merchants/(?P<pk>\d+)/devices/$',
+        views.MerchantDeviceListView.as_view(),
+        name='merchant_device_list'),
+    url(r'^merchants/(?P<pk>\d+)/devices/(?P<device_key>[0-9a-zA-Z]{8,64})/$',
+        views.MerchantDeviceInfoView.as_view(),
+        name='merchant_device_info'),
 ]

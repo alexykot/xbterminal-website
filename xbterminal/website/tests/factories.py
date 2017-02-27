@@ -5,6 +5,7 @@ import uuid
 from contextlib import contextmanager
 
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import InMemoryUploadedFile
 import factory
 from factory import fuzzy
@@ -74,6 +75,17 @@ class UserFactory(factory.DjangoModelFactory):
 
     email = factory.Sequence(lambda n: 'user_{0}@xbterminal.io'.format(n))
     password = factory.PostGenerationMethodCall('set_password', 'password')
+
+    groups__names = factory.List([])
+
+    @factory.post_generation
+    def groups(self, create, extracted, **kwargs):
+        if create:
+            if extracted is None:
+                groups = Group.objects.filter(name__in=kwargs['names'])
+                self.groups = groups
+            else:
+                self.groups = extracted
 
     @factory.post_generation
     def oauth_app(self, create, extracted, **kwargs):

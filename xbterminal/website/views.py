@@ -3,6 +3,7 @@ import json
 import datetime
 import re
 
+from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect
 from django.http import HttpResponse, Http404, StreamingHttpResponse
 from django.contrib.auth import login, logout
@@ -124,9 +125,20 @@ class LoginView(ContextMixin, TemplateResponseMixin, View):
             'next', self.request.GET.get('next', ''))
         return context
 
+    def _redirect_after_login(self, user):
+        if user.role == 'administrator':
+            url = reverse('admin:index')
+        elif user.role == 'merchant':
+            url = reverse('website:devices')
+        elif user.role == 'controller':
+            url = reverse('website:merchant_list')
+        else:
+            url = reverse('website:landing')
+        return redirect(url)
+
     def get(self, *args, **kwargs):
-        if hasattr(self.request.user, 'merchant'):
-            return redirect(reverse('website:devices'))
+        if self.request.user.is_authenticated():
+            return self._redirect_after_login(self.request.user)
         context = self.get_context_data(**kwargs)
         context['form'] = forms.AuthenticationForm
         return self.render_to_response(context)
@@ -135,8 +147,9 @@ class LoginView(ContextMixin, TemplateResponseMixin, View):
         context = self.get_context_data(**kwargs)
         form = forms.AuthenticationForm(self.request, data=self.request.POST)
         if form.is_valid():
-            login(self.request, form.get_user())
-            return redirect(context['next'] or reverse('website:devices'))
+            user = form.get_user()
+            login(self.request, user)
+            return self._redirect_after_login(user)
         context['form'] = form
         return self.render_to_response(context)
 
@@ -245,9 +258,9 @@ def get_current_merchant(request):
     return request.user.merchant
 
 
-class CabinetView(ContextMixin, View):
+class MerchantCabinetView(ContextMixin, View):
     """
-    Base class for cabinet views
+    Base class for merchant cabinet views
     """
 
     @method_decorator(login_required)
@@ -255,19 +268,21 @@ class CabinetView(ContextMixin, View):
         self.merchant = get_current_merchant(request)
         if not self.merchant:
             raise Http404
-        return super(CabinetView, self).dispatch(request, *args, **kwargs)
+        return super(MerchantCabinetView,
+                     self).dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        context = super(CabinetView, self).get_context_data(**kwargs)
+        context = super(MerchantCabinetView,
+                        self).get_context_data(**kwargs)
         context['cabinet_page'] = resolve(self.request.path_info).url_name
         return context
 
 
-class DeviceList(TemplateResponseMixin, CabinetView):
+class DeviceListView(TemplateResponseMixin, MerchantCabinetView):
     """
     Device list page
     """
-    template_name = "cabinet/device_list.html"
+    template_name = 'cabinet/merchant/device_list.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -275,9 +290,9 @@ class DeviceList(TemplateResponseMixin, CabinetView):
         return self.render_to_response(context)
 
 
-class ActivateDeviceView(TemplateResponseMixin, CabinetView):
+class ActivateDeviceView(TemplateResponseMixin, MerchantCabinetView):
 
-    template_name = 'cabinet/activation.html'
+    template_name = 'cabinet/merchant/activation.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -296,9 +311,9 @@ class ActivateDeviceView(TemplateResponseMixin, CabinetView):
             return self.render_to_response(context)
 
 
-class DeviceActivationView(TemplateResponseMixin, CabinetView):
+class DeviceActivationView(TemplateResponseMixin, MerchantCabinetView):
 
-    template_name = 'cabinet/activation.html'
+    template_name = 'cabinet/merchant/activation.html'
 
     def get(self, *args, **kwargs):
         try:
@@ -333,11 +348,13 @@ class DeviceMixin(ContextMixin):
         return context
 
 
-class UpdateDeviceView(DeviceMixin, TemplateResponseMixin, CabinetView):
+class UpdateDeviceView(DeviceMixin,
+                       TemplateResponseMixin,
+                       MerchantCabinetView):
     """
     Update device
     """
-    template_name = "cabinet/device_form.html"
+    template_name = 'cabinet/merchant/device_form.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -360,11 +377,11 @@ class UpdateDeviceView(DeviceMixin, TemplateResponseMixin, CabinetView):
             return self.render_to_response(context)
 
 
-class UpdateProfileView(TemplateResponseMixin, CabinetView):
+class UpdateProfileView(TemplateResponseMixin, MerchantCabinetView):
     """
     Update profile
     """
-    template_name = "cabinet/profile_form.html"
+    template_name = 'cabinet/merchant/profile_form.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -383,11 +400,11 @@ class UpdateProfileView(TemplateResponseMixin, CabinetView):
             return self.render_to_response(context)
 
 
-class ChangePasswordView(TemplateResponseMixin, CabinetView):
+class ChangePasswordView(TemplateResponseMixin, MerchantCabinetView):
     """
     Change password
     """
-    template_name = "cabinet/change_password.html"
+    template_name = 'cabinet/merchant/change_password.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -405,11 +422,11 @@ class ChangePasswordView(TemplateResponseMixin, CabinetView):
             return self.render_to_response(context)
 
 
-class VerificationView(TemplateResponseMixin, CabinetView):
+class VerificationView(TemplateResponseMixin, MerchantCabinetView):
     """
     Verification page
     """
-    template_name = 'cabinet/verification.html'
+    template_name = 'cabinet/merchant/verification.html'
 
     def get(self, *args, **kwargs):
         if not self.merchant.has_managed_cryptopay_profile:
@@ -525,11 +542,11 @@ class VerificationFileView(View):
                             content_type='application/json')
 
 
-class AccountListView(TemplateResponseMixin, CabinetView):
+class AccountListView(TemplateResponseMixin, MerchantCabinetView):
     """
     Account list page
     """
-    template_name = "cabinet/account_list.html"
+    template_name = 'cabinet/merchant/account_list.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -552,11 +569,13 @@ class AccountMixin(ContextMixin):
         return context
 
 
-class EditAccountView(AccountMixin, TemplateResponseMixin, CabinetView):
+class EditAccountView(AccountMixin,
+                      TemplateResponseMixin,
+                      MerchantCabinetView):
     """
     Edit account
     """
-    template_name = 'cabinet/account_form.html'
+    template_name = 'cabinet/merchant/account_form.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -577,11 +596,11 @@ class EditAccountView(AccountMixin, TemplateResponseMixin, CabinetView):
             return self.render_to_response(context)
 
 
-class TransactionListView(TemplateResponseMixin, CabinetView):
+class TransactionListView(TemplateResponseMixin, MerchantCabinetView):
     """
     Base class
     """
-    template_name = 'cabinet/transactions.html'
+    template_name = 'cabinet/merchant/transactions.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -621,7 +640,7 @@ class AccountTransactionListView(AccountMixin, TransactionListView):
     pass
 
 
-class ReportView(CabinetView):
+class ReportView(MerchantCabinetView):
     """
     Base class
     """
@@ -656,7 +675,9 @@ class AccountReportView(AccountMixin, ReportView):
     pass
 
 
-class AddFundsView(AccountMixin, TemplateResponseMixin, CabinetView):
+class AddFundsView(AccountMixin,
+                   TemplateResponseMixin,
+                   MerchantCabinetView):
     """
     Add funds to account
     """
@@ -670,11 +691,11 @@ class AddFundsView(AccountMixin, TemplateResponseMixin, CabinetView):
 
 class WithdrawToBankAccountView(AccountMixin,
                                 TemplateResponseMixin,
-                                CabinetView):
+                                MerchantCabinetView):
     """
     Withdraw funds from instantfiat account
     """
-    template_name = 'cabinet/withdrawal_form.html'
+    template_name = 'cabinet/merchant/withdrawal_form.html'
 
     def get_context_data(self, **kwargs):
         context = super(WithdrawToBankAccountView, self).\
@@ -701,3 +722,94 @@ class WithdrawToBankAccountView(AccountMixin,
         else:
             context['form'] = form
             return self.render_to_response(context)
+
+
+class ControllerCabinetView(ContextMixin, View):
+    """
+    Base class for controller cabinet views
+    """
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.role == 'controller':
+            raise Http404
+        return super(ControllerCabinetView, self).dispatch(
+            request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(ControllerCabinetView,
+                        self).get_context_data(**kwargs)
+        context['cabinet_page'] = resolve(self.request.path_info).url_name
+        return context
+
+
+class MerchantListView(TemplateResponseMixin, ControllerCabinetView):
+    """
+    Merchant list page
+    """
+    template_name = 'cabinet/controller/merchant_list.html'
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['merchants'] = models.MerchantAccount.objects.\
+            annotate(device_count=Count('device'))
+        return self.render_to_response(context)
+
+
+class MerchantMixin(ContextMixin):
+
+    def get_context_data(self, **kwargs):
+        context = super(MerchantMixin, self).get_context_data(**kwargs)
+        merchant_id = self.kwargs.get('pk')
+        try:
+            context['merchant'] = models.MerchantAccount.objects.\
+                get(pk=merchant_id)
+        except models.MerchantAccount.DoesNotExist:
+            raise Http404
+        return context
+
+
+class MerchantInfoView(TemplateResponseMixin,
+                       MerchantMixin,
+                       ControllerCabinetView):
+    """
+    Merchant details page
+    """
+    template_name = 'cabinet/controller/merchant_info.html'
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+
+class MerchantDeviceListView(TemplateResponseMixin,
+                             MerchantMixin,
+                             ControllerCabinetView):
+    """
+    Merchant's device list
+    """
+    template_name = 'cabinet/controller/device_list.html'
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['devices'] = context['merchant'].device_set.all()
+        return self.render_to_response(context)
+
+
+class MerchantDeviceInfoView(TemplateResponseMixin,
+                             MerchantMixin,
+                             ControllerCabinetView):
+    """
+    Merchant's device info page
+    """
+    template_name = 'cabinet/controller/device_info.html'
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        device_key = self.kwargs.get('device_key')
+        try:
+            context['device'] = context['merchant'].device_set.\
+                get(key=device_key)
+        except models.Device.DoesNotExist:
+            raise Http404
+        return self.render_to_response(context)

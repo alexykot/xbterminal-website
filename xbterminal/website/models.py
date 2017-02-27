@@ -86,6 +86,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     def get_short_name(self):
         return self.email
 
+    @property
+    def role(self):
+        if self.is_staff:
+            return 'administrator'
+        elif hasattr(self, 'merchant'):
+            return 'merchant'
+        elif self.groups.filter(name='controllers').exists():
+            return 'controller'
+
 
 class Language(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -747,10 +756,11 @@ class Device(models.Model):
             order_by('created_at')
 
     def is_online(self):
+        timeout = 120  # seconds
         if self.last_activity is None:
             return False
         delta = timezone.now() - self.last_activity
-        return delta < datetime.timedelta(minutes=2)
+        return delta.total_seconds() < timeout
 
     is_online.boolean = True
 
