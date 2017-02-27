@@ -35,6 +35,6 @@ redis==2.10.5
 reportlab==2.7
 requests==2.9.1
 rq==0.7.1
-rq-scheduler==0.6.1
+rq-scheduler==0.7.0
 unicodecsv==0.9.4
 xhtml2pdf==0.0.6
