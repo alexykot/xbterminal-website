@@ -264,7 +264,7 @@ class DeviceViewSet(viewsets.GenericViewSet):
 
     def retrieve(self, *args, **kwargs):
         device = self.get_object()
-        if not device.is_online():
+        if not device.is_online() and config.ENABLE_SALT:
             # Get info when device has been turned on
             rq_helpers.run_task(get_device_info,
                                 [device.key],

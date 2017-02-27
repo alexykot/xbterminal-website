@@ -8,6 +8,7 @@ from django.utils import timezone
 from mock import patch, Mock
 from rest_framework.test import APITestCase, APIRequestFactory
 from rest_framework import status
+from constance.test import override_config
 
 from api.views_v2 import WithdrawalViewSet
 from api.utils.crypto import create_test_signature, create_test_public_key
@@ -596,6 +597,16 @@ class DeviceViewSetTestCase(APITestCase):
 
         self.assertIs(run_mock.called, True)
         self.assertEqual(run_mock.call_args[0][1][0], device.key)
+
+    @override_config(ENABLE_SALT=False)
+    @patch('api.views_v2.rq_helpers.run_task')
+    def test_retrieve_active_salt_disabled(self, run_mock):
+        device = DeviceFactory.create(status='active')
+        url = reverse('api:v2:device-detail',
+                      kwargs={'key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIs(run_mock.called, False)
 
     def test_retrieve_suspended(self):
         device = DeviceFactory.create(status='suspended')

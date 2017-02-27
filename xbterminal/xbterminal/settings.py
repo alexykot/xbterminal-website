@@ -299,6 +299,7 @@ CONSTANCE_CONFIG = {
     'WITHDRAW_UNCONFIRMED': (False, 'Allow to withdraw from unconfirmed deposits'),
     'POOL_TX_MAX_OUTPUT': (Decimal('0.05'),
                            'Maximum value of TX output in the pool'),
+    'ENABLE_SALT': (True, 'Enable Salt integration'),
 }
 
 # Sentry
@@ -348,4 +349,4 @@ if TESTING:
         'testnet': (None, None),
     }
     # Don't connect to Salt server
-    SALT_SERVERS = None
+    SALT_SERVERS = {}
