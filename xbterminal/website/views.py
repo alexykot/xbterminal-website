@@ -736,6 +736,12 @@ class ControllerCabinetView(ContextMixin, View):
         return super(ControllerCabinetView, self).dispatch(
             request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        context = super(ControllerCabinetView,
+                        self).get_context_data(**kwargs)
+        context['cabinet_page'] = resolve(self.request.path_info).url_name
+        return context
+
 
 class MerchantListView(TemplateResponseMixin, ControllerCabinetView):
     """

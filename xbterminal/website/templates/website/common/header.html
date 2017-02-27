@@ -20,10 +20,19 @@
             </div>
             <div class="collapse navbar-collapse">
                 <ul class="nav navbar-nav">
-                    {% if cabinet_page %}
+                    {% if user.role == 'merchant' %}
                     <li><a href="{% url 'website:devices' %}" {% if cabinet_page == 'devices' %}class="active"{% endif %}>{% trans 'devices' %}</a></li><!--
                     --><li><a href="{% url 'website:accounts' %}" {% if cabinet_page == 'accounts' %}class="active"{% endif %}>{% trans 'accounts' %}</a></li><!--
                     --><li><a href="{% url 'website:profile' %}" {% if cabinet_page == 'profile' or cabinet_page == 'verification' %}class="active"{% endif %}>{% trans 'profile' %}</a></li>
+                    {% elif user.role == 'controller' %}
+                    <li>
+                        <a href="{% url 'website:merchant_list' %}"
+                                {% if cabinet_page == 'merchant_list' %}class="active"{% endif %}
+                                style="font-size: 0.8em;"
+                        >
+                            {% trans 'monitoring' %}
+                        </a>
+                    </li>
                     {% else %}
                     <li><a href="{% url 'website:landing' %}#about-section">{% trans 'about' %}</a></li><!--
                     --><li><a href="{% url 'website:landing' %}#mobile-section">{% trans 'mobile' %}</a></li>
