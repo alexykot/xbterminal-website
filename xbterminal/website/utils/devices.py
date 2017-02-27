@@ -38,7 +38,11 @@ def get_device_info(device_key):
     device = Device.objects.get(key=device_key)
     salt = Salt()
     salt.login()
-    versions = salt.get_pkg_versions(device.key, MAIN_PACKAGES)
-    device.system_info = {'packages': versions}
-    device.save()
-    logger.info('device system info updated')
+    try:
+        versions = salt.get_pkg_versions(device.key, MAIN_PACKAGES)
+    except AssertionError:
+        logger.warning('device is offline')
+    else:
+        device.system_info = {'packages': versions}
+        device.save()
+        logger.info('device system info updated')

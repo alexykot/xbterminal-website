@@ -201,5 +201,6 @@ class Salt(object):
             'arg': packages,
         }
         results = self._send_request('post', '/', data=payload)
+        assert minion_id in results
         return {name: info['version'] for name, info
                 in results[minion_id].items()}
