@@ -91,6 +91,7 @@ class CurrencyTestCase(TestCase):
         self.assertEqual(gbp.amount_2, Decimal('2.50'))
         self.assertEqual(gbp.amount_3, Decimal('10.00'))
         self.assertEqual(gbp.amount_shift, Decimal('0.05'))
+        self.assertEqual(gbp.max_payout, 0)
 
     def test_fixture_usd(self):
         usd = Currency.objects.get(name='USD')

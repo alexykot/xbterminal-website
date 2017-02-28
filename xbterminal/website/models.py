@@ -143,6 +143,11 @@ class Currency(models.Model):
         decimal_places=2,
         default=Decimal('0.05'),
         help_text=_('Default value for payment amount shift button.'))
+    max_payout = models.DecimalField(
+        _('Maximum payout'),
+        max_digits=20,
+        decimal_places=8,
+        default=0)
 
     class Meta:
         verbose_name_plural = 'currencies'
