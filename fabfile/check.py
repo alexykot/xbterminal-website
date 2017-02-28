@@ -12,6 +12,12 @@ def python():
 
 
 @task
+def security():
+    with prefix('. venv/bin/activate'):
+        local('bandit -r -c .bandit -x tests xbterminal')
+
+
+@task
 def django(apps='website operations api'):
     with prefix('. venv/bin/activate'):
         local('coverage run '
