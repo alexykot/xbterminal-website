@@ -398,7 +398,6 @@ class AccountFormTestCase(TestCase):
     def test_update_btc(self):
         account = AccountFactory.create()
         form_data = {
-            'max_payout': '0.1',
             'forward_address': '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
         }
         form = AccountForm(data=form_data, instance=account)
@@ -407,20 +406,17 @@ class AccountFormTestCase(TestCase):
         self.assertEqual(account_updated.pk, account.pk)
         self.assertEqual(account_updated.currency.pk,
                          account.currency.pk)
-        self.assertEqual(account_updated.max_payout, Decimal('0.1'))
 
     def test_update_btc_no_data(self):
         account = AccountFactory.create()
         form_data = {}
         form = AccountForm(data=form_data, instance=account)
         self.assertFalse(form.is_valid())
-        self.assertIn('max_payout', form.errors)
         self.assertIn('forward_address', form.errors)
 
     def test_update_btc_invalid_forward_address(self):
         account = AccountFactory.create(currency__name='TBTC')
         form_data = {
-            'max_payout': '0.1',
             'forward_address': '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
         }
         form = AccountForm(data=form_data, instance=account)
@@ -513,8 +509,9 @@ class TransactionSearchFormTestCase(TestCase):
 class WithdrawToBankAccountFormTestCase(TestCase):
 
     def test_valid_data(self):
-        account = AccountFactory.create(max_payout=Decimal('0.2'),
-                                        instantfiat=True)
+        account = AccountFactory.create(instantfiat=True)
+        DeviceFactory.create(merchant=account.merchant, account=account,
+                             max_payout=Decimal('0.2'))
         TransactionFactory.create(account=account, amount=Decimal('1.0'))
         DeviceFactory.create(merchant=account.merchant, account=account)
         self.assertEqual(account.balance_confirmed, Decimal('1.0'))
@@ -541,10 +538,11 @@ class WithdrawToBankAccountFormTestCase(TestCase):
                          'Insufficient balance on account.')
 
     def test_min_balance(self):
-        account = AccountFactory.create(max_payout=Decimal('0.2'),
-                                        instantfiat=True)
+        account = AccountFactory.create(instantfiat=True)
         TransactionFactory.create(account=account, amount=Decimal('0.5'))
-        DeviceFactory.create(merchant=account.merchant, account=account)
+        DeviceFactory.create(merchant=account.merchant,
+                             account=account,
+                             max_payout=Decimal('0.2'))
         self.assertEqual(account.balance_min, Decimal('0.2'))
         data = {'amount': '0.4'}
         form = WithdrawToBankAccountForm(data=data, account=account)

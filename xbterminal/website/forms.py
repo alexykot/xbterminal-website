@@ -442,7 +442,6 @@ class AccountForm(forms.ModelForm):
     class Meta:
         model = Account
         fields = [
-            'max_payout',
             'forward_address',
             'bank_account_name',
             'bank_account_bic',
@@ -458,7 +457,6 @@ class AccountForm(forms.ModelForm):
             del self.fields['bank_account_iban']
         else:
             assert self.instance.instantfiat
-            del self.fields['max_payout']
             del self.fields['forward_address']
             self.fields['bank_account_name'].required = True
             self.fields['bank_account_bic'].required = True

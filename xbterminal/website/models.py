@@ -352,11 +352,6 @@ class Account(models.Model):
     """
     merchant = models.ForeignKey(MerchantAccount)
     currency = models.ForeignKey(Currency)
-    max_payout = models.DecimalField(
-        _('Maximum payout'),
-        max_digits=20,
-        decimal_places=8,
-        default=0)
     forward_address = models.CharField(
         max_length=35,
         validators=[validate_bitcoin_address],
@@ -425,7 +420,8 @@ class Account(models.Model):
 
     @property
     def balance_min(self):
-        return self.max_payout * self.device_set.count()
+        result = self.device_set.aggregate(models.Sum('max_payout'))
+        return result['max_payout__sum'] or Decimal('0.00000000')
 
     @property
     def balance_max(self):
@@ -708,7 +704,6 @@ class Device(models.Model):
         self.amount_shift = self.merchant.currency.amount_shift
         # Not related to GUI, use account currency to infer default value
         self.max_payout = self.account.currency.max_payout
-        self.save()
 
     @transition(field=status,
                 source='activation_in_progress',

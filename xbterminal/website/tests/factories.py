@@ -258,3 +258,12 @@ class DeviceFactory(factory.DjangoModelFactory):
             self.key = hashlib.sha256(uuid.uuid4().bytes).hexdigest()
             if created:
                 self.save()
+
+    @factory.post_generation
+    def max_payout(self, created, extracted, **kwargs):
+        # Override copying of the default value
+        # in status post-generation hook
+        if extracted is not None:
+            self.max_payout = extracted
+        if created:
+            self.save()
