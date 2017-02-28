@@ -281,6 +281,7 @@ class DeviceFormTestCase(TestCase):
             'amount_2': '0.2',
             'amount_3': '0.3',
             'amount_shift': '0.01',
+            'max_payout': '10.0',
         }
         form = DeviceForm(data=form_data,
                           merchant=device.merchant,
@@ -295,6 +296,7 @@ class DeviceFormTestCase(TestCase):
         self.assertEqual(device.amount_2, Decimal('0.20'))
         self.assertEqual(device.amount_3, Decimal('0.30'))
         self.assertEqual(device.amount_shift, Decimal('0.01'))
+        self.assertEqual(device.max_payout, Decimal('10.0'))
 
     def test_update_valid_mobile(self):
         device = DeviceFactory.create(device_type='mobile')
@@ -325,6 +327,7 @@ class DeviceFormTestCase(TestCase):
         self.assertIn('amount_2', form.errors)
         self.assertIn('amount_3', form.errors)
         self.assertIn('amount_shift', form.errors)
+        self.assertIn('max_payout', form.errors)
 
     def test_required_mobile(self):
         merchant = MerchantAccountFactory.create()
@@ -338,6 +341,7 @@ class DeviceFormTestCase(TestCase):
         self.assertNotIn('amount_2', form.errors)
         self.assertNotIn('amount_3', form.errors)
         self.assertNotIn('amount_shift', form.errors)
+        self.assertNotIn('max_payout', form.errors)
 
     def test_invalid_account_currency(self):
         merchant = MerchantAccountFactory.create(currency__name='USD')

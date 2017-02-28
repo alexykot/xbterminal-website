@@ -29,6 +29,7 @@
                     {% bootstrap_field form.amount_3 show_label=False form_group_class='form-group col-md-3' %}
                     {% bootstrap_field form.amount_shift show_label=False form_group_class='form-group col-md-3' %}
                 </div>
+                {% bootstrap_field form.max_payout %}
             {% elif device and device.device_type == 'mobile' %}
                 <div class="row">
                     <div class="col-md-8">
