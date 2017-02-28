@@ -524,6 +524,7 @@ class DeviceTestCase(TestCase):
         self.assertIsNone(device.amount_2)
         self.assertIsNone(device.amount_3)
         self.assertIsNone(device.amount_shift)
+        self.assertIsNone(device.max_payout)
         self.assertEqual(device.system_info, {})
         self.assertIsNotNone(device.created_at)
         self.assertIsNone(device.last_activity)
@@ -540,6 +541,7 @@ class DeviceTestCase(TestCase):
         self.assertIsNone(device.amount_2)
         self.assertIsNone(device.amount_3)
         self.assertIsNone(device.amount_shift)
+        self.assertIsNone(device.max_payout)
         self.assertEqual(device.system_info, {})
         # Activation in progress
         device = DeviceFactory.create(status='activation_in_progress')
@@ -555,6 +557,8 @@ class DeviceTestCase(TestCase):
                          device.merchant.currency.amount_3)
         self.assertEqual(device.amount_shift,
                          device.merchant.currency.amount_shift)
+        self.assertEqual(device.max_payout,
+                         device.account.currency.max_payout)
         # Activation error
         device = DeviceFactory.create(status='activation_error')
         self.assertIsNotNone(device.merchant)

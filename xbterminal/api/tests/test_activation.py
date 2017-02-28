@@ -34,13 +34,15 @@ class ActivationTestCase(TestCase):
         self.assertEqual(device_updated.merchant.pk, merchant.pk)
         self.assertEqual(device_updated.account.pk, account_usd.pk)
         self.assertEqual(device.amount_1,
-                         account_usd.currency.amount_1)
+                         merchant.currency.amount_1)
         self.assertEqual(device.amount_2,
-                         account_usd.currency.amount_2)
+                         merchant.currency.amount_2)
         self.assertEqual(device.amount_3,
-                         account_usd.currency.amount_3)
+                         merchant.currency.amount_3)
         self.assertEqual(device.amount_shift,
-                         account_usd.currency.amount_shift)
+                         merchant.currency.amount_shift)
+        self.assertEqual(device.max_payout,
+                         account_usd.currency.max_payout)
 
     @patch('api.utils.activation.rq_helpers.run_task')
     @patch('api.utils.activation.rq_helpers.run_periodic_task')
