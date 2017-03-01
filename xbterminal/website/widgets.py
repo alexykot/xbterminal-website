@@ -1,59 +1,13 @@
 from django.core.urlresolvers import reverse
 from django.forms.widgets import (
-    ChoiceFieldRenderer,
-    RadioChoiceInput,
-    RendererMixin,
     Widget,
     Select,
     FileInput)
-from django.utils.encoding import force_text
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 from website.utils.files import get_verification_file_name
 from operations.services import blockcypher
-
-
-class ButtonGroupChoiceInput(RadioChoiceInput):
-    def render(self, name=None, value=None, attrs=None, choices=()):
-        name = name or self.name
-        value = value or self.value
-        attrs = attrs or self.attrs
-        if 'id' in self.attrs:
-            label_for = format_html(' for="{0}_{1}"', self.attrs['id'], self.index)
-        else:
-            label_for = ''
-
-        if self.is_checked():
-            template = '<label{0} class="btn btn-primary active">{1} {2}</label>'
-        else:
-            template = '<label{0} class="btn btn-primary">{1} {2}</label>'
-
-        return format_html(template, label_for, self.tag(), self.choice_label)
-
-
-class ButtonGroupFieldRenderer(ChoiceFieldRenderer):
-    choice_input_class = ButtonGroupChoiceInput
-
-    def render(self):
-        id_ = self.attrs.get('id', None)
-        if id_:
-            start_tag = format_html('<div><div id="{0}" class="btn-group" data-toggle="buttons">', id_)
-        else:
-            start_tag = '<div><div class="btn-group" data-toggle="buttons">'
-        output = [start_tag]
-
-        for widget in self:
-            output.append(force_text(widget))
-        output.append('</div></div>')
-        return mark_safe('\n'.join(output))
-
-
-class ButtonGroupRadioSelect(RendererMixin, Select):
-    renderer = ButtonGroupFieldRenderer
-
-    def render(self, name, value, attrs=None, choices=()):
-        return self.get_renderer(name, value, attrs, choices).render()
 
 
 class FileWidget(FileInput):
