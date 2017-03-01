@@ -31,7 +31,7 @@ class FileWidget(FileInput):
         else:
             list_item = ''
         output = format_html(template, file_input, list_item)
-        return mark_safe(output)
+        return mark_safe(output)  # nosec
 
 
 class ForeignKeyWidget(Select):
@@ -51,7 +51,7 @@ class ForeignKeyWidget(Select):
             output += format_html('&nbsp;<a href="{0}">{1}</a>&nbsp;',
                                   instance_url,
                                   str(instance))
-        return mark_safe(output)
+        return mark_safe(output)  # nosec
 
 
 class BitcoinAddressWidget(Widget):
@@ -68,7 +68,7 @@ class BitcoinAddressWidget(Widget):
                 value)
         else:
             output = '-'
-        return mark_safe(output)
+        return mark_safe(output)  # nosec
 
 
 class BitcoinTransactionWidget(Widget):
@@ -85,7 +85,7 @@ class BitcoinTransactionWidget(Widget):
                 value)
         else:
             output = '-'
-        return mark_safe(output)
+        return mark_safe(output)  # nosec
 
 
 class BitcoinTransactionArrayWidget(Widget):
@@ -104,7 +104,7 @@ class BitcoinTransactionArrayWidget(Widget):
                     tx_id)
         else:
             output = '-'
-        return mark_safe(output)
+        return mark_safe(output)  # nosec
 
 
 class ReadOnlyAdminWidget(Widget):

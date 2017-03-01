@@ -28,4 +28,5 @@ def django(apps='website operations api'):
 @task(default=True)
 def all():
     python()
+    security()
     django()

@@ -47,7 +47,7 @@ def create_test_public_key():
     Create secret key and public key, return public key
     (for testing purposes)
     """
-    secret_key = rsa.generate_private_key(
+    secret_key = rsa.generate_private_key(  # nosec
         public_exponent=65537,
         key_size=512,
         backend=default_backend())
@@ -62,7 +62,7 @@ def create_test_signature(message):
     """
     Create secret key and sign message (for testing purposes)
     """
-    secret_key = rsa.generate_private_key(
+    secret_key = rsa.generate_private_key(  # nosec
         public_exponent=65537,
         key_size=512,
         backend=default_backend())
