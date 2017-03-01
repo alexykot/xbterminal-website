@@ -83,9 +83,9 @@ class UserFactory(factory.DjangoModelFactory):
         if create:
             if extracted is None:
                 groups = Group.objects.filter(name__in=kwargs['names'])
-                self.groups = groups
+                self.groups.set(groups)
             else:
-                self.groups = extracted
+                self.groups.set(extracted)
 
     @factory.post_generation
     def oauth_app(self, create, extracted, **kwargs):

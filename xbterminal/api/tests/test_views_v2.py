@@ -8,6 +8,7 @@ from django.utils import timezone
 from mock import patch, Mock
 from rest_framework.test import APITestCase, APIRequestFactory
 from rest_framework import status
+from constance.test import override_config
 
 from api.views_v2 import WithdrawalViewSet
 from api.utils.crypto import create_test_signature, create_test_public_key
@@ -561,7 +562,8 @@ class DeviceViewSetTestCase(APITestCase):
         self.assertEqual(response.data['api_key'][0],
                          'This field is required.')
 
-    def test_retrieve_registered(self):
+    @patch('api.views_v2.rq_helpers.run_task')
+    def test_retrieve_registered(self, run_mock):
         device = DeviceFactory.create(status='registered')
         url = reverse('api:v2:device-detail',
                       kwargs={'key': device.key})
@@ -571,7 +573,8 @@ class DeviceViewSetTestCase(APITestCase):
         self.assertEqual(response.data['language']['code'], 'en')
         self.assertEqual(response.data['currency']['name'], 'GBP')
 
-    def test_retrieve_activation(self):
+    @patch('api.views_v2.rq_helpers.run_task')
+    def test_retrieve_activation(self, run_mock):
         device = DeviceFactory.create(status='activation_in_progress')
         url = reverse('api:v2:device-detail',
                       kwargs={'key': device.key})
@@ -579,7 +582,8 @@ class DeviceViewSetTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['status'], 'activation_in_progress')
 
-    def test_retrieve_active(self):
+    @patch('api.views_v2.rq_helpers.run_task')
+    def test_retrieve_active(self, run_mock):
         device = DeviceFactory.create(status='active')
         url = reverse('api:v2:device-detail',
                       kwargs={'key': device.key})
@@ -590,6 +594,21 @@ class DeviceViewSetTestCase(APITestCase):
 
         updated_device = Device.objects.get(pk=device.pk)
         self.assertTrue(updated_device.is_online())
+
+        self.assertIs(run_mock.called, True)
+        self.assertEqual(run_mock.call_args[0][1][0], device.key)
+        self.assertEqual(run_mock.call_args[1]['time_delta'],
+                         datetime.timedelta(minutes=3))
+
+    @override_config(ENABLE_SALT=False)
+    @patch('api.views_v2.rq_helpers.run_task')
+    def test_retrieve_active_salt_disabled(self, run_mock):
+        device = DeviceFactory.create(status='active')
+        url = reverse('api:v2:device-detail',
+                      kwargs={'key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIs(run_mock.called, False)
 
     def test_retrieve_suspended(self):
         device = DeviceFactory.create(status='suspended')

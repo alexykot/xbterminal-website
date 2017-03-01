@@ -8,7 +8,7 @@ from rq.job import Job, NoSuchJobError
 from website.models import Account, Device
 from api.utils.salt import Salt
 from api.utils.aptly import get_latest_version
-from operations import rq_helpers
+from common import rq_helpers
 
 CACHE_KEY_TEMPLATE = 'activation-{device_key}'
 ACTIVATION_TIMEOUT = datetime.timedelta(minutes=30)

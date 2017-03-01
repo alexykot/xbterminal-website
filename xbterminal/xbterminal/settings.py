@@ -22,7 +22,7 @@ LOGGING = {
     },
     'filters': {
         'ggt': {
-            '()': 'utils.log.GeneratingGrammarTablesFilter',
+            '()': 'common.log.GeneratingGrammarTablesFilter',
         },
     },
     'handlers': {
@@ -79,7 +79,7 @@ LOGGING = {
 
 # Applications
 
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -104,7 +104,7 @@ INSTALLED_APPS = (
     'website',
     'operations',
     'api',
-)
+]
 
 MIDDLEWARE_CLASSES = [
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -189,7 +189,7 @@ RQ_QUEUES = {
     },
 }
 
-RQ_EXCEPTION_HANDLERS = ['operations.rq_helpers.sentry_exc_handler']
+RQ_EXCEPTION_HANDLERS = ['common.rq_helpers.sentry_exc_handler']
 
 # Internationalization
 
@@ -199,9 +199,9 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-LOCALE_PATHS = (
+LOCALE_PATHS = [
     os.path.join(BASE_DIR, 'locale'),
-)
+]
 
 
 # Static files (CSS, JavaScript, Images)
@@ -299,6 +299,7 @@ CONSTANCE_CONFIG = {
     'WITHDRAW_UNCONFIRMED': (False, 'Allow to withdraw from unconfirmed deposits'),
     'POOL_TX_MAX_OUTPUT': (Decimal('0.05'),
                            'Maximum value of TX output in the pool'),
+    'ENABLE_SALT': (True, 'Enable Salt integration'),
 }
 
 # Sentry
@@ -348,4 +349,4 @@ if TESTING:
         'testnet': (None, None),
     }
     # Don't connect to Salt server
-    SALT_SERVERS = None
+    SALT_SERVERS = {}

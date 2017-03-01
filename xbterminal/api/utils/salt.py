@@ -192,3 +192,15 @@ class Salt(object):
                     return
             time.sleep(self.ASYNC_JOB_CHECK_INTERVAL)
         raise SaltTimeout()
+
+    def get_pkg_versions(self, minion_id, packages):
+        payload = {
+            'client': 'local',
+            'fun': 'pkg.info_installed',
+            'tgt': minion_id,
+            'arg': packages,
+        }
+        results = self._send_request('post', '/', data=payload)
+        assert minion_id in results
+        return {name: info['version'] for name, info
+                in results[minion_id].items()}
