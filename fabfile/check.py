@@ -2,7 +2,7 @@ from fabric.api import task, prefix, local
 
 
 @task
-def python():
+def style():
     with prefix('. venv/bin/activate'):
         local('flake8 fabfile')
         local('flake8 '
@@ -18,7 +18,7 @@ def security():
 
 
 @task
-def django(apps='website operations api'):
+def unit(apps='website operations api'):
     with prefix('. venv/bin/activate'):
         local('coverage run '
               'xbterminal/manage.py test {}'.format(apps))
@@ -27,6 +27,6 @@ def django(apps='website operations api'):
 
 @task(default=True)
 def all():
-    python()
+    style()
     security()
-    django()
+    unit()
