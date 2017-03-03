@@ -239,14 +239,12 @@ BITCOIND_SERVERS = {
         'PORT': 8332,
         'USER': 'xbt',
         'PASSWORD': 'xbt',
-        'USE_SSL': False,
     },
     'testnet': {
         'HOST': 'localhost',
         'PORT': 18332,
         'USER': 'xbt',
         'PASSWORD': 'xbt',
-        'USE_SSL': False,
     },
 }
 
