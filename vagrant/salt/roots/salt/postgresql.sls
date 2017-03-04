@@ -1,25 +1,17 @@
-postgresql-repo:
+postgresql_repo:
   pkgrepo.managed:
-    - name: deb http://apt.postgresql.org/pub/repos/apt/ wily-pgdg main
+    - name: deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main
     - file: /etc/apt/sources.list.d/pgdg.list
     - key_url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
 
-postgresql:
+postgresql_package:
   pkg:
     - installed
-    - pkgs:
-      - postgresql-9.4
+    - name: postgresql-9.4
     - require:
-      - pkgrepo: postgresql-repo
-  service.running:
-    - enable: true
-    - watch:
-      - file: /etc/postgresql/9.4/main/postgresql.conf
-      - file: /etc/postgresql/9.4/main/pg_hba.conf
-    - require:
-      - pkg: postgresql
+      - pkgrepo: postgresql_repo
 
-postgresql.conf:
+postgresql_config:
   file.managed:
     - name: /etc/postgresql/9.4/main/postgresql.conf
     - source: salt://postgresql/postgresql.conf
@@ -27,9 +19,9 @@ postgresql.conf:
     - group: postgres
     - mode: 644
     - require:
-      - pkg: postgresql
+      - pkg: postgresql_package
 
-pg_hba.conf:
+postgresql_hba_config:
   file.managed:
     - name: /etc/postgresql/9.4/main/pg_hba.conf
     - source: salt://postgresql/pg_hba.conf
@@ -37,4 +29,15 @@ pg_hba.conf:
     - group: postgres
     - mode: 644
     - require:
-      - pkg: postgresql
+      - pkg: postgresql_package
+
+postgresql_service:
+  service:
+    - running
+    - name: postgresql
+    - enable: true
+    - watch:
+      - file: postgresql_config
+      - file: postgresql_hba_config
+    - require:
+      - pkg: postgresql_package

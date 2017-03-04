@@ -1,11 +1,13 @@
 xbt_required_pkgs:
   pkg.installed:
     - names:
+      - build-essential
       - python-virtualenv
       - python-dev
       - libpq-dev
       - libffi-dev
       - libjpeg-dev
+      - libssl-dev
 
 xbt_pg_user:
   postgres_user.present:
@@ -13,7 +15,7 @@ xbt_pg_user:
     - createdb: {{ pillar['postgresql']['createdb'] }}
     - password: {{ pillar['postgresql']['password'] }}
     - require:
-      - service: postgresql
+      - service: postgresql_service
 
 xbt_pg_database:
   postgres_database.present:
@@ -26,11 +28,11 @@ xbt_pg_database:
     - require:
       - postgres_user: xbt_pg_user
 
-/home/vagrant/venv:
+/home/ubuntu/venv:
   virtualenv.managed:
     - requirements: /vagrant/requirements_dev.txt
     - no_chown: true
-    - user: vagrant
+    - user: ubuntu
     - python: /usr/bin/python2
     - system_site_packages: false
     - require:
