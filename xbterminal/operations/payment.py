@@ -4,7 +4,7 @@ Payment operations
 from decimal import Decimal
 import logging
 
-from bitcoin.rpc import JSONRPCException
+from bitcoin.rpc import JSONRPCError
 from bitcoin.wallet import CBitcoinAddress
 
 from django.utils import timezone
@@ -223,7 +223,7 @@ def parse_payment(payment_order, payment_message):
         try:
             incoming_tx_signed = bc.sign_raw_transaction(incoming_tx)
             bc.send_raw_transaction(incoming_tx_signed)
-        except JSONRPCException as error:
+        except JSONRPCError as error:
             logger.exception(error)
         incoming_tx_id = blockchain.get_txid(incoming_tx)
         if incoming_tx_id not in payment_order.incoming_tx_ids:

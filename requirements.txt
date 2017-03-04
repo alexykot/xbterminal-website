@@ -26,7 +26,7 @@ protobuf==2.5.0
 psycopg2==2.6.1
 pyOpenSSL==0.15.1  # requests[security]
 PyPDF2==1.24
-python-bitcoinlib==0.5.1
+python-bitcoinlib==0.7.0
 python-slugify==1.2.1
 pytz>=2016.4
 qrcode==5.1
