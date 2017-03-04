@@ -3,7 +3,6 @@ import logging
 from django.core.management.base import BaseCommand
 
 from website.models import Currency, Account
-from website.utils.email import send_balance_admin_notification
 from operations.blockchain import BlockChain
 
 logger = logging.getLogger(__name__)
@@ -38,11 +37,6 @@ def check_wallet(network):
             wallet_value += bc.get_address_balance(address.address)
         db_value += account.balance
     if wallet_value != db_value:
-        send_balance_admin_notification({
-            'network': network,
-            'wallet_value': wallet_value,
-            'db_value': db_value,
-        })
         logger.critical('Balance mismatch on {0} wallet ({1} != {2})'.format(
             network, wallet_value, db_value))
     else:
@@ -59,11 +53,6 @@ def check_wallet_strict(network):
     for account in Account.objects.filter(currency=currency):
         db_value += account.balance
     if wallet_value != db_value:
-        send_balance_admin_notification({
-            'network': network,
-            'wallet_value': wallet_value,
-            'db_value': db_value,
-        })
         logger.critical('Balance mismatch on {0} wallet ({1} != {2})'.format(
             network, wallet_value, db_value))
     else:
