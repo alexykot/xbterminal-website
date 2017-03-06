@@ -23,7 +23,8 @@ class PrepareWithdrawalTestCase(TestCase):
     @patch('operations.withdrawal.get_exchange_rate')
     def test_prepare_btc(self, get_rate_mock, bc_cls_mock):
         account_address = AddressFactory.create()
-        device = DeviceFactory.create(account=account_address.account)
+        device = DeviceFactory.create(account=account_address.account,
+                                      max_payout=Decimal('10.0'))
         fiat_amount = Decimal('1.00')
         exchange_rate = Decimal(100)
         get_rate_mock.return_value = exchange_rate
@@ -61,7 +62,8 @@ class PrepareWithdrawalTestCase(TestCase):
         account = AccountFactory.create()
         address_1, address_2 = AddressFactory.create_batch(
             2, account=account)
-        device = DeviceFactory.create(account=account)
+        device = DeviceFactory.create(account=account,
+                                      max_payout=Decimal('10.0'))
         fiat_amount = Decimal('9.00')
         get_rate_mock.return_value = Decimal(100)
         bc_cls_mock.return_value = bc_mock = Mock(**{
@@ -88,7 +90,8 @@ class PrepareWithdrawalTestCase(TestCase):
                          address_1.address)
 
     def test_no_account(self):
-        device = DeviceFactory.create(status='registered')
+        device = DeviceFactory.create(status='registered',
+                                      max_payout=Decimal('10.0'))
         fiat_amount = Decimal('1.00')
         with self.assertRaises(exceptions.WithdrawalError) as context:
             withdrawal.prepare_withdrawal(device, fiat_amount)
@@ -98,7 +101,8 @@ class PrepareWithdrawalTestCase(TestCase):
     def test_currency_mismatch(self):
         device = DeviceFactory.create(
             merchant__currency__name='GBP',
-            account__currency__name='USD')
+            account__currency__name='USD',
+            max_payout=Decimal('10.0'))
         fiat_amount = Decimal('1.5')
         with self.assertRaises(exceptions.WithdrawalError) as context:
             withdrawal.prepare_withdrawal(device, fiat_amount)
@@ -106,17 +110,28 @@ class PrepareWithdrawalTestCase(TestCase):
                          'Account currency should match merchant currency.')
 
     def test_no_address(self):
-        device = DeviceFactory.create()
+        device = DeviceFactory.create(max_payout=Decimal('10.0'))
         fiat_amount = Decimal('1.00')
         with self.assertRaises(exceptions.WithdrawalError) as context:
             withdrawal.prepare_withdrawal(device, fiat_amount)
         self.assertEqual(context.exception.message,
                          'Nothing to withdraw.')
 
+    def test_max_payout(self):
+        account_address = AddressFactory.create()
+        device = DeviceFactory.create(account=account_address.account,
+                                      max_payout=Decimal('10.0'))
+        fiat_amount = Decimal('100.00')
+        with self.assertRaises(exceptions.WithdrawalError) as context:
+            withdrawal.prepare_withdrawal(device, fiat_amount)
+        self.assertEqual(context.exception.message,
+                         'Amount exceeds max payout for current device.')
+
     @patch('operations.withdrawal.get_exchange_rate')
     def test_dust_threshold(self, get_rate_mock):
         account_address = AddressFactory.create()
-        device = DeviceFactory.create(account=account_address.account)
+        device = DeviceFactory.create(account=account_address.account,
+                                      max_payout=Decimal('10.0'))
         fiat_amount = Decimal('0.05')
         get_rate_mock.return_value = Decimal(1000)
         with self.assertRaises(exceptions.WithdrawalError):
@@ -126,7 +141,8 @@ class PrepareWithdrawalTestCase(TestCase):
     @patch('operations.withdrawal.get_exchange_rate')
     def test_insufficient_funds_btc(self, get_rate_mock, bc_mock):
         account_address = AddressFactory.create()
-        device = DeviceFactory.create(account=account_address.account)
+        device = DeviceFactory.create(account=account_address.account,
+                                      max_payout=Decimal('1000.0'))
         fiat_amount = Decimal('200.00')
         get_rate_mock.return_value = Decimal(200)
         bc_mock.return_value = Mock(**{
@@ -142,7 +158,8 @@ class PrepareWithdrawalTestCase(TestCase):
     @patch('operations.withdrawal.get_exchange_rate')
     def test_already_reserved(self, get_rate_mock, bc_mock):
         account_address = AddressFactory.create()
-        device = DeviceFactory.create(account=account_address.account)
+        device = DeviceFactory.create(account=account_address.account,
+                                      max_payout=Decimal('1000.0'))
         reserved_output = outpoint_factory()
         order = WithdrawalOrderFactory.create(
             device=device,
@@ -172,7 +189,8 @@ class PrepareWithdrawalTestCase(TestCase):
     @patch('operations.withdrawal.get_exchange_rate')
     def test_dust_change(self, get_rate_mock, bc_mock):
         account_address = AddressFactory.create()
-        device = DeviceFactory.create(account=account_address.account)
+        device = DeviceFactory.create(account=account_address.account,
+                                      max_payout=Decimal('10.0'))
         fiat_amount = Decimal('1.00')
         exchange_rate = Decimal(200)
         get_rate_mock.return_value = exchange_rate
@@ -191,7 +209,8 @@ class PrepareWithdrawalTestCase(TestCase):
     def test_prepare_instantfiat(self, get_rate_mock):
         device = DeviceFactory.create(
             account__currency__name='GBP',
-            account__balance=Decimal('2.00'))
+            account__balance=Decimal('2.00'),
+            max_payout=Decimal('10.0'))
         self.assertTrue(device.account.instantfiat)
         self.assertEqual(device.account.balance_confirmed, Decimal('2.00'))
         fiat_amount = Decimal('1.00')
@@ -214,7 +233,8 @@ class PrepareWithdrawalTestCase(TestCase):
 
     @patch('operations.withdrawal.get_exchange_rate')
     def test_insufficient_funds_instantfiat(self, get_rate_mock):
-        device = DeviceFactory.create(account__currency__name='GBP')
+        device = DeviceFactory.create(account__currency__name='GBP',
+                                      max_payout=Decimal('1000.0'))
         self.assertEqual(device.account.balance_confirmed, 0)
         fiat_amount = Decimal('200.00')
         get_rate_mock.return_value = Decimal(200)
