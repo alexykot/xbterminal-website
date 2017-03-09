@@ -340,6 +340,7 @@ class DeviceForm(forms.ModelForm):
             'amount_2',
             'amount_3',
             'amount_shift',
+            'max_payout',
         ]
         widgets = {
             'device_type': forms.HiddenInput,
@@ -356,14 +357,15 @@ class DeviceForm(forms.ModelForm):
                 Q(instantfiat=True, currency=self.merchant.currency) |
                 Q(instantfiat=False))
         self.fields['account'].required = True
-        # Configure amounts fields
-        amounts_fields = [
+        # Configure fields for hardware terminal
+        terminal_settings_fields = [
             'amount_1',
             'amount_2',
             'amount_3',
             'amount_shift',
+            'max_payout',
         ]
-        for field_name in amounts_fields:
+        for field_name in terminal_settings_fields:
             if self.instance and self.instance.device_type == 'hardware':
                 self.fields[field_name].required = True
             else:
@@ -440,7 +442,6 @@ class AccountForm(forms.ModelForm):
     class Meta:
         model = Account
         fields = [
-            'max_payout',
             'forward_address',
             'bank_account_name',
             'bank_account_bic',
@@ -456,7 +457,6 @@ class AccountForm(forms.ModelForm):
             del self.fields['bank_account_iban']
         else:
             assert self.instance.instantfiat
-            del self.fields['max_payout']
             del self.fields['forward_address']
             self.fields['bank_account_name'].required = True
             self.fields['bank_account_bic'].required = True

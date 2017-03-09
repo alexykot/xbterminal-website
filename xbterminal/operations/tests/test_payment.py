@@ -113,7 +113,7 @@ class PreparePaymentTestCase(TestCase):
     def test_btc_large_amount(self, run_task_mock, get_rate_mock, bc_cls_mock):
         device = DeviceFactory.create(
             account__currency__name='BTC',
-            account__max_payout=Decimal('100.0'))
+            max_payout=Decimal('100.0'))
         fiat_amount = Decimal('1000.00')
         bc_cls_mock.return_value = Mock(**{
             'get_new_address.return_value': '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje',
@@ -914,11 +914,11 @@ class ForwardTransactionTestCase(TestCase):
     @patch('operations.payment.blockchain.BlockChain')
     def test_forward_to_btc_account_no_split(self, bc_mock):
         merchant = MerchantAccountFactory.create()
-        btc_account = AccountFactory.create(merchant=merchant,
-                                            max_payout=Decimal('0.3'))
+        btc_account = AccountFactory.create(merchant=merchant)
         payment_order = PaymentOrderFactory.create(
             device__merchant=merchant,
             device__account=btc_account,
+            device__max_payout=Decimal('0.3'),
             merchant_btc_amount=Decimal('0.04'),
             fee_btc_amount=Decimal('0.001'),
             tx_fee_btc_amount=Decimal('0.0001'),
@@ -974,12 +974,12 @@ class ForwardTransactionTestCase(TestCase):
     @patch('operations.payment.blockchain.BlockChain')
     def test_forward_to_btc_account_with_split(self, bc_cls_mock):
         merchant = MerchantAccountFactory.create()
-        account = AccountFactory.create(merchant=merchant,
-                                        max_payout=Decimal('0.3'))
+        account = AccountFactory.create(merchant=merchant)
         account_address = AddressFactory.create(account=account)
         order = PaymentOrderFactory.create(
             device__merchant=merchant,
             device__account=account,
+            device__max_payout=Decimal('0.3'),
             merchant_btc_amount=Decimal('0.14'),
             incoming_tx_ids=['0' * 64],
             refund_address='18GV9EWUjSVTU1jXMb1RmaGxAonSyBgKAc')

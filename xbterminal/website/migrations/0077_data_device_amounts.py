@@ -6,11 +6,11 @@ from django.db import migrations, models
 
 def set_device_amounts(apps, schema_editor):
     Device = apps.get_model('website', 'Device')
-    for device in Device.objects.filter(account__isnull=False):
-        device.amount_1 = device.account.currency.amount_1
-        device.amount_2 = device.account.currency.amount_2
-        device.amount_3 = device.account.currency.amount_3
-        device.amount_shift = device.account.currency.amount_shift
+    for device in Device.objects.filter(merchant__isnull=False):
+        device.amount_1 = device.merchant.currency.amount_1
+        device.amount_2 = device.merchant.currency.amount_2
+        device.amount_3 = device.merchant.currency.amount_3
+        device.amount_shift = device.merchant.currency.amount_shift
         device.save()
 
 def unset_device_amounts(apps, schema_editor):

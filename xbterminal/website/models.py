@@ -143,6 +143,11 @@ class Currency(models.Model):
         decimal_places=2,
         default=Decimal('0.05'),
         help_text=_('Default value for payment amount shift button.'))
+    max_payout = models.DecimalField(
+        _('Maximum payout'),
+        max_digits=20,
+        decimal_places=8,
+        default=0)
 
     class Meta:
         verbose_name_plural = 'currencies'
@@ -347,11 +352,6 @@ class Account(models.Model):
     """
     merchant = models.ForeignKey(MerchantAccount)
     currency = models.ForeignKey(Currency)
-    max_payout = models.DecimalField(
-        _('Maximum payout'),
-        max_digits=20,
-        decimal_places=8,
-        default=0)
     forward_address = models.CharField(
         max_length=35,
         validators=[validate_bitcoin_address],
@@ -420,7 +420,8 @@ class Account(models.Model):
 
     @property
     def balance_min(self):
-        return self.max_payout * self.device_set.count()
+        result = self.device_set.aggregate(models.Sum('max_payout'))
+        return result['max_payout__sum'] or Decimal('0.00000000')
 
     @property
     def balance_max(self):
@@ -660,7 +661,6 @@ class Device(models.Model):
         blank=True,
         null=True)
 
-    # GUI config
     amount_1 = models.DecimalField(
         max_digits=12, decimal_places=2,
         blank=True, null=True)
@@ -672,6 +672,10 @@ class Device(models.Model):
         blank=True, null=True)
     amount_shift = models.DecimalField(
         max_digits=12, decimal_places=2,
+        blank=True, null=True)
+    max_payout = models.DecimalField(
+        _('Maximum payout'),
+        max_digits=20, decimal_places=8,
         blank=True, null=True)
 
     system_info = JSONField(default=dict, blank=True)
@@ -693,12 +697,13 @@ class Device(models.Model):
                 target='activation_in_progress',
                 conditions=[can_activate])
     def start_activation(self):
-        # Copy global defaults
+        # Copy global defaults for merchant's currency
         self.amount_1 = self.merchant.currency.amount_1
         self.amount_2 = self.merchant.currency.amount_2
         self.amount_3 = self.merchant.currency.amount_3
         self.amount_shift = self.merchant.currency.amount_shift
-        self.save()
+        # Not related to GUI, use account currency to infer default value
+        self.max_payout = self.account.currency.max_payout
 
     @transition(field=status,
                 source='activation_in_progress',

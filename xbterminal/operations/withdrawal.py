@@ -72,6 +72,9 @@ def prepare_withdrawal(device_or_account, fiat_amount):
             'Account currency should match merchant currency.')
     if not account.instantfiat and account.address_set.count() == 0:
         raise WithdrawalError('Nothing to withdraw.')
+    if device is not None and fiat_amount > device.max_payout:
+        raise WithdrawalError(
+            'Amount exceeds max payout for current device.')
 
     # TODO: fiat currency -> currency
     order = WithdrawalOrder(

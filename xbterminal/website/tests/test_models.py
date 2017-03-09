@@ -91,6 +91,7 @@ class CurrencyTestCase(TestCase):
         self.assertEqual(gbp.amount_2, Decimal('2.50'))
         self.assertEqual(gbp.amount_3, Decimal('10.00'))
         self.assertEqual(gbp.amount_shift, Decimal('0.05'))
+        self.assertEqual(gbp.max_payout, 0)
 
     def test_fixture_usd(self):
         usd = Currency.objects.get(name='USD')
@@ -280,7 +281,6 @@ class AccountTestCase(TestCase):
                                          instantfiat=False)
         # Check defaults
         self.assertEqual(account.currency.name, 'BTC')
-        self.assertEqual(account.max_payout, 0)
         self.assertEqual(account.balance, 0)
         self.assertFalse(account.instantfiat)
         self.assertIsNone(account.instantfiat_account_id)
@@ -292,7 +292,6 @@ class AccountTestCase(TestCase):
     def test_factory_btc(self):
         account = AccountFactory.create()
         self.assertEqual(account.currency.name, 'BTC')
-        self.assertEqual(account.max_payout, 0)
         self.assertEqual(account.balance, 0)
         self.assertIsNotNone(account.forward_address)
         self.assertFalse(account.instantfiat)
@@ -307,7 +306,6 @@ class AccountTestCase(TestCase):
             currency__name='GBP',
             merchant__instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY)
         self.assertEqual(account.currency.name, 'GBP')
-        self.assertEqual(account.max_payout, 0)
         self.assertEqual(account.balance, 0)
         self.assertIsNone(account.forward_address)
         self.assertTrue(account.instantfiat)
@@ -397,12 +395,14 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.balance_confirmed, Decimal('0.20'))
 
     def test_balance_min_max(self):
-        account_btc = AccountFactory.create(currency__name='BTC',
-                                            max_payout=Decimal('0.2'))
+        account_btc = AccountFactory.create(currency__name='BTC')
         DeviceFactory.create_batch(
-            3, merchant=account_btc.merchant, account=account_btc)
-        self.assertEqual(account_btc.balance_min, Decimal('0.6'))
-        self.assertEqual(account_btc.balance_max, Decimal('1.8'))
+            3,
+            merchant=account_btc.merchant,
+            account=account_btc,
+            max_payout=Decimal('0.3'))
+        self.assertEqual(account_btc.balance_min, Decimal('0.9'))
+        self.assertEqual(account_btc.balance_max, Decimal('2.7'))
         account_gbp = AccountFactory.create(currency__name='GBP')
         DeviceFactory.create_batch(
             3, merchant=account_gbp.merchant, account=account_gbp)
@@ -523,6 +523,7 @@ class DeviceTestCase(TestCase):
         self.assertIsNone(device.amount_2)
         self.assertIsNone(device.amount_3)
         self.assertIsNone(device.amount_shift)
+        self.assertIsNone(device.max_payout)
         self.assertEqual(device.system_info, {})
         self.assertIsNotNone(device.created_at)
         self.assertIsNone(device.last_activity)
@@ -539,6 +540,7 @@ class DeviceTestCase(TestCase):
         self.assertIsNone(device.amount_2)
         self.assertIsNone(device.amount_3)
         self.assertIsNone(device.amount_shift)
+        self.assertIsNone(device.max_payout)
         self.assertEqual(device.system_info, {})
         # Activation in progress
         device = DeviceFactory.create(status='activation_in_progress')
@@ -554,6 +556,8 @@ class DeviceTestCase(TestCase):
                          device.merchant.currency.amount_3)
         self.assertEqual(device.amount_shift,
                          device.merchant.currency.amount_shift)
+        self.assertEqual(device.max_payout,
+                         device.account.currency.max_payout)
         # Activation error
         device = DeviceFactory.create(status='activation_error')
         self.assertIsNotNone(device.merchant)
