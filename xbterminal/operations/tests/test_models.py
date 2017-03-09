@@ -227,7 +227,7 @@ class WithdrawalOrderTestCase(TestCase):
         self.assertEqual(order.status, 'sent')
         order.time_broadcasted = timezone.now()
         self.assertEqual(order.status, 'broadcasted')
-        order.time_completed = timezone.now()
+        order.time_notified = timezone.now()
         self.assertEqual(order.status, 'completed')
         # Timeout
         order = WithdrawalOrderFactory.create(

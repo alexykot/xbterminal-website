@@ -283,7 +283,7 @@ class PaymentViewSetTestCase(APITestCase):
         self.assertEqual(response['Content-Type'], 'application/pdf')
         self.assertTrue(template_mock.render.called)
 
-    def test_receipt_not_completed(self):
+    def test_receipt_not_notified(self):
         order = PaymentOrderFactory.create()
         url = reverse('api:v2:payment-receipt',
                       kwargs={'uid': order.uid})
@@ -485,7 +485,7 @@ class WithdrawalViewSetTestCase(APITestCase):
             'render.return_value': 'test',
         })
         order = WithdrawalOrderFactory.create(
-            time_completed=timezone.now())
+            time_notified=timezone.now())
         url = reverse('api:v2:withdrawal-receipt',
                       kwargs={'uid': order.uid})
         response = self.client.get(url)
@@ -493,7 +493,7 @@ class WithdrawalViewSetTestCase(APITestCase):
         self.assertEqual(response['Content-Type'], 'application/pdf')
         self.assertTrue(template_mock.render.called)
 
-    def test_receipt_not_completed(self):
+    def test_receipt_not_notified(self):
         order = WithdrawalOrderFactory.create()
         url = reverse('api:v2:withdrawal-receipt',
                       kwargs={'uid': order.uid})
@@ -506,7 +506,7 @@ class WithdrawalViewSetTestCase(APITestCase):
             'render.return_value': 'test',
         })
         order = WithdrawalOrderFactory.create(
-            time_completed=timezone.now())
+            time_notified=timezone.now())
         url = reverse('api:short:withdrawal-receipt',
                       kwargs={'uid': order.uid})
         response = self.client.get(url)
@@ -515,7 +515,7 @@ class WithdrawalViewSetTestCase(APITestCase):
 
     def test_receipt_short_post(self):
         order = WithdrawalOrderFactory.create(
-            time_completed=timezone.now())
+            time_notified=timezone.now())
         url = reverse('api:short:withdrawal-receipt',
                       kwargs={'uid': order.uid})
         response = self.client.post(url, {})

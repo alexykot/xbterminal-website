@@ -263,7 +263,7 @@ class WithdrawalOrder(models.Model):
     time_created = models.DateTimeField(auto_now_add=True)
     time_sent = models.DateTimeField(null=True)
     time_broadcasted = models.DateTimeField(null=True)
-    time_completed = models.DateTimeField(null=True)
+    time_notified = models.DateTimeField(null=True)
     time_cancelled = models.DateTimeField(null=True)
 
     def __unicode__(self):
@@ -312,14 +312,14 @@ class WithdrawalOrder(models.Model):
             new - withdrawal order has just been created
             sent - transaction has been sent
             broadcasted: transaction has been broadcasted
-            completed: customer notified about successful withdrawal
+            completed (notified): customer notified about successful withdrawal
             timeout - transaction has not been sent
                 (order is not confirmed)
             failed - transaction has been sent,
-                but withdrawal order is not marked as completed
+                but withdrawal order is not marked as notified
             cancelled: withdrawal order cancelled by the customer
         """
-        if self.time_completed:
+        if self.time_notified:
             return 'completed'
         if self.time_cancelled:
             return 'cancelled'
