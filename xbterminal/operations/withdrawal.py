@@ -13,7 +13,6 @@ from operations import (
 from operations.services.wrappers import get_exchange_rate, is_tx_reliable
 from operations.blockchain import (
     BlockChain,
-    get_tx_fee,
     validate_bitcoin_address,
     serialize_outputs,
     deserialize_outputs)
@@ -112,7 +111,7 @@ def prepare_withdrawal(device_or_account, fiat_amount):
                     continue
                 reserved_sum += output['amount']
                 reserved_outputs.append(output['outpoint'])
-                order.tx_fee_btc_amount = get_tx_fee(len(reserved_outputs), 2)
+                order.tx_fee_btc_amount = bc.get_tx_fee(len(reserved_outputs), 2)
                 if reserved_sum >= order.btc_amount:
                     break
             if reserved_sum >= order.btc_amount:

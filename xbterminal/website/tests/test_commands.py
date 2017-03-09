@@ -80,18 +80,20 @@ class WithdrawBTCTestCase(TestCase):
             'create_raw_transaction.return_value': 'tx',
             'sign_raw_transaction.return_value': 'tx_signed',
             'send_raw_transaction.return_value': '0000',
+            'get_tx_fee.return_value': Decimal('0.0005'),
         })
         result = withdraw_btc(
             account.pk,
             '1Mavf5uXXUNiJbvi5vmD4CjvFghTm9pZvM')
         self.assertEqual(
             result,
-            'sent 0.19990000 BTC to 1Mavf5uXXUNiJbvi5vmD4CjvFghTm9pZvM, '
+            'sent 0.19950000 BTC to 1Mavf5uXXUNiJbvi5vmD4CjvFghTm9pZvM, '
             'tx id 0000')
         self.assertEqual(bc_cls_mock.call_args[0][0], 'mainnet')
         self.assertEqual(bc_mock.get_unspent_outputs.call_args[0][0],
                          address.address)
         self.assertTrue(bc_mock.send_raw_transaction.called)
+        self.assertEqual(bc_mock.get_tx_fee.call_args[0], (1, 1))
 
 
 class CryptoPaySyncTestCase(TestCase):

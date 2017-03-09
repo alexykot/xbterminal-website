@@ -191,6 +191,22 @@ class BlockChain(object):
             return True
         return False
 
+    def get_tx_fee(self, n_inputs, n_outputs, n_blocks=6):
+        """
+        Accepts:
+            n_inputs: number of inputs
+            n_outputs: number of outputs
+            n_blocks: the maximum number of blocks a transaction
+                should have to wait before it is predicted
+                to be included in a block
+        Returns:
+            fee
+        """
+        fee_per_kb = self._proxy.call('estimatefee', n_blocks)
+        if fee_per_kb == -1:
+            fee_per_kb = config.TX_DEFAULT_FEE
+        return get_tx_fee(n_inputs, n_outputs, fee_per_kb)
+
 
 def construct_bitcoin_uri(address, amount_btc, name, *request_urls):
     """
@@ -251,15 +267,16 @@ def validate_bitcoin_address(address, network):
             return 'Invalid bitcoin address.'
 
 
-def get_tx_fee(inputs, outputs):
+def get_tx_fee(n_inputs, n_outputs, fee_per_kb):
     """
     Calculate transaction fee
     Accepts:
-        inputs: number of inputs,
-        outputs: number of outputs
+        n_inputs: number of inputs
+        n_outputs: number of outputs
+        fee_per_kb: fee per kilobyte
     """
-    tx_size = inputs * 148 + outputs * 34 + 10 + inputs
-    fee = config.TX_DEFAULT_FEE * (tx_size // 1024 + 1)
+    tx_size = n_inputs * 148 + n_outputs * 34 + 10 + n_inputs
+    fee = fee_per_kb * (tx_size // 1024 + 1)
     return fee
 
 

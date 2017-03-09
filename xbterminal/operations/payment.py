@@ -132,7 +132,7 @@ def prepare_payment(device_or_account, fiat_amount):
             config.POOL_TX_MAX_OUTPUT))
     else:
         n_outputs = 3
-    order.tx_fee_btc_amount = blockchain.get_tx_fee(1, n_outputs)
+    order.tx_fee_btc_amount = bc.get_tx_fee(1, n_outputs)
     # Save order
     order.save()
     # Schedule tasks
@@ -285,7 +285,7 @@ def reverse_payment(order):
         amount += output['amount']
     if not amount:
         raise exceptions.RefundError
-    amount -= blockchain.get_tx_fee(1, 1)
+    amount -= bc.get_tx_fee(1, 1)
     tx_outputs = {order.refund_address: amount}
     refund_tx = bc.create_raw_transaction(tx_inputs, tx_outputs)
     refund_tx_signed = bc.sign_raw_transaction(refund_tx)

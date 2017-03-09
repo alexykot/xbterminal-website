@@ -4,12 +4,15 @@ from mock import patch, Mock
 
 import bitcoin
 from bitcoin.core import COutPoint
+from constance.test import override_config
+
 from operations.blockchain import (
     BlockChain,
     serialize_outputs,
     deserialize_outputs,
     validate_bitcoin_address,
-    split_amount)
+    split_amount,
+    get_tx_fee)
 
 
 class BlockChainTestCase(TestCase):
@@ -69,6 +72,28 @@ class BlockChainTestCase(TestCase):
         })
         bc = BlockChain('mainnet')
         self.assertFalse(bc.is_tx_confirmed('0' * 64))
+
+    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    def test_get_tx_fee(self, proxy_cls_mock):
+        proxy_cls_mock.return_value = proxy_mock = Mock(**{
+            'call.return_value': Decimal('0.0002'),
+        })
+        bc = BlockChain('mainnet')
+        expected_fee = get_tx_fee(1, 1, Decimal('0.0002'))
+        self.assertEqual(bc.get_tx_fee(1, 1), expected_fee)
+        self.assertEqual(proxy_mock.call.call_count, 1)
+        self.assertEqual(proxy_mock.call.call_args[0][0], 'estimatefee')
+        self.assertEqual(proxy_mock.call.call_args[0][1], 6)
+
+    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @override_config(TX_DEFAULT_FEE=Decimal('0.0005'))
+    def test_get_tx_fee_error(self, proxy_cls_mock):
+        proxy_cls_mock.return_value = Mock(**{
+            'call.return_value': Decimal(-1),
+        })
+        bc = BlockChain('mainnet')
+        expected_fee = get_tx_fee(1, 1, Decimal('0.0005'))
+        self.assertEqual(bc.get_tx_fee(1, 1), expected_fee)
 
 
 class UtilsTestCase(TestCase):
