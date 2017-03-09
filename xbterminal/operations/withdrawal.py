@@ -9,6 +9,7 @@ from operations import (
     BTC_MIN_OUTPUT,
     WITHDRAWAL_TIMEOUT,
     WITHDRAWAL_BROADCAST_TIMEOUT,
+    WITHDRAWAL_CONFIRMATION_TIMEOUT,
     instantfiat)
 from operations.services.wrappers import get_exchange_rate, is_tx_reliable
 from operations.blockchain import (
@@ -248,6 +249,8 @@ def wait_for_confidence(order_uid):
         if order.time_broadcasted is None:
             order.time_broadcasted = timezone.now()
             order.save()
+            run_periodic_task(wait_for_confirmation, [order.uid],
+                              interval=15)
 
 
 def wait_for_processor(order_uid):
@@ -286,3 +289,27 @@ def wait_for_processor(order_uid):
         # TODO: check for confidence in another task?
         order.time_broadcasted = timezone.now()
         order.save()
+        run_periodic_task(wait_for_confirmation, [order.uid], interval=15)
+
+
+def wait_for_confirmation(order_uid):
+    """
+    Asynchronous task
+    Accepts:
+        order_uid: WithdrawalOrder unique identifier
+    """
+    try:
+        order = WithdrawalOrder.objects.get(uid=order_uid)
+    except WithdrawalOrder.DoesNotExist:
+        # WithdrawalOrder deleted, cancel job
+        cancel_current_task()
+        return
+    if order.time_created + WITHDRAWAL_CONFIRMATION_TIMEOUT < timezone.now():
+        # Timeout, cancel job
+        cancel_current_task()
+    bc = BlockChain(order.bitcoin_network)
+    if bc.is_tx_confirmed(order.outgoing_tx_id):
+        cancel_current_task()
+        if order.time_confirmed is None:
+            order.time_confirmed = timezone.now()
+            order.save()

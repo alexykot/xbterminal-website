@@ -177,6 +177,9 @@ class WithdrawalOrderTestCase(TestCase):
         self.assertIsNone(order.instantfiat_transfer_id)
         self.assertIsNone(order.instantfiat_reference)
         self.assertIsNotNone(order.time_created)
+        self.assertIsNone(order.time_sent)
+        self.assertIsNone(order.time_notified)
+        self.assertIsNone(order.time_confirmed)
         self.assertEqual(str(order), order.uid)
 
     def test_factory(self):
@@ -229,6 +232,8 @@ class WithdrawalOrderTestCase(TestCase):
         self.assertEqual(order.status, 'broadcasted')
         order.time_notified = timezone.now()
         self.assertEqual(order.status, 'completed')
+        order.time_confirmed = timezone.now()
+        self.assertEqual(order.status, 'confirmed')
         # Timeout
         order = WithdrawalOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=1))
@@ -238,6 +243,12 @@ class WithdrawalOrderTestCase(TestCase):
             time_created=timezone.now() - datetime.timedelta(hours=2),
             time_sent=timezone.now() - datetime.timedelta(hours=1))
         self.assertEqual(order.status, 'failed')
+        # Unconfirmed
+        order = WithdrawalOrderFactory.create(
+            time_created=timezone.now() - datetime.timedelta(hours=5),
+            time_sent=timezone.now() - datetime.timedelta(hours=5),
+            time_notified=timezone.now() - datetime.timedelta(hours=5))
+        self.assertEqual(order.status, 'unconfirmed')
         # Cancelled
         order = WithdrawalOrderFactory.create()
         self.assertEqual(order.status, 'new')

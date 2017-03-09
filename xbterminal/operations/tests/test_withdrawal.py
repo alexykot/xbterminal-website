@@ -543,3 +543,37 @@ class WaitForProcessorTestCase(TestCase):
         self.assertEqual(order.status, 'timeout')
         self.assertTrue(cancel_mock.called)
         self.assertFalse(check_mock.called)
+
+
+class WaitForConfirmationTestCase(TestCase):
+
+    @patch('operations.withdrawal.cancel_current_task')
+    def test_order_does_not_exist(self, cancel_mock):
+        withdrawal.wait_for_confirmation(123456)
+        self.assertIs(cancel_mock.called, True)
+
+    @patch('operations.withdrawal.cancel_current_task')
+    @patch('operations.withdrawal.BlockChain')
+    def test_tx_confirmed(self, bc_cls_mock, cancel_mock):
+        order = WithdrawalOrderFactory.create(
+            outgoing_tx_id='0' * 64)
+        bc_cls_mock.return_value = Mock(**{
+            'is_tx_confirmed.return_value': True,
+        })
+        withdrawal.wait_for_confirmation(order.uid)
+        order.refresh_from_db()
+        self.assertIsNotNone(order.time_confirmed)
+        self.assertIs(cancel_mock.called, True)
+
+    @patch('operations.withdrawal.cancel_current_task')
+    @patch('operations.withdrawal.BlockChain')
+    def test_tx_not_confirmed(self, bc_cls_mock, cancel_mock):
+        order = WithdrawalOrderFactory.create(
+            outgoing_tx_id='0' * 64)
+        bc_cls_mock.return_value = Mock(**{
+            'is_tx_confirmed.return_value': False,
+        })
+        withdrawal.wait_for_confirmation(order.uid)
+        order.refresh_from_db()
+        self.assertIsNone(order.time_confirmed)
+        self.assertIs(cancel_mock.called, False)

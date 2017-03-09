@@ -1051,7 +1051,7 @@ class WaitForConfirmationTestCase(TestCase):
 
     @patch('operations.payment.cancel_current_task')
     @patch('operations.payment.blockchain.BlockChain')
-    def test_tx_not_broadcasted(self, bc_cls_mock, cancel_mock):
+    def test_tx_not_confirmed(self, bc_cls_mock, cancel_mock):
         order = PaymentOrderFactory.create(
             outgoing_tx_id='0' * 64)
         bc_cls_mock.return_value = Mock(**{
