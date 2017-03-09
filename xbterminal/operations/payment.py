@@ -437,6 +437,11 @@ def wait_for_confirmation(order_uid):
 
 
 def check_confirmation(order):
+    """
+    Check outgoing transaction for confirmation
+    Accepts:
+        order: PaymentOrder or WithdrawalOrder instance
+    """
     if order.time_confirmed is not None:
         return True
     bc = blockchain.BlockChain(order.bitcoin_network)

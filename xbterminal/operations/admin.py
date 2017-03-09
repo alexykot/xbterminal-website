@@ -153,6 +153,7 @@ class WithdrawalOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
     ]
     readonly_fields = ['status']
     inlines = [WithdrawalOrderTransactionInline]
+    actions = ['check_confirmation']
 
     def has_add_permission(self, request):
         return False
@@ -180,3 +181,18 @@ class WithdrawalOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
         return url_to_object(withdrawal_order.merchant)
     merchant_link.allow_tags = True
     merchant_link.short_description = 'merchant'
+
+    def check_confirmation(self, request, queryset):
+        for order in queryset.filter(time_notified__isnull=False):
+            if payment.check_confirmation(order):
+                self.message_user(
+                    request,
+                    'Withdrawal order "{0}" is confirmed.'.format(order.pk),
+                    messages.SUCCESS)
+            else:
+                self.message_user(
+                    request,
+                    'Withdrawal order "{0}" is not confirmed yet.'.format(order.pk),
+                    messages.WARNING)
+
+    check_confirmation.short_description = 'Check confirmation status'
