@@ -83,7 +83,7 @@ class BlockChainTestCase(TestCase):
         self.assertEqual(bc.get_tx_fee(1, 1), expected_fee)
         self.assertEqual(proxy_mock.call.call_count, 1)
         self.assertEqual(proxy_mock.call.call_args[0][0], 'estimatefee')
-        self.assertEqual(proxy_mock.call.call_args[0][1], 6)
+        self.assertEqual(proxy_mock.call.call_args[0][1], 10)
 
     @patch('operations.blockchain.bitcoin.rpc.Proxy')
     @override_config(TX_DEFAULT_FEE=Decimal('0.0005'))

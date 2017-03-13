@@ -191,7 +191,8 @@ class BlockChain(object):
             return True
         return False
 
-    def get_tx_fee(self, n_inputs, n_outputs, n_blocks=6):
+    def get_tx_fee(self, n_inputs, n_outputs,
+                   n_blocks=config.TX_EXPECTED_CONFIRM):
         """
         Accepts:
             n_inputs: number of inputs
