@@ -130,18 +130,3 @@ def send_feedback_email(form_data):
         settings.DEFAULT_FROM_EMAIL,
         settings.CONTACT_EMAIL_RECIPIENTS)
     message.send(fail_silently=False)
-
-
-def send_balance_admin_notification(info):
-    """
-    Send email to admin if balance mismatch detected
-    Accepts:
-        info: dict
-    """
-    message = create_html_message(
-        _('Balance mismatch'),
-        'email/admin_balance_notification.html',
-        {'info': info},
-        settings.DEFAULT_FROM_EMAIL,
-        settings.CONTACT_EMAIL_RECIPIENTS)
-    message.send(fail_silently=False)

@@ -1,12 +1,15 @@
 sentry_required_pkgs:
   pkg.installed:
     - names:
+      - build-essential
       - python-virtualenv
       - python-dev
       - libpq-dev
       - libxml2-dev
       - libxslt1-dev
       - libffi-dev
+      - libssl-dev
+      - libjpeg-dev
 
 sentry_group:
   group.present:
@@ -27,7 +30,7 @@ sentry_pg_user:
     - name: sentry
     - password: sentry
     - require:
-      - service: postgresql
+      - service: postgresql_service
 
 sentry_pg_database:
   postgres_database.present:
@@ -79,7 +82,7 @@ sentry_pg_database:
 sentry_db_upgrade:
    cmd.script:
     - source: salt://sentry/sentry_upgrade.sh
-    - user: sentry
+    - runas: sentry
     - env:
       - SENTRY_CONF: /etc/sentry
     - require:

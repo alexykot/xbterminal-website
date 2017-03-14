@@ -16,3 +16,4 @@ PAYMENT_CONFIRMATION_TIMEOUT = datetime.timedelta(minutes=60)
 
 WITHDRAWAL_TIMEOUT = datetime.timedelta(minutes=5)
 WITHDRAWAL_BROADCAST_TIMEOUT = datetime.timedelta(minutes=45)
+WITHDRAWAL_CONFIRMATION_TIMEOUT = datetime.timedelta(minutes=120)

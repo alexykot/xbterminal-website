@@ -33,6 +33,7 @@ class PrepareWithdrawalTestCase(TestCase):
                 {'amount': Decimal('0.005'), 'outpoint': outpoint_factory()},
                 {'amount': Decimal('0.007'), 'outpoint': outpoint_factory()},
             ],
+            'get_tx_fee.return_value': Decimal('0.0002'),
         })
 
         order = withdrawal.prepare_withdrawal(device, fiat_amount)
@@ -45,16 +46,18 @@ class PrepareWithdrawalTestCase(TestCase):
         self.assertEqual(order.fiat_amount, fiat_amount)
         self.assertEqual(order.exchange_rate, exchange_rate)
         self.assertEqual(order.customer_btc_amount, Decimal('0.01'))
-        self.assertEqual(order.tx_fee_btc_amount, Decimal('0.0001'))
-        self.assertEqual(order.change_btc_amount, Decimal('0.0019'))
+        self.assertEqual(order.tx_fee_btc_amount, Decimal('0.0002'))
+        self.assertEqual(order.change_btc_amount, Decimal('0.0018'))
         self.assertIsNotNone(order.reserved_outputs)
         self.assertEqual(order.status, 'new')
+
         self.assertEqual(bc_mock.get_unspent_outputs.call_count, 1)
         self.assertEqual(
             bc_mock.get_unspent_outputs.call_args[0][0],
             account_address.address)
         self.assertEqual(
             bc_mock.get_unspent_outputs.call_args[1]['minconf'], 1)
+        self.assertEqual(bc_mock.get_tx_fee.call_args[0], (2, 2))
 
     @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.get_exchange_rate')
@@ -76,18 +79,20 @@ class PrepareWithdrawalTestCase(TestCase):
                     {'amount': Decimal('0.03'), 'outpoint': outpoint_factory()},
                 ],
             ],
+            'get_tx_fee.return_value': Decimal('0.0005'),
         })
 
         order = withdrawal.prepare_withdrawal(device, fiat_amount)
         self.assertEqual(order.account.pk, account.pk)
         self.assertEqual(order.customer_btc_amount, Decimal('0.09'))
-        self.assertEqual(order.tx_fee_btc_amount, Decimal('0.0001'))
-        self.assertEqual(order.change_btc_amount, Decimal('0.0099'))
+        self.assertEqual(order.tx_fee_btc_amount, Decimal('0.0005'))
+        self.assertEqual(order.change_btc_amount, Decimal('0.0095'))
         self.assertEqual(bc_mock.get_unspent_outputs.call_count, 2)
         self.assertEqual(bc_mock.get_unspent_outputs.call_args_list[0][0][0],
                          address_2.address)
         self.assertEqual(bc_mock.get_unspent_outputs.call_args_list[1][0][0],
                          address_1.address)
+        self.assertEqual(bc_mock.get_tx_fee.call_args[0], (2, 2))
 
     def test_no_account(self):
         device = DeviceFactory.create(status='registered',
@@ -148,6 +153,7 @@ class PrepareWithdrawalTestCase(TestCase):
         bc_mock.return_value = Mock(**{
             'get_unspent_outputs.return_value':
                 [{'amount': Decimal('0.9'), 'outpoint': outpoint_factory()}],
+            'get_tx_fee.return_value': Decimal('0.0005'),
         })
 
         with self.assertRaises(exceptions.WithdrawalError) as context:
@@ -172,6 +178,7 @@ class PrepareWithdrawalTestCase(TestCase):
             'get_unspent_outputs.return_value': [
                 {'amount': Decimal('1.5'), 'outpoint': reserved_output},
             ],
+            'get_tx_fee.return_value': Decimal('0.0005'),
         })
         with self.assertRaises(exceptions.WithdrawalError) as context:
             withdrawal.prepare_withdrawal(device, fiat_amount)
@@ -196,13 +203,14 @@ class PrepareWithdrawalTestCase(TestCase):
         get_rate_mock.return_value = exchange_rate
         bc_mock.return_value = Mock(**{
             'get_unspent_outputs.return_value': [
-                {'amount': Decimal('0.005105'), 'outpoint': outpoint_factory()},
+                {'amount': Decimal('0.005205'), 'outpoint': outpoint_factory()},
             ],
+            'get_tx_fee.return_value': Decimal('0.0002'),
         })
 
         order = withdrawal.prepare_withdrawal(device, fiat_amount)
         self.assertEqual(order.customer_btc_amount, Decimal('0.005005'))
-        self.assertEqual(order.tx_fee_btc_amount, Decimal('0.0001'))
+        self.assertEqual(order.tx_fee_btc_amount, Decimal('0.0002'))
         self.assertEqual(order.change_btc_amount, Decimal(0))
 
     @patch('operations.withdrawal.get_exchange_rate')
@@ -253,6 +261,7 @@ class PrepareWithdrawalTestCase(TestCase):
             'get_unspent_outputs.return_value': [
                 {'amount': Decimal('0.1'), 'outpoint': outpoint_factory()},
             ],
+            'get_tx_fee.return_value': Decimal('0.0005'),
         })
 
         order = withdrawal.prepare_withdrawal(account, fiat_amount)
@@ -534,3 +543,37 @@ class WaitForProcessorTestCase(TestCase):
         self.assertEqual(order.status, 'timeout')
         self.assertTrue(cancel_mock.called)
         self.assertFalse(check_mock.called)
+
+
+class WaitForConfirmationTestCase(TestCase):
+
+    @patch('operations.withdrawal.cancel_current_task')
+    def test_order_does_not_exist(self, cancel_mock):
+        withdrawal.wait_for_confirmation(123456)
+        self.assertIs(cancel_mock.called, True)
+
+    @patch('operations.withdrawal.cancel_current_task')
+    @patch('operations.withdrawal.BlockChain')
+    def test_tx_confirmed(self, bc_cls_mock, cancel_mock):
+        order = WithdrawalOrderFactory.create(
+            outgoing_tx_id='0' * 64)
+        bc_cls_mock.return_value = Mock(**{
+            'is_tx_confirmed.return_value': True,
+        })
+        withdrawal.wait_for_confirmation(order.uid)
+        order.refresh_from_db()
+        self.assertIsNotNone(order.time_confirmed)
+        self.assertIs(cancel_mock.called, True)
+
+    @patch('operations.withdrawal.cancel_current_task')
+    @patch('operations.withdrawal.BlockChain')
+    def test_tx_not_confirmed(self, bc_cls_mock, cancel_mock):
+        order = WithdrawalOrderFactory.create(
+            outgoing_tx_id='0' * 64)
+        bc_cls_mock.return_value = Mock(**{
+            'is_tx_confirmed.return_value': False,
+        })
+        withdrawal.wait_for_confirmation(order.uid)
+        order.refresh_from_db()
+        self.assertIsNone(order.time_confirmed)
+        self.assertIs(cancel_mock.called, False)

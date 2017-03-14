@@ -28,8 +28,9 @@ class PreparePaymentTestCase(TestCase):
         exchange_rate = Decimal('235.64')
         local_address = '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje'
 
-        bc_cls_mock.return_value = Mock(**{
+        bc_cls_mock.return_value = bc_mock = Mock(**{
             'get_new_address.return_value': local_address,
+            'get_tx_fee.return_value': Decimal('0.0005'),
         })
         get_rate_mock.return_value = exchange_rate
 
@@ -41,7 +42,7 @@ class PreparePaymentTestCase(TestCase):
                                         exchange_rate).quantize(BTC_DEC_PLACES)
         expected_btc_amount = (expected_merchant_btc_amount +
                                expected_fee_btc_amount +
-                               Decimal('0.0001'))
+                               Decimal('0.0005'))
 
         self.assertEqual(payment_order.device.pk, device.pk)
         self.assertEqual(payment_order.account.pk, device.account.pk)
@@ -62,7 +63,7 @@ class PreparePaymentTestCase(TestCase):
         self.assertEqual(payment_order.fee_btc_amount,
                          expected_fee_btc_amount)
         self.assertEqual(payment_order.tx_fee_btc_amount,
-                         Decimal('0.0001'))
+                         Decimal('0.0005'))
         self.assertEqual(payment_order.btc_amount,
                          expected_btc_amount)
         self.assertEqual(payment_order.paid_btc_amount, 0)
@@ -70,8 +71,10 @@ class PreparePaymentTestCase(TestCase):
         self.assertEqual(len(payment_order.incoming_tx_ids), 0)
         self.assertIsNone(payment_order.outgoing_tx_id)
         self.assertEqual(payment_order.status, 'new')
+
         self.assertEqual(bc_cls_mock.call_args[0][0],
                          payment_order.bitcoin_network)
+        self.assertEqual(bc_mock.get_tx_fee.call_args[0], (1, 3))
 
         calls = run_task_mock.call_args_list
         self.assertEqual(calls[0][0][0].__name__, 'wait_for_payment')
@@ -89,6 +92,7 @@ class PreparePaymentTestCase(TestCase):
 
         bc_mock.return_value = Mock(**{
             'get_new_address.return_value': local_address,
+            'get_tx_fee.return_value': Decimal('0.0005'),
         })
         get_rate_mock.return_value = exchange_rate
 
@@ -96,7 +100,7 @@ class PreparePaymentTestCase(TestCase):
         expected_merchant_btc_amount = (fiat_amount /
                                         exchange_rate).quantize(BTC_DEC_PLACES)
         expected_btc_amount = (expected_merchant_btc_amount +
-                               Decimal('0.0001'))
+                               Decimal('0.0005'))
 
         self.assertEqual(payment_order.fiat_amount, fiat_amount)
         self.assertEqual(payment_order.instantfiat_fiat_amount, 0)
@@ -115,19 +119,21 @@ class PreparePaymentTestCase(TestCase):
             account__currency__name='BTC',
             max_payout=Decimal('100.0'))
         fiat_amount = Decimal('1000.00')
-        bc_cls_mock.return_value = Mock(**{
+        bc_cls_mock.return_value = bc_mock = Mock(**{
             'get_new_address.return_value': '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje',
+            'get_tx_fee.return_value': Decimal('0.001'),
         })
         get_rate_mock.return_value = Decimal('200.00')
         order = payment.prepare_payment(device, fiat_amount)
         self.assertEqual(order.merchant_btc_amount, Decimal('5.0'))
         self.assertEqual(order.fee_btc_amount, Decimal('0.025'))
-        self.assertEqual(order.tx_fee_btc_amount, Decimal('0.0004'))
+        self.assertEqual(order.tx_fee_btc_amount, Decimal('0.001'))
+        self.assertEqual(bc_mock.get_tx_fee.call_args[0], (1, 102))
 
     @patch('operations.payment.blockchain.BlockChain')
     @patch('operations.payment.instantfiat.create_invoice')
     @patch('operations.payment.run_periodic_task')
-    def test_instantfiat(self, run_task_mock, invoice_mock, bc_mock):
+    def test_instantfiat(self, run_task_mock, invoice_mock, bc_cls_mock):
         device = DeviceFactory.create(account__currency__name='GBP')
         self.assertTrue(device.account.instantfiat)
         fiat_amount = Decimal('10')
@@ -136,8 +142,9 @@ class PreparePaymentTestCase(TestCase):
         instantfiat_btc_amount = Decimal('0.043')
         instantfiat_address = '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'
 
-        bc_mock.return_value = Mock(**{
+        bc_cls_mock.return_value = bc_mock = Mock(**{
             'get_new_address.return_value': local_address,
+            'get_tx_fee.return_value': Decimal('0.0005'),
         })
         invoice_mock.return_value = (
             instantfiat_invoice_id,
@@ -149,7 +156,7 @@ class PreparePaymentTestCase(TestCase):
                                    Decimal(config.OUR_FEE_SHARE)).quantize(BTC_DEC_PLACES)
         expected_btc_amount = (instantfiat_btc_amount +
                                expected_fee_btc_amount +
-                               Decimal('0.0001'))
+                               Decimal('0.0005'))
 
         self.assertEqual(payment_order.local_address,
                          local_address)
@@ -169,6 +176,8 @@ class PreparePaymentTestCase(TestCase):
                          expected_btc_amount)
         self.assertEqual(payment_order.instantfiat_invoice_id,
                          instantfiat_invoice_id)
+
+        self.assertEqual(bc_mock.get_tx_fee.call_args[0], (1, 3))
 
     def test_no_account(self):
         device = DeviceFactory.create(status='registered')
@@ -204,6 +213,7 @@ class PreparePaymentTestCase(TestCase):
         fiat_amount = Decimal('10')
         bc_cls_mock.return_value = Mock(**{
             'get_new_address.return_value': '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje',
+            'get_tx_fee.return_value': Decimal('0.0005'),
         })
         get_rate_mock.return_value = Decimal('235.64')
 
@@ -592,14 +602,17 @@ class ReversePaymentTestCase(TestCase):
             'create_raw_transaction.return_value': 'test_tx',
             'sign_raw_transaction.return_value': 'test_tx_signed',
             'send_raw_transaction.return_value': refund_tx_id,
+            'get_tx_fee.return_value': Decimal('0.0005'),
         })
 
         payment.reverse_payment(order)
         tx_outputs = bc_mock.create_raw_transaction.call_args[0][1]
+        expected_refund_amount = order.btc_amount - Decimal('0.0005')
         self.assertEqual(tx_outputs[order.refund_address],
-                         Decimal('0.101'))
+                         expected_refund_amount)
         self.assertTrue(bc_mock.sign_raw_transaction.called)
         self.assertTrue(bc_mock.send_raw_transaction.called)
+        self.assertEqual(bc_mock.get_tx_fee.call_args[0], (1, 1))
         order.refresh_from_db()
         self.assertEqual(order.refund_tx_id, refund_tx_id)
         self.assertEqual(order.status, 'refunded')
@@ -1038,7 +1051,7 @@ class WaitForConfirmationTestCase(TestCase):
 
     @patch('operations.payment.cancel_current_task')
     @patch('operations.payment.blockchain.BlockChain')
-    def test_tx_not_broadcasted(self, bc_cls_mock, cancel_mock):
+    def test_tx_not_confirmed(self, bc_cls_mock, cancel_mock):
         order = PaymentOrderFactory.create(
             outgoing_tx_id='0' * 64)
         bc_cls_mock.return_value = Mock(**{

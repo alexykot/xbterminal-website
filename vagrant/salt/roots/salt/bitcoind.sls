@@ -3,18 +3,12 @@ bitcoin_ppa:
     - ppa: bitcoin/bitcoin
     - refresh_db: true
 
-bitcoind:
+bitcoind_package:
   pkg:
     - installed
+    - name: bitcoind
     - require:
       - pkgrepo: bitcoin_ppa
-  service:
-    - running
-    - enable: true
-    - require:
-      - pkg: bitcoind
-      - file: /lib/systemd/system/bitcoind.service
-      - file: /etc/bitcoin/bitcoin.conf
 
 bitcoin_group:
   group:
@@ -60,3 +54,13 @@ bitcoin_user:
     - source: salt://bitcoind/bitcoind.service
     - require:
       - pkg: bitcoind
+
+bitcoind_service:
+  service:
+    - running
+    - name: bitcoind
+    - enable: true
+    - require:
+      - pkg: bitcoind_package
+      - file: /lib/systemd/system/bitcoind.service
+      - file: /etc/bitcoin/bitcoin.conf

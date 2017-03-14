@@ -1,16 +1,20 @@
-redis-server:
+redis_package:
   pkg:
     - installed
-  service.running:
-    - enable: true
-    - require:
-      - pkg: redis-server
-    - watch:
-      - file: /etc/redis/redis.conf
+    - name: redis-server
 
-redis.conf:
+redis_config:
   file.managed:
     - name: /etc/redis/redis.conf
     - source: salt://redis/redis.conf
     - require:
-      - pkg: redis-server
+      - pkg: redis_package
+
+redis_service:
+  service.running:
+    - name: redis-server
+    - enable: true
+    - require:
+      - pkg: redis_package
+    - watch:
+      - file: redis_config

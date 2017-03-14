@@ -228,9 +228,9 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
 
     def retrieve(self, request, uid=None):
         order = self.get_object()
-        if order.time_broadcasted and not order.time_completed:
+        if order.time_broadcasted and not order.time_notified:
             # Close order
-            order.time_completed = timezone.now()
+            order.time_notified = timezone.now()
             order.save()
         serializer = self.get_serializer(order)
         return Response(serializer.data)
@@ -238,7 +238,7 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
     @detail_route(methods=['GET'], renderer_classes=[PDFRenderer])
     def receipt(self, *args, **kwargs):
         order = self.get_object()
-        if not order.time_completed:
+        if not order.time_notified:
             raise Http404
         result = generate_pdf('pdf/receipt.html', {'order': order})
         response = Response(result.getvalue())

@@ -19,7 +19,8 @@ from operations import (
     PAYMENT_VALIDATION_TIMEOUT,
     PAYMENT_CONFIRMATION_TIMEOUT,
     WITHDRAWAL_TIMEOUT,
-    WITHDRAWAL_BROADCAST_TIMEOUT)
+    WITHDRAWAL_BROADCAST_TIMEOUT,
+    WITHDRAWAL_CONFIRMATION_TIMEOUT)
 from operations.protocol import create_payment_request
 from api.utils.urls import construct_absolute_url
 
@@ -263,7 +264,8 @@ class WithdrawalOrder(models.Model):
     time_created = models.DateTimeField(auto_now_add=True)
     time_sent = models.DateTimeField(null=True)
     time_broadcasted = models.DateTimeField(null=True)
-    time_completed = models.DateTimeField(null=True)
+    time_notified = models.DateTimeField(null=True)
+    time_confirmed = models.DateTimeField(null=True)
     time_cancelled = models.DateTimeField(null=True)
 
     def __unicode__(self):
@@ -312,15 +314,24 @@ class WithdrawalOrder(models.Model):
             new - withdrawal order has just been created
             sent - transaction has been sent
             broadcasted: transaction has been broadcasted
-            completed: customer notified about successful withdrawal
+            completed (notified): customer notified about successful withdrawal
+            confirmed - outgoing transaction confirmed
             timeout - transaction has not been sent
                 (order is not confirmed)
             failed - transaction has been sent,
-                but withdrawal order is not marked as completed
+                but withdrawal order is not marked as notified
+            unconfirmed - customer notified about successful withdrawal,
+                but outgoing transaction is not confirmed
             cancelled: withdrawal order cancelled by the customer
         """
-        if self.time_completed:
-            return 'completed'
+        if self.time_notified:
+            if self.time_confirmed:
+                return 'confirmed'
+            else:
+                if self.time_created + WITHDRAWAL_CONFIRMATION_TIMEOUT < timezone.now():
+                    return 'unconfirmed'
+                else:
+                    return 'completed'
         if self.time_cancelled:
             return 'cancelled'
         if self.time_sent:

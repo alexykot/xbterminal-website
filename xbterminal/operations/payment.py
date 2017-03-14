@@ -4,7 +4,7 @@ Payment operations
 from decimal import Decimal
 import logging
 
-from bitcoin.rpc import JSONRPCException
+from bitcoin.rpc import JSONRPCError
 from bitcoin.wallet import CBitcoinAddress
 
 from django.utils import timezone
@@ -132,7 +132,7 @@ def prepare_payment(device_or_account, fiat_amount):
             config.POOL_TX_MAX_OUTPUT))
     else:
         n_outputs = 3
-    order.tx_fee_btc_amount = blockchain.get_tx_fee(1, n_outputs)
+    order.tx_fee_btc_amount = bc.get_tx_fee(1, n_outputs)
     # Save order
     order.save()
     # Schedule tasks
@@ -223,7 +223,7 @@ def parse_payment(payment_order, payment_message):
         try:
             incoming_tx_signed = bc.sign_raw_transaction(incoming_tx)
             bc.send_raw_transaction(incoming_tx_signed)
-        except JSONRPCException as error:
+        except JSONRPCError as error:
             logger.exception(error)
         incoming_tx_id = blockchain.get_txid(incoming_tx)
         if incoming_tx_id not in payment_order.incoming_tx_ids:
@@ -285,7 +285,7 @@ def reverse_payment(order):
         amount += output['amount']
     if not amount:
         raise exceptions.RefundError
-    amount -= blockchain.get_tx_fee(1, 1)
+    amount -= bc.get_tx_fee(1, 1)
     tx_outputs = {order.refund_address: amount}
     refund_tx = bc.create_raw_transaction(tx_inputs, tx_outputs)
     refund_tx_signed = bc.sign_raw_transaction(refund_tx)
@@ -437,6 +437,11 @@ def wait_for_confirmation(order_uid):
 
 
 def check_confirmation(order):
+    """
+    Check outgoing transaction for confirmation
+    Accepts:
+        order: PaymentOrder or WithdrawalOrder instance
+    """
     if order.time_confirmed is not None:
         return True
     bc = blockchain.BlockChain(order.bitcoin_network)

@@ -39,7 +39,7 @@ def withdraw_btc(account_id, destination_address):
     account.transaction_set.create(amount=-amount)
     if account.balance != 0:
         return 'invalid balance'
-    amount -= blockchain.get_tx_fee(len(tx_inputs), 1)
+    amount -= bc.get_tx_fee(len(tx_inputs), 1)
     tx_outputs = {destination_address: amount}
     tx = bc.create_raw_transaction(tx_inputs, tx_outputs)
     tx_signed = bc.sign_raw_transaction(tx)
