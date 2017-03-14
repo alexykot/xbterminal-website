@@ -192,7 +192,7 @@ class BlockChain(object):
         return False
 
     def get_tx_fee(self, n_inputs, n_outputs,
-                   n_blocks=config.TX_EXPECTED_CONFIRM):
+                   n_blocks=None):
         """
         Accepts:
             n_inputs: number of inputs
@@ -203,7 +203,9 @@ class BlockChain(object):
         Returns:
             fee
         """
-        fee_per_kb = self._proxy.call('estimatefee', n_blocks)
+        fee_per_kb = self._proxy.call(
+            'estimatefee',
+            n_blocks or config.TX_EXPECTED_CONFIRM)
         if fee_per_kb == -1:
             fee_per_kb = config.TX_DEFAULT_FEE
         return get_tx_fee(n_inputs, n_outputs, fee_per_kb)
