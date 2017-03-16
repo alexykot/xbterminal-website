@@ -377,6 +377,35 @@ class UpdateDeviceView(DeviceMixin,
             return self.render_to_response(context)
 
 
+class DeviceStatusView(DeviceMixin,
+                       TemplateResponseMixin,
+                       MerchantCabinetView):
+    """
+    Suspend or activate device
+    """
+    template_name = 'cabinet/merchant/device_status.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(DeviceStatusView, self).get_context_data(**kwargs)
+        if context['device'].status not in ['active', 'suspended']:
+            raise Http404
+        return context
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+    def post(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        device = context['device']
+        if device.status == 'active':
+            device.suspend()
+        elif device.status == 'suspended':
+            device.activate()
+        device.save()
+        return redirect(reverse('website:devices'))
+
+
 class UpdateProfileView(TemplateResponseMixin, MerchantCabinetView):
     """
     Update profile

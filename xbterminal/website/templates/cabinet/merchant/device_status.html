@@ -1,0 +1,30 @@
+{% extends 'cabinet/base.html' %}
+{% load i18n %}
+
+{% block cabinet_content %}
+<div class="row">
+  <div class="col-md-8 col-md-offset-2">
+    <h3>{{ device.name }}</h3>
+    <form id="device-status-form" action="" method="post">
+      {% if device.status == 'active' %}
+      <p class="text-muted">You will be able to reenable module later</p>
+      {% endif %}
+      {% csrf_token %}
+      <div class="row">
+        <div class="col-md-6">
+          <button type="submit" class="btn btn-default pull-right">
+            {% if device.status == 'active' %}{% trans 'Suspend' %}
+            {% elif device.status == 'suspended' %}{% trans 'Reenable' %}
+            {% endif %}
+          </button>
+        </div>
+        <div class="col-md-6">
+          <a href="{% url 'website:devices' %}" class="btn btn-default">
+            {% trans 'Cancel' %}
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -28,7 +28,14 @@
         <td>{{ device.account }}</td>
         <td>
             {% if device.status == 'active' or device.status == 'suspended' %}
-            <div><a href="{% url 'website:device_transactions' device.key %}">{% trans 'view transactions' %}</a></div>
+            <div><a href="{% url 'website:device_transactions' device.key %}">
+                {% trans 'view transactions' %}
+            </a></div>
+            <div><a href="{% url 'website:device_status' device.key %}">
+                {% if device.status == 'active' %}{% trans 'suspend module' %}
+                {% elif device.status == 'suspended' %}{% trans 'reenable module' %}
+                {% endif %}
+            </a></div>
             {% endif %}
         </td>
     </tr>
