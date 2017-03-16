@@ -14,7 +14,7 @@
 {% block cabinet_content %}
 <div class="row">
     <div class="col-md-8 col-md-offset-2">
-        <h3>{% trans 'Device activation' %}</h3>
+        <h3>{% trans 'Module activation' %}</h3>
         {% if form %}
         <form id="activation-form" action="" method="post" autocomplete="off">
             {% csrf_token %}
@@ -28,7 +28,7 @@
         </form>
         {% else %}
             <p class="large activation-in-progress">
-                {% trans 'Activation in progress. Do not turn off the device.' %}<br>
+                {% trans 'Activation in progress. Do not turn off the module.' %}<br>
                 <img src="{% static 'img/loading.gif' %}">
             </p>
             <p class="large activation-error">

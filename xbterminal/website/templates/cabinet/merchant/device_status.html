@@ -7,7 +7,7 @@
     <h3>{{ device.name }}</h3>
     <form id="device-status-form" action="" method="post">
       {% if device.status == 'active' %}
-      <p class="text-muted">You will be able to reenable module later</p>
+      <p class="text-muted">{% trans 'You will be able to reenable module later' %}</p>
       {% endif %}
       {% csrf_token %}
       <div class="row">
