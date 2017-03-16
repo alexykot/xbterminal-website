@@ -15,7 +15,7 @@
     {% for device in devices %}
     <tr>
         <td>
-            {% if device.status == 'activation' %}
+            {% if device.status == 'activation_in_progress' or device.status == 'activation_error' %}
             <a href="{% url 'website:device_activation' device.key %}">{{ device.name }}</a>
             {% else %}
             <a href="{% url 'website:device' device.key %}">{{ device.name }}</a>

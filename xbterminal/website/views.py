@@ -322,7 +322,7 @@ class DeviceActivationView(TemplateResponseMixin, MerchantCabinetView):
         except models.Device.DoesNotExist:
             raise Http404
         if device.status not in ['activation_in_progress',
-                                 'activation_failed']:
+                                 'activation_error']:
             # Activation already finished
             return redirect(reverse('website:device',
                                     kwargs={'device_key': device.key}))

@@ -489,7 +489,7 @@ class DeviceActivationViewTestCase(TestCase):
     def setUp(self):
         self.merchant = MerchantAccountFactory.create()
 
-    def test_get(self):
+    def test_get_activation_in_progress(self):
         device = DeviceFactory.create(merchant=self.merchant,
                                       status='activation_in_progress')
         url = reverse('website:device_activation',
@@ -502,6 +502,16 @@ class DeviceActivationViewTestCase(TestCase):
             response, 'cabinet/merchant/activation.html')
         self.assertEqual(response.context['device'].pk,
                          device.pk)
+
+    def test_get_activation_error(self):
+        device = DeviceFactory.create(merchant=self.merchant,
+                                      status='activation_error')
+        url = reverse('website:device_activation',
+                      kwargs={'device_key': device.key})
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
 
     def test_already_active(self):
         device = DeviceFactory.create(merchant=self.merchant,
