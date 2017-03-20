@@ -279,7 +279,7 @@ def get_tx_fee(n_inputs, n_outputs, fee_per_kb):
         fee_per_kb: fee per kilobyte
     """
     tx_size = n_inputs * 148 + n_outputs * 34 + 10 + n_inputs
-    fee = fee_per_kb * (tx_size // 1024 + 1)
+    fee = (fee_per_kb / 1024) * tx_size
     return fee
 
 
