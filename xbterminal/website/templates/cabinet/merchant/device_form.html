@@ -9,13 +9,19 @@
 
 {% if device.status == 'suspended' %}
 <div class="alert alert-danger">
-    This device currently is not operational
+    {% trans 'This module currently is not operational' %}
 </div>
 {% endif %}
 
 <div class="row">
     <div class="col-md-8 col-md-offset-2">
-        <h3>{% if device %}{% trans 'Update' %}{% else %}{% trans 'Create' %}{% endif %} {{ form.device_type_verbose|lower }}:</h3>
+        <h3>
+            {% if device %}
+            {% blocktrans with type=form.device_type_verbose|lower %}Update {{ type }} settings{% endblocktrans %}
+            {% else %}
+            {% blocktrans with type=form.device_type_verbose|lower %}Create {{ type }}{% endblocktrans %}
+            {% endif %}
+        </h3>
         <form id="device-form" action="" method="post">
             {% csrf_token %}
             {% bootstrap_field form.device_type %}

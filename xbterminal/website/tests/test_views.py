@@ -378,6 +378,56 @@ class UpdateDeviceView(TestCase):
             response, 'cabinet/merchant/device_form.html')
 
 
+class DeviceStatusViewTestCase(TestCase):
+
+    def setUp(self):
+        self.merchant = MerchantAccountFactory.create()
+
+    def test_get(self):
+        device = DeviceFactory.create(merchant=self.merchant)
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:device_status',
+                      kwargs={'device_key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/device_status.html')
+
+    def test_get_activation(self):
+        device = DeviceFactory.create(merchant=self.merchant,
+                                      status='activation_in_progress')
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:device_status',
+                      kwargs={'device_key': device.key})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_post_suspend(self):
+        device = DeviceFactory.create(merchant=self.merchant)
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:device_status',
+                      kwargs={'device_key': device.key})
+        response = self.client.post(url)
+        self.assertRedirects(response, reverse('website:devices'))
+        device_updated = Device.objects.get(key=device.key)
+        self.assertEqual(device_updated.status, 'suspended')
+
+    def test_post_activate(self):
+        device = DeviceFactory.create(merchant=self.merchant,
+                                      status='suspended')
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        url = reverse('website:device_status',
+                      kwargs={'device_key': device.key})
+        response = self.client.post(url)
+        self.assertRedirects(response, reverse('website:devices'))
+        device_updated = Device.objects.get(key=device.key)
+        self.assertEqual(device_updated.status, 'active')
+
+
 class ActivateDeviceViewTestCase(TestCase):
 
     def setUp(self):
@@ -439,7 +489,7 @@ class DeviceActivationViewTestCase(TestCase):
     def setUp(self):
         self.merchant = MerchantAccountFactory.create()
 
-    def test_get(self):
+    def test_get_activation_in_progress(self):
         device = DeviceFactory.create(merchant=self.merchant,
                                       status='activation_in_progress')
         url = reverse('website:device_activation',
@@ -452,6 +502,16 @@ class DeviceActivationViewTestCase(TestCase):
             response, 'cabinet/merchant/activation.html')
         self.assertEqual(response.context['device'].pk,
                          device.pk)
+
+    def test_get_activation_error(self):
+        device = DeviceFactory.create(merchant=self.merchant,
+                                      status='activation_error')
+        url = reverse('website:device_activation',
+                      kwargs={'device_key': device.key})
+        self.client.login(username=self.merchant.user.email,
+                          password='password')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
 
     def test_already_active(self):
         device = DeviceFactory.create(merchant=self.merchant,

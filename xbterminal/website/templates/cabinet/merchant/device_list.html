@@ -15,7 +15,7 @@
     {% for device in devices %}
     <tr>
         <td>
-            {% if device.status == 'activation' %}
+            {% if device.status == 'activation_in_progress' or device.status == 'activation_error' %}
             <a href="{% url 'website:device_activation' device.key %}">{{ device.name }}</a>
             {% else %}
             <a href="{% url 'website:device' device.key %}">{{ device.name }}</a>
@@ -28,7 +28,14 @@
         <td>{{ device.account }}</td>
         <td>
             {% if device.status == 'active' or device.status == 'suspended' %}
-            <div><a href="{% url 'website:device_transactions' device.key %}">{% trans 'view transactions' %}</a></div>
+            <div><a href="{% url 'website:device_transactions' device.key %}">
+                {% trans 'view transactions' %}
+            </a></div>
+            <div><a href="{% url 'website:device_status' device.key %}">
+                {% if device.status == 'active' %}{% trans 'suspend module' %}
+                {% elif device.status == 'suspended' %}{% trans 'reenable module' %}
+                {% endif %}
+            </a></div>
             {% endif %}
         </td>
     </tr>
