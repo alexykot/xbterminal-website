@@ -253,7 +253,7 @@ class DeviceViewSet(viewsets.GenericViewSet):
     lookup_field = 'key'
 
     def get_queryset(self):
-        queryset = Device.objects.exclude(status='suspended')
+        queryset = Device.objects.all()
         if self.action == 'confirm_activation':
             queryset = queryset.filter(status='activation_in_progress')
         return queryset

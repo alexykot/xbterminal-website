@@ -610,12 +610,13 @@ class DeviceViewSetTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIs(run_mock.called, False)
 
-    def test_retrieve_suspended(self):
+    @patch('api.views_v2.rq_helpers.run_task')
+    def test_retrieve_suspended(self, run_mock):
         device = DeviceFactory.create(status='suspended')
         url = reverse('api:v2:device-detail',
                       kwargs={'key': device.key})
         response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_confirm_activation(self):
         device = DeviceFactory.create(status='activation_in_progress')
