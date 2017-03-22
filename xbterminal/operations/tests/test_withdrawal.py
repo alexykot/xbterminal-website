@@ -451,10 +451,14 @@ class SendTransactionTestCase(TestCase):
 class WaitForConfidenceTestCase(TestCase):
 
     @patch('operations.withdrawal.cancel_current_task')
+    @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.is_tx_reliable')
-    def test_tx_broadcasted(self, tx_check_mock, cancel_mock):
+    def test_tx_broadcasted(self, tx_check_mock, bc_cls_mock, cancel_mock):
         order = WithdrawalOrderFactory.create(
             time_sent=timezone.now())
+        bc_cls_mock.return_value = Mock(**{
+            'is_tx_confirmed.return_value': False,
+        })
         tx_check_mock.return_value = True
         withdrawal.wait_for_confidence(order.uid)
         order.refresh_from_db()
@@ -462,10 +466,14 @@ class WaitForConfidenceTestCase(TestCase):
         self.assertTrue(cancel_mock.called)
 
     @patch('operations.withdrawal.cancel_current_task')
+    @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.is_tx_reliable')
-    def test_tx_not_broadcasted(self, tx_check_mock, cancel_mock):
+    def test_tx_not_broadcasted(self, tx_check_mock, bc_cls_mock, cancel_mock):
         order = WithdrawalOrderFactory.create(
             time_sent=timezone.now())
+        bc_cls_mock.return_value = Mock(**{
+            'is_tx_confirmed.return_value': False,
+        })
         tx_check_mock.return_value = False
         withdrawal.wait_for_confidence(order.uid)
         order.refresh_from_db()
@@ -473,15 +481,17 @@ class WaitForConfidenceTestCase(TestCase):
         self.assertFalse(cancel_mock.called)
 
     @patch('operations.withdrawal.cancel_current_task')
+    @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.is_tx_reliable')
-    def test_does_not_exist(self, tx_check_mock, cancel_mock):
+    def test_does_not_exist(self, tx_check_mock, bc_cls_mock, cancel_mock):
         withdrawal.wait_for_confidence('invalid_uid')
         self.assertTrue(cancel_mock.called)
         self.assertFalse(tx_check_mock.called)
 
     @patch('operations.withdrawal.cancel_current_task')
+    @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.is_tx_reliable')
-    def test_timeout(self, tx_check_mock, cancel_mock):
+    def test_timeout(self, tx_check_mock, bc_cls_mock, cancel_mock):
         order = WithdrawalOrderFactory.create(
             time_created=timezone.now() - datetime.timedelta(hours=1),
             time_sent=timezone.now() - datetime.timedelta(hours=1))

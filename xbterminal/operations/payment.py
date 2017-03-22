@@ -324,8 +324,12 @@ def wait_for_validation(payment_order_uid):
     if payment_order.status == 'cancelled':
         cancel_current_task()
         return
+    bc = blockchain.BlockChain(payment_order.bitcoin_network)
     if payment_order.time_received is not None:
         for incoming_tx_id in payment_order.incoming_tx_ids:
+            if bc.is_tx_confirmed(incoming_tx_id, minconf=1):
+                # Already confirmed, skip confidence check
+                continue
             if not is_tx_reliable(incoming_tx_id,
                                   payment_order.bitcoin_network):
                 # Break cycle, wait for confidence
