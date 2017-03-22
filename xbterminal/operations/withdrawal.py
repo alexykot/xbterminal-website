@@ -289,7 +289,7 @@ def wait_for_processor(order_uid):
         # TODO: check for confidence in another task?
         order.time_broadcasted = timezone.now()
         order.save()
-        run_periodic_task(wait_for_confirmation, [order.uid], interval=15)
+        run_periodic_task(wait_for_confirmation, [order.uid], interval=30)
 
 
 def wait_for_confirmation(order_uid):

@@ -296,6 +296,7 @@ CONSTANCE_CONFIG = {
     'TX_EXPECTED_CONFIRM': (10, 'Expected max number of blocks TX should '
                                 'wait before it is included in a block'),
     'TX_CONFIDENCE_THRESHOLD': (0.95, 'Transaction confidence threshold'),
+    'TX_REQUIRED_CONFIRMATIONS': (6, 'Number of required confirmations for TX'),
     'WITHDRAW_UNCONFIRMED': (False, 'Allow to withdraw from unconfirmed deposits'),
     'POOL_TX_MAX_OUTPUT': (Decimal('0.05'),
                            'Maximum value of TX output in the pool'),

@@ -62,13 +62,13 @@ class BlockChainTestCase(TestCase):
     def test_is_tx_confirmed(self, proxy_mock):
         # Confirmed
         proxy_mock.return_value = Mock(**{
-            'gettransaction.return_value': {'confirmations': 2},
+            'gettransaction.return_value': {'confirmations': 6},
         })
         bc = BlockChain('mainnet')
         self.assertTrue(bc.is_tx_confirmed('0' * 64))
         # Unconfirmed
         proxy_mock.return_value = Mock(**{
-            'gettransaction.return_value': {'confirmations': 0},
+            'gettransaction.return_value': {'confirmations': 1},
         })
         bc = BlockChain('mainnet')
         self.assertFalse(bc.is_tx_confirmed('0' * 64))

@@ -338,7 +338,7 @@ def wait_for_validation(payment_order_uid):
                     # Payment still can be cancelled at this moment
                     return
                 forward_transaction(payment_order)
-            run_periodic_task(wait_for_confirmation, [payment_order.uid], interval=15)
+            run_periodic_task(wait_for_confirmation, [payment_order.uid], interval=30)
             if payment_order.instantfiat_invoice_id is None:
                 # Payment finished
                 logger.info('payment order closed ({0})'.format(payment_order.uid))
