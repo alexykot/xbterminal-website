@@ -179,14 +179,16 @@ class BlockChain(object):
         transaction_id = self._proxy.sendrawtransaction(transaction)
         return b2lx(transaction_id)
 
-    def is_tx_confirmed(self, transaction_id, minconf=1):
+    def is_tx_confirmed(self, transaction_id, minconf=None):
         """
         Accepts:
             transaction_id: hex string
+            minconf: number of required confirmations
         Returns:
             True or False
         """
         tx_info = self._proxy.gettransaction(lx(transaction_id))
+        minconf = minconf or config.TX_REQUIRED_CONFIRMATIONS
         if tx_info['confirmations'] >= minconf:
             return True
         return False

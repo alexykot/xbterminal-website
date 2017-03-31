@@ -44,6 +44,22 @@ class PaymentOrderTransactionInline(TransactionInline):
     readonly_fields = ['account', 'amount_colored']
 
 
+class PaymentOrderStatusListFilter(admin.SimpleListFilter):
+
+    title = 'status'
+    parameter_name = 'status'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('unconfirmed', 'Unconfirmed'),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'unconfirmed':
+            return queryset.filter(time_notified__isnull=False,
+                                   time_confirmed__isnull=True)
+
+
 @admin.register(models.PaymentOrder)
 class PaymentOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
 
@@ -55,6 +71,7 @@ class PaymentOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
         'time_created',
         'status',
     ]
+    list_filter = [PaymentOrderStatusListFilter]
     readonly_fields = ['status', 'payment_request_qr_code']
     actions = ['refund', 'check_confirmation']
     inlines = [PaymentOrderTransactionInline]

@@ -244,7 +244,10 @@ def wait_for_confidence(order_uid):
             }})
         cancel_current_task()
         return
-    if is_tx_reliable(order.outgoing_tx_id, order.bitcoin_network):
+    bc = BlockChain(order.bitcoin_network)
+    # If transaction is already confirmed, skip confidence check
+    if bc.is_tx_confirmed(order.outgoing_tx_id, minconf=1) or \
+            is_tx_reliable(order.outgoing_tx_id, order.bitcoin_network):
         cancel_current_task()
         if order.time_broadcasted is None:
             order.time_broadcasted = timezone.now()
@@ -289,7 +292,7 @@ def wait_for_processor(order_uid):
         # TODO: check for confidence in another task?
         order.time_broadcasted = timezone.now()
         order.save()
-        run_periodic_task(wait_for_confirmation, [order.uid], interval=15)
+        run_periodic_task(wait_for_confirmation, [order.uid], interval=30)
 
 
 def wait_for_confirmation(order_uid):

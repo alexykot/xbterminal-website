@@ -324,8 +324,12 @@ def wait_for_validation(payment_order_uid):
     if payment_order.status == 'cancelled':
         cancel_current_task()
         return
+    bc = blockchain.BlockChain(payment_order.bitcoin_network)
     if payment_order.time_received is not None:
         for incoming_tx_id in payment_order.incoming_tx_ids:
+            if bc.is_tx_confirmed(incoming_tx_id, minconf=1):
+                # Already confirmed, skip confidence check
+                continue
             if not is_tx_reliable(incoming_tx_id,
                                   payment_order.bitcoin_network):
                 # Break cycle, wait for confidence
@@ -338,7 +342,7 @@ def wait_for_validation(payment_order_uid):
                     # Payment still can be cancelled at this moment
                     return
                 forward_transaction(payment_order)
-            run_periodic_task(wait_for_confirmation, [payment_order.uid], interval=15)
+            run_periodic_task(wait_for_confirmation, [payment_order.uid], interval=30)
             if payment_order.instantfiat_invoice_id is None:
                 # Payment finished
                 logger.info('payment order closed ({0})'.format(payment_order.uid))
