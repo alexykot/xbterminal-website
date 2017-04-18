@@ -10,7 +10,8 @@ from operations import (
     WITHDRAWAL_TIMEOUT,
     WITHDRAWAL_BROADCAST_TIMEOUT,
     WITHDRAWAL_CONFIRMATION_TIMEOUT,
-    instantfiat)
+    instantfiat,
+    exceptions)
 from operations.services.wrappers import get_exchange_rate, is_tx_reliable
 from operations.blockchain import (
     BlockChain,
@@ -18,11 +19,6 @@ from operations.blockchain import (
     serialize_outputs,
     deserialize_outputs)
 from operations.models import WithdrawalOrder
-from operations.exceptions import (
-    WithdrawalError,
-    InsufficientFunds,
-    DoubleSpend,
-    TransactionModified)
 from website.models import Device, Account
 from website.utils.accounts import create_account_txs
 from api.utils.urls import get_admin_url
@@ -69,15 +65,15 @@ def prepare_withdrawal(device_or_account, fiat_amount):
         device = None
         account = device_or_account
     if not account:
-        raise WithdrawalError('Account is not set for device.')
+        raise exceptions.WithdrawalError('Account is not set for device.')
     if account.instantfiat and \
             account.merchant.currency != account.currency:
-        raise WithdrawalError(
+        raise exceptions.WithdrawalError(
             'Account currency should match merchant currency.')
     if not account.instantfiat and account.address_set.count() == 0:
-        raise WithdrawalError('Nothing to withdraw.')
+        raise exceptions.WithdrawalError('Nothing to withdraw.')
     if device is not None and fiat_amount > device.max_payout:
-        raise WithdrawalError(
+        raise exceptions.WithdrawalError(
             'Amount exceeds max payout for current device.')
 
     # TODO: fiat currency -> currency
@@ -96,7 +92,7 @@ def prepare_withdrawal(device_or_account, fiat_amount):
     order.customer_btc_amount = (order.fiat_amount / order.exchange_rate).\
         quantize(BTC_DEC_PLACES)
     if order.customer_btc_amount < BTC_MIN_OUTPUT:
-        raise WithdrawalError('Customer BTC amount is below dust threshold')
+        raise exceptions.WithdrawalError('Customer BTC amount is below dust threshold')
 
     if not account.instantfiat:
         # Find unspent outputs which are not reserved by other orders
@@ -128,7 +124,7 @@ def prepare_withdrawal(device_or_account, fiat_amount):
                     'account_id': account.pk,
                     'account_admin_url': get_admin_url(account),
                 }})
-            raise WithdrawalError('Insufficient funds.')
+            raise exceptions.WithdrawalError('Insufficient funds.')
         order.reserved_outputs = serialize_outputs(reserved_outputs)
         logger.info('reserved {0} unspent outputs'.format(
             len(reserved_outputs)))
@@ -148,7 +144,7 @@ def prepare_withdrawal(device_or_account, fiat_amount):
                     'account_id': account.pk,
                     'account_admin_url': get_admin_url(account),
                 }})
-            raise WithdrawalError('Insufficient funds.')
+            raise exceptions.WithdrawalError('Insufficient funds.')
         order.tx_fee_btc_amount = BTC_DEC_PLACES
         order.change_btc_amount = BTC_DEC_PLACES
 
@@ -166,7 +162,7 @@ def send_transaction(order, customer_address):
     error_message = validate_bitcoin_address(customer_address,
                                              order.bitcoin_network)
     if error_message:
-        raise WithdrawalError(error_message)
+        raise exceptions.WithdrawalError(error_message)
     else:
         order.customer_address = customer_address
 
@@ -182,7 +178,7 @@ def send_transaction(order, customer_address):
                     'order_uid': order.uid,
                     'order_admin_url': get_admin_url(order),
                 }})
-            raise WithdrawalError('Insufficient funds.')
+            raise exceptions.WithdrawalError('Insufficient funds.')
         # Create and send transaction
         change_address = order.account.address_set.first().address
         tx_outputs = {
@@ -203,7 +199,7 @@ def send_transaction(order, customer_address):
                 order.account,
                 order.fiat_amount,
                 order.customer_address)
-        except InsufficientFunds:
+        except exceptions.InsufficientFunds:
             logger.error(
                 'Withdrawal error - insufficient funds',
                 extra={'data': {
@@ -211,9 +207,9 @@ def send_transaction(order, customer_address):
                     'account_admin_url': get_admin_url(order.account),
                     'order_uid': order.uid,
                 }})
-            raise WithdrawalError('Insufficient funds.')
+            raise exceptions.WithdrawalError('Insufficient funds.')
         except:
-            raise WithdrawalError('Instantfiat error.')
+            raise exceptions.WithdrawalError('Instantfiat error.')
         # Don't set time_sent at this moment
 
     order.save()
@@ -317,7 +313,7 @@ def wait_for_confirmation(order_uid):
     bc = BlockChain(order.bitcoin_network)
     try:
         tx_confirmed = bc.is_tx_confirmed(order.outgoing_tx_id)
-    except DoubleSpend:
+    except exceptions.DoubleSpend:
         # Report double spend, cancel job
         logger.error(
             'double spend detected',
@@ -327,7 +323,7 @@ def wait_for_confirmation(order_uid):
             }})
         cancel_current_task()
         return
-    except TransactionModified as error:
+    except exceptions.TransactionModified as error:
         logger.warning(
             'transaction has been modified',
             extra={'data': {
