@@ -302,31 +302,31 @@ def reverse_payment(order):
         }})
 
 
-def wait_for_validation(payment_order_uid):
+def wait_for_validation(order_uid):
     """
     Asynchronous task
     Accepts:
         payment_order_uid: PaymentOrder unique identifier
     """
     try:
-        payment_order = PaymentOrder.objects.get(uid=payment_order_uid)
+        order = PaymentOrder.objects.get(uid=order_uid)
     except PaymentOrder.DoesNotExist:
         # PaymentOrder deleted, cancel job
         cancel_current_task()
         return
-    if payment_order.time_created + PAYMENT_VALIDATION_TIMEOUT < timezone.now():
+    if order.time_created + PAYMENT_VALIDATION_TIMEOUT < timezone.now():
         # Timeout, cancel job
         cancel_current_task()
-    if payment_order.time_forwarded is not None:
+    if order.time_forwarded is not None:
         # Payment already forwarded, cancel job
         cancel_current_task()
         return
-    if payment_order.status == 'cancelled':
+    if order.status == 'cancelled':
         cancel_current_task()
         return
-    bc = blockchain.BlockChain(payment_order.bitcoin_network)
-    if payment_order.time_received is not None:
-        for incoming_tx_id in payment_order.incoming_tx_ids:
+    bc = blockchain.BlockChain(order.bitcoin_network)
+    if order.time_received is not None:
+        for incoming_tx_id in order.incoming_tx_ids:
             try:
                 tx_confirmed = bc.is_tx_confirmed(incoming_tx_id, minconf=1)
             except exceptions.DoubleSpend:
@@ -334,8 +334,8 @@ def wait_for_validation(payment_order_uid):
                 logger.error(
                     'double spend detected',
                     extra={'data': {
-                        'order_uid': payment_order.uid,
-                        'order_admin_url': get_admin_url(payment_order),
+                        'order_uid': order.uid,
+                        'order_admin_url': get_admin_url(order),
                     }})
                 cancel_current_task()
                 return
@@ -344,39 +344,39 @@ def wait_for_validation(payment_order_uid):
                 logger.warning(
                     'transaction has been modified',
                     extra={'data': {
-                        'order_uid': payment_order.uid,
-                        'order_admin_url': get_admin_url(payment_order),
+                        'order_uid': order.uid,
+                        'order_admin_url': get_admin_url(order),
                     }})
-                payment_order.incoming_tx_ids = [
+                order.incoming_tx_ids = [
                     error.another_tx_id if tx_id == incoming_tx_id else tx_id
-                    for tx_id in payment_order.incoming_tx_ids]
-                payment_order.save()
+                    for tx_id in order.incoming_tx_ids]
+                order.save()
                 break
             if tx_confirmed:
                 # Already confirmed, skip confidence check
                 continue
-            if payment_order.bitcoin_network == 'testnet':
+            if order.bitcoin_network == 'testnet':
                 # Disable confidence check on testnet
                 # Quick fix for malleability issue
                 break
             if not is_tx_reliable(incoming_tx_id,
-                                  payment_order.bitcoin_network):
+                                  order.bitcoin_network):
                 # Break cycle, wait for confidence
                 break
         else:
             cancel_current_task()
             with atomic():
-                payment_order.refresh_from_db()
-                if payment_order.status == 'cancelled':
+                order.refresh_from_db()
+                if order.status == 'cancelled':
                     # Payment still can be cancelled at this moment
                     return
-                forward_transaction(payment_order)
-            run_periodic_task(wait_for_confirmation, [payment_order.uid], interval=30)
-            if payment_order.instantfiat_invoice_id is None:
+                forward_transaction(order)
+            run_periodic_task(wait_for_confirmation, [order.uid], interval=30)
+            if order.instantfiat_invoice_id is None:
                 # Payment finished
-                logger.info('payment order closed ({0})'.format(payment_order.uid))
+                logger.info('payment order closed ({0})'.format(order.uid))
             else:
-                run_periodic_task(wait_for_exchange, [payment_order.uid])
+                run_periodic_task(wait_for_exchange, [order.uid])
 
 
 def forward_transaction(payment_order):
