@@ -182,12 +182,12 @@ class BlockChain(object):
     def is_tx_confirmed(self, tx_id, minconf=None):
         """
         Check for confirmation and get new transaction ID
-        in case of malleability attack
+        in case of malleability attack or double spend
         Accepts:
             tx_id: hex string
             minconf: number of required confirmations
         Returns:
-            final_tx_id: hex string (or None if unconfirmed)
+            True or False
         """
         tx_info = self._proxy.gettransaction(lx(tx_id))
         minconf = minconf or config.TX_REQUIRED_CONFIRMATIONS
