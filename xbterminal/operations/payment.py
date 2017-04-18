@@ -327,10 +327,36 @@ def wait_for_validation(payment_order_uid):
     bc = blockchain.BlockChain(payment_order.bitcoin_network)
     if payment_order.time_received is not None:
         for incoming_tx_id in payment_order.incoming_tx_ids:
-            if bc.is_tx_confirmed(incoming_tx_id, minconf=1):
+            try:
+                tx_confirmed = bc.is_tx_confirmed(incoming_tx_id, minconf=1)
+            except exceptions.DoubleSpend:
+                # Report double spend, cancel job
+                logger.error(
+                    'double spend detected',
+                    extra={'data': {
+                        'order_uid': payment_order.uid,
+                        'order_admin_url': get_admin_url(payment_order),
+                    }})
+                cancel_current_task()
+                return
+            except exceptions.TransactionModified as error:
+                # Transaction has been modified (malleability attack)
+                logger.warning(
+                    'transaction has been modified',
+                    extra={'data': {
+                        'order_uid': payment_order.uid,
+                        'order_admin_url': get_admin_url(payment_order),
+                    }})
+                payment_order.incoming_tx_ids = [
+                    error.another_tx_id if tx_id == incoming_tx_id else tx_id
+                    for tx_id in payment_order.incoming_tx_ids]
+                payment_order.save()
+                break
+            if tx_confirmed:
                 # Already confirmed, skip confidence check
                 continue
             if payment_order.bitcoin_network == 'testnet':
+                # Disable confidence check on testnet
                 # Quick fix for malleability issue
                 break
             if not is_tx_reliable(incoming_tx_id,
