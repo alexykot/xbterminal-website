@@ -483,6 +483,25 @@ class WaitForConfidenceTestCase(TestCase):
     @patch('operations.withdrawal.cancel_current_task')
     @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.is_tx_reliable')
+    def test_tx_modified(self, tx_check_mock, bc_cls_mock, cancel_mock):
+        order = WithdrawalOrderFactory.create(
+            time_sent=timezone.now())
+        final_tx_id = 'e' * 64
+        bc_cls_mock.return_value = Mock(**{
+            'is_tx_confirmed.side_effect':
+                exceptions.TransactionModified(final_tx_id),
+        })
+        tx_check_mock.return_value = False
+        withdrawal.wait_for_confidence(order.uid)
+        order.refresh_from_db()
+        self.assertEqual(order.status, 'sent')
+        self.assertEqual(order.outgoing_tx_id, final_tx_id)
+        self.assertIs(tx_check_mock.called, False)
+        self.assertIs(cancel_mock.called, False)
+
+    @patch('operations.withdrawal.cancel_current_task')
+    @patch('operations.withdrawal.BlockChain')
+    @patch('operations.withdrawal.is_tx_reliable')
     def test_does_not_exist(self, tx_check_mock, bc_cls_mock, cancel_mock):
         withdrawal.wait_for_confidence('invalid_uid')
         self.assertTrue(cancel_mock.called)

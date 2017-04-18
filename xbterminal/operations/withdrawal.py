@@ -245,9 +245,20 @@ def wait_for_confidence(order_uid):
         cancel_current_task()
         return
     bc = BlockChain(order.bitcoin_network)
+    try:
+        tx_confirmed = bc.is_tx_confirmed(order.outgoing_tx_id, minconf=1)
+    except exceptions.TransactionModified as error:
+        logger.warning(
+            'transaction has been modified',
+            extra={'data': {
+                'order_uid': order.uid,
+                'order_admin_url': get_admin_url(order),
+            }})
+        order.outgoing_tx_id = error.another_tx_id
+        order.save()
+        return
     # If transaction is already confirmed, skip confidence check
-    if bc.is_tx_confirmed(order.outgoing_tx_id, minconf=1) or \
-            is_tx_reliable(order.outgoing_tx_id, order.bitcoin_network):
+    if tx_confirmed or is_tx_reliable(order.outgoing_tx_id, order.bitcoin_network):
         cancel_current_task()
         if order.time_broadcasted is None:
             order.time_broadcasted = timezone.now()
