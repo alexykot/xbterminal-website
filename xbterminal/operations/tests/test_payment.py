@@ -1087,12 +1087,12 @@ class WaitForConfirmationTestCase(TestCase):
         order = PaymentOrderFactory.create(
             outgoing_tx_id='0' * 64)
         bc_cls_mock.return_value = Mock(**{
-            'is_tx_confirmed.return_value': True,
+            'get_final_tx_id.return_value': order.outgoing_tx_id,
         })
         payment.wait_for_confirmation(order.uid)
         order.refresh_from_db()
         self.assertIsNotNone(order.time_confirmed)
-        self.assertTrue(cancel_mock.called)
+        self.assertIs(cancel_mock.called, True)
 
     @patch('operations.payment.cancel_current_task')
     @patch('operations.payment.blockchain.BlockChain')
@@ -1100,12 +1100,27 @@ class WaitForConfirmationTestCase(TestCase):
         order = PaymentOrderFactory.create(
             outgoing_tx_id='0' * 64)
         bc_cls_mock.return_value = Mock(**{
-            'is_tx_confirmed.return_value': False,
+            'get_final_tx_id.return_value': None,
         })
         payment.wait_for_confirmation(order.uid)
         order.refresh_from_db()
         self.assertIsNone(order.time_confirmed)
-        self.assertFalse(cancel_mock.called)
+        self.assertIs(cancel_mock.called, False)
+
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.blockchain.BlockChain')
+    def test_tx_modified(self, bc_cls_mock, cancel_mock):
+        order = PaymentOrderFactory.create(
+            outgoing_tx_id='0' * 64)
+        final_tx_id = '1' * 64
+        bc_cls_mock.return_value = Mock(**{
+            'get_final_tx_id.return_value': final_tx_id,
+        })
+        payment.wait_for_confirmation(order.uid)
+        order.refresh_from_db()
+        self.assertIsNotNone(order.time_confirmed)
+        self.assertEqual(order.outgoing_tx_id, final_tx_id)
+        self.assertIs(cancel_mock.called, True)
 
 
 class CheckPaymentStatusTestCase(TestCase):
