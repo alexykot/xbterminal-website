@@ -324,16 +324,6 @@ def wait_for_confirmation(order_uid):
     bc = BlockChain(order.bitcoin_network)
     try:
         tx_confirmed = bc.is_tx_confirmed(order.outgoing_tx_id)
-    except exceptions.DoubleSpend:
-        # Report double spend, cancel job
-        logger.error(
-            'double spend detected',
-            extra={'data': {
-                'order_uid': order.uid,
-                'order_admin_url': get_admin_url(order),
-            }})
-        cancel_current_task()
-        return
     except exceptions.TransactionModified as error:
         logger.warning(
             'transaction has been modified',
