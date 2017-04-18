@@ -330,6 +330,9 @@ def wait_for_validation(payment_order_uid):
             if bc.is_tx_confirmed(incoming_tx_id, minconf=1):
                 # Already confirmed, skip confidence check
                 continue
+            if payment_order.bitcoin_network == 'testnet':
+                # Quick fix for malleability issue
+                break
             if not is_tx_reliable(incoming_tx_id,
                                   payment_order.bitcoin_network):
                 # Break cycle, wait for confidence
