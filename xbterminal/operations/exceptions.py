@@ -60,3 +60,8 @@ class WithdrawalError(Exception):
     def __init__(self, message):
         super(WithdrawalError, self).__init__()
         self.message = message
+
+
+class DoubleSpend(PaymentError):
+
+    message = 'Double spend detected'
