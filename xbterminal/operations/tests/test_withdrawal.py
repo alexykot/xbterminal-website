@@ -568,7 +568,7 @@ class WaitForConfirmationTestCase(TestCase):
         order = WithdrawalOrderFactory.create(
             outgoing_tx_id='0' * 64)
         bc_cls_mock.return_value = Mock(**{
-            'get_final_tx_id.return_value': order.outgoing_tx_id,
+            'is_tx_confirmed.return_value': True,
         })
         withdrawal.wait_for_confirmation(order.uid)
         order.refresh_from_db()
@@ -581,7 +581,7 @@ class WaitForConfirmationTestCase(TestCase):
         order = WithdrawalOrderFactory.create(
             outgoing_tx_id='0' * 64)
         bc_cls_mock.return_value = Mock(**{
-            'get_final_tx_id.return_value': None,
+            'is_tx_confirmed.return_value': False,
         })
         withdrawal.wait_for_confirmation(order.uid)
         order.refresh_from_db()
@@ -595,10 +595,11 @@ class WaitForConfirmationTestCase(TestCase):
             outgoing_tx_id='0' * 64)
         final_tx_id = '1' * 64
         bc_cls_mock.return_value = Mock(**{
-            'get_final_tx_id.return_value': final_tx_id,
+            'is_tx_confirmed.side_effect':
+                exceptions.TransactionModified(final_tx_id),
         })
         withdrawal.wait_for_confirmation(order.uid)
         order.refresh_from_db()
-        self.assertIsNotNone(order.time_confirmed)
+        self.assertIsNone(order.time_confirmed)
         self.assertEqual(order.outgoing_tx_id, final_tx_id)
-        self.assertIs(cancel_mock.called, True)
+        self.assertIs(cancel_mock.called, False)

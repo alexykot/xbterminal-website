@@ -437,7 +437,7 @@ def wait_for_confirmation(order_uid):
         cancel_current_task()
     bc = blockchain.BlockChain(order.bitcoin_network)
     try:
-        outgoing_tx_final_id = bc.get_final_tx_id(order.outgoing_tx_id)
+        tx_confirmed = bc.is_tx_confirmed(order.outgoing_tx_id)
     except exceptions.DoubleSpend:
         # Report double spend, cancel job
         logger.error(
@@ -448,20 +448,21 @@ def wait_for_confirmation(order_uid):
             }})
         cancel_current_task()
         return
-    if outgoing_tx_final_id:
+    except exceptions.TransactionModified as error:
+        # Transaction has been modified (malleability attack)
+        logger.warning(
+            'transaction has been modified',
+            extra={'data': {
+                'order_uid': order.uid,
+                'order_admin_url': get_admin_url(order),
+            }})
+        order.outgoing_tx_id = error.another_tx_id
+        order.save()
+        return
+    if tx_confirmed:
         cancel_current_task()
         if order.time_confirmed is None:
             order.time_confirmed = timezone.now()
-            order.save()
-        if outgoing_tx_final_id != order.outgoing_tx_id:
-            # Transaction has been modified (malleability attack)
-            logger.warning(
-                'transaction has been modified',
-                extra={'data': {
-                    'order_uid': order.uid,
-                    'order_admin_url': get_admin_url(order),
-                }})
-            order.outgoing_tx_id = outgoing_tx_final_id
             order.save()
 
 

@@ -60,22 +60,7 @@ class BlockChainTestCase(TestCase):
         self.assertEqual(proxy_mock.listunspent.call_args[1]['minconf'], 1)
 
     @patch('operations.blockchain.bitcoin.rpc.Proxy')
-    def test_is_tx_confirmed(self, proxy_mock):
-        # Confirmed
-        proxy_mock.return_value = Mock(**{
-            'gettransaction.return_value': {'confirmations': 6},
-        })
-        bc = BlockChain('mainnet')
-        self.assertTrue(bc.is_tx_confirmed('0' * 64))
-        # Unconfirmed
-        proxy_mock.return_value = Mock(**{
-            'gettransaction.return_value': {'confirmations': 1},
-        })
-        bc = BlockChain('mainnet')
-        self.assertFalse(bc.is_tx_confirmed('0' * 64))
-
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
-    def test_get_final_tx_id_confirmed(self, proxy_mock):
+    def test_is_tx_confirmed_true(self, proxy_mock):
         tx_id = '1' * 64
         proxy_mock.return_value = Mock(**{
             'gettransaction.return_value': {
@@ -84,10 +69,10 @@ class BlockChainTestCase(TestCase):
             },
         })
         bc = BlockChain('mainnet')
-        self.assertEqual(bc.get_final_tx_id(tx_id), tx_id)
+        self.assertIs(bc.is_tx_confirmed(tx_id), True)
 
     @patch('operations.blockchain.bitcoin.rpc.Proxy')
-    def test_get_final_tx_id_unconfirmed(self, proxy_mock):
+    def test_is_tx_confirmed_false(self, proxy_mock):
         tx_id = '1' * 64
         proxy_mock.return_value = Mock(**{
             'gettransaction.return_value': {
@@ -96,10 +81,10 @@ class BlockChainTestCase(TestCase):
             },
         })
         bc = BlockChain('mainnet')
-        self.assertIsNone(bc.get_final_tx_id(tx_id))
+        self.assertIs(bc.is_tx_confirmed(tx_id), False)
 
     @patch('operations.blockchain.bitcoin.rpc.Proxy')
-    def test_get_final_tx_id_modified(self, proxy_mock):
+    def test_is_tx_confirmed_modified(self, proxy_mock):
         tx_id_1 = '1' * 64
         tx_id_2 = '2' * 64
         proxy_mock.return_value = Mock(**{
@@ -113,10 +98,12 @@ class BlockChainTestCase(TestCase):
             ],
         })
         bc = BlockChain('mainnet')
-        self.assertEqual(bc.get_final_tx_id(tx_id_1), tx_id_2)
+        with self.assertRaises(exceptions.TransactionModified) as context:
+            bc.is_tx_confirmed(tx_id_1)
+        self.assertEqual(context.exception.another_tx_id, tx_id_2)
 
     @patch('operations.blockchain.bitcoin.rpc.Proxy')
-    def test_get_final_tx_id_double_spend(self, proxy_mock):
+    def test_is_tx_confirmed_double_spend(self, proxy_mock):
         tx_id_1 = '1' * 64
         tx_id_2 = '2' * 64
         proxy_mock.return_value = Mock(**{
@@ -130,8 +117,9 @@ class BlockChainTestCase(TestCase):
             ],
         })
         bc = BlockChain('mainnet')
-        with self.assertRaises(exceptions.DoubleSpend):
-            bc.get_final_tx_id(tx_id_1)
+        with self.assertRaises(exceptions.DoubleSpend) as context:
+            bc.is_tx_confirmed(tx_id_1)
+        self.assertEqual(context.exception.another_tx_id, tx_id_2)
 
     @patch('operations.blockchain.bitcoin.rpc.Proxy')
     def test_get_tx_fee(self, proxy_cls_mock):

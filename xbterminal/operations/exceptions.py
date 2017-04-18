@@ -65,3 +65,16 @@ class WithdrawalError(Exception):
 class DoubleSpend(PaymentError):
 
     message = 'Double spend detected'
+
+    def __init__(self, another_tx_id):
+        super(DoubleSpend, self).__init__()
+        self.another_tx_id = another_tx_id
+
+
+class TransactionModified(PaymentError):
+
+    message = 'Transaction modified'
+
+    def __init__(self, another_tx_id):
+        super(TransactionModified, self).__init__()
+        self.another_tx_id = another_tx_id
