@@ -179,18 +179,35 @@ class BlockChain(object):
         transaction_id = self._proxy.sendrawtransaction(transaction)
         return b2lx(transaction_id)
 
-    def is_tx_confirmed(self, transaction_id, minconf=None):
+    def is_tx_confirmed(self, tx_id, minconf=None):
         """
+        Check for confirmation and get new transaction ID
+        in case of malleability attack or double spend
         Accepts:
-            transaction_id: hex string
+            tx_id: hex string
             minconf: number of required confirmations
         Returns:
             True or False
         """
-        tx_info = self._proxy.gettransaction(lx(transaction_id))
+        tx_info = self._proxy.gettransaction(lx(tx_id))
         minconf = minconf or config.TX_REQUIRED_CONFIRMATIONS
         if tx_info['confirmations'] >= minconf:
             return True
+        # Check conflicting transactions
+        for conflicting_tx_id in tx_info['walletconflicts']:
+            conflicting_tx_info = self._proxy.getrawtransaction(
+                lx(conflicting_tx_id), verbose=True)
+            if conflicting_tx_info['confirmations'] >= minconf:
+                # Check for double spend
+                try:
+                    tx = self._proxy.getrawtransaction(lx(tx_id))
+                except IndexError:
+                    # Original transaction already removed from mempool
+                    pass
+                else:
+                    if conflicting_tx_info['tx'].vout != tx.vout:
+                        raise exceptions.DoubleSpend(conflicting_tx_id)
+                raise exceptions.TransactionModified(conflicting_tx_id)
         return False
 
     def get_tx_fee(self, n_inputs, n_outputs,

@@ -759,6 +759,47 @@ class WaitForValidationTestCase(TestCase):
     @patch('operations.payment.blockchain.BlockChain')
     @patch('operations.payment.is_tx_reliable')
     @patch('operations.payment.forward_transaction')
+    def test_double_spend(self, forward_mock, conf_chk_mock,
+                          bc_cls_mock, cancel_mock):
+        bc_cls_mock.return_value = Mock(**{
+            'is_tx_confirmed.side_effect':
+                exceptions.DoubleSpend('1' * 64),
+        })
+        conf_chk_mock.return_value = False
+        order = PaymentOrderFactory.create(
+            time_received=timezone.now(),
+            incoming_tx_ids=['0' * 64])
+        payment.wait_for_validation(order.uid)
+        self.assertIs(cancel_mock.called, True)
+        self.assertIs(conf_chk_mock.called, False)
+        self.assertIs(forward_mock.called, False)
+
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.blockchain.BlockChain')
+    @patch('operations.payment.is_tx_reliable')
+    @patch('operations.payment.forward_transaction')
+    def test_tx_modified(self, forward_mock, conf_chk_mock,
+                         bc_cls_mock, cancel_mock):
+        final_tx_id = 'e' * 64
+        bc_cls_mock.return_value = Mock(**{
+            'is_tx_confirmed.side_effect':
+                exceptions.TransactionModified(final_tx_id),
+        })
+        conf_chk_mock.return_value = False
+        order = PaymentOrderFactory.create(
+            time_received=timezone.now(),
+            incoming_tx_ids=['0' * 64])
+        payment.wait_for_validation(order.uid)
+        self.assertIs(cancel_mock.called, False)
+        self.assertIs(conf_chk_mock.called, False)
+        self.assertIs(forward_mock.called, False)
+        order.refresh_from_db()
+        self.assertEqual(order.incoming_tx_ids, [final_tx_id])
+
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.blockchain.BlockChain')
+    @patch('operations.payment.is_tx_reliable')
+    @patch('operations.payment.forward_transaction')
     @patch('operations.payment.run_periodic_task')
     def test_forward_btc(self, run_task_mock, forward_mock, conf_chk_mock,
                          bc_cls_mock, cancel_mock):
@@ -1092,7 +1133,7 @@ class WaitForConfirmationTestCase(TestCase):
         payment.wait_for_confirmation(order.uid)
         order.refresh_from_db()
         self.assertIsNotNone(order.time_confirmed)
-        self.assertTrue(cancel_mock.called)
+        self.assertIs(cancel_mock.called, True)
 
     @patch('operations.payment.cancel_current_task')
     @patch('operations.payment.blockchain.BlockChain')
@@ -1105,7 +1146,23 @@ class WaitForConfirmationTestCase(TestCase):
         payment.wait_for_confirmation(order.uid)
         order.refresh_from_db()
         self.assertIsNone(order.time_confirmed)
-        self.assertFalse(cancel_mock.called)
+        self.assertIs(cancel_mock.called, False)
+
+    @patch('operations.payment.cancel_current_task')
+    @patch('operations.payment.blockchain.BlockChain')
+    def test_tx_modified(self, bc_cls_mock, cancel_mock):
+        order = PaymentOrderFactory.create(
+            outgoing_tx_id='0' * 64)
+        final_tx_id = '1' * 64
+        bc_cls_mock.return_value = Mock(**{
+            'is_tx_confirmed.side_effect':
+                exceptions.TransactionModified(final_tx_id),
+        })
+        payment.wait_for_confirmation(order.uid)
+        order.refresh_from_db()
+        self.assertIsNone(order.time_confirmed)
+        self.assertEqual(order.outgoing_tx_id, final_tx_id)
+        self.assertIs(cancel_mock.called, False)
 
 
 class CheckPaymentStatusTestCase(TestCase):
