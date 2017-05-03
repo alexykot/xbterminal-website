@@ -73,7 +73,10 @@ class PaymentOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
     ]
     list_filter = [PaymentOrderStatusListFilter]
     readonly_fields = ['status', 'payment_request_qr_code']
-    actions = ['refund', 'check_confirmation']
+    actions = [
+        'refund',
+        'check_confirmation',
+    ]
     inlines = [PaymentOrderTransactionInline]
 
     def has_add_permission(self, request):
