@@ -198,7 +198,7 @@ def wait_for_payment(payment_order_uid):
             payment_order.payment_type = 'bip0021'
             payment_order.time_received = timezone.now()
             payment_order.save()
-            logger.info('payment received ({0})'.format(payment_order.uid))
+            logger.info('payment received (%s)', payment_order.uid)
 
 
 def parse_payment(payment_order, payment_message):
@@ -238,7 +238,7 @@ def parse_payment(payment_order, payment_message):
     payment_order.payment_type = 'bip0070'
     payment_order.time_received = timezone.now()
     payment_order.save()
-    logger.info('payment received ({0})'.format(payment_order.uid))
+    logger.info('payment received (%s)', payment_order.uid)
     return payment_ack
 
 
@@ -295,7 +295,7 @@ def reverse_payment(order):
     order.time_refunded = timezone.now()
     order.save()
     logger.warning(
-        'Payment returned',
+        'payment returned',
         extra={'data': {
             'order_uid': order.uid,
             'order_admin_url': get_admin_url(order),
@@ -370,7 +370,7 @@ def wait_for_validation(order_uid):
             run_periodic_task(wait_for_confirmation, [order.uid], interval=30)
             if order.instantfiat_invoice_id is None:
                 # Payment finished
-                logger.info('payment order closed ({0})'.format(order.uid))
+                logger.info('payment forwarded (%s)', order.uid)
             else:
                 run_periodic_task(wait_for_exchange, [order.uid])
 
@@ -547,7 +547,7 @@ def wait_for_exchange(payment_order_uid):
             return
         payment_order.time_exchanged = timezone.now()
         payment_order.save()
-        logger.info('payment order closed ({0})'.format(payment_order.uid))
+        logger.info('instantfiat invoice closed (%s)', payment_order.uid)
 
 
 def check_payment_status(payment_order_uid):
