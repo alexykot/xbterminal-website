@@ -195,8 +195,12 @@ class BlockChain(object):
             return True
         # Check conflicting transactions
         for conflicting_tx_id in tx_info['walletconflicts']:
-            conflicting_tx_info = self._proxy.getrawtransaction(
-                lx(conflicting_tx_id), verbose=True)
+            try:
+                conflicting_tx_info = self._proxy.getrawtransaction(
+                    lx(conflicting_tx_id), verbose=True)
+            except IndexError:
+                # Transaction already removed from mempool, skip
+                continue
             if conflicting_tx_info['confirmations'] >= minconf:
                 # Check for double spend
                 try:
