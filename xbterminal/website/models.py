@@ -177,6 +177,12 @@ class UITheme(models.Model):
         return self.name
 
 
+def generate_alphanumeric_code(length=6):
+    chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZ'
+    code = ''.join(random.sample(chars, length))
+    return code
+
+
 INSTANTFIAT_PROVIDERS = Choices(
     ('CRYPTOPAY', 1, 'CryptoPay'),
     ('GOCOIN', 2, 'GoCoin'),
@@ -778,9 +784,8 @@ class Device(models.Model):
 def device_generate_activation_code(sender, instance, **kwargs):
     if not instance.pk:
         # Generate unique activation code
-        chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZ'
         while True:
-            code = ''.join(random.sample(chars, 6))
+            code = generate_alphanumeric_code()
             if not sender.objects.filter(activation_code=code).exists():
                 instance.activation_code = code
                 break
