@@ -12,7 +12,7 @@ from bitcoin.wallet import CBitcoinAddress
 from django.conf import settings
 from constance import config
 
-from operations import BTC_DEC_PLACES
+from operations import BTC_DEC_PLACES, BTC_MIN_FEE
 from operations import exceptions
 
 
@@ -231,6 +231,8 @@ class BlockChain(object):
             n_blocks or config.TX_EXPECTED_CONFIRM)
         if fee_per_kb == -1:
             fee_per_kb = config.TX_DEFAULT_FEE
+        elif fee_per_kb <= BTC_MIN_FEE:
+            fee_per_kb = BTC_MIN_FEE
         return get_tx_fee(n_inputs, n_outputs, fee_per_kb)
 
 

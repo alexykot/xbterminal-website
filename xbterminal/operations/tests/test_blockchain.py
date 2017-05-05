@@ -6,7 +6,9 @@ import bitcoin
 from bitcoin.core import COutPoint
 from constance.test import override_config
 
-from operations import exceptions
+from operations import (
+    exceptions,
+    BTC_MIN_FEE)
 from operations.blockchain import (
     BlockChain,
     serialize_outputs,
@@ -141,6 +143,15 @@ class BlockChainTestCase(TestCase):
         })
         bc = BlockChain('mainnet')
         expected_fee = get_tx_fee(1, 1, Decimal('0.0005'))
+        self.assertEqual(bc.get_tx_fee(1, 1), expected_fee)
+
+    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    def test_get_tx_fee_too_small(self, proxy_cls_mock):
+        proxy_cls_mock.return_value = Mock(**{
+            'call.return_value': Decimal('0.00000223'),
+        })
+        bc = BlockChain('mainnet')
+        expected_fee = get_tx_fee(1, 1, BTC_MIN_FEE)
         self.assertEqual(bc.get_tx_fee(1, 1), expected_fee)
 
 
