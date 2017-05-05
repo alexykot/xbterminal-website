@@ -15,7 +15,7 @@ def verification_file_path_gen(instance, filename):
     """
     Accepts:
         instance: KYCDocument instance
-        filename: filename
+        filename: file name
     """
     merchant_id = instance.merchant.id
     filename, ext = os.path.splitext(filename)
@@ -23,7 +23,8 @@ def verification_file_path_gen(instance, filename):
         instance.document_type,
         slugify(filename, separator='_'),
         ext.encode('ascii', 'ignore'))
-    return os.path.join('verification', str(merchant_id), prefixed)
+    path = os.path.join('verification', str(merchant_id), prefixed)
+    return path
 
 
 def get_verification_file_name(file):
