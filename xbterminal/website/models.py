@@ -178,6 +178,9 @@ class UITheme(models.Model):
 
 
 def generate_alphanumeric_code(length=6):
+    """
+    Generate simple human-readable code
+    """
     chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZ'
     code = ''.join(random.sample(chars, length))
     return code
@@ -254,6 +257,10 @@ class MerchantAccount(models.Model):
 
     verification_status = models.CharField(_('KYC'), max_length=50, choices=VERIFICATION_STATUSES, default='unverified')
 
+    activation_code = models.CharField(
+        max_length=6,
+        editable=False,
+        unique=True)
     comments = models.TextField(blank=True)
 
     def __unicode__(self):
@@ -344,6 +351,17 @@ class MerchantAccount(models.Model):
                 'total': total,
                 'tx_count': tx_count,
                 'tx_sum': 0 if tx_sum is None else tx_sum}
+
+
+@receiver(pre_save, sender=MerchantAccount)
+def merchant_generate_activation_code(sender, instance, **kwargs):
+    if not instance.pk:
+        # Generate unique activation code
+        while True:
+            code = generate_alphanumeric_code()
+            if not sender.objects.filter(activation_code=code).exists():
+                instance.activation_code = code
+                break
 
 
 BITCOIN_NETWORKS = [

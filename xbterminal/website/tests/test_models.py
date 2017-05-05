@@ -147,6 +147,7 @@ class MerchantAccountTestCase(TestCase):
         self.assertIsNone(merchant.instantfiat_email)
         self.assertIsNone(merchant.instantfiat_api_key)
         self.assertEqual(merchant.verification_status, 'unverified')
+        self.assertEqual(len(merchant.activation_code), 6)
 
     def test_merchant_factory(self):
         merchant = MerchantAccountFactory.create()
