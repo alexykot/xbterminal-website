@@ -327,6 +327,13 @@ class KYCDocumentUploadForm(forms.ModelForm):
         elif self.document_type == KYC_DOCUMENT_TYPES.ADDRESS:
             self.fields['file'].label = _('Corporate or residence proof document')
 
+    def clean_file(self):
+        file = self.cleaned_data['file']
+        if len(file.name) > 80:
+            raise forms.ValidationError(
+                _('File name length must be no more then 80 characters.'))
+        return file
+
 
 class DeviceForm(forms.ModelForm):
 

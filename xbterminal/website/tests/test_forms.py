@@ -246,6 +246,13 @@ class KYCDocumentUploadFormTestCase(TestCase):
         document = form.save(commit=False)
         self.assertIsNotNone(document.file)
 
+    def test_max_length_error(self):
+        image = create_uploaded_image(100, name='a' * 100 + '.png')
+        files = MultiValueDict({'file': [image]})
+        form = KYCDocumentUploadForm(data={}, files=files)
+        self.assertIs(form.is_valid(), False)
+        self.assertIn('file', form.errors)
+
 
 class DeviceFormTestCase(TestCase):
 
