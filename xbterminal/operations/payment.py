@@ -198,7 +198,7 @@ def wait_for_payment(payment_order_uid):
             payment_order.payment_type = 'bip0021'
             payment_order.time_received = timezone.now()
             payment_order.save()
-            logger.info('payment received ({0})'.format(payment_order.uid))
+            logger.info('payment received (%s)', payment_order.uid)
 
 
 def parse_payment(payment_order, payment_message):
@@ -238,7 +238,7 @@ def parse_payment(payment_order, payment_message):
     payment_order.payment_type = 'bip0070'
     payment_order.time_received = timezone.now()
     payment_order.save()
-    logger.info('payment received ({0})'.format(payment_order.uid))
+    logger.info('payment received (%s)', payment_order.uid)
     return payment_ack
 
 
@@ -295,7 +295,7 @@ def reverse_payment(order):
     order.time_refunded = timezone.now()
     order.save()
     logger.warning(
-        'Payment returned',
+        'payment returned',
         extra={'data': {
             'order_uid': order.uid,
             'order_admin_url': get_admin_url(order),
@@ -355,10 +355,6 @@ def wait_for_validation(order_uid):
             if tx_confirmed:
                 # Already confirmed, skip confidence check
                 continue
-            if order.bitcoin_network == 'testnet':
-                # Disable confidence check on testnet
-                # Quick fix for malleability issue
-                break
             if not is_tx_reliable(incoming_tx_id,
                                   order.bitcoin_network):
                 # Break cycle, wait for confidence
@@ -374,7 +370,7 @@ def wait_for_validation(order_uid):
             run_periodic_task(wait_for_confirmation, [order.uid], interval=30)
             if order.instantfiat_invoice_id is None:
                 # Payment finished
-                logger.info('payment order closed ({0})'.format(order.uid))
+                logger.info('payment forwarded (%s)', order.uid)
             else:
                 run_periodic_task(wait_for_exchange, [order.uid])
 
@@ -462,6 +458,33 @@ def wait_for_confirmation(order_uid):
         # Timeout, cancel job
         cancel_current_task()
     bc = blockchain.BlockChain(order.bitcoin_network)
+
+    # Check incoming txs
+    for incoming_tx_id in order.incoming_tx_ids:
+        try:
+            tx_confirmed = bc.is_tx_confirmed(incoming_tx_id, minconf=1)
+        except exceptions.TransactionModified as error:
+            # Transaction has been modified (malleability attack)
+            # Return to validation step
+            order.outgoing_tx_id = None
+            order.time_forwarded = None
+            order.save()
+            order.transaction_set.all().delete()
+            logger.warning(
+                'transaction has been modified, returning to validation step',
+                extra={'data': {
+                    'order_uid': order.uid,
+                    'order_admin_url': get_admin_url(order),
+                }})
+            # NOTE: wait_for_exchange will not be cancelled
+            cancel_current_task()
+            run_periodic_task(wait_for_validation, [order.uid], interval=30)
+            return
+        if not tx_confirmed:
+            # Break, do not check other transactions
+            return
+
+    # Check outgoing tx
     try:
         tx_confirmed = bc.is_tx_confirmed(order.outgoing_tx_id)
     except exceptions.TransactionModified as error:
@@ -524,7 +547,7 @@ def wait_for_exchange(payment_order_uid):
             return
         payment_order.time_exchanged = timezone.now()
         payment_order.save()
-        logger.info('payment order closed ({0})'.format(payment_order.uid))
+        logger.info('instantfiat invoice closed (%s)', payment_order.uid)
 
 
 def check_payment_status(payment_order_uid):
