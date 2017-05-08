@@ -53,9 +53,6 @@ def prepare_payment(device_or_account, fiat_amount):
     if not account:
         raise exceptions.PaymentError(
             'Account is not set for device.')
-    if not account.instantfiat and not account.forward_address:
-        raise exceptions.PaymentError(
-            'Payout address is not set for account.')
     if account.instantfiat and \
             account.merchant.currency != account.currency:
         raise exceptions.PaymentError(
@@ -66,7 +63,6 @@ def prepare_payment(device_or_account, fiat_amount):
         device=device,
         account=account,
         bitcoin_network=account.bitcoin_network,
-        merchant_address=account.forward_address,
         fiat_currency=account.merchant.currency,
         fiat_amount=fiat_amount.quantize(FIAT_DEC_PLACES))
     # Connect to bitcoind
@@ -89,6 +85,12 @@ def prepare_payment(device_or_account, fiat_amount):
         order.instantfiat_fiat_amount = FIAT_DEC_PLACES
         order.instantfiat_btc_amount = BTC_DEC_PLACES
         exchange_rate = get_exchange_rate(order.fiat_currency.name)
+        if not account.forward_address:
+            logger.warning(
+                'payout address is not set for account',
+                extra={'data': {'order_uid': order.uid}})
+        else:
+            order.merchant_address = account.forward_address
     else:
         order.instantfiat_fiat_amount = order.fiat_amount
         (order.instantfiat_invoice_id,
@@ -408,7 +410,7 @@ def forward_transaction(payment_order):
     else:
         assert not payment_order.instantfiat_btc_amount
         if account.balance + payment_order.merchant_btc_amount <= \
-                account.balance_max:
+                account.balance_max or not payment_order.merchant_address:
             # Store bitcoins on merchant's internal account
             splitted = blockchain.split_amount(
                 payment_order.merchant_btc_amount,
