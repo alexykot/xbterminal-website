@@ -96,7 +96,6 @@ def create_merchant(first_name, last_name, email, api_key):
         'email': email,
         'send_welcome_email': False,
     }
-    assert api_key
     headers = {
         'Content-Type': 'application/json',
         'X-Api-Key': api_key,
@@ -124,7 +123,6 @@ def get_merchant(user_id, api_key):
         api_key: CryptoPay API key with access to users API
     """
     api_url = 'https://cryptopay.me/api/v2/users/{user_id}'
-    assert api_key
     headers = {
         'Content-Type': 'application/json',
         'X-Api-Key': api_key,
@@ -149,7 +147,6 @@ def set_password(user_id, password, api_key):
     payload = {
         'password': password,
     }
-    assert api_key
     headers = {
         'Content-Type': 'application/json',
         'X-Api-Key': api_key,
@@ -181,7 +178,6 @@ def upload_documents(user_id, documents, api_key):
         'id_document_backside': encode_base64(documents[1]),
         'residence_document': encode_base64(documents[2]),
     }
-    assert api_key
     headers = {
         'Content-Type': 'application/json',
         'X-Api-Key': api_key,
@@ -201,7 +197,6 @@ def list_accounts(api_key):
         api_key: merchant's API key
     """
     api_url = 'https://cryptopay.me/api/v2/accounts'
-    assert api_key
     headers = {
         'Content-Type': 'application/json',
         'X-Api-Key': api_key,
@@ -221,7 +216,6 @@ def list_transactions(account_id, api_key):
         api_key: merchant's API key
     """
     api_url = 'https://cryptopay.me/api/v2/accounts/{account_id}/transactions'
-    assert api_key
     headers = {
         'Content-Type': 'application/json',
         'X-Api-Key': api_key,
@@ -255,7 +249,6 @@ def send_transaction(account_id, currency_name, fiat_amount, destination, api_ke
         'account': account_id,
         'address': destination,
     }
-    assert api_key
     headers = {
         'Content-Type': 'application/json',
         'X-Api-Key': api_key,
@@ -285,7 +278,6 @@ def get_transfer(transfer_id, api_key):
         api_key: merchant's API key
     """
     api_url = 'https://cryptopay.me/api/v2/bitcoin_transfers/{transfer_id}'
-    assert api_key
     headers = {
         'Content-Type': 'application/json',
         'X-Api-Key': api_key,
