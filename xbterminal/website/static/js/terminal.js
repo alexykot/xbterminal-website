@@ -34,6 +34,7 @@ var getPaymentReceiptUrl = function (paymentUid) {
 
 var paymentInit = function (form) {
     var amountField = form.find('[name="amount"]');
+    var submitButton = form.find('[type="submit"]');
     var amount = parseFloat(amountField.val());
     if (isNaN(amount) || amount < 0.01) {
         showErrorMessage(gettext('invalid amount'));
@@ -41,6 +42,7 @@ var paymentInit = function (form) {
     }
     hideErrorMessage();
     amountField.attr('disabled', true);
+    submitButton.prop('disabled', true);
     $.ajax({
         url: paymentInitUrl,
         method: 'POST',
@@ -50,6 +52,7 @@ var paymentInit = function (form) {
         }
     }).done(function (data) {
         amountField.attr('disabled', false);
+        submitButton.prop('disabled', false);
         form.hide();
         $('.payment-init').show();
         $('.fiat-amount').text(
@@ -74,6 +77,7 @@ var showErrorMessage = function (errorMessage) {
         .attr('disabled', false)
         .addClass('error')
         .focus();
+    $('.enter-amount [type="submit"]').attr('disabled', false);
 };
 var hideErrorMessage = function () {
     $('.error-message').hide();
