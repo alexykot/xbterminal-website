@@ -396,6 +396,9 @@ class AccountTestCase(TestCase):
 
     def test_balance_min_max(self):
         account_btc = AccountFactory.create(currency__name='BTC')
+        self.assertEqual(account_btc.balance_min, 0)
+        self.assertEqual(account_btc.balance_max,
+                         account_btc.currency.max_payout * 3)
         DeviceFactory.create_batch(
             3,
             merchant=account_btc.merchant,
@@ -403,11 +406,13 @@ class AccountTestCase(TestCase):
             max_payout=Decimal('0.3'))
         self.assertEqual(account_btc.balance_min, Decimal('0.9'))
         self.assertEqual(account_btc.balance_max, Decimal('2.7'))
+
         account_gbp = AccountFactory.create(currency__name='GBP')
         DeviceFactory.create_batch(
             3, merchant=account_gbp.merchant, account=account_gbp)
         self.assertEqual(account_gbp.balance_min, 0)
-        self.assertEqual(account_gbp.balance_max, 0)
+        self.assertEqual(account_gbp.balance_max,
+                         account_gbp.currency.max_payout * 3)
 
     def test_get_transactions_by_date(self):
         account = AccountFactory.create()

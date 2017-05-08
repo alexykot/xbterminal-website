@@ -426,7 +426,8 @@ class Account(models.Model):
     @property
     def balance_max(self):
         multiplier = 3
-        return self.balance_min * multiplier
+        return max(self.balance_min * multiplier,
+                   self.currency.max_payout * multiplier)
 
     def get_transactions_by_date(self, range_beg, range_end):
         """

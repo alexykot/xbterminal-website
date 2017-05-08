@@ -187,13 +187,24 @@ class PreparePaymentTestCase(TestCase):
         self.assertEqual(context.exception.message,
                          'Account is not set for device.')
 
-    def test_no_bitcoin_address(self):
+    @patch('operations.payment.blockchain.BlockChain')
+    @patch('operations.payment.get_exchange_rate')
+    @patch('operations.payment.run_periodic_task')
+    def test_no_forward_address(self, run_mock, get_rate_mock, bc_cls_mock):
         device = DeviceFactory.create(account__forward_address=None)
         fiat_amount = Decimal('10')
-        with self.assertRaises(exceptions.PaymentError) as context:
-            payment.prepare_payment(device, fiat_amount)
-        self.assertEqual(context.exception.message,
-                         'Payout address is not set for account.')
+        exchange_rate = Decimal('235.64')
+        local_address = '1KYwqZshnYNUNweXrDkCAdLaixxPhePRje'
+
+        bc_cls_mock.return_value = Mock(**{
+            'get_new_address.return_value': local_address,
+            'get_tx_fee.return_value': Decimal('0.0005'),
+        })
+        get_rate_mock.return_value = exchange_rate
+
+        order = payment.prepare_payment(device, fiat_amount)
+        self.assertEqual(order.merchant_address,
+                         device.account.forward_address)
 
     def test_currency_mismatch(self):
         device = DeviceFactory.create(
