@@ -20,6 +20,7 @@ from formtools.wizard.views import CookieWizardView
 from ipware.ip import get_real_ip
 
 from api.utils import activation
+from api.utils.urls import construct_absolute_url
 
 from website import forms, models
 from website.utils import email, kyc, reports
@@ -290,28 +291,53 @@ class DeviceListView(TemplateResponseMixin, MerchantCabinetView):
         return self.render_to_response(context)
 
 
-class ActivateDeviceView(TemplateResponseMixin, MerchantCabinetView):
+class ActivationView(MerchantCabinetView):
+
+    def dispatch(self, request, *args, **kwargs):
+        self.merchant = get_current_merchant(request)
+        if not self.merchant:
+            try:
+                self.merchant = models.MerchantAccount.objects.get(
+                    activation_code=self.kwargs.get('activation_code'))
+            except models.MerchantAccount.DoesNotExist:
+                raise Http404
+        return super(MerchantCabinetView, self).dispatch(request, *args, **kwargs)
+
+
+class ActivateDeviceView(TemplateResponseMixin, ActivationView):
 
     template_name = 'cabinet/merchant/activation.html'
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         context['form'] = forms.DeviceActivationForm()
+        context['activation_url'] = construct_absolute_url(
+            'website:activate_device_nologin',
+            kwargs={'activation_code': self.merchant.activation_code})
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
         form = forms.DeviceActivationForm(self.request.POST)
         if form.is_valid():
             activation.start(form.device, self.merchant)
-            return redirect(reverse('website:device_activation',
-                                    kwargs={'device_key': form.device.key}))
+            if not hasattr(self.request.user, 'merchant'):
+                return redirect(reverse(
+                    'website:device_activation_nologin',
+                    kwargs={
+                        'activation_code': self.merchant.activation_code,
+                        'device_key': form.device.key,
+                    }))
+            else:
+                return redirect(reverse(
+                    'website:device_activation',
+                    kwargs={'device_key': form.device.key}))
         else:
             context = self.get_context_data(**kwargs)
             context['form'] = form
             return self.render_to_response(context)
 
 
-class DeviceActivationView(TemplateResponseMixin, MerchantCabinetView):
+class DeviceActivationView(TemplateResponseMixin, ActivationView):
 
     template_name = 'cabinet/merchant/activation.html'
 

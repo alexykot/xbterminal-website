@@ -437,7 +437,7 @@ class ActivateDeviceViewTestCase(TestCase):
         merchant = MerchantAccountFactory.create()
 
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 404)
 
         self.client.login(username=merchant.user.email,
                           password='password')

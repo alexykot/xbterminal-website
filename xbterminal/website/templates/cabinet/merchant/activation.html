@@ -16,6 +16,7 @@
     <div class="col-md-8 col-md-offset-2">
         <h3>{% trans 'Module activation' %}</h3>
         {% if form %}
+        {{ activation_url }}
         <form id="activation-form" action="" method="post" autocomplete="off">
             {% csrf_token %}
             {% bootstrap_form form %}
