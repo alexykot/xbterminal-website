@@ -276,6 +276,7 @@ class MerchantCabinetView(ContextMixin, View):
         context = super(MerchantCabinetView,
                         self).get_context_data(**kwargs)
         context['cabinet_page'] = resolve(self.request.path_info).url_name
+        context['merchant'] = self.merchant
         return context
 
 

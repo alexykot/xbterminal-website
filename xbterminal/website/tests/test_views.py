@@ -454,6 +454,7 @@ class ActivateDeviceViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
             response, 'cabinet/merchant/activation.html')
+        self.assertEqual(response.context['merchant'].pk, merchant.pk)
 
     def test_get_nologin_lowercase(self):
         merchant = MerchantAccountFactory()
@@ -595,6 +596,8 @@ class DeviceActivationViewTestCase(TestCase):
             response, 'cabinet/merchant/activation.html')
         self.assertEqual(response.context['device'].pk,
                          device.pk)
+        self.assertEqual(response.context['merchant'].pk,
+                         self.merchant.pk)
 
     def test_get_nologin_invalid_merchant_code(self):
         url = reverse(
