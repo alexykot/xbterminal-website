@@ -1,3 +1,5 @@
+import re
+
 from django.contrib.sites.models import Site
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.core.urlresolvers import reverse
@@ -11,7 +13,7 @@ def reverse_no_i18n(*args, **kwargs):
     result = reverse(*args, **kwargs)
     current_language = translation.get_language()
     if current_language:
-        return result.replace('/' + current_language, '')
+        return re.sub(r'^/' + current_language, '', result)
     return result
 
 
