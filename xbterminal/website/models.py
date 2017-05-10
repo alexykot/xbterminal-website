@@ -361,6 +361,10 @@ class MerchantAccount(models.Model):
                 'tx_count': tx_count,
                 'tx_sum': 0 if tx_sum is None else tx_sum}
 
+    def get_tx_confidence_threshold(self):
+        return self.tx_confidence_threshold or \
+            config.TX_CONFIDENCE_THRESHOLD
+
 
 @receiver(pre_save, sender=MerchantAccount)
 def merchant_generate_activation_code(sender, instance, **kwargs):

@@ -249,6 +249,12 @@ class MerchantAccountTestCase(TestCase):
         self.assertEqual(info['tx_sum'],
                          sum(p.fiat_amount for p in payments))
 
+    def test_get_tx_confidence_threshold(self):
+        merchant = MerchantAccountFactory()
+        self.assertEqual(merchant.get_tx_confidence_threshold(), 0.95)
+        merchant.tx_confidence_threshold = 0.75
+        self.assertEqual(merchant.get_tx_confidence_threshold(), 0.75)
+
 
 class KYCDocumentTestCase(TestCase):
 
