@@ -443,6 +443,7 @@ class ActivateDeviceViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
             response, 'cabinet/merchant/activation.html')
+        self.assertIn('activation_url', response.context)
 
     def test_get_nologin(self):
         merchant = MerchantAccountFactory()
@@ -511,6 +512,7 @@ class ActivateDeviceViewTestCase(TestCase):
             response, 'cabinet/merchant/activation.html')
         self.assertIn('activation_code',
                       response.context['form'].errors)
+        self.assertIn('activation_url', response.context)
 
     @patch('api.utils.activation.rq_helpers.run_task')
     @patch('api.utils.activation.rq_helpers.run_periodic_task')

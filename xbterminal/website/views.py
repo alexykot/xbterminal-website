@@ -309,12 +309,16 @@ class ActivateDeviceView(TemplateResponseMixin, ActivationView):
 
     template_name = 'cabinet/merchant/activation.html'
 
-    def get(self, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-        context['form'] = forms.DeviceActivationForm()
+    def get_context_data(self, **kwargs):
+        context = super(ActivateDeviceView, self).get_context_data(**kwargs)
         context['activation_url'] = construct_absolute_url(
             'website:activate_device_nologin',
             kwargs={'merchant_code': self.merchant.activation_code})
+        return context
+
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['form'] = forms.DeviceActivationForm()
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
