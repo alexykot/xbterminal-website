@@ -14,6 +14,7 @@ from django.contrib.auth.models import (
     PermissionsMixin)
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.db.models.signals import pre_save, post_delete
 from django.dispatch import receiver
@@ -254,6 +255,14 @@ class MerchantAccount(models.Model):
         max_length=200,
         blank=True,
         null=True)
+    tx_confidence_threshold = models.FloatField(
+        _('TX confidence threshold'),
+        blank=True,
+        null=True,
+        validators=[
+            MinValueValidator(0),
+            MaxValueValidator(1),
+        ])
 
     verification_status = models.CharField(_('KYC'), max_length=50, choices=VERIFICATION_STATUSES, default='unverified')
 
