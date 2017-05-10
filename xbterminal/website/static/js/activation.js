@@ -13,7 +13,9 @@ var Activation = (function () {
                 $('.activation-in-progress').show();
                 $('.activation-error').hide();
                 $('.activation-success').hide();
-                interval = setInterval(checkActivation, 2000);
+                if (!interval) {
+                    interval = setInterval(checkActivation, 2000);
+                }
             } else if (data.status === 'activation_error') {
                 $('.activation-in-progress').hide();
                 $('.activation-error').show();
