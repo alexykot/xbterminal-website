@@ -455,6 +455,23 @@ class ActivateDeviceViewTestCase(TestCase):
         self.assertTemplateUsed(
             response, 'cabinet/merchant/activation.html')
 
+    def test_get_nologin_lowercase(self):
+        merchant = MerchantAccountFactory()
+        url = reverse(
+            'website:activate_device_nologin',
+            kwargs={'merchant_code': merchant.activation_code.lower()})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_nologin_invalid_merchant_code(self):
+        url = reverse(
+            'website:activate_device_nologin',
+            kwargs={'merchant_code': 'ABCDEF'})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 404)
+
     @patch('api.utils.activation.rq_helpers.run_task')
     @patch('api.utils.activation.rq_helpers.run_periodic_task')
     def test_post_valid_code(self, run_periodic_mock, run_mock):

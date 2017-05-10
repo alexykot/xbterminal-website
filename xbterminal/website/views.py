@@ -298,7 +298,7 @@ class ActivationView(MerchantCabinetView):
         if not self.merchant:
             try:
                 self.merchant = models.MerchantAccount.objects.get(
-                    activation_code=self.kwargs.get('merchant_code'))
+                    activation_code__iexact=self.kwargs.get('merchant_code'))
             except models.MerchantAccount.DoesNotExist:
                 raise Http404
         return super(MerchantCabinetView, self).dispatch(request, *args, **kwargs)
