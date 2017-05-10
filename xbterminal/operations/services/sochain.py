@@ -1,5 +1,4 @@
 import requests
-from constance import config
 
 SOCHAIN_NETWORKS = {
     'mainnet': 'BTC',
@@ -7,7 +6,7 @@ SOCHAIN_NETWORKS = {
 }
 
 
-def is_tx_reliable(tx_id, network):
+def get_tx_confidence(tx_id, network):
     """
     https://chain.so/api#get-network-confidence
     """
@@ -18,8 +17,5 @@ def is_tx_reliable(tx_id, network):
     response.raise_for_status()
     data = response.json()
     if data['data']['confirmations'] >= 1:
-        return True
-    elif data['data']['confidence'] >= config.TX_CONFIDENCE_THRESHOLD:
-        return True
-    else:
-        return False
+        return 1.0
+    return data['data']['confidence']

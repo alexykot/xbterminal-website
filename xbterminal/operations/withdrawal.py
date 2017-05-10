@@ -258,7 +258,9 @@ def wait_for_confidence(order_uid):
         order.save()
         return
     # If transaction is already confirmed, skip confidence check
-    if tx_confirmed or is_tx_reliable(order.outgoing_tx_id, order.bitcoin_network):
+    if tx_confirmed or is_tx_reliable(order.outgoing_tx_id,
+                                      order.merchant.get_tx_confidence_threshold(),
+                                      order.bitcoin_network):
         cancel_current_task()
         if order.time_broadcasted is None:
             order.time_broadcasted = timezone.now()

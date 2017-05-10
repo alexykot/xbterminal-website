@@ -12,7 +12,7 @@ BLOCKCYPHER_CHAINS_LIVE = {
 }
 
 
-def is_tx_reliable(tx_id, network):
+def get_tx_confidence(tx_id, network):
     """
     http://dev.blockcypher.com/#transaction-confidence-endpoint
     """
@@ -26,11 +26,8 @@ def is_tx_reliable(tx_id, network):
     response.raise_for_status()
     data = response.json()
     if data['confirmations'] >= 1:
-        return True
-    elif data['confidence'] >= config.TX_CONFIDENCE_THRESHOLD:
-        return True
-    else:
-        return False
+        return 1.0
+    return data['confidence']
 
 
 def get_tx_url(tx_id, network):

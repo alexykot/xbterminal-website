@@ -358,6 +358,7 @@ def wait_for_validation(order_uid):
                 # Already confirmed, skip confidence check
                 continue
             if not is_tx_reliable(incoming_tx_id,
+                                  order.merchant.get_tx_confidence_threshold(),
                                   order.bitcoin_network):
                 # Break cycle, wait for confidence
                 break
