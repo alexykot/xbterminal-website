@@ -347,11 +347,6 @@ class DeviceActivationView(TemplateResponseMixin, ActivationView):
                 key=self.kwargs.get('device_key'))
         except models.Device.DoesNotExist:
             raise Http404
-        if device.status not in ['activation_in_progress',
-                                 'activation_error']:
-            # Activation already finished
-            return redirect(reverse('website:device',
-                                    kwargs={'device_key': device.key}))
         context = self.get_context_data(**kwargs)
         context['device'] = device
         return self.render_to_response(context)

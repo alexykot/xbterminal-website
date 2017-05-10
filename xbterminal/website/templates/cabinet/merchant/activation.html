@@ -6,7 +6,6 @@
 <script src="{% static 'js/activation.js' %}"></script>
 <script>
     var checkUrl = '{% url 'api:v2:device-detail' device.key %}';
-    var redirectUrl = '{% url 'website:device' device.key %}';
 </script>
 {% endif %}
 {% endblock %}
@@ -23,9 +22,11 @@
             <button type="submit" class="btn btn-default">
                 {% trans 'Activate' %}
             </button>
+            {% if user.is_authenticated %}
             <a href="{% url 'website:devices' %}" class="btn btn-default">
                 {% trans 'Cancel' %}
             </a>
+            {% endif %}
         </form>
         {% else %}
             <p class="large activation-in-progress">
@@ -34,6 +35,14 @@
             </p>
             <p class="large activation-error">
                 {% trans 'Activation failed. Please contact support.' %}
+            </p>
+            <p class="large activation-success">
+                {% trans 'Activation successful.' %}
+                {% if user.is_authenticated %}
+                <a href="{% url 'website:device' device.key %}">
+                    {% trans 'Show device settings.' %}
+                </a>
+                {% endif %}
             </p>
         {% endif %}
     </div>

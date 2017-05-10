@@ -513,7 +513,7 @@ class DeviceActivationViewTestCase(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
-    def test_already_active(self):
+    def test_get_activation_finished(self):
         device = DeviceFactory.create(merchant=self.merchant,
                                       status='active')
         url = reverse('website:device_activation',
@@ -521,9 +521,11 @@ class DeviceActivationViewTestCase(TestCase):
         self.client.login(username=self.merchant.user.email,
                           password='password')
         response = self.client.get(url)
-        expected_url = reverse('website:device',
-                               kwargs={'device_key': device.key})
-        self.assertRedirects(response, expected_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/activation.html')
+        self.assertEqual(response.context['device'].pk,
+                         device.pk)
 
 
 class UpdateProfileViewTestCase(TestCase):
