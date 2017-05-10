@@ -298,7 +298,7 @@ class ActivationView(MerchantCabinetView):
         if not self.merchant:
             try:
                 self.merchant = models.MerchantAccount.objects.get(
-                    activation_code=self.kwargs.get('activation_code'))
+                    activation_code=self.kwargs.get('merchant_code'))
             except models.MerchantAccount.DoesNotExist:
                 raise Http404
         return super(MerchantCabinetView, self).dispatch(request, *args, **kwargs)
@@ -313,18 +313,18 @@ class ActivateDeviceView(TemplateResponseMixin, ActivationView):
         context['form'] = forms.DeviceActivationForm()
         context['activation_url'] = construct_absolute_url(
             'website:activate_device_nologin',
-            kwargs={'activation_code': self.merchant.activation_code})
+            kwargs={'merchant_code': self.merchant.activation_code})
         return self.render_to_response(context)
 
     def post(self, *args, **kwargs):
         form = forms.DeviceActivationForm(self.request.POST)
         if form.is_valid():
             activation.start(form.device, self.merchant)
-            if not hasattr(self.request.user, 'merchant'):
+            if not self.request.user.is_authenticated():
                 return redirect(reverse(
                     'website:device_activation_nologin',
                     kwargs={
-                        'activation_code': self.merchant.activation_code,
+                        'merchant_code': self.merchant.activation_code,
                         'device_key': form.device.key,
                     }))
             else:

@@ -430,18 +430,27 @@ class DeviceStatusViewTestCase(TestCase):
 
 class ActivateDeviceViewTestCase(TestCase):
 
-    def setUp(self):
-        self.url = reverse('website:activate_device')
-
     def test_get(self):
         merchant = MerchantAccountFactory.create()
 
-        response = self.client.get(self.url)
+        url = reverse('website:activate_device')
+        response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
         self.client.login(username=merchant.user.email,
                           password='password')
-        response = self.client.get(self.url)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/activation.html')
+
+    def test_get_nologin(self):
+        merchant = MerchantAccountFactory()
+        url = reverse(
+            'website:activate_device_nologin',
+            kwargs={'merchant_code': merchant.activation_code})
+        response = self.client.get(url)
+
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
             response, 'cabinet/merchant/activation.html')
@@ -459,7 +468,8 @@ class ActivateDeviceViewTestCase(TestCase):
         form_data = {
             'activation_code': device.activation_code,
         }
-        response = self.client.post(self.url, form_data, follow=True)
+        url = reverse('website:activate_device')
+        response = self.client.post(url, form_data, follow=True)
         self.assertTrue(run_mock.called)
         self.assertEqual(run_mock.call_args[1]['queue'], 'low')
         self.assertTrue(run_periodic_mock.called)
@@ -471,17 +481,43 @@ class ActivateDeviceViewTestCase(TestCase):
         self.assertEqual(active_device.status, 'activation_in_progress')
         self.assertEqual(active_device.account.pk, account.pk)
 
-    def test_post_error(self):
+    def test_post_invalid_form_data(self):
         merchant = MerchantAccountFactory.create()
         self.client.login(username=merchant.user.email,
                           password='password')
 
-        response = self.client.post(self.url, {})
+        url = reverse('website:activate_device')
+        response = self.client.post(url, {})
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
             response, 'cabinet/merchant/activation.html')
         self.assertIn('activation_code',
                       response.context['form'].errors)
+
+    @patch('api.utils.activation.rq_helpers.run_task')
+    @patch('api.utils.activation.rq_helpers.run_periodic_task')
+    def test_post_nologin(self, run_periodic_mock, run_mock):
+        self.client.logout()
+        merchant = MerchantAccountFactory.create()
+        AccountFactory.create(merchant=merchant)
+        device = DeviceFactory.create(status='registered')
+        form_data = {
+            'activation_code': device.activation_code,
+        }
+        url = reverse(
+            'website:activate_device_nologin',
+            kwargs={'merchant_code': merchant.activation_code})
+        response = self.client.post(url, form_data, follow=True)
+
+        self.assertTrue(run_mock.called)
+        self.assertTrue(run_periodic_mock.called)
+        expected_url = reverse(
+            'website:device_activation_nologin',
+            kwargs={
+                'merchant_code': merchant.activation_code,
+                'device_key': device.key,
+            })
+        self.assertRedirects(response, expected_url)
 
 
 class DeviceActivationViewTestCase(TestCase):
@@ -526,6 +562,32 @@ class DeviceActivationViewTestCase(TestCase):
             response, 'cabinet/merchant/activation.html')
         self.assertEqual(response.context['device'].pk,
                          device.pk)
+
+    def test_get_nologin(self):
+        device = DeviceFactory(merchant=self.merchant,
+                               status='activation_in_progress')
+        url = reverse(
+            'website:device_activation_nologin',
+            kwargs={
+                'merchant_code': self.merchant.activation_code,
+                'device_key': device.key,
+            })
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, 'cabinet/merchant/activation.html')
+        self.assertEqual(response.context['device'].pk,
+                         device.pk)
+
+    def test_get_nologin_invalid_merchant_code(self):
+        url = reverse(
+            'website:device_activation_nologin',
+            kwargs={
+                'merchant_code': 'ABCDEF',
+                'device_key': 'a' * 64,
+            })
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
 
 
 class UpdateProfileViewTestCase(TestCase):
