@@ -18,6 +18,12 @@ urlpatterns = [
     url(r'^activate/$',
         views.ActivationWizard.as_view(),
         name='activation_wizard'),
+    url(r'^activate/(?P<merchant_code>\w{6})/$',
+        views.ActivateDeviceView.as_view(),
+        name='activate_device_nologin'),
+    url(r'^activate/(?P<merchant_code>\w{6})/(?P<device_key>[0-9a-zA-Z]{8,64})/$',
+        views.DeviceActivationView.as_view(),
+        name='device_activation_nologin'),
 
     url(r'^profile/$', views.UpdateProfileView.as_view(), name='profile'),
     url(r'^change_password/$', views.ChangePasswordView.as_view(), name='change_password'),

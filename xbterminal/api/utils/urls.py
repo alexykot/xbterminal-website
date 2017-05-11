@@ -1,15 +1,30 @@
+import re
+
 from django.contrib.sites.models import Site
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.core.urlresolvers import reverse
+from django.utils import translation
+
+
+def reverse_no_i18n(*args, **kwargs):
+    """
+    Returns url without language code
+    """
+    result = reverse(*args, **kwargs)
+    current_language = translation.get_language()
+    if current_language:
+        return re.sub(r'^/' + current_language, '', result)
+    return result
 
 
 def construct_absolute_url(url_name, args=None, kwargs=None):
     site = Site.objects.get_current()
     url_template = '{protocol}://{domain_name}{path}'
+    path = reverse_no_i18n(url_name, args=args, kwargs=kwargs)
     url = url_template.format(
         protocol='https' if site.pk == 1 else 'http',
         domain_name=site.domain,
-        path=reverse(url_name, args=args, kwargs=kwargs))
+        path=path)
     return url
 
 
@@ -33,4 +48,4 @@ def get_admin_url(obj, absolute=True):
     if absolute:
         return construct_absolute_url(url_name, args=[obj.pk])
     else:
-        return reverse(url_name, args=[obj.pk])
+        return reverse_no_i18n(url_name, args=[obj.pk])

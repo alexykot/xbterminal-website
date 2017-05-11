@@ -20,6 +20,7 @@ from formtools.wizard.views import CookieWizardView
 from ipware.ip import get_real_ip
 
 from api.utils import activation
+from api.utils.urls import construct_absolute_url
 
 from website import forms, models
 from website.utils import email, kyc, reports
@@ -275,6 +276,7 @@ class MerchantCabinetView(ContextMixin, View):
         context = super(MerchantCabinetView,
                         self).get_context_data(**kwargs)
         context['cabinet_page'] = resolve(self.request.path_info).url_name
+        context['merchant'] = self.merchant
         return context
 
 
@@ -290,9 +292,29 @@ class DeviceListView(TemplateResponseMixin, MerchantCabinetView):
         return self.render_to_response(context)
 
 
-class ActivateDeviceView(TemplateResponseMixin, MerchantCabinetView):
+class ActivationView(MerchantCabinetView):
+
+    def dispatch(self, request, *args, **kwargs):
+        self.merchant = get_current_merchant(request)
+        if not self.merchant:
+            try:
+                self.merchant = models.MerchantAccount.objects.get(
+                    activation_code__iexact=self.kwargs.get('merchant_code'))
+            except models.MerchantAccount.DoesNotExist:
+                raise Http404
+        return super(MerchantCabinetView, self).dispatch(request, *args, **kwargs)
+
+
+class ActivateDeviceView(TemplateResponseMixin, ActivationView):
 
     template_name = 'cabinet/merchant/activation.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(ActivateDeviceView, self).get_context_data(**kwargs)
+        context['activation_url'] = construct_absolute_url(
+            'website:activate_device_nologin',
+            kwargs={'merchant_code': self.merchant.activation_code})
+        return context
 
     def get(self, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -303,15 +325,24 @@ class ActivateDeviceView(TemplateResponseMixin, MerchantCabinetView):
         form = forms.DeviceActivationForm(self.request.POST)
         if form.is_valid():
             activation.start(form.device, self.merchant)
-            return redirect(reverse('website:device_activation',
-                                    kwargs={'device_key': form.device.key}))
+            if not self.request.user.is_authenticated():
+                return redirect(reverse(
+                    'website:device_activation_nologin',
+                    kwargs={
+                        'merchant_code': self.merchant.activation_code,
+                        'device_key': form.device.key,
+                    }))
+            else:
+                return redirect(reverse(
+                    'website:device_activation',
+                    kwargs={'device_key': form.device.key}))
         else:
             context = self.get_context_data(**kwargs)
             context['form'] = form
             return self.render_to_response(context)
 
 
-class DeviceActivationView(TemplateResponseMixin, MerchantCabinetView):
+class DeviceActivationView(TemplateResponseMixin, ActivationView):
 
     template_name = 'cabinet/merchant/activation.html'
 
@@ -321,11 +352,6 @@ class DeviceActivationView(TemplateResponseMixin, MerchantCabinetView):
                 key=self.kwargs.get('device_key'))
         except models.Device.DoesNotExist:
             raise Http404
-        if device.status not in ['activation_in_progress',
-                                 'activation_error']:
-            # Activation already finished
-            return redirect(reverse('website:device',
-                                    kwargs={'device_key': device.key}))
         context = self.get_context_data(**kwargs)
         context['device'] = device
         return self.render_to_response(context)
