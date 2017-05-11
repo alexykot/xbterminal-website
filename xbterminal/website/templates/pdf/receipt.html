@@ -95,6 +95,12 @@
         </td>
         <td class="col2 btc-amount">m<span class="btc-symbol">&#xf15a;</span> {{ order.scaled_btc_amount|floatformat:5 }}</td>
     </tr>
+    {% if order.order_type == 'withdrawal' %}
+    <tr>
+        <td class="col1">{% trans 'Network fee' %}</td>
+        <td class="col2 btc-amount">m<span class="btc-symbol">&#xf15a;</span> {{ order.tx_fee_btc_amount|scale|floatformat:5 }}</td>
+    </tr>
+    {% endif %}
     <tr>
         <td class="col1">{% trans 'Effective exchange rate' %}</td>
         <td class="col2">{{ order.merchant.currency.prefix }}{{ order.scaled_effective_exchange_rate|floatformat:4 }}{{ order.merchant.currency.postfix }}</td>
@@ -151,9 +157,7 @@
         <td class="col1">{% trans 'Transaction time' %}</td>
         <td class="col2">
             {% language 'en' %}
-            {% if order.order_type == 'payment' %}{{ order.time_notified|date:'d M Y, h:i A' }}
-            {% elif order.order_type == 'withdrawal' %}{{ order.time_completed|date:'d M Y, h:i A' }}
-            {% endif %}
+            {{ order.time_notified|date:'d M Y, h:i A' }}
             {% endlanguage %}
         </td>
     </tr>
