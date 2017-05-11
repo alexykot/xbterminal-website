@@ -146,6 +146,7 @@ class MerchantAccountTestCase(TestCase):
         self.assertIsNone(merchant.instantfiat_merchant_id)
         self.assertIsNone(merchant.instantfiat_email)
         self.assertIsNone(merchant.instantfiat_api_key)
+        self.assertIsNone(merchant.tx_confidence_threshold)
         self.assertEqual(merchant.verification_status, 'unverified')
         self.assertEqual(len(merchant.activation_code), 6)
 
@@ -158,6 +159,7 @@ class MerchantAccountTestCase(TestCase):
         self.assertIsNone(merchant.instantfiat_merchant_id)
         self.assertIsNone(merchant.instantfiat_email)
         self.assertIsNone(merchant.instantfiat_api_key)
+        self.assertIsNone(merchant.tx_confidence_threshold)
 
     def test_merchant_factory_instantfiat(self):
         merchant = MerchantAccountFactory.create(
@@ -246,6 +248,12 @@ class MerchantAccountTestCase(TestCase):
         self.assertEqual(info['tx_count'], len(payments))
         self.assertEqual(info['tx_sum'],
                          sum(p.fiat_amount for p in payments))
+
+    def test_get_tx_confidence_threshold(self):
+        merchant = MerchantAccountFactory()
+        self.assertEqual(merchant.get_tx_confidence_threshold(), 0.95)
+        merchant.tx_confidence_threshold = 0.75
+        self.assertEqual(merchant.get_tx_confidence_threshold(), 0.75)
 
 
 class KYCDocumentTestCase(TestCase):
