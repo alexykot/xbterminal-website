@@ -24,7 +24,7 @@ var numKeys = {
 };
 var maxDigits = 9;
 
-var paymentInitUrl = '/api/v2/payments/';
+var paymentInitUrl = location.protocol + '//' + location.host + '/api/v2/payments/';
 var getPaymentCheckUrl = function (paymentUid) {
     return paymentInitUrl + paymentUid + '/';
 };
