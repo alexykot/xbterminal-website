@@ -292,7 +292,7 @@ CONSTANCE_CONFIG = {
     'GOCOIN_AUTH_TOKEN': ('', 'GoCoin access token'),
     'BLOCKCYPHER_API_TOKEN': ('', 'BlockCypher API token'),
     'CURRENT_BATCH_NUMBER': ('', 'Batch number'),
-    'TX_DEFAULT_FEE': (Decimal('0.00050000'), 'Default TX fee'),
+    'TX_DEFAULT_FEE': (Decimal('0.00150000'), 'Default TX fee'),
     'TX_EXPECTED_CONFIRM': (10, 'Expected max number of blocks TX should '
                                 'wait before it is included in a block'),
     'TX_CONFIDENCE_THRESHOLD': (0.95, 'Transaction confidence threshold'),
