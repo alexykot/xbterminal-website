@@ -37,11 +37,13 @@ def check_wallet(network):
             wallet_value += bc.get_address_balance(address.address)
         db_value += account.balance
     if wallet_value != db_value:
-        logger.critical('Balance mismatch on {0} wallet ({1} != {2})'.format(
-            network, wallet_value, db_value))
+        logger.critical(
+            'Balance mismatch on %s wallet (%s != %s)',
+            network, wallet_value, db_value)
     else:
-        logger.info('Balance OK on {0} wallet ({1} total)'.format(
-            network, wallet_value))
+        logger.info(
+            'Balance OK on %s wallet (%s total)',
+            network, wallet_value)
 
 
 def check_wallet_strict(network):
@@ -53,8 +55,10 @@ def check_wallet_strict(network):
     for account in Account.objects.filter(currency=currency):
         db_value += account.balance
     if wallet_value != db_value:
-        logger.critical('Balance mismatch on {0} wallet ({1} != {2})'.format(
-            network, wallet_value, db_value))
+        logger.critical(
+            'Balance mismatch on %s wallet (%s != %s)',
+            network, wallet_value, db_value)
     else:
-        logger.info('Balance OK on {0} wallet ({1} total)'.format(
-            network, wallet_value))
+        logger.info(
+            'Balance OK on %s wallet (%s total)',
+            network, wallet_value)
