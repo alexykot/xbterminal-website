@@ -1,5 +1,5 @@
 from decimal import Decimal
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from mock import patch, Mock
 
 import bitcoin
@@ -143,6 +143,17 @@ class BlockChainTestCase(TestCase):
         })
         bc = BlockChain('mainnet')
         expected_fee = get_tx_fee(1, 1, Decimal('0.0005'))
+        self.assertEqual(bc.get_tx_fee(1, 1), expected_fee)
+
+    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @override_config(TX_DEFAULT_FEE=Decimal('0.0015'))
+    @override_settings(DEBUG=True)
+    def test_get_tx_fee_debug(self, proxy_cls_mock):
+        proxy_cls_mock.return_value = Mock(**{
+            'call.return_value': Decimal('0.0009'),
+        })
+        bc = BlockChain('mainnet')
+        expected_fee = get_tx_fee(1, 1, Decimal('0.0015'))
         self.assertEqual(bc.get_tx_fee(1, 1), expected_fee)
 
     @patch('operations.blockchain.bitcoin.rpc.Proxy')

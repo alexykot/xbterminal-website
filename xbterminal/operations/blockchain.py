@@ -231,6 +231,9 @@ class BlockChain(object):
             n_blocks or config.TX_EXPECTED_CONFIRM)
         if fee_per_kb == -1:
             fee_per_kb = config.TX_DEFAULT_FEE
+        elif settings.DEBUG and fee_per_kb < config.TX_DEFAULT_FEE:
+            # Always use TX_DEFAULT_FEE in stage and dev environments
+            fee_per_kb = config.TX_DEFAULT_FEE
         elif fee_per_kb <= BTC_MIN_FEE:
             fee_per_kb = BTC_MIN_FEE
         return get_tx_fee(n_inputs, n_outputs, fee_per_kb)
