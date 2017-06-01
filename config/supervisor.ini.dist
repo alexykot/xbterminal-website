@@ -1,12 +1,12 @@
 [program:rqworker-high]
 directory=/repo_root/
-command=/repo_root/venv/bin/python /repo_root/xbterminal/manage.py rqworker high
+command=/repo_root/venv/bin/python /repo_root/xbterminal/manage.py rqworker high --worker-class rq.SimpleWorker
 user=xbterminal
 group=xbterminal
 
 [program:rqworker-low]
 directory=/repo_root/
-command=/repo_root/venv/bin/python /repo_root/xbterminal/manage.py rqworker low
+command=/repo_root/venv/bin/python /repo_root/xbterminal/manage.py rqworker low --worker-class rq.SimpleWorker
 user=xbterminal
 group=xbterminal
 
