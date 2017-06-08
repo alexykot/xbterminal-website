@@ -2,7 +2,7 @@ from django.db import IntegrityError
 from django.test import TestCase
 
 from wallet.models import WalletKey, WalletAccount, Address
-from wallet.enums import BIP44_COIN_TYPES
+from wallet.enums import BIP44_COIN_TYPES, MAX_INDEX
 from wallet.tests.factories import (
     WalletKeyFactory,
     WalletAccountFactory,
@@ -76,3 +76,22 @@ class AddressTestCase(TestCase):
         with self.assertRaises(IntegrityError):
             address_2.index = address_1.index
             address_2.save()
+
+    def test_create_method(self):
+        wallet_key = WalletKeyFactory(coin_type=BIP44_COIN_TYPES.BTC)
+        self.assertEqual(wallet_key.walletaccount_set.count(), 0)
+        address = Address.create('BTC', False)
+        self.assertEqual(wallet_key.walletaccount_set.count(), 1)
+        self.assertEqual(address.wallet_account.parent_key, wallet_key)
+
+    def test_create_method_max_index(self):
+        wallet_key = WalletKeyFactory(coin_type=BIP44_COIN_TYPES.BTC)
+        account = WalletAccountFactory(parent_key=wallet_key)
+        self.assertEqual(wallet_key.walletaccount_set.count(), 1)
+        address_1 = AddressFactory(wallet_account=account)
+        address_1.index = MAX_INDEX + 1
+        address_1.save()
+        address_2 = Address.create('BTC', False)
+        self.assertNotEqual(address_2.wallet_account,
+                            address_1.wallet_account)
+        self.assertEqual(wallet_key.walletaccount_set.count(), 2)

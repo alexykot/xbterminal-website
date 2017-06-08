@@ -1,9 +1,11 @@
 from __future__ import unicode_literals
 
+from django.core.exceptions import ImproperlyConfigured
 from django.db import models
+from django.db.models import Max
 from django.db.transaction import atomic
 
-from wallet.enums import BIP44_PURPOSE, BIP44_COIN_TYPES
+from wallet.enums import BIP44_PURPOSE, BIP44_COIN_TYPES, MAX_INDEX
 from wallet.utils.keys import generate_p2pkh_script
 
 
@@ -100,3 +102,27 @@ class Address(models.Model):
                 filter(is_change=self.is_change).count()
             self.address = self.get_script(as_address=True)
         super(Address, self).save(*args, **kwargs)
+
+    @classmethod
+    @atomic
+    def create(cls, netcode, is_change):
+        """
+        Accepts:
+            netcode: BTC or XTN
+            is_change: boolean
+        Returns:
+            address: Address instance
+        """
+        coin_type = BIP44_COIN_TYPES.for_constant(netcode).value
+        try:
+            wallet_key = WalletKey.objects.get(coin_type=coin_type)
+        except WalletKey.DoesNotExist:
+            raise ImproperlyConfigured
+        try:
+            account = wallet_key.walletaccount_set.\
+                annotate(address_max_index=Max('address__index')).\
+                exclude(address_max_index__gte=MAX_INDEX).\
+                latest('index')
+        except WalletAccount.DoesNotExist:
+            account = wallet_key.walletaccount_set.create()
+        return account.address_set.create(is_change=is_change)

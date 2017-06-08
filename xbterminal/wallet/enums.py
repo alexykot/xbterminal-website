@@ -8,3 +8,5 @@ BIP44_COIN_TYPES = Choices(
     ('BTC', 0, _('Bitcoin')),
     ('XTN', 1, _('Bitcoin Testnet')),
 )
+
+MAX_INDEX = 2 ** 30
