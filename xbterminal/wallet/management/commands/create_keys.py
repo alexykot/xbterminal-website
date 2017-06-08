@@ -31,5 +31,5 @@ class Command(BaseCommand):
         self.stdout.write(
             'Master private key: ' + master_key.hwif(as_private=True))
         self.stdout.write(
-            'Master prublic key: ' + master_key.hwif(as_private=False))
+            'Master public key: ' + master_key.hwif(as_private=False))
         self.stdout.write('Derived keys are saved to database.')
