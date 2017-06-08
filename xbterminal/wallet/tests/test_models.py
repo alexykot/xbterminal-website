@@ -1,9 +1,11 @@
 from django.db import IntegrityError
 from django.test import TestCase
 
-from wallet.models import WalletKey
+from wallet.models import WalletKey, WalletAccount
 from wallet.enums import BIP44_COIN_TYPES
-from wallet.tests.factories import WalletKeyFactory
+from wallet.tests.factories import (
+    WalletKeyFactory,
+    WalletAccountFactory)
 
 
 class WalletKeyTestCase(TestCase):
@@ -31,3 +33,18 @@ class WalletKeyTestCase(TestCase):
         WalletKeyFactory(private_key='a' * 100)
         with self.assertRaises(IntegrityError):
             WalletKeyFactory(private_key='a' * 100)
+
+
+class WalletAccountTestCase(TestCase):
+
+    def test_create(self):
+        key = WalletKeyFactory()
+        account = WalletAccount.objects.create(
+            parent_key=key)
+        self.assertEqual(account.index, 0)
+        self.assertEqual(account.path, "0'/0'/0")
+        self.assertEqual(str(account), account.path)
+
+    def test_factory(self):
+        account = WalletAccountFactory()
+        self.assertEqual(account.path, "0'/0'/0")

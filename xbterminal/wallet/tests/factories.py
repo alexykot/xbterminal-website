@@ -18,3 +18,11 @@ class WalletKeyFactory(factory.DjangoModelFactory):
         master_key = create_master_key(currency_code, str(n))
         path = "0'/{}'".format(self.coin_type)
         return create_wallet_key(master_key, path, as_private=True)
+
+
+class WalletAccountFactory(factory.DjangoModelFactory):
+
+    class Meta:
+        model = models.WalletAccount
+
+    parent_key = factory.SubFactory(WalletKeyFactory)
