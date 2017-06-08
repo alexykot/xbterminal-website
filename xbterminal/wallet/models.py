@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from django.db import models
 from django.db.transaction import atomic
 
-from wallet.enums import BIP44_COIN_TYPES
+from wallet.enums import BIP44_PURPOSE, BIP44_COIN_TYPES
 from wallet.utils.keys import generate_p2pkh_script
 
 
@@ -26,7 +26,7 @@ class WalletKey(models.Model):
     @property
     def path(self):
         return "{purpose}'/{coin}'".format(
-            purpose=0,
+            purpose=BIP44_PURPOSE,
             coin=self.coin_type)
 
 
