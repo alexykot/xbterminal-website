@@ -26,3 +26,12 @@ class WalletAccountFactory(factory.DjangoModelFactory):
         model = models.WalletAccount
 
     parent_key = factory.SubFactory(WalletKeyFactory)
+
+
+class AddressFactory(factory.DjangoModelFactory):
+
+    class Meta:
+        model = models.Address
+
+    wallet_account = factory.SubFactory(WalletAccountFactory)
+    is_change = False

@@ -4,6 +4,7 @@ from django.db import models
 from django.db.transaction import atomic
 
 from wallet.enums import BIP44_COIN_TYPES
+from wallet.utils.keys import generate_p2pkh_script
 
 
 class WalletKey(models.Model):
@@ -55,3 +56,47 @@ class WalletAccount(models.Model):
         if not self.pk and not self.index:
             self.index = self.parent_key.walletaccount_set.count()
         super(WalletAccount, self).save(*args, **kwargs)
+
+
+class Address(models.Model):
+
+    wallet_account = models.ForeignKey(
+        WalletAccount,
+        on_delete=models.PROTECT)
+    is_change = models.BooleanField()
+    index = models.PositiveIntegerField()
+    address = models.CharField(
+        max_length=50,
+        unique=True)
+
+    class Meta:
+        ordering = ['wallet_account', 'is_change', 'index']
+        unique_together = ['wallet_account', 'is_change', 'index']
+        verbose_name_plural = 'addresses'
+
+    def __str__(self):
+        return self.address
+
+    @property
+    def relative_path(self):
+        return '{account}/{change}/{index}'.format(
+            account=self.wallet_account.index,
+            change=int(self.is_change),
+            index=self.index)
+
+    def get_script(self, as_address=True):
+        """
+        Returns script or address
+        """
+        return generate_p2pkh_script(
+            self.wallet_account.parent_key.private_key,
+            self.relative_path,
+            as_address=as_address)
+
+    @atomic
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.index = self.wallet_account.address_set.\
+                filter(is_change=self.is_change).count()
+            self.address = self.get_script(as_address=True)
+        super(Address, self).save(*args, **kwargs)
