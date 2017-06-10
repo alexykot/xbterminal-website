@@ -1,10 +1,7 @@
 import datetime
 from decimal import Decimal
-import random
 import os
 import uuid
-
-from bitcoin import base58
 
 from django.apps import apps
 from django.conf import settings
@@ -37,6 +34,7 @@ from website.validators import (
 from website.utils.files import (
     get_verification_file_name,
     verification_file_path_gen)
+from common.uids import generate_alphanumeric_code, generate_b58_uid
 
 
 class UserManager(BaseUserManager):
@@ -176,15 +174,6 @@ class UITheme(models.Model):
 
     def __unicode__(self):
         return self.name
-
-
-def generate_alphanumeric_code(length=6):
-    """
-    Generate simple human-readable code
-    """
-    chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZ'
-    code = ''.join(random.sample(chars, length))
-    return code
 
 
 INSTANTFIAT_PROVIDERS = Choices(
@@ -371,7 +360,7 @@ def merchant_generate_activation_code(sender, instance, **kwargs):
     if not instance.pk:
         # Generate unique activation code
         while True:
-            code = generate_alphanumeric_code()
+            code = generate_alphanumeric_code(6)
             if not sender.objects.filter(activation_code=code).exists():
                 instance.activation_code = code
                 break
@@ -641,8 +630,7 @@ class DeviceBatch(models.Model):
 
 
 def gen_device_key():
-    bts = uuid.uuid4().bytes
-    return base58.encode(bts)[:8]
+    return generate_b58_uid(8)
 
 
 def get_default_batch():
@@ -816,7 +804,7 @@ def device_generate_activation_code(sender, instance, **kwargs):
     if not instance.pk:
         # Generate unique activation code
         while True:
-            code = generate_alphanumeric_code()
+            code = generate_alphanumeric_code(6)
             if not sender.objects.filter(activation_code=code).exists():
                 instance.activation_code = code
                 break
@@ -825,15 +813,12 @@ def device_generate_activation_code(sender, instance, **kwargs):
 # TODO: remove this functions
 
 def gen_payment_reference():
-    bts = uuid.uuid4().bytes
-    return base58.encode(bts)[:10].upper()
+    pass
 
 
 def gen_payment_uid():
-    bts = uuid.uuid4().bytes
-    return base58.encode(bts)[:6]
+    pass
 
 
 def gen_withdrawal_uid():
-    bts = uuid.uuid4().bytes
-    return base58.encode(bts)[:6]
+    pass
