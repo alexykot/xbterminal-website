@@ -105,6 +105,7 @@ INSTALLED_APPS = [
     'operations',
     'api',
     'wallet.apps.WalletConfig',
+    'transactions.apps.TransactionsConfig',
 ]
 
 MIDDLEWARE_CLASSES = [
