@@ -3,10 +3,16 @@ from __future__ import unicode_literals
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.transaction import atomic
+from django.utils import timezone
 
 from common.uids import generate_b58_uid
 from wallet.constants import BIP44_COIN_TYPES
-from transactions.constants import BTC_DEC_PLACES, PAYMENT_TYPES
+from transactions.constants import (
+    BTC_DEC_PLACES,
+    DEPOSIT_TIMEOUT,
+    DEPOSIT_VALIDATION_TIMEOUT,
+    DEPOSIT_CONFIRMATION_TIMEOUT,
+    PAYMENT_TYPES)
 
 
 class Deposit(models.Model):
@@ -77,11 +83,55 @@ class Deposit(models.Model):
                 self.merchant_coin_amount).quantize(BTC_DEC_PLACES)
 
     @property
-    def btc_amount(self):
+    def coin_amount(self):
         """
         Total BTC amount (for payment)
         """
         return self.merchant_coin_amount + self.fee_coin_amount
+
+    @property
+    def status(self):
+        """
+        Returns status of the deposit:
+            new - deposit has just been created
+            underpaid - incoming transaction received,
+                but amount is not sufficient
+            received - incoming transaction received, full amount
+            notified - customer notified about successful payment
+            confirmed - incoming transaction confirmed
+            refunded - money sent back to customer
+            timeout - incoming transaction did not received
+            failed - incoming transaction received,
+                but payment order is not marked as notified
+            unconfirmed - customer notified about successful payment,
+                but incoming transaction is not confirmed
+            cancelled: deposit cancelled by the customer
+        """
+        if self.time_refunded:
+            return 'refunded'
+        if self.time_cancelled:
+            return 'cancelled'
+        if self.time_notified:
+            if self.time_confirmed:
+                return 'confirmed'
+            else:
+                if self.time_created + DEPOSIT_CONFIRMATION_TIMEOUT < timezone.now():
+                    return 'unconfirmed'
+                else:
+                    return 'notified'
+        if not self.time_received:
+            if self.time_created + DEPOSIT_TIMEOUT < timezone.now():
+                return 'timeout'
+            else:
+                if 0 < self.paid_coin_amount < self.coin_amount:
+                    return 'underpaid'
+                else:
+                    return 'new'
+        else:
+            if self.time_created + DEPOSIT_VALIDATION_TIMEOUT < timezone.now():
+                return 'failed'
+            else:
+                return 'received'
 
     @atomic
     def save(self, *args, **kwargs):

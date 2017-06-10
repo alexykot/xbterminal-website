@@ -33,6 +33,7 @@ class PrepareDepositTestCase(TestCase):
             BIP44_COIN_TYPES.BTC)
         self.assertEqual(deposit.merchant_coin_amount, Decimal('0.005'))
         self.assertEqual(deposit.fee_coin_amount, Decimal('0.000025'))
+        self.assertEqual(deposit.status, 'new')
         self.assertEqual(get_rate_mock.call_args[0][0],
                          deposit.currency.name)
 
