@@ -119,6 +119,7 @@ class Address(models.Model):
             raise ImproperlyConfigured
         try:
             account = wallet_key.walletaccount_set.\
+                filter(address__is_change=is_change).\
                 annotate(address_max_index=Max('address__index')).\
                 exclude(address_max_index__gte=MAX_INDEX).\
                 latest('index')
