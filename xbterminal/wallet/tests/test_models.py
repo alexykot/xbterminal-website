@@ -2,7 +2,7 @@ from django.db import IntegrityError
 from django.test import TestCase
 
 from wallet.models import WalletKey, WalletAccount, Address
-from wallet.enums import BIP44_COIN_TYPES, MAX_INDEX
+from wallet.constants import BIP44_COIN_TYPES, MAX_INDEX
 from wallet.tests.factories import (
     WalletKeyFactory,
     WalletAccountFactory,

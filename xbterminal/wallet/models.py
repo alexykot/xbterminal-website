@@ -5,7 +5,7 @@ from django.db import models
 from django.db.models import Max
 from django.db.transaction import atomic
 
-from wallet.enums import BIP44_PURPOSE, BIP44_COIN_TYPES, MAX_INDEX
+from wallet.constants import BIP44_PURPOSE, BIP44_COIN_TYPES, MAX_INDEX
 from wallet.utils.keys import generate_p2pkh_script
 
 

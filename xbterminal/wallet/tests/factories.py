@@ -1,7 +1,7 @@
 import factory
 
 from wallet import models
-from wallet.enums import BIP44_COIN_TYPES
+from wallet.constants import BIP44_COIN_TYPES
 from wallet.utils.keys import create_master_key, create_wallet_key
 
 

@@ -3,7 +3,7 @@ import StringIO
 from django.test import TestCase
 from django.core.management import call_command
 
-from wallet.enums import BIP44_COIN_TYPES
+from wallet.constants import BIP44_COIN_TYPES
 from wallet.models import WalletKey
 
 
