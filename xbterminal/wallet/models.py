@@ -105,15 +105,14 @@ class Address(models.Model):
 
     @classmethod
     @atomic
-    def create(cls, netcode, is_change):
+    def create(cls, coin_type, is_change=False):
         """
         Accepts:
-            netcode: BTC or XTN
+            coin_type: value from BIP44_COIN_TYPES enum
             is_change: boolean
         Returns:
             address: Address instance
         """
-        coin_type = BIP44_COIN_TYPES.for_constant(netcode).value
         try:
             wallet_key = WalletKey.objects.get(coin_type=coin_type)
         except WalletKey.DoesNotExist:

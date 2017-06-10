@@ -80,9 +80,10 @@ class AddressTestCase(TestCase):
     def test_create_method(self):
         wallet_key = WalletKeyFactory(coin_type=BIP44_COIN_TYPES.BTC)
         self.assertEqual(wallet_key.walletaccount_set.count(), 0)
-        address = Address.create('BTC', False)
+        address = Address.create(BIP44_COIN_TYPES.BTC)
         self.assertEqual(wallet_key.walletaccount_set.count(), 1)
         self.assertEqual(address.wallet_account.parent_key, wallet_key)
+        self.assertIs(address.is_change, False)
 
     def test_create_method_max_index(self):
         wallet_key = WalletKeyFactory(coin_type=BIP44_COIN_TYPES.BTC)
@@ -91,7 +92,7 @@ class AddressTestCase(TestCase):
         address_1 = AddressFactory(wallet_account=account)
         address_1.index = MAX_INDEX + 1
         address_1.save()
-        address_2 = Address.create('BTC', False)
+        address_2 = Address.create(BIP44_COIN_TYPES.BTC)
         self.assertNotEqual(address_2.wallet_account,
                             address_1.wallet_account)
         self.assertEqual(wallet_key.walletaccount_set.count(), 2)
