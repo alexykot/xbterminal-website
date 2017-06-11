@@ -38,6 +38,16 @@ class BlockChain(object):
         address = self._proxy.getnewaddress()
         return address
 
+    def import_address(self, address, rescan=False):
+        """
+        Accepts:
+            address: bitcoin address
+            rescan: do blockchain rescan after import or not
+        """
+        result = self._proxy.importaddress(address, rescan=rescan)
+        if result is not None:
+            raise ValueError
+
     def get_balance(self, minconf=1):
         """
         Accepts:

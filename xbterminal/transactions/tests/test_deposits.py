@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from django.test import TestCase
 
-from mock import patch
+from mock import patch, Mock
 
 from transactions.deposits import prepare_deposit
 from wallet.constants import BIP44_COIN_TYPES
@@ -15,9 +15,11 @@ class PrepareDepositTestCase(TestCase):
     def setUp(self):
         WalletKeyFactory()
 
+    @patch('transactions.deposits.BlockChain')
     @patch('transactions.deposits.get_exchange_rate')
-    def test_prepare_with_device(self, get_rate_mock):
+    def test_prepare_with_device(self, get_rate_mock, bc_cls_mock):
         device = DeviceFactory()
+        bc_cls_mock.return_value = bc_mock = Mock()
         get_rate_mock.return_value = Decimal('2000.0')
         deposit = prepare_deposit(device, Decimal('10.00'))
 
@@ -34,11 +36,16 @@ class PrepareDepositTestCase(TestCase):
         self.assertEqual(deposit.merchant_coin_amount, Decimal('0.005'))
         self.assertEqual(deposit.fee_coin_amount, Decimal('0.000025'))
         self.assertEqual(deposit.status, 'new')
+
+        self.assertEqual(bc_mock.import_address.call_count, 1)
+        self.assertEqual(bc_mock.import_address.call_args[0][0],
+                         deposit.deposit_address.address)
         self.assertEqual(get_rate_mock.call_args[0][0],
                          deposit.currency.name)
 
+    @patch('transactions.deposits.BlockChain')
     @patch('transactions.deposits.get_exchange_rate')
-    def test_prepare_with_account(self, get_rate_mock):
+    def test_prepare_with_account(self, get_rate_mock, bc_cls_mock):
         account = AccountFactory()
         get_rate_mock.return_value = Decimal('2000.0')
         deposit = prepare_deposit(account, Decimal('10.00'))

@@ -31,6 +31,18 @@ class BlockChainTestCase(TestCase):
         self.assertTrue(service_url.startswith('http'))
 
     @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    def test_import_address(self, proxy_cls_mock):
+        proxy_cls_mock.return_value = proxy_mock = Mock(**{
+            'importaddress.return_value': None,
+        })
+        address = '1JpY93MNoeHJ914CHLCQkdhS7TvBM68Xp6'
+        bc = BlockChain('mainnet')
+        bc.import_address('1JpY93MNoeHJ914CHLCQkdhS7TvBM68Xp6')
+        self.assertEqual(proxy_mock.importaddress.call_count, 1)
+        self.assertEqual(proxy_mock.importaddress.call_args[0][0], address)
+        self.assertIs(proxy_mock.importaddress.call_args[1]['rescan'], False)
+
+    @patch('operations.blockchain.bitcoin.rpc.Proxy')
     def test_get_balance(self, proxy_mock):
         proxy_mock.return_value = Mock(**{
             'getbalance.return_value': 500000,

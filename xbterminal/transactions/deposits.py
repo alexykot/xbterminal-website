@@ -5,6 +5,7 @@ from constance import config
 
 from transactions.constants import BTC_DEC_PLACES, BTC_MIN_OUTPUT
 from transactions.models import Deposit
+from operations.blockchain import BlockChain
 from operations.services.wrappers import get_exchange_rate
 from wallet.constants import BIP44_COIN_TYPES
 from wallet.models import Address
@@ -25,6 +26,17 @@ def _get_coin_type(account):
         raise ValueError('Instantfiat accounts are not supported.')
 
 
+def _get_blockchain_instance(coin_type):
+    # TODO: change initialization in BlockChain class, remove this method
+    if coin_type == BIP44_COIN_TYPES.BTC:
+        network = 'mainnet'
+    elif coin_type == BIP44_COIN_TYPES.XTN:
+        network = 'testnet'
+    else:
+        raise ValueError('Invalid coin type.')
+    return BlockChain(network)
+
+
 def prepare_deposit(device_or_account, amount):
     """
     Accepts:
@@ -39,9 +51,12 @@ def prepare_deposit(device_or_account, amount):
     elif isinstance(device_or_account, Account):
         device = None
         account = device_or_account
-    # Create model instance
+    # Create new address
     coin_type = _get_coin_type(account)
     deposit_address = Address.create(coin_type, is_change=False)
+    bc = _get_blockchain_instance(coin_type)
+    bc.import_address(deposit_address.address, rescan=False)
+    # Create model instance
     deposit = Deposit(
         account=account,
         device=device,
