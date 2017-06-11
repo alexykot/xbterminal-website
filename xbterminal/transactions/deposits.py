@@ -1,11 +1,18 @@
 from decimal import Decimal
 import logging
 
+from django.utils import timezone
+
 from constance import config
 
-from transactions.constants import BTC_DEC_PLACES, BTC_MIN_OUTPUT
+from common.rq_helpers import run_periodic_task, cancel_current_task
+from transactions.constants import (
+    BTC_DEC_PLACES,
+    BTC_MIN_OUTPUT,
+    PAYMENT_TYPES)
 from transactions.models import Deposit
-from operations.blockchain import BlockChain
+from transactions.exceptions import InsufficientFundsError
+from operations.blockchain import BlockChain, get_txid
 from operations.services.wrappers import get_exchange_rate
 from wallet.constants import BIP44_COIN_TYPES
 from wallet.models import Address
@@ -66,4 +73,81 @@ def prepare_deposit(device_or_account, amount):
                                Decimal(config.OUR_FEE_SHARE) /
                                exchange_rate).quantize(BTC_DEC_PLACES)
     deposit.save()
+    # Wait for payment
+    run_periodic_task(wait_for_payment, [deposit.pk], interval=2)
     return deposit
+
+
+def validate_payment(deposit, transactions):
+    """
+    Validates payment
+    Accepts:
+        deposit: Deposit instance
+        transactions: list of CTransaction
+    """
+    bc = BlockChain(deposit.bitcoin_network)
+    # Validate transactions
+    for incoming_tx in transactions:
+        bc.sign_raw_transaction(incoming_tx)
+    # Check and save received amount
+    received_amount = BTC_DEC_PLACES
+    for incoming_tx in transactions:
+        for output in bc.get_tx_outputs(incoming_tx):
+            if str(output['address']) == deposit.deposit_address.address:
+                received_amount += output['amount']
+    deposit.paid_coin_amount = received_amount
+    deposit.save()
+    if deposit.status == 'underpaid':
+        raise InsufficientFundsError
+
+
+def wait_for_payment(deposit_id):
+    """
+    Periodic task for monitoring BIP21 payment
+    Accepts:
+        deposit_id: integer
+    """
+    deposit = Deposit.objects.get(pk=deposit_id)
+    if deposit.status == 'timeout':
+        # Timeout, cancel job
+        cancel_current_task()
+    if deposit.time_received is not None:
+        # Payment already validated, cancel job
+        cancel_current_task()
+        return
+    if deposit.status == 'cancelled':
+        cancel_current_task()
+        return
+    # Connect to bitcoind
+    bc = BlockChain(deposit.bitcoin_network)
+    transactions = bc.get_unspent_transactions(deposit.deposit_address.address)
+    if transactions:
+        if len(transactions) > 1:
+            logger.warning('multiple incoming tx')
+        # Save tx ids
+        for incoming_tx in transactions:
+            incoming_tx_id = get_txid(incoming_tx)
+            if incoming_tx_id not in deposit.incoming_tx_ids:
+                deposit.incoming_tx_ids.append(incoming_tx_id)
+        # Save refund address
+        tx_inputs = bc.get_tx_inputs(transactions[0])
+        if len(tx_inputs) > 1:
+            logger.warning('incoming tx contains more than one input')
+        deposit.refund_address = str(tx_inputs[0]['address'])
+        deposit.save()
+        # Validate payment
+        try:
+            validate_payment(deposit, transactions)
+        except InsufficientFundsError:
+            # Don't cancel task, wait for next transaction
+            pass
+        except Exception as error:
+            cancel_current_task()
+            logger.exception(error)
+        else:
+            cancel_current_task()
+            # Update status
+            deposit.payment_type = PAYMENT_TYPES.BIP21
+            deposit.time_received = timezone.now()
+            deposit.save()
+            logger.info('payment received (%s)', deposit.uid)
