@@ -74,6 +74,30 @@ class BlockChainTestCase(TestCase):
         self.assertEqual(proxy_mock.listunspent.call_args[1]['minconf'], 1)
 
     @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    def test_get_unspent_transactions(self, proxy_cls_mock):
+        address = '1JpY93MNoeHJ914CHLCQkdhS7TvBM68Xp6'
+        transaction_mock = Mock()
+        proxy_cls_mock.return_value = proxy_mock = Mock(**{
+            'listunspent.return_value': [{
+                'amount': 500000, 'outpoint': Mock(hash=b'\x11' * 32),
+            }],
+            'getrawtransaction.return_value': transaction_mock,
+        })
+        bc = BlockChain('mainnet')
+        transactions = bc.get_unspent_transactions(address)
+        self.assertEqual(len(transactions), 1)
+        self.assertEqual(transactions[0], transaction_mock)
+        self.assertEqual(proxy_mock.listunspent.call_count, 1)
+        self.assertEqual(proxy_mock.listunspent.call_args[1]['minconf'], 0)
+        call_addrs = proxy_mock.listunspent.call_args[1]['addrs']
+        self.assertEqual(len(call_addrs), 1)
+        self.assertEqual(call_addrs[0].__class__.__name__,
+                         'P2PKHBitcoinAddress')
+        self.assertEqual(
+            proxy_mock.getrawtransaction.call_args[0][0],
+            b'\x11' * 32)
+
+    @patch('operations.blockchain.bitcoin.rpc.Proxy')
     def test_is_tx_confirmed_true(self, proxy_mock):
         tx_id = '1' * 64
         proxy_mock.return_value = Mock(**{

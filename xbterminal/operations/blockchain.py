@@ -87,10 +87,11 @@ class BlockChain(object):
     def get_unspent_transactions(self, address):
         """
         Accepts:
-            address: CBitcoinAddress
+            address: bitcoin address, string
         Returns:
             transactions: list of CTransaction
         """
+        address = CBitcoinAddress(address)
         txouts = self._proxy.listunspent(minconf=0, addrs=[address])
         transactions = []
         for out in txouts:
