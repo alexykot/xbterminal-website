@@ -64,10 +64,15 @@ class AddressTestCase(TestCase):
         self.assertEqual(address.relative_path, '0/0/0')
         self.assertEqual(str(address), address.address)
 
-    def test_factory(self):
+    def test_factory_btc(self):
         address = AddressFactory()
         self.assertIs(address.address.startswith('1'), True)
         self.assertEqual(address.relative_path, '0/0/0')
+
+    def test_factory_xtn(self):
+        address = AddressFactory(
+            wallet_account__parent_key__coin_type=BIP44_COIN_TYPES.XTN)
+        self.assertIn(address.address[0], ['m', 'n'])
 
     def test_unique_index(self):
         account = WalletAccountFactory()
