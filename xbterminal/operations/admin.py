@@ -7,9 +7,9 @@ from website.widgets import (
     BitcoinTransactionWidget,
     BitcoinTransactionArrayWidget,
     ReadOnlyAdminWidget)
-from website.admin import url_to_object, TransactionInline
+from website.admin import TransactionInline
 from website.utils.qr import generate_qr_code
-from api.utils.urls import construct_absolute_url
+from api.utils.urls import construct_absolute_url, get_link_to_object
 from operations.blockchain import construct_bitcoin_uri
 from operations import payment, exceptions
 
@@ -87,7 +87,7 @@ class PaymentOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
 
     def device_link(self, payment_order):
         if payment_order.device:
-            return url_to_object(payment_order.device)
+            return get_link_to_object(payment_order.device)
         else:
             return '-'
     device_link.allow_tags = True
@@ -95,14 +95,16 @@ class PaymentOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
 
     def account_link(self, payment_order):
         if payment_order.account:
-            return url_to_object(payment_order.account)
+            return get_link_to_object(payment_order.account)
         else:
             return '-'
+
     account_link.allow_tags = True
     account_link.short_description = 'account'
 
     def merchant_link(self, payment_order):
-        return url_to_object(payment_order.merchant)
+        return get_link_to_object(payment_order.merchant)
+
     merchant_link.allow_tags = True
     merchant_link.short_description = 'merchant'
 
@@ -183,22 +185,25 @@ class WithdrawalOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
 
     def device_link(self, withdrawal_order):
         if withdrawal_order.device:
-            return url_to_object(withdrawal_order.device)
+            return get_link_to_object(withdrawal_order.device)
         else:
             return '-'
+
     device_link.allow_tags = True
     device_link.short_description = 'device'
 
     def account_link(self, withdrawal_order):
         if withdrawal_order.account:
-            return url_to_object(withdrawal_order.account)
+            return get_link_to_object(withdrawal_order.account)
         else:
             return '-'
+
     account_link.allow_tags = True
     account_link.short_description = 'account'
 
     def merchant_link(self, withdrawal_order):
-        return url_to_object(withdrawal_order.merchant)
+        return get_link_to_object(withdrawal_order.merchant)
+
     merchant_link.allow_tags = True
     merchant_link.short_description = 'merchant'
 

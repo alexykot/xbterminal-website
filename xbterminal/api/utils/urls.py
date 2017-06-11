@@ -4,6 +4,7 @@ from django.contrib.sites.models import Site
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.core.urlresolvers import reverse
 from django.utils import translation
+from django.utils.html import format_html
 
 
 def reverse_no_i18n(*args, **kwargs):
@@ -49,3 +50,9 @@ def get_admin_url(obj, absolute=True):
         return construct_absolute_url(url_name, args=[obj.pk])
     else:
         return reverse_no_i18n(url_name, args=[obj.pk])
+
+
+def get_link_to_object(obj):
+    return format_html(u'<a href="{0}">{1}</a>',
+                       get_admin_url(obj, absolute=False),
+                       str(obj))
