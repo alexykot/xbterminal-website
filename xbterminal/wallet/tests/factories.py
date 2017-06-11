@@ -15,9 +15,9 @@ class WalletKeyFactory(factory.DjangoModelFactory):
     @factory.lazy_attribute_sequence
     def private_key(self, n):
         netcode = BIP44_COIN_TYPES.for_value(self.coin_type).constant
-        master_key = create_master_key(str(n), netcode)
+        master_key = create_master_key(str(n))
         path = "0'/{}'".format(self.coin_type)
-        return create_wallet_key(master_key, path, as_private=True)
+        return create_wallet_key(master_key, netcode, path, as_private=True)
 
 
 class WalletAccountFactory(factory.DjangoModelFactory):

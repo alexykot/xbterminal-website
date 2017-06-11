@@ -4,12 +4,13 @@ from pycoin.key.BIP32Node import BIP32Node
 from pycoin.tx.pay_to import script_obj_from_script
 
 
-def create_master_key(secret, netcode='BTC'):
-    return BIP32Node.from_master_secret(secret, netcode=netcode)
+def create_master_key(secret):
+    return BIP32Node.from_master_secret(secret)
 
 
-def create_wallet_key(master_key, path, as_private=False):
+def create_wallet_key(master_key, netcode, path, as_private=False):
     key = master_key.subkey_for_path(path)
+    key._netcode = netcode
     return key.hwif(as_private=as_private)
 
 

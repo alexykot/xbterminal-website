@@ -20,11 +20,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         secret = options['secret'] or str(random.getrandbits(100))
         master_key = create_master_key(secret)
-        for coin_type in BIP44_COIN_TYPES.values:
+        for netcode, coin_type, _ in BIP44_COIN_TYPES.entries:
             path = "{purpose}'/{coin}'".format(
                 purpose=BIP44_PURPOSE,
                 coin=coin_type)
-            private_key = create_wallet_key(master_key, path, as_private=True)
+            private_key = create_wallet_key(master_key, netcode, path, as_private=True)
             wallet_key = WalletKey.objects.create(coin_type=coin_type,
                                                   private_key=private_key)
             wallet_key.walletaccount_set.create()
