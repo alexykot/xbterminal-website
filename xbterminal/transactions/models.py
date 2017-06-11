@@ -82,6 +82,18 @@ class Deposit(models.Model):
         return self.account.merchant
 
     @property
+    def bitcoin_network(self):
+        # Property for backwards compatibility
+        # TODO: use coin types instead
+        if self.coin_type == BIP44_COIN_TYPES.BTC:
+            network = 'mainnet'
+        elif self.coin_type == BIP44_COIN_TYPES.XTN:
+            network = 'testnet'
+        else:
+            raise ValueError('Invalid coin type.')
+        return network
+
+    @property
     def exchange_rate(self):
         return (self.amount /
                 self.merchant_coin_amount).quantize(BTC_DEC_PLACES)
