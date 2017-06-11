@@ -38,7 +38,7 @@ class DepositTestCase(TestCase):
         self.assertIsNone(deposit.time_confirmed)
         self.assertIsNone(deposit.time_refunded)
         self.assertIsNone(deposit.time_cancelled)
-        self.assertEqual(str(deposit), deposit.uid)
+        self.assertEqual(str(deposit), str(deposit.pk))
 
     def test_factory(self):
         deposit = DepositFactory()
@@ -59,6 +59,17 @@ class DepositTestCase(TestCase):
                                  exchange_rate=Decimal('2000.00'))
         self.assertEqual(deposit.merchant_coin_amount, Decimal('0.005'))
         self.assertEqual(deposit.fee_coin_amount, Decimal('0.000025'))
+
+    def test_factory_no_device(self):
+        deposit = DepositFactory(device=None)
+        self.assertIsNone(deposit.device)
+        self.assertEqual(deposit.currency,
+                         deposit.account.merchant.currency)
+
+    def test_merchant(self):
+        deposit = DepositFactory()
+        self.assertEqual(deposit.merchant,
+                         deposit.account.merchant)
 
     def test_status(self):
         deposit = DepositFactory()

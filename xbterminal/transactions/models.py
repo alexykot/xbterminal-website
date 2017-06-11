@@ -75,7 +75,11 @@ class Deposit(models.Model):
     time_cancelled = models.DateTimeField(null=True)
 
     def __str__(self):
-        return self.uid
+        return str(self.pk)
+
+    @property
+    def merchant(self):
+        return self.account.merchant
 
     @property
     def exchange_rate(self):

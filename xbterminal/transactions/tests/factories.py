@@ -5,7 +5,7 @@ import factory
 
 from transactions import models
 from transactions.constants import BTC_DEC_PLACES
-from website.tests.factories import DeviceFactory
+from website.tests.factories import AccountFactory, DeviceFactory
 from wallet.constants import BIP44_COIN_TYPES
 from wallet.tests.factories import AddressFactory
 
@@ -22,8 +22,11 @@ class DepositFactory(factory.DjangoModelFactory):
             right_digits=2,
             positive=True)
 
-    account = factory.SelfAttribute('device.account')
-    device = factory.SubFactory(DeviceFactory)
+    account = factory.SubFactory(AccountFactory)
+    device = factory.SubFactory(
+        DeviceFactory,
+        merchant=factory.SelfAttribute('..account.merchant'),
+        account=factory.SelfAttribute('..account'))
     currency = factory.SelfAttribute('account.merchant.currency')
     amount = factory.Faker(
         'pydecimal',
