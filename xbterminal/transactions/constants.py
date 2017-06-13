@@ -10,7 +10,7 @@ BTC_MIN_OUTPUT = Decimal('0.00005460')
 BTC_MIN_FEE = Decimal('0.00005000')
 
 DEPOSIT_TIMEOUT = datetime.timedelta(minutes=15)
-DEPOSIT_VALIDATION_TIMEOUT = datetime.timedelta(minutes=30)
+DEPOSIT_BROADCAST_TIMEOUT = datetime.timedelta(minutes=30)
 DEPOSIT_CONFIRMATION_TIMEOUT = datetime.timedelta(minutes=180)
 
 PAYMENT_TYPES = Choices(

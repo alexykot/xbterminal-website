@@ -79,6 +79,8 @@ class DepositTestCase(TestCase):
         deposit.paid_coin_amount = deposit.coin_amount
         deposit.time_received = timezone.now()
         self.assertEqual(deposit.status, 'received')
+        deposit.time_broadcasted = timezone.now()
+        self.assertEqual(deposit.status, 'broadcasted')
         deposit.time_notified = timezone.now()
         self.assertEqual(deposit.status, 'notified')
         deposit.time_confirmed = timezone.now()

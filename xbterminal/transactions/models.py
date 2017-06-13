@@ -10,7 +10,7 @@ from wallet.constants import BIP44_COIN_TYPES
 from transactions.constants import (
     BTC_DEC_PLACES,
     DEPOSIT_TIMEOUT,
-    DEPOSIT_VALIDATION_TIMEOUT,
+    DEPOSIT_BROADCAST_TIMEOUT,
     DEPOSIT_CONFIRMATION_TIMEOUT,
     PAYMENT_TYPES)
 
@@ -69,6 +69,7 @@ class Deposit(models.Model):
 
     time_created = models.DateTimeField(auto_now_add=True)
     time_received = models.DateTimeField(null=True)
+    time_broadcasted = models.DateTimeField(null=True)
     time_notified = models.DateTimeField(null=True)
     time_confirmed = models.DateTimeField(null=True)
     time_refunded = models.DateTimeField(null=True)
@@ -113,6 +114,8 @@ class Deposit(models.Model):
             underpaid - incoming transaction received,
                 but amount is not sufficient
             received - incoming transaction received, full amount
+            broadcasted: all incoming transactions are
+                reached the confidence threshold
             notified - customer notified about successful payment
             confirmed - incoming transaction confirmed
             refunded - money sent back to customer
@@ -135,7 +138,14 @@ class Deposit(models.Model):
                     return 'unconfirmed'
                 else:
                     return 'notified'
-        if not self.time_received:
+        if self.time_received:
+            if self.time_created + DEPOSIT_BROADCAST_TIMEOUT < timezone.now():
+                return 'failed'
+            elif self.time_broadcasted:
+                return 'broadcasted'
+            else:
+                return 'received'
+        else:
             if self.time_created + DEPOSIT_TIMEOUT < timezone.now():
                 return 'timeout'
             else:
@@ -143,11 +153,6 @@ class Deposit(models.Model):
                     return 'underpaid'
                 else:
                     return 'new'
-        else:
-            if self.time_created + DEPOSIT_VALIDATION_TIMEOUT < timezone.now():
-                return 'failed'
-            else:
-                return 'received'
 
     @atomic
     def save(self, *args, **kwargs):
