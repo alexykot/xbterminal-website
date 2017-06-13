@@ -11,7 +11,7 @@ from transactions.constants import (
     BTC_MIN_OUTPUT,
     PAYMENT_TYPES)
 from transactions.models import Deposit
-from transactions.exceptions import InsufficientFundsError
+from operations.exceptions import InsufficientFunds
 from operations.blockchain import BlockChain, get_txid
 from operations.services.wrappers import get_exchange_rate
 from wallet.constants import BIP44_COIN_TYPES
@@ -98,7 +98,7 @@ def validate_payment(deposit, transactions):
     deposit.paid_coin_amount = received_amount
     deposit.save()
     if deposit.status == 'underpaid':
-        raise InsufficientFundsError
+        raise InsufficientFunds
 
 
 def wait_for_payment(deposit_id):
@@ -138,7 +138,7 @@ def wait_for_payment(deposit_id):
         # Validate payment
         try:
             validate_payment(deposit, transactions)
-        except InsufficientFundsError:
+        except InsufficientFunds:
             # Don't cancel task, wait for next transaction
             pass
         except Exception as error:

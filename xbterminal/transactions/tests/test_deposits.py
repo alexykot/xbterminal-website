@@ -10,8 +10,8 @@ from transactions.deposits import (
     prepare_deposit,
     validate_payment,
     wait_for_payment)
-from transactions.exceptions import InsufficientFundsError
 from transactions.tests.factories import DepositFactory
+from operations.exceptions import InsufficientFunds
 from wallet.constants import BIP44_COIN_TYPES
 from wallet.tests.factories import WalletKeyFactory
 from website.tests.factories import AccountFactory, DeviceFactory
@@ -126,7 +126,7 @@ class ValidatePaymentTestCase(TestCase):
             }],
         })
 
-        with self.assertRaises(InsufficientFundsError):
+        with self.assertRaises(InsufficientFunds):
             validate_payment(deposit, transactions)
         self.assertEqual(bc_mock.sign_raw_transaction.call_count, 1)
         deposit.refresh_from_db()
@@ -235,7 +235,7 @@ class WaitForPaymentTestCase(TestCase):
         def validate(deposit, _):
             deposit.paid_coin_amount = Decimal('0.001')
             deposit.save()
-            raise InsufficientFundsError
+            raise InsufficientFunds
 
         validate_mock.side_effect = validate
         deposit = DepositFactory()
@@ -287,7 +287,7 @@ class WaitForPaymentTestCase(TestCase):
             incoming_tx_id_1,
             incoming_tx_id_2,
         ]
-        validate_mock.side_effect = [InsufficientFundsError, None]
+        validate_mock.side_effect = [InsufficientFunds, None]
         deposit = DepositFactory()
         wait_for_payment(deposit.pk)
         wait_for_payment(deposit.pk)
