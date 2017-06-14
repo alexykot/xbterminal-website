@@ -9,9 +9,13 @@ from transactions.constants import PAYMENT_TYPES
 from transactions.deposits import (
     prepare_deposit,
     validate_payment,
-    wait_for_payment)
+    wait_for_payment,
+    wait_for_confidence)
 from transactions.tests.factories import DepositFactory
-from operations.exceptions import InsufficientFunds
+from operations.exceptions import (
+    InsufficientFunds,
+    DoubleSpend,
+    TransactionModified)
 from wallet.constants import BIP44_COIN_TYPES
 from wallet.tests.factories import WalletKeyFactory
 from website.tests.factories import AccountFactory, DeviceFactory
@@ -51,6 +55,9 @@ class PrepareDepositTestCase(TestCase):
         self.assertEqual(get_rate_mock.call_args[0][0],
                          deposit.currency.name)
         self.assertEqual(run_task_mock.call_count, 1)
+        self.assertEqual(run_task_mock.call_args[0][0].__name__,
+                         'wait_for_payment')
+        self.assertEqual(run_task_mock.call_args[0][1], [deposit.pk])
 
     @patch('transactions.deposits.BlockChain')
     @patch('transactions.deposits.get_exchange_rate')
@@ -170,8 +177,9 @@ class WaitForPaymentTestCase(TestCase):
     @patch('transactions.deposits.BlockChain')
     @patch('transactions.deposits.get_txid')
     @patch('transactions.deposits.validate_payment')
-    def test_validate_payment(self, validate_mock, get_txid_mock,
-                              bc_cls_mock, cancel_mock):
+    @patch('transactions.deposits.run_periodic_task')
+    def test_validate_payment(self, run_task_mock, validate_mock,
+                              get_txid_mock, bc_cls_mock, cancel_mock):
         customer_address = 'a' * 32
         incoming_tx = Mock()
         incoming_tx_id = '1' * 64
@@ -190,6 +198,10 @@ class WaitForPaymentTestCase(TestCase):
         self.assertEqual(validate_mock.call_args[0][0], deposit)
         self.assertEqual(validate_mock.call_args[0][1], [incoming_tx])
         self.assertIs(cancel_mock.called, True)
+        self.assertIs(run_task_mock.called, True)
+        self.assertEqual(run_task_mock.call_args[0][0].__name__,
+                         'wait_for_confidence')
+        self.assertEqual(run_task_mock.call_args[0][1], [deposit.pk])
 
         deposit.refresh_from_db()
         self.assertEqual(deposit.refund_address, customer_address)
@@ -201,7 +213,8 @@ class WaitForPaymentTestCase(TestCase):
     @patch('transactions.deposits.BlockChain')
     @patch('transactions.deposits.get_txid')
     @patch('transactions.deposits.validate_payment')
-    def test_mutilple_tx(self, validate_mock, get_txid_mock,
+    @patch('transactions.deposits.run_periodic_task')
+    def test_mutilple_tx(self, run_task_mock, validate_mock, get_txid_mock,
                          bc_cls_mock, cancel_mock):
         bc_cls_mock.return_value = Mock(**{
             'get_unspent_transactions.return_value': [Mock(), Mock()],
@@ -215,6 +228,7 @@ class WaitForPaymentTestCase(TestCase):
 
         self.assertEqual(validate_mock.call_count, 1)
         self.assertIs(cancel_mock.called, True)
+        self.assertIs(run_task_mock.called, True)
         deposit.refresh_from_db()
         self.assertEqual(deposit.incoming_tx_ids,
                          [incoming_tx_id_1, incoming_tx_id_2])
@@ -271,7 +285,8 @@ class WaitForPaymentTestCase(TestCase):
     @patch('transactions.deposits.BlockChain')
     @patch('transactions.deposits.get_txid')
     @patch('transactions.deposits.validate_payment')
-    def test_repeat(self, validate_mock, get_txid_mock,
+    @patch('transactions.deposits.run_periodic_task')
+    def test_repeat(self, run_task_mock, validate_mock, get_txid_mock,
                     bc_cls_mock, cancel_mock):
         bc_cls_mock.return_value = Mock(**{
             'get_unspent_transactions.side_effect': [
@@ -296,3 +311,128 @@ class WaitForPaymentTestCase(TestCase):
         self.assertEqual(deposit.incoming_tx_ids,
                          [incoming_tx_id_1, incoming_tx_id_2])
         self.assertEqual(deposit.status, 'received')
+
+
+class WaitForConfidenceTestCase(TestCase):
+
+    @patch('transactions.deposits.cancel_current_task')
+    @patch('transactions.deposits.BlockChain')
+    def test_already_broadcasted(self, bc_cls_mock, cancel_mock):
+        deposit = DepositFactory(
+            time_received=timezone.now(),
+            time_broadcasted=timezone.now())
+        wait_for_confidence(deposit.pk)
+        self.assertIs(cancel_mock.called, True)
+        self.assertIs(bc_cls_mock.called, False)
+
+    @patch('transactions.deposits.cancel_current_task')
+    @patch('transactions.deposits.BlockChain')
+    @patch('transactions.deposits.is_tx_reliable')
+    def test_tx_not_reliable(self, is_reliable_mock, bc_cls_mock,
+                             cancel_mock):
+        deposit = DepositFactory(
+            time_received=timezone.now(),
+            incoming_tx_ids=['0' * 64])
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'is_tx_confirmed.return_value': False,
+        })
+        is_reliable_mock.return_value = False
+        wait_for_confidence(deposit.pk)
+
+        self.assertIs(cancel_mock.called, False)
+        self.assertEqual(bc_mock.is_tx_confirmed.call_count, 1)
+        self.assertEqual(is_reliable_mock.call_count, 1)
+
+    @patch('transactions.deposits.cancel_current_task')
+    @patch('transactions.deposits.BlockChain')
+    @patch('transactions.deposits.is_tx_reliable')
+    def test_multiple_tx_not_reliable(self, is_reliable_mock,
+                                      bc_cls_mock, cancel_mock):
+        deposit = DepositFactory(
+            time_received=timezone.now(),
+            incoming_tx_ids=['0' * 64, '1' * 64])
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'is_tx_confirmed.side_effect': [False, False],
+        })
+        is_reliable_mock.side_effect = [False, False]
+        wait_for_confidence(deposit.pk)
+
+        self.assertIs(cancel_mock.called, False)
+        self.assertEqual(bc_mock.is_tx_confirmed.call_count, 1)
+        self.assertEqual(is_reliable_mock.call_count, 1)
+
+    @patch('transactions.deposits.cancel_current_task')
+    @patch('transactions.deposits.BlockChain')
+    @patch('transactions.deposits.is_tx_reliable')
+    def test_double_spend(self, is_reliable_mock,
+                          bc_cls_mock, cancel_mock):
+        incoming_tx_id = '0' * 64
+        deposit = DepositFactory(
+            time_received=timezone.now(),
+            incoming_tx_ids=[incoming_tx_id])
+        bc_cls_mock.return_value = Mock(**{
+            'is_tx_confirmed.side_effect': DoubleSpend('1' * 64),
+        })
+        wait_for_confidence(deposit.pk)
+
+        self.assertIs(is_reliable_mock.called, False)
+        self.assertIs(cancel_mock.called, True)
+        deposit.refresh_from_db()
+        self.assertEqual(deposit.incoming_tx_ids, [incoming_tx_id])
+
+    @patch('transactions.deposits.cancel_current_task')
+    @patch('transactions.deposits.BlockChain')
+    @patch('transactions.deposits.is_tx_reliable')
+    def test_tx_modified(self, is_reliable_mock,
+                         bc_cls_mock, cancel_mock):
+        deposit = DepositFactory(
+            time_received=timezone.now(),
+            incoming_tx_ids=['0' * 64])
+        final_tx_id = 'e' * 64
+        bc_cls_mock.return_value = Mock(**{
+            'is_tx_confirmed.side_effect': TransactionModified(final_tx_id),
+        })
+        wait_for_confidence(deposit.pk)
+
+        self.assertIs(is_reliable_mock.called, False)
+        self.assertIs(cancel_mock.called, False)
+        deposit.refresh_from_db()
+        self.assertEqual(deposit.incoming_tx_ids, [final_tx_id])
+        self.assertIsNone(deposit.time_broadcasted)
+
+    @patch('transactions.deposits.cancel_current_task')
+    @patch('transactions.deposits.BlockChain')
+    @patch('transactions.deposits.is_tx_reliable')
+    def test_broadcasted(self, is_reliable_mock,
+                         bc_cls_mock, cancel_mock):
+        deposit = DepositFactory(
+            time_received=timezone.now(),
+            incoming_tx_ids=['0' * 64])
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'is_tx_confirmed.return_value': False,
+        })
+        is_reliable_mock.return_value = True
+        wait_for_confidence(deposit.pk)
+
+        self.assertIs(bc_mock.is_tx_confirmed.called, True)
+        self.assertIs(is_reliable_mock.called, True)
+        self.assertIs(cancel_mock.called, True)
+        deposit.refresh_from_db()
+        self.assertIsNotNone(deposit.time_broadcasted)
+
+    @patch('transactions.deposits.cancel_current_task')
+    @patch('transactions.deposits.BlockChain')
+    @patch('transactions.deposits.is_tx_reliable')
+    def test_confirmed(self, is_reliable_mock, bc_cls_mock, cancel_mock):
+        deposit = DepositFactory(
+            time_received=timezone.now(),
+            incoming_tx_ids=['0' * 64])
+        bc_cls_mock.return_value = Mock(**{
+            'is_tx_confirmed.return_value': True,
+        })
+        wait_for_confidence(deposit.pk)
+
+        self.assertIs(is_reliable_mock.called, False)
+        self.assertIs(cancel_mock.called, True)
+        deposit.refresh_from_db()
+        self.assertIsNotNone(deposit.time_broadcasted)

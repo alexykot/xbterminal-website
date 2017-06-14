@@ -5,15 +5,19 @@ from django.utils import timezone
 
 from constance import config
 
+from api.utils.urls import get_admin_url
 from common.rq_helpers import run_periodic_task, cancel_current_task
 from transactions.constants import (
     BTC_DEC_PLACES,
     BTC_MIN_OUTPUT,
     PAYMENT_TYPES)
 from transactions.models import Deposit
-from operations.exceptions import InsufficientFunds
+from operations.exceptions import (
+    InsufficientFunds,
+    DoubleSpend,
+    TransactionModified)
 from operations.blockchain import BlockChain, get_txid
-from operations.services.wrappers import get_exchange_rate
+from operations.services.wrappers import get_exchange_rate, is_tx_reliable
 from wallet.constants import BIP44_COIN_TYPES
 from wallet.models import Address
 from website.models import Account, Device
@@ -146,8 +150,65 @@ def wait_for_payment(deposit_id):
             logger.exception(error)
         else:
             cancel_current_task()
-            # Update status
+            # Update status and wait for confidence
             deposit.payment_type = PAYMENT_TYPES.BIP21
             deposit.time_received = timezone.now()
             deposit.save()
+            run_periodic_task(wait_for_confidence, [deposit.pk], interval=5)
             logger.info('payment received (%s)', deposit.uid)
+
+
+def wait_for_confidence(deposit_id):
+    """
+    Periodic task for monitoring status of incoming transactions
+    Accepts:
+        deposit_id: Deposit ID, integer
+    """
+    deposit = Deposit.objects.get(pk=deposit_id)
+    if deposit.status == 'failed':
+        # Timeout, cancel job
+        cancel_current_task()
+    if deposit.time_broadcasted is not None:
+        # Confidence threshold reached, cancel job
+        cancel_current_task()
+        return
+    bc = BlockChain(deposit.bitcoin_network)
+    for incoming_tx_id in deposit.incoming_tx_ids:
+        try:
+            tx_confirmed = bc.is_tx_confirmed(incoming_tx_id, minconf=1)
+        except DoubleSpend:
+            # Report double spend, cancel job
+            logger.error(
+                'double spend detected',
+                extra={'data': {
+                    'deposit_id': deposit.pk,
+                    'deposit_admin_url': get_admin_url(deposit),
+                }})
+            cancel_current_task()
+            return
+        except TransactionModified as error:
+            # Transaction has been modified (malleability attack)
+            logger.warning(
+                'transaction has been modified',
+                extra={'data': {
+                    'deposit_id': deposit.pk,
+                    'deposit_admin_url': get_admin_url(deposit),
+                }})
+            deposit.incoming_tx_ids = [
+                error.another_tx_id if tx_id == incoming_tx_id else tx_id
+                for tx_id in deposit.incoming_tx_ids]
+            deposit.save()
+            break
+        if tx_confirmed:
+            # Already confirmed, skip confidence check
+            continue
+        if not is_tx_reliable(incoming_tx_id,
+                              deposit.merchant.get_tx_confidence_threshold(),
+                              deposit.bitcoin_network):
+            # Break cycle, wait for confidence
+            break
+    else:
+        cancel_current_task()
+        deposit.time_broadcasted = timezone.now()
+        deposit.save()
+        logger.info('payment confidence reached (%s)', deposit.pk)
