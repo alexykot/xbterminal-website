@@ -453,7 +453,9 @@ class WaitForConfidenceTestCase(TestCase):
     @patch('operations.withdrawal.cancel_current_task')
     @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.is_tx_reliable')
-    def test_tx_broadcasted(self, tx_check_mock, bc_cls_mock, cancel_mock):
+    @patch('operations.withdrawal.run_periodic_task')
+    def test_tx_broadcasted(self, run_task_mock,
+                            tx_check_mock, bc_cls_mock, cancel_mock):
         order = WithdrawalOrderFactory.create(
             time_sent=timezone.now())
         bc_cls_mock.return_value = Mock(**{
@@ -463,7 +465,10 @@ class WaitForConfidenceTestCase(TestCase):
         withdrawal.wait_for_confidence(order.uid)
         order.refresh_from_db()
         self.assertEqual(order.status, 'broadcasted')
-        self.assertTrue(cancel_mock.called)
+        self.assertIs(cancel_mock.called, True)
+        self.assertIs(run_task_mock.called, True)
+        self.assertEqual(run_task_mock.call_args[0][0].__name__,
+                         'wait_for_confirmation')
 
     @patch('operations.withdrawal.cancel_current_task')
     @patch('operations.withdrawal.BlockChain')
@@ -525,7 +530,8 @@ class WaitForProcessorTestCase(TestCase):
 
     @patch('operations.withdrawal.cancel_current_task')
     @patch('operations.withdrawal.instantfiat.check_transfer')
-    def test_completed(self, check_mock, cancel_mock):
+    @patch('operations.withdrawal.run_periodic_task')
+    def test_completed(self, run_task_mock, check_mock, cancel_mock):
         order = WithdrawalOrderFactory.create()
         tx_id = '4' * 64
         check_mock.return_value = (True, tx_id)
@@ -539,6 +545,7 @@ class WaitForProcessorTestCase(TestCase):
         self.assertEqual(order.status, 'broadcasted')
         self.assertEqual(order.outgoing_tx_id, tx_id)
         self.assertTrue(cancel_mock.called)
+        self.assertIs(run_task_mock.called, True)
 
     @patch('operations.withdrawal.cancel_current_task')
     @patch('operations.withdrawal.instantfiat.check_transfer')
