@@ -10,6 +10,8 @@ from common.rq_helpers import run_periodic_task, cancel_current_task
 from transactions.constants import (
     BTC_DEC_PLACES,
     BTC_MIN_OUTPUT,
+    DEPOSIT_CONFIDENCE_TIMEOUT,
+    DEPOSIT_CONFIRMATION_TIMEOUT,
     PAYMENT_TYPES)
 from transactions.models import Deposit
 from operations.exceptions import (
@@ -165,7 +167,7 @@ def wait_for_confidence(deposit_id):
         deposit_id: Deposit ID, integer
     """
     deposit = Deposit.objects.get(pk=deposit_id)
-    if deposit.status == 'failed':
+    if deposit.time_created + DEPOSIT_CONFIDENCE_TIMEOUT < timezone.now():
         # Timeout, cancel job
         cancel_current_task()
     if deposit.time_broadcasted is not None:
@@ -211,4 +213,42 @@ def wait_for_confidence(deposit_id):
         cancel_current_task()
         deposit.time_broadcasted = timezone.now()
         deposit.save()
+        run_periodic_task(wait_for_confirmation, [deposit.pk], interval=30)
         logger.info('payment confidence reached (%s)', deposit.pk)
+
+
+def wait_for_confirmation(deposit_id):
+    """
+    Periodic task for confirmation monitoring
+    Accepts:
+        deposit_id: deposit ID, integer
+    """
+    deposit = Deposit.objects.get(pk=deposit_id)
+    if deposit.time_created + DEPOSIT_CONFIRMATION_TIMEOUT < timezone.now():
+        # Timeout, cancel job
+        cancel_current_task()
+    bc = BlockChain(deposit.bitcoin_network)
+    for incoming_tx_id in deposit.incoming_tx_ids:
+        try:
+            tx_confirmed = bc.is_tx_confirmed(incoming_tx_id)
+        except TransactionModified as error:
+            # Transaction has been modified (malleability attack)
+            logger.warning(
+                'transaction has been modified',
+                extra={'data': {
+                    'deposit_id': deposit.pk,
+                    'deposit_admin_url': get_admin_url(deposit),
+                }})
+            deposit.incoming_tx_ids = [
+                error.another_tx_id if tx_id == incoming_tx_id else tx_id
+                for tx_id in deposit.incoming_tx_ids]
+            deposit.save()
+            return
+        if not tx_confirmed:
+            # Do not check other transactions
+            break
+    else:
+        cancel_current_task()
+        deposit.time_confirmed = timezone.now()
+        deposit.save()
+        logger.info('payment confirmed (%s)', deposit.pk)

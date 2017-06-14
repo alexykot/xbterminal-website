@@ -10,7 +10,7 @@ from wallet.constants import BIP44_COIN_TYPES
 from transactions.constants import (
     BTC_DEC_PLACES,
     DEPOSIT_TIMEOUT,
-    DEPOSIT_BROADCAST_TIMEOUT,
+    DEPOSIT_CONFIDENCE_TIMEOUT,
     DEPOSIT_CONFIRMATION_TIMEOUT,
     PAYMENT_TYPES)
 
@@ -139,7 +139,7 @@ class Deposit(models.Model):
                 else:
                     return 'notified'
         if self.time_received:
-            if self.time_created + DEPOSIT_BROADCAST_TIMEOUT < timezone.now():
+            if self.time_created + DEPOSIT_CONFIDENCE_TIMEOUT < timezone.now():
                 return 'failed'
             elif self.time_broadcasted:
                 return 'broadcasted'
