@@ -11,12 +11,14 @@ from transactions.deposits import (
     validate_payment,
     wait_for_payment,
     wait_for_confidence,
-    wait_for_confirmation)
+    wait_for_confirmation,
+    refund_deposit)
 from transactions.tests.factories import DepositFactory
 from operations.exceptions import (
     InsufficientFunds,
     DoubleSpend,
-    TransactionModified)
+    TransactionModified,
+    RefundError)
 from wallet.constants import BIP44_COIN_TYPES
 from wallet.tests.factories import WalletKeyFactory
 from website.tests.factories import AccountFactory, DeviceFactory
@@ -498,3 +500,100 @@ class WaitForConfirmationTestCase(TestCase):
         deposit.refresh_from_db()
         self.assertEqual(deposit.incoming_tx_ids, ['c' * 64, 'b' * 64])
         self.assertIsNone(deposit.time_confirmed)
+
+
+class RefundDepositTestCase(TestCase):
+
+    @patch('transactions.deposits.BlockChain')
+    @patch('transactions.deposits.create_tx')
+    def test_refund(self, create_tx_mock, bc_cls_mock):
+        deposit = DepositFactory(
+            amount=Decimal('10.00'),
+            exchange_rate=Decimal('1000.00'),
+            refund_address='1KYwqZshnYNUNweXrDkCAdLaixxPhePRje')
+        refund_tx_id = '5' * 64
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'get_raw_unspent_outputs.return_value': [{
+                'txid': '1' * 64,
+                'amount': Decimal('0.01'),
+            }],
+            'get_tx_fee.return_value': Decimal('0.0005'),
+            'send_raw_transaction.return_value': refund_tx_id,
+        })
+        create_tx_mock.return_value = Mock(**{'as_hex.return_value': 'test'})
+        refund_deposit(deposit)
+
+        deposit.refresh_from_db()
+        self.assertEqual(deposit.refund_tx_id, refund_tx_id)
+        self.assertEqual(deposit.status, 'refunded')
+        self.assertEqual(bc_mock.get_raw_unspent_outputs.call_count, 1)
+        self.assertEqual(bc_mock.get_raw_unspent_outputs.call_args[0][0],
+                         deposit.deposit_address.address)
+        self.assertEqual(bc_mock.get_tx_fee.call_args[0], (1, 1))
+        tx_inputs = create_tx_mock.call_args[0][0]
+        self.assertEqual(len(tx_inputs), 1)
+        self.assertIn('txid', tx_inputs[0])
+        self.assertIn('private_key', tx_inputs[0])
+        tx_outputs = create_tx_mock.call_args[0][1]
+        self.assertEqual(len(tx_outputs.keys()), 1)
+        self.assertEqual(tx_outputs[deposit.refund_address],
+                         Decimal('0.0095'))
+
+    def test_already_notified(self):
+        deposit = DepositFactory(
+            time_received=timezone.now(),
+            time_broadcasted=timezone.now(),
+            time_notified=timezone.now())
+        with self.assertRaises(RefundError) as context:
+            refund_deposit(deposit)
+        self.assertEqual(context.exception.message,
+                         'User already notified')
+
+    def test_already_refunded(self):
+        deposit = DepositFactory(time_refunded=timezone.now())
+        with self.assertRaises(RefundError) as context:
+            refund_deposit(deposit)
+        self.assertEqual(context.exception.message,
+                         'Deposit already refunded')
+
+    def test_no_refund_address(self):
+        deposit = DepositFactory(
+            refund_address=None,
+            time_cancelled=timezone.now())
+        with self.assertRaises(RefundError) as context:
+            refund_deposit(deposit)
+        self.assertEqual(context.exception.message,
+                         'No refund address')
+
+    @patch('transactions.deposits.BlockChain')
+    def test_nothing_to_send(self, bc_cls_mock):
+        deposit = DepositFactory(
+            amount=Decimal('10.00'),
+            exchange_rate=Decimal('1000.00'),
+            refund_address='1KYwqZshnYNUNweXrDkCAdLaixxPhePRje')
+        bc_cls_mock.return_value = Mock(**{
+            'get_raw_unspent_outputs.return_value': [],
+            'get_tx_fee.return_value': Decimal('0.0005'),
+        })
+        with self.assertRaises(RefundError) as context:
+            refund_deposit(deposit)
+        self.assertEqual(context.exception.message,
+                         'Nothing to refund')
+
+    @patch('transactions.deposits.BlockChain')
+    def test_dust_output(self, bc_cls_mock):
+        deposit = DepositFactory(
+            amount=Decimal('0.50'),
+            exchange_rate=Decimal('1000.00'),
+            refund_address='1KYwqZshnYNUNweXrDkCAdLaixxPhePRje')
+        bc_cls_mock.return_value = Mock(**{
+            'get_raw_unspent_outputs.return_value': [{
+                'txid': '1' * 64,
+                'amount': Decimal('0.0005'),
+            }],
+            'get_tx_fee.return_value': Decimal('0.000499'),
+        })
+        with self.assertRaises(RefundError) as context:
+            refund_deposit(deposit)
+        self.assertEqual(context.exception.message,
+                         'Output is below dust threshold')

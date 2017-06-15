@@ -14,10 +14,12 @@ from transactions.constants import (
     DEPOSIT_CONFIRMATION_TIMEOUT,
     PAYMENT_TYPES)
 from transactions.models import Deposit
+from transactions.utils.tx import create_tx
 from operations.exceptions import (
     InsufficientFunds,
     DoubleSpend,
-    TransactionModified)
+    TransactionModified,
+    RefundError)
 from operations.blockchain import BlockChain, get_txid
 from operations.services.wrappers import get_exchange_rate, is_tx_reliable
 from wallet.constants import BIP44_COIN_TYPES
@@ -252,3 +254,40 @@ def wait_for_confirmation(deposit_id):
         deposit.time_confirmed = timezone.now()
         deposit.save()
         logger.info('payment confirmed (%s)', deposit.pk)
+
+
+def refund_deposit(deposit):
+    """
+    Send all money back to customer
+    Accepts:
+        deposit: Deposit instance
+    """
+    if deposit.time_notified is not None:
+        raise RefundError('User already notified')
+    if deposit.time_refunded is not None:
+        raise RefundError('Deposit already refunded')
+    if not deposit.refund_address:
+        raise RefundError('No refund address')
+    bc = BlockChain(deposit.bitcoin_network)
+    private_key = deposit.deposit_address.get_private_key()
+    tx_inputs = []
+    amount = BTC_DEC_PLACES
+    for output in bc.get_raw_unspent_outputs(deposit.deposit_address.address):
+        tx_inputs.append(dict(output, private_key=private_key))
+        amount += output['amount']
+    if amount == 0:
+        raise RefundError('Nothing to refund')
+    amount -= bc.get_tx_fee(1, 1)
+    if amount < BTC_MIN_OUTPUT:
+        raise RefundError('Output is below dust threshold')
+    tx_outputs = {deposit.refund_address: amount}
+    refund_tx = create_tx(tx_inputs, tx_outputs)
+    deposit.refund_tx_id = bc.send_raw_transaction(refund_tx.as_hex())
+    deposit.time_refunded = timezone.now()
+    deposit.save()
+    logger.warning(
+        'payment returned',
+        extra={'data': {
+            'deposit_id': deposit.pk,
+            'deposit_admin_url': get_admin_url(deposit),
+        }})
