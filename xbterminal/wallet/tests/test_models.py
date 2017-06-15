@@ -106,3 +106,8 @@ class AddressTestCase(TestCase):
         self.assertNotEqual(address_2.wallet_account,
                             address_1.wallet_account)
         self.assertEqual(wallet_key.walletaccount_set.count(), 2)
+
+    def test_get_private_key(self):
+        address = AddressFactory()
+        private_key = address.get_private_key()
+        self.assertEqual(private_key.address(), address.address)

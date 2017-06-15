@@ -6,7 +6,7 @@ from django.db.models import Max
 from django.db.transaction import atomic
 
 from wallet.constants import BIP44_PURPOSE, BIP44_COIN_TYPES, MAX_INDEX
-from wallet.utils.keys import generate_p2pkh_script
+from wallet.utils.keys import derive_key, generate_p2pkh_script
 
 
 class WalletKey(models.Model):
@@ -94,6 +94,13 @@ class Address(models.Model):
             self.wallet_account.parent_key.private_key,
             self.relative_path,
             as_address=as_address)
+
+    def get_private_key(self):
+        """
+        Returns corresponding private key (BIP32Node instance)
+        """
+        return derive_key(self.wallet_account.parent_key.private_key,
+                          self.relative_path)
 
     @atomic
     def save(self, *args, **kwargs):
