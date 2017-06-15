@@ -74,6 +74,19 @@ class BlockChainTestCase(TestCase):
         self.assertEqual(proxy_mock.listunspent.call_args[1]['minconf'], 1)
 
     @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    def test_get_raw_unspent_outputs(self, proxy_cls_mock):
+        proxy_cls_mock.return_value = proxy_mock = Mock(**{
+            'call.return_value': [{'txid': '1' * 64}],
+        })
+        bc = BlockChain('mainnet')
+        outputs = bc.get_raw_unspent_outputs('test', minconf=1)
+        self.assertEqual(outputs[0]['txid'], '1' * 64)
+        self.assertTrue(proxy_mock.call.call_args[0][0], 'listunspent')
+        self.assertEqual(proxy_mock.call.call_args[0][1], 1)
+        self.assertEqual(proxy_mock.call.call_args[0][2], 9999999)
+        self.assertEqual(proxy_mock.call.call_args[0][3], ['test'])
+
+    @patch('operations.blockchain.bitcoin.rpc.Proxy')
     def test_get_unspent_transactions(self, proxy_cls_mock):
         address = '1JpY93MNoeHJ914CHLCQkdhS7TvBM68Xp6'
         transaction_mock = Mock()

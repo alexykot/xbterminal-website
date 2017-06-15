@@ -84,6 +84,20 @@ class BlockChain(object):
             out['amount'] = Decimal(out['amount']) / COIN
         return txouts
 
+    def get_raw_unspent_outputs(self, address, minconf=0):
+        """
+        Accepts:
+            address: bitcoin address, string
+        Returns:
+            list of dicts
+        """
+        results = self._proxy.call(
+            'listunspent',
+            minconf,
+            9999999,
+            [address])
+        return results
+
     def get_unspent_transactions(self, address):
         """
         Accepts:
