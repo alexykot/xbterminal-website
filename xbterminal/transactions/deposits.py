@@ -83,6 +83,7 @@ def prepare_deposit(device_or_account, amount):
     deposit.save()
     # Wait for payment
     run_periodic_task(wait_for_payment, [deposit.pk], interval=2)
+    run_periodic_task(check_deposit_status, [deposit.pk], interval=60)
     return deposit
 
 
@@ -291,3 +292,40 @@ def refund_deposit(deposit):
             'deposit_id': deposit.pk,
             'deposit_admin_url': get_admin_url(deposit),
         }})
+
+
+def check_deposit_status(deposit_id):
+    """
+    Periodic task for monitoring deposit status
+    Accepts:
+        deposit_id: deposit ID, integer
+    """
+    deposit = Deposit.objects.get(pk=deposit_id)
+    if deposit.status in ['timeout', 'cancelled']:
+        try:
+            refund_deposit(deposit)
+        except RefundError:
+            pass
+        cancel_current_task()
+    elif deposit.status == 'failed':
+        try:
+            refund_deposit(deposit)
+        except RefundError:
+            pass
+        logger.error(
+            'payment failed',
+            extra={'data': {
+                'deposit_id': deposit.pk,
+                'deposit_admin_url': get_admin_url(deposit),
+            }})
+        cancel_current_task()
+    elif deposit.status == 'unconfirmed':
+        logger.error(
+            'payment not confirmed',
+            extra={'data': {
+                'deposit_id': deposit.pk,
+                'deposit_admin_url': get_admin_url(deposit),
+            }})
+        cancel_current_task()
+    elif deposit.status in ['refunded', 'confirmed']:
+        cancel_current_task()

@@ -1,3 +1,4 @@
+import datetime
 from decimal import Decimal
 
 from django.test import TestCase
@@ -12,7 +13,8 @@ from transactions.deposits import (
     wait_for_payment,
     wait_for_confidence,
     wait_for_confirmation,
-    refund_deposit)
+    refund_deposit,
+    check_deposit_status)
 from transactions.tests.factories import DepositFactory
 from operations.exceptions import (
     InsufficientFunds,
@@ -57,10 +59,13 @@ class PrepareDepositTestCase(TestCase):
                          deposit.deposit_address.address)
         self.assertEqual(get_rate_mock.call_args[0][0],
                          deposit.currency.name)
-        self.assertEqual(run_task_mock.call_count, 1)
-        self.assertEqual(run_task_mock.call_args[0][0].__name__,
+        self.assertEqual(run_task_mock.call_count, 2)
+        self.assertEqual(run_task_mock.call_args_list[0][0][0].__name__,
                          'wait_for_payment')
-        self.assertEqual(run_task_mock.call_args[0][1], [deposit.pk])
+        self.assertEqual(run_task_mock.call_args_list[0][0][1], [deposit.pk])
+        self.assertEqual(run_task_mock.call_args_list[1][0][0].__name__,
+                         'check_deposit_status')
+        self.assertEqual(run_task_mock.call_args_list[1][0][1], [deposit.pk])
 
     @patch('transactions.deposits.BlockChain')
     @patch('transactions.deposits.get_exchange_rate')
@@ -78,7 +83,7 @@ class PrepareDepositTestCase(TestCase):
         self.assertEqual(
             deposit.deposit_address.wallet_account.parent_key.coin_type,
             BIP44_COIN_TYPES.BTC)
-        self.assertEqual(run_task_mock.call_count, 1)
+        self.assertEqual(run_task_mock.call_count, 2)
 
 
 class ValidatePaymentTestCase(TestCase):
@@ -597,3 +602,89 @@ class RefundDepositTestCase(TestCase):
             refund_deposit(deposit)
         self.assertEqual(context.exception.message,
                          'Output is below dust threshold')
+
+
+class CheckDepositStatusTestCase(TestCase):
+
+    @patch('transactions.deposits.cancel_current_task')
+    def test_new(self, cancel_mock):
+        deposit = DepositFactory()
+        check_deposit_status(deposit.pk)
+        self.assertIs(cancel_mock.called, False)
+
+    @patch('transactions.deposits.cancel_current_task')
+    def test_notified(self, cancel_mock):
+        deposit = DepositFactory(
+            time_notified=timezone.now())
+        check_deposit_status(deposit.pk)
+        self.assertIs(cancel_mock.called, False)
+
+    @patch('transactions.deposits.cancel_current_task')
+    def test_confirmed(self, cancel_mock):
+        deposit = DepositFactory(
+            time_notified=timezone.now(),
+            time_confirmed=timezone.now())
+        check_deposit_status(deposit.pk)
+        self.assertIs(cancel_mock.called, True)
+
+    @patch('transactions.deposits.cancel_current_task')
+    @patch('transactions.deposits.refund_deposit')
+    @patch('transactions.deposits.logger')
+    def test_timeout(self, logger_mock, refund_mock, cancel_mock):
+        deposit = DepositFactory(
+            time_created=timezone.now() - datetime.timedelta(hours=1))
+        check_deposit_status(deposit.pk)
+        self.assertIs(cancel_mock.called, True)
+        self.assertIs(refund_mock.called, True)
+        self.assertIs(logger_mock.error.called, False)
+
+    @patch('transactions.deposits.cancel_current_task')
+    @patch('transactions.deposits.refund_deposit')
+    @patch('transactions.deposits.logger')
+    def test_failed(self, logger_mock, refund_mock, cancel_mock):
+        deposit = DepositFactory(
+            time_created=timezone.now() - datetime.timedelta(hours=2),
+            time_received=timezone.now() - datetime.timedelta(hours=1))
+        check_deposit_status(deposit.pk)
+        self.assertIs(cancel_mock.called, True)
+        self.assertIs(refund_mock.called, True)
+        self.assertIs(logger_mock.error.called, True)
+
+    @patch('transactions.deposits.cancel_current_task')
+    @patch('transactions.deposits.refund_deposit')
+    @patch('transactions.deposits.logger')
+    def test_unconfirmed(self, logger_mock, refund_mock, cancel_mock):
+        deposit = DepositFactory(
+            time_created=timezone.now() - datetime.timedelta(hours=4),
+            time_received=timezone.now() - datetime.timedelta(hours=3),
+            time_broadcasted=timezone.now() - datetime.timedelta(hours=3),
+            time_notified=timezone.now() - datetime.timedelta(hours=3))
+        self.assertEqual(deposit.status, 'unconfirmed')
+        check_deposit_status(deposit.pk)
+        self.assertIs(cancel_mock.called, True)
+        self.assertIs(refund_mock.called, False)
+        self.assertIs(logger_mock.error.called, True)
+
+    @patch('transactions.deposits.cancel_current_task')
+    @patch('transactions.deposits.refund_deposit')
+    @patch('transactions.deposits.logger')
+    def test_refunded(self, logger_mock, refund_mock, cancel_mock):
+        deposit = DepositFactory(
+            time_created=timezone.now(),
+            time_received=timezone.now(),
+            time_refunded=timezone.now())
+        check_deposit_status(deposit.pk)
+        self.assertIs(cancel_mock.called, True)
+        self.assertIs(refund_mock.called, False)
+        self.assertIs(logger_mock.error.called, False)
+
+    @patch('transactions.deposits.cancel_current_task')
+    @patch('transactions.deposits.refund_deposit')
+    @patch('transactions.deposits.logger')
+    def test_cancelled(self, logger_mock, refund_mock, cancel_mock):
+        deposit = DepositFactory(
+            time_cancelled=timezone.now())
+        check_deposit_status(deposit.pk)
+        self.assertIs(cancel_mock.called, True)
+        self.assertIs(refund_mock.called, True)
+        self.assertIs(logger_mock.error.called, False)
