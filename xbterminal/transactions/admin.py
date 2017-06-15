@@ -52,7 +52,7 @@ class DepositAdmin(admin.ModelAdmin):
                 readonly_fields.append(field.name + '_widget')
             else:
                 readonly_fields.append(field.name)
-        readonly_fields += ['status']
+        readonly_fields += ['status', 'coin_amount']
         return readonly_fields
 
     def get_form(self, request, obj=None, **kwargs):
