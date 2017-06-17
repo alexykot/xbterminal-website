@@ -106,6 +106,7 @@ def validate_payment(deposit, transactions):
                 received_amount += output['amount']
     deposit.paid_coin_amount = received_amount
     deposit.save()
+    deposit.create_balance_changes()
     if deposit.status == 'underpaid':
         raise InsufficientFunds
 
@@ -286,6 +287,7 @@ def refund_deposit(deposit):
     deposit.refund_tx_id = bc.send_raw_transaction(refund_tx.as_hex())
     deposit.time_refunded = timezone.now()
     deposit.save()
+    deposit.balancechange_set.all().delete()
     logger.warning(
         'payment returned',
         extra={'data': {

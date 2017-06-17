@@ -199,3 +199,20 @@ class BalanceChange(models.Model):
 
     def __str__(self):
         return str(self.pk)
+
+
+def get_account_balance(account):
+    """
+    Total balance on account, including unconfirmed deposits
+    """
+    # TODO: replace old balance property
+    result = account.balancechange_set.aggregate(models.Sum('amount'))
+    return result['amount__sum'] or BTC_DEC_PLACES
+
+
+def get_address_balance(address):
+    """
+    Total balance on address, including unconfirmed deposits
+    """
+    result = address.balancechange_set.aggregate(models.Sum('amount'))
+    return result['amount__sum'] or BTC_DEC_PLACES

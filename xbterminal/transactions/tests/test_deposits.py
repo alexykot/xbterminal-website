@@ -7,6 +7,7 @@ from django.utils import timezone
 from mock import patch, Mock
 
 from transactions.constants import PAYMENT_TYPES
+from transactions.models import get_account_balance, get_address_balance
 from transactions.deposits import (
     prepare_deposit,
     validate_payment,
@@ -104,20 +105,29 @@ class ValidatePaymentTestCase(TestCase):
         deposit.refresh_from_db()
         self.assertEqual(deposit.paid_coin_amount, deposit.coin_amount)
         self.assertEqual(deposit.status, 'new')
+        self.assertEqual(get_account_balance(deposit.account),
+                         deposit.paid_coin_amount - deposit.fee_coin_amount)
+        self.assertEqual(get_address_balance(deposit.deposit_address),
+                         deposit.paid_coin_amount)
 
     @patch('transactions.deposits.BlockChain')
     def test_validate_multiple_tx(self, bc_cls_mock):
-        deposit = DepositFactory()
+        deposit = DepositFactory(
+            merchant_coin_amount=Decimal('0.1'),
+            fee_coin_amount=Decimal('0.01'),
+            paid_coin_amount=Decimal('0.05'))
+        deposit.create_balance_changes()
+        self.assertEqual(deposit.status, 'underpaid')
         transactions = [Mock(), Mock()]
         bc_cls_mock.return_value = bc_mock = Mock(**{
             'get_tx_outputs.side_effect': [
                 [{
                     'address': deposit.deposit_address.address,
-                    'amount': deposit.coin_amount,
+                    'amount': Decimal('0.05'),
                 }],
                 [{
                     'address': deposit.deposit_address.address,
-                    'amount': Decimal('0.5'),
+                    'amount': Decimal('0.1'),
                 }],
             ],
         })
@@ -125,8 +135,11 @@ class ValidatePaymentTestCase(TestCase):
         validate_payment(deposit, transactions)
         self.assertEqual(bc_mock.sign_raw_transaction.call_count, 2)
         deposit.refresh_from_db()
-        self.assertEqual(deposit.paid_coin_amount,
-                         deposit.coin_amount + Decimal('0.5'))
+        self.assertEqual(deposit.paid_coin_amount, Decimal('0.15'))
+        self.assertEqual(get_account_balance(deposit.account),
+                         deposit.paid_coin_amount - deposit.fee_coin_amount)
+        self.assertEqual(get_address_balance(deposit.deposit_address),
+                         deposit.paid_coin_amount)
 
     @patch('transactions.deposits.BlockChain')
     def test_insufficient_funds(self, bc_cls_mock):
@@ -146,6 +159,10 @@ class ValidatePaymentTestCase(TestCase):
         self.assertEqual(bc_mock.sign_raw_transaction.call_count, 1)
         deposit.refresh_from_db()
         self.assertEqual(deposit.paid_coin_amount, Decimal('0.05'))
+        self.assertEqual(get_account_balance(deposit.account),
+                         deposit.paid_coin_amount - deposit.fee_coin_amount)
+        self.assertEqual(get_address_balance(deposit.deposit_address),
+                         deposit.paid_coin_amount)
 
 
 class WaitForPaymentTestCase(TestCase):
@@ -513,9 +530,10 @@ class RefundDepositTestCase(TestCase):
     @patch('transactions.deposits.create_tx')
     def test_refund(self, create_tx_mock, bc_cls_mock):
         deposit = DepositFactory(
+            received=True,
             amount=Decimal('10.00'),
-            exchange_rate=Decimal('1000.00'),
-            refund_address='1KYwqZshnYNUNweXrDkCAdLaixxPhePRje')
+            exchange_rate=Decimal('1000.00'))
+        deposit.create_balance_changes()
         refund_tx_id = '5' * 64
         bc_cls_mock.return_value = bc_mock = Mock(**{
             'get_raw_unspent_outputs.return_value': [{
@@ -531,6 +549,7 @@ class RefundDepositTestCase(TestCase):
         deposit.refresh_from_db()
         self.assertEqual(deposit.refund_tx_id, refund_tx_id)
         self.assertEqual(deposit.status, 'refunded')
+        self.assertEqual(deposit.balancechange_set.count(), 0)
         self.assertEqual(bc_mock.get_raw_unspent_outputs.call_count, 1)
         self.assertEqual(bc_mock.get_raw_unspent_outputs.call_args[0][0],
                          deposit.deposit_address.address)
