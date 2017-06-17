@@ -14,7 +14,7 @@ from transactions.constants import (
     DEPOSIT_CONFIRMATION_TIMEOUT,
     PAYMENT_TYPES)
 from transactions.models import Deposit
-from transactions.utils.tx import create_tx
+from transactions.utils.tx import create_tx_
 from operations.exceptions import (
     InsufficientFunds,
     DoubleSpend,
@@ -283,8 +283,8 @@ def refund_deposit(deposit):
     if amount < BTC_MIN_OUTPUT:
         raise RefundError('Output is below dust threshold')
     tx_outputs = {deposit.refund_address: amount}
-    refund_tx = create_tx(tx_inputs, tx_outputs)
-    deposit.refund_tx_id = bc.send_raw_transaction(refund_tx.as_hex())
+    refund_tx = create_tx_(tx_inputs, tx_outputs)
+    deposit.refund_tx_id = bc.send_raw_transaction(refund_tx)
     deposit.time_refunded = timezone.now()
     deposit.save()
     deposit.balancechange_set.all().delete()

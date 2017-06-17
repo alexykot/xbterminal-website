@@ -527,7 +527,7 @@ class WaitForConfirmationTestCase(TestCase):
 class RefundDepositTestCase(TestCase):
 
     @patch('transactions.deposits.BlockChain')
-    @patch('transactions.deposits.create_tx')
+    @patch('transactions.deposits.create_tx_')
     def test_refund(self, create_tx_mock, bc_cls_mock):
         deposit = DepositFactory(
             received=True,
@@ -543,7 +543,7 @@ class RefundDepositTestCase(TestCase):
             'get_tx_fee.return_value': Decimal('0.0005'),
             'send_raw_transaction.return_value': refund_tx_id,
         })
-        create_tx_mock.return_value = Mock(**{'as_hex.return_value': 'test'})
+        create_tx_mock.return_value = tx_mock = Mock()
         refund_deposit(deposit)
 
         deposit.refresh_from_db()
@@ -562,6 +562,8 @@ class RefundDepositTestCase(TestCase):
         self.assertEqual(len(tx_outputs.keys()), 1)
         self.assertEqual(tx_outputs[deposit.refund_address],
                          Decimal('0.0095'))
+        self.assertEqual(bc_mock.send_raw_transaction.call_args[0][0],
+                         tx_mock)
 
     def test_already_notified(self):
         deposit = DepositFactory(
