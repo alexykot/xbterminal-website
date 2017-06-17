@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from wallet.constants import BIP44_COIN_TYPES
 from wallet.tests.factories import AddressFactory
+from transactions.constants import PAYMENT_TYPES
 from transactions.models import Deposit
 from transactions.tests.factories import DepositFactory
 from website.tests.factories import DeviceFactory
@@ -50,9 +51,13 @@ class DepositTestCase(TestCase):
         self.assertEqual(deposit.coin_type, BIP44_COIN_TYPES.BTC)
         self.assertGreater(deposit.merchant_coin_amount, 0)
         self.assertGreater(deposit.fee_coin_amount, 0)
+        self.assertEqual(deposit.paid_coin_amount, 0)
         self.assertEqual(
             deposit.deposit_address.wallet_account.parent_key.coin_type,
             BIP44_COIN_TYPES.BTC)
+        self.assertEqual(len(deposit.incoming_tx_ids), 0)
+        self.assertIsNone(deposit.payment_type)
+        self.assertEqual(deposit.status, 'new')
 
     def test_factory_exchange_rate(self):
         deposit = DepositFactory(amount=Decimal('10.00'),
@@ -65,6 +70,14 @@ class DepositTestCase(TestCase):
         self.assertIsNone(deposit.device)
         self.assertEqual(deposit.currency,
                          deposit.account.merchant.currency)
+
+    def test_factory_received(self):
+        deposit = DepositFactory(received=True)
+        self.assertEqual(deposit.paid_coin_amount, deposit.coin_amount)
+        self.assertEqual(len(deposit.incoming_tx_ids), 1)
+        self.assertEqual(len(deposit.incoming_tx_ids[0]), 64)
+        self.assertEqual(deposit.payment_type, PAYMENT_TYPES.BIP21)
+        self.assertEqual(deposit.status, 'received')
 
     def test_merchant(self):
         deposit = DepositFactory()
