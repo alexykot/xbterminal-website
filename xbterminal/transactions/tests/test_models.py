@@ -13,6 +13,7 @@ from transactions.models import (
     BalanceChange)
 from transactions.tests.factories import (
     DepositFactory,
+    WithdrawalFactory,
     BalanceChangeFactory)
 from website.tests.factories import DeviceFactory
 
@@ -180,6 +181,29 @@ class WithdrawalTestCase(TestCase):
         self.assertIsNone(withdrawal.time_confirmed)
         self.assertIsNone(withdrawal.time_cancelled)
         self.assertEqual(str(withdrawal), str(withdrawal.pk))
+
+    def test_factory(self):
+        withdrawal = WithdrawalFactory()
+        self.assertEqual(withdrawal.device.account, withdrawal.account)
+        self.assertEqual(withdrawal.currency,
+                         withdrawal.account.merchant.currency)
+        self.assertGreater(withdrawal.amount, 0)
+        self.assertEqual(withdrawal.coin_type, BIP44_COIN_TYPES.BTC)
+        self.assertGreater(withdrawal.customer_coin_amount, 0)
+        self.assertEqual(withdrawal.tx_fee_coin_amount, Decimal('0.0005'))
+        self.assertIsNone(withdrawal.customer_address)
+        self.assertIsNone(withdrawal.outgoing_tx_id)
+
+    def test_factory_exchange_rate(self):
+        withdrawal = WithdrawalFactory(amount=Decimal('10.00'),
+                                       exchange_rate=Decimal('2000.00'))
+        self.assertEqual(withdrawal.customer_coin_amount, Decimal('0.005'))
+
+    def test_factory_no_device(self):
+        withdrawal = WithdrawalFactory(device=None)
+        self.assertIsNone(withdrawal.device)
+        self.assertEqual(withdrawal.currency,
+                         withdrawal.account.merchant.currency)
 
 
 class BalanceChangeTestCase(TestCase):

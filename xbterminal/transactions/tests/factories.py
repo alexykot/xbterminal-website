@@ -84,6 +84,44 @@ class DepositFactory(factory.DjangoModelFactory):
                 self.save()
 
 
+class WithdrawalFactory(factory.DjangoModelFactory):
+
+    class Meta:
+        model = models.Withdrawal
+
+    class Params:
+        exchange_rate = factory.Faker(
+            'pydecimal',
+            left_digits=4,
+            right_digits=2,
+            positive=True)
+
+    account = factory.SubFactory(AccountFactory)
+    device = factory.SubFactory(
+        DeviceFactory,
+        merchant=factory.SelfAttribute('..account.merchant'),
+        account=factory.SelfAttribute('..account'))
+    currency = factory.SelfAttribute('account.merchant.currency')
+    amount = factory.Faker(
+        'pydecimal',
+        left_digits=2,
+        right_digits=2,
+        positive=True)
+    coin_type = BIP44_COIN_TYPES.BTC
+    tx_fee_coin_amount = Decimal('0.0005')
+
+    @factory.lazy_attribute
+    def customer_coin_amount(self):
+        return (self.amount / self.exchange_rate).quantize(BTC_DEC_PLACES)
+
+    @factory.post_generation
+    def time_created(self, create, extracted, **kwargs):
+        if extracted:
+            self.time_created = extracted
+            if create:
+                self.save()
+
+
 class BalanceChangeFactory(factory.DjangoModelFactory):
 
     class Meta:
