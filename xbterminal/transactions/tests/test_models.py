@@ -133,6 +133,27 @@ class DepositTestCase(TestCase):
             time_cancelled=timezone.now())
         self.assertEqual(deposit.status, 'cancelled')
 
+    def test_create_balance_changes(self):
+        deposit = DepositFactory(received=True)
+        deposit.create_balance_changes()
+        changes = list(deposit.balancechange_set.order_by('account'))
+        self.assertEqual(len(changes), 2)
+        self.assertEqual(changes[0].account, deposit.account)
+        self.assertEqual(changes[0].address, deposit.deposit_address)
+        self.assertEqual(changes[0].amount,
+                         deposit.paid_coin_amount - deposit.fee_coin_amount)
+        self.assertIsNone(changes[1].account)
+        self.assertEqual(changes[1].address, deposit.deposit_address)
+        self.assertEqual(changes[1].amount,
+                         deposit.fee_coin_amount)
+
+    def test_create_balance_changes_no_fee(self):
+        deposit = DepositFactory(received=True, fee_coin_amount=0)
+        deposit.create_balance_changes()
+        self.assertEqual(deposit.balancechange_set.count(), 1)
+        self.assertEqual(deposit.balancechange_set.get().amount,
+                         deposit.paid_coin_amount)
+
 
 class BalanceChangeTestCase(TestCase):
 

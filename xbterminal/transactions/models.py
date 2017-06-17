@@ -155,6 +155,19 @@ class Deposit(models.Model):
                     return 'new'
 
     @atomic
+    def create_balance_changes(self):
+        self.balancechange_set.all().delete()
+        self.balancechange_set.create(
+            account=self.account,
+            address=self.deposit_address,
+            amount=self.paid_coin_amount - self.fee_coin_amount)
+        if self.fee_coin_amount > 0:
+            self.balancechange_set.create(
+                account=None,
+                address=self.deposit_address,
+                amount=self.fee_coin_amount)
+
+    @atomic
     def save(self, *args, **kwargs):
         if not self.pk:
             while True:
