@@ -15,8 +15,10 @@ from transactions.constants import (
     PAYMENT_TYPES)
 
 
-class Deposit(models.Model):
-
+class Transaction(models.Model):
+    """
+    Base model for Deposit and Withdrawal
+    """
     uid = models.CharField(
         'UID',
         max_length=6,
@@ -39,6 +41,32 @@ class Deposit(models.Model):
 
     coin_type = models.PositiveSmallIntegerField(
         choices=BIP44_COIN_TYPES)
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return str(self.pk)
+
+    @property
+    def merchant(self):
+        return self.account.merchant
+
+    @property
+    def bitcoin_network(self):
+        # Property for backwards compatibility
+        # TODO: use coin types instead
+        if self.coin_type == BIP44_COIN_TYPES.BTC:
+            network = 'mainnet'
+        elif self.coin_type == BIP44_COIN_TYPES.XTN:
+            network = 'testnet'
+        else:
+            raise ValueError('Invalid coin type.')
+        return network
+
+
+class Deposit(Transaction):
+
     merchant_coin_amount = models.DecimalField(
         max_digits=18,
         decimal_places=8)
@@ -74,25 +102,6 @@ class Deposit(models.Model):
     time_confirmed = models.DateTimeField(null=True)
     time_refunded = models.DateTimeField(null=True)
     time_cancelled = models.DateTimeField(null=True)
-
-    def __str__(self):
-        return str(self.pk)
-
-    @property
-    def merchant(self):
-        return self.account.merchant
-
-    @property
-    def bitcoin_network(self):
-        # Property for backwards compatibility
-        # TODO: use coin types instead
-        if self.coin_type == BIP44_COIN_TYPES.BTC:
-            network = 'mainnet'
-        elif self.coin_type == BIP44_COIN_TYPES.XTN:
-            network = 'testnet'
-        else:
-            raise ValueError('Invalid coin type.')
-        return network
 
     @property
     def exchange_rate(self):
@@ -178,30 +187,8 @@ class Deposit(models.Model):
         super(Deposit, self).save(*args, **kwargs)
 
 
-class Withdrawal(models.Model):
+class Withdrawal(Transaction):
 
-    uid = models.CharField(
-        'UID',
-        max_length=6,
-        editable=False,
-        unique=True)
-    account = models.ForeignKey(
-        'website.Account',
-        on_delete=models.PROTECT)
-    device = models.ForeignKey(
-        'website.Device',
-        on_delete=models.SET_NULL,
-        null=True)
-
-    currency = models.ForeignKey(
-        'website.Currency',
-        on_delete=models.PROTECT)
-    amount = models.DecimalField(
-        max_digits=12,
-        decimal_places=2)
-
-    coin_type = models.PositiveSmallIntegerField(
-        choices=BIP44_COIN_TYPES)
     customer_coin_amount = models.DecimalField(
         max_digits=18,
         decimal_places=8)
@@ -222,25 +209,6 @@ class Withdrawal(models.Model):
     time_notified = models.DateTimeField(null=True)
     time_confirmed = models.DateTimeField(null=True)
     time_cancelled = models.DateTimeField(null=True)
-
-    def __str__(self):
-        return str(self.pk)
-
-    @property
-    def merchant(self):
-        return self.account.merchant
-
-    @property
-    def bitcoin_network(self):
-        # Property for backwards compatibility
-        # TODO: use coin types instead
-        if self.coin_type == BIP44_COIN_TYPES.BTC:
-            network = 'mainnet'
-        elif self.coin_type == BIP44_COIN_TYPES.XTN:
-            network = 'testnet'
-        else:
-            raise ValueError('Invalid coin type.')
-        return network
 
     @property
     def exchange_rate(self):
