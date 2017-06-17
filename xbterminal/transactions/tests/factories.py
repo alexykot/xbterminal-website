@@ -69,3 +69,15 @@ class DepositFactory(factory.DjangoModelFactory):
             self.time_created = extracted
             if create:
                 self.save()
+
+
+class BalanceChangeFactory(factory.DjangoModelFactory):
+
+    class Meta:
+        model = models.BalanceChange
+
+    deposit = factory.SubFactory(DepositFactory, received=True)
+
+    account = factory.SelfAttribute('deposit.account')
+    address = factory.SelfAttribute('deposit.deposit_address')
+    amount = factory.SelfAttribute('deposit.paid_coin_amount')

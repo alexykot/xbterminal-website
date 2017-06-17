@@ -163,3 +163,26 @@ class Deposit(models.Model):
                     self.uid = uid
                     break
         super(Deposit, self).save(*args, **kwargs)
+
+
+class BalanceChange(models.Model):
+    """
+    Represents balance change on merchant account and/or wallet address
+    """
+    deposit = models.ForeignKey(
+        Deposit,
+        on_delete=models.PROTECT)
+
+    account = models.ForeignKey(
+        'website.Account',
+        on_delete=models.PROTECT,
+        null=True)
+    address = models.ForeignKey(
+        'wallet.Address',
+        on_delete=models.PROTECT)
+    amount = models.DecimalField(
+        max_digits=18,
+        decimal_places=8)
+
+    def __str__(self):
+        return str(self.pk)

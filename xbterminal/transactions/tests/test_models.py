@@ -7,8 +7,12 @@ from django.utils import timezone
 from wallet.constants import BIP44_COIN_TYPES
 from wallet.tests.factories import AddressFactory
 from transactions.constants import PAYMENT_TYPES
-from transactions.models import Deposit
-from transactions.tests.factories import DepositFactory
+from transactions.models import (
+    Deposit,
+    BalanceChange)
+from transactions.tests.factories import (
+    DepositFactory,
+    BalanceChangeFactory)
 from website.tests.factories import DeviceFactory
 
 
@@ -128,3 +132,26 @@ class DepositTestCase(TestCase):
         deposit = DepositFactory(
             time_cancelled=timezone.now())
         self.assertEqual(deposit.status, 'cancelled')
+
+
+class BalanceChangeTestCase(TestCase):
+
+    def test_create(self):
+        deposit = DepositFactory()
+        change = BalanceChange.objects.create(
+            account=deposit.account,
+            address=deposit.deposit_address,
+            amount=deposit.paid_coin_amount - deposit.fee_coin_amount,
+            deposit=deposit)
+        self.assertEqual(str(change), str(change.pk))
+        self.assertEqual(deposit.balancechange_set.count(), 1)
+        self.assertEqual(deposit.account.balancechange_set.count(), 1)
+        self.assertEqual(deposit.deposit_address.balancechange_set.count(), 1)
+
+    def test_factory(self):
+        change = BalanceChangeFactory()
+        self.assertIsNotNone(change.deposit)
+        self.assertEqual(change.deposit.status, 'received')
+        self.assertEqual(change.account, change.deposit.account)
+        self.assertEqual(change.address, change.deposit.deposit_address)
+        self.assertEqual(change.amount, change.deposit.paid_coin_amount)
