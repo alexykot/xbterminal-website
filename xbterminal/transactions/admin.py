@@ -47,6 +47,8 @@ class DepositAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = []
         for field in self.model._meta.get_fields():
+            if field.name == 'balancechange':
+                continue
             if field.name in ['deposit_address', 'refund_address',
                               'incoming_tx_ids', 'refund_tx_id']:
                 readonly_fields.append(field.name + '_widget')
@@ -110,3 +112,49 @@ class DepositAdmin(admin.ModelAdmin):
                            deposit.bitcoin_network)
 
     refund_tx_id_widget.short_description = 'refund tx ID'
+
+
+@admin.register(models.BalanceChange)
+class BalanceChangeAdmin(admin.ModelAdmin):
+
+    list_display = [
+        '__str__',
+        'account_link',
+        'address_link',
+        'amount_colored',
+    ]
+
+    readonly_fields = [
+        'deposit',
+        'account',
+        'address',
+        'amount',
+    ]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def account_link(self, change):
+        if change.account:
+            return get_link_to_object(change.account)
+        else:
+            return '-'
+
+    account_link.short_description = 'account'
+
+    def address_link(self, change):
+        return get_link_to_object(change.address)
+
+    address_link.short_description = 'address'
+
+    def amount_colored(self, change):
+        template = '<span style="color: {0}">{1}</span>'
+        return format_html(template,
+                           'red' if change.amount < 0 else 'green',
+                           change.amount)
+
+    amount_colored.allow_tags = True
+    amount_colored.short_description = 'amount'
