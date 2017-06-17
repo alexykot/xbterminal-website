@@ -59,6 +59,7 @@ class DepositTestCase(TestCase):
         self.assertEqual(
             deposit.deposit_address.wallet_account.parent_key.coin_type,
             BIP44_COIN_TYPES.BTC)
+        self.assertIsNone(deposit.refund_address)
         self.assertEqual(len(deposit.incoming_tx_ids), 0)
         self.assertIsNone(deposit.payment_type)
         self.assertEqual(deposit.status, 'new')
@@ -78,6 +79,7 @@ class DepositTestCase(TestCase):
     def test_factory_received(self):
         deposit = DepositFactory(received=True)
         self.assertEqual(deposit.paid_coin_amount, deposit.coin_amount)
+        self.assertIs(deposit.refund_address.startswith('1'), True)
         self.assertEqual(len(deposit.incoming_tx_ids), 1)
         self.assertEqual(len(deposit.incoming_tx_ids[0]), 64)
         self.assertEqual(deposit.payment_type, PAYMENT_TYPES.BIP21)

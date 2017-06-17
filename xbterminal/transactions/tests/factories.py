@@ -6,12 +6,23 @@ from django.utils import timezone
 
 from constance import config
 import factory
+from pycoin.encoding import hash160, hash160_sec_to_bitcoin_address
+from pycoin.networks import address_prefix_for_netcode
 
 from transactions import models
 from transactions.constants import BTC_DEC_PLACES, PAYMENT_TYPES
 from website.tests.factories import AccountFactory, DeviceFactory
 from wallet.constants import BIP44_COIN_TYPES
 from wallet.tests.factories import AddressFactory
+
+
+def generate_random_address(coin_type):
+    netcode = BIP44_COIN_TYPES.for_value(coin_type).constant
+    randbytes = bytes(random.getrandbits(100))
+    address_prefix = address_prefix_for_netcode(netcode)
+    hash_ = hash160(randbytes)
+    return hash160_sec_to_bitcoin_address(
+        hash_, address_prefix=address_prefix)
 
 
 def generate_random_tx_id():
@@ -33,6 +44,8 @@ class DepositFactory(factory.DjangoModelFactory):
         received = factory.Trait(
             paid_coin_amount=factory.LazyAttribute(
                 lambda d: d.merchant_coin_amount + d.fee_coin_amount),
+            refund_address=factory.LazyAttribute(
+                lambda d: generate_random_address(d.coin_type)),
             incoming_tx_ids=factory.List(
                 [factory.LazyFunction(generate_random_tx_id)]),
             payment_type=PAYMENT_TYPES.BIP21,
