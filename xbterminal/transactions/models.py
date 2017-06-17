@@ -178,6 +178,93 @@ class Deposit(models.Model):
         super(Deposit, self).save(*args, **kwargs)
 
 
+class Withdrawal(models.Model):
+
+    uid = models.CharField(
+        'UID',
+        max_length=6,
+        editable=False,
+        unique=True)
+    account = models.ForeignKey(
+        'website.Account',
+        on_delete=models.PROTECT)
+    device = models.ForeignKey(
+        'website.Device',
+        on_delete=models.SET_NULL,
+        null=True)
+
+    currency = models.ForeignKey(
+        'website.Currency',
+        on_delete=models.PROTECT)
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2)
+
+    coin_type = models.PositiveSmallIntegerField(
+        choices=BIP44_COIN_TYPES)
+    customer_coin_amount = models.DecimalField(
+        max_digits=18,
+        decimal_places=8)
+    tx_fee_coin_amount = models.DecimalField(
+        max_digits=18,
+        decimal_places=8)
+
+    customer_address = models.CharField(
+        max_length=35,
+        null=True)
+    outgoing_tx_id = models.CharField(
+        max_length=64,
+        null=True)
+
+    time_created = models.DateTimeField(auto_now_add=True)
+    time_sent = models.DateTimeField(null=True)
+    time_broadcasted = models.DateTimeField(null=True)
+    time_notified = models.DateTimeField(null=True)
+    time_confirmed = models.DateTimeField(null=True)
+    time_cancelled = models.DateTimeField(null=True)
+
+    def __str__(self):
+        return str(self.pk)
+
+    @property
+    def merchant(self):
+        return self.account.merchant
+
+    @property
+    def bitcoin_network(self):
+        # Property for backwards compatibility
+        # TODO: use coin types instead
+        if self.coin_type == BIP44_COIN_TYPES.BTC:
+            network = 'mainnet'
+        elif self.coin_type == BIP44_COIN_TYPES.XTN:
+            network = 'testnet'
+        else:
+            raise ValueError('Invalid coin type.')
+        return network
+
+    @property
+    def exchange_rate(self):
+        return (self.amount /
+                self.customer_coin_amount).quantize(BTC_DEC_PLACES)
+
+    @property
+    def coin_amount(self):
+        """
+        Total BTC amount (for receipts)
+        """
+        return self.customer_coin_amount + self.tx_fee_coin_amount
+
+    @atomic
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            while True:
+                uid = generate_b58_uid(6)
+                if not Withdrawal.objects.filter(uid=uid).exists():
+                    self.uid = uid
+                    break
+        super(Withdrawal, self).save(*args, **kwargs)
+
+
 class BalanceChange(models.Model):
     """
     Represents balance change on merchant account and/or wallet address

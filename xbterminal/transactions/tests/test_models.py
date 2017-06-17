@@ -9,6 +9,7 @@ from wallet.tests.factories import AddressFactory
 from transactions.constants import PAYMENT_TYPES
 from transactions.models import (
     Deposit,
+    Withdrawal,
     BalanceChange)
 from transactions.tests.factories import (
     DepositFactory,
@@ -155,6 +156,30 @@ class DepositTestCase(TestCase):
         self.assertEqual(deposit.balancechange_set.count(), 1)
         self.assertEqual(deposit.balancechange_set.get().amount,
                          deposit.paid_coin_amount)
+
+
+class WithdrawalTestCase(TestCase):
+
+    def test_create(self):
+        device = DeviceFactory()
+        withdrawal = Withdrawal.objects.create(
+            account=device.account,
+            device=device,
+            currency=device.merchant.currency,
+            amount=Decimal('10.0'),
+            coin_type=BIP44_COIN_TYPES.BTC,
+            customer_coin_amount=Decimal('0.005'),
+            tx_fee_coin_amount=Decimal('0.0002'))
+        self.assertEqual(len(withdrawal.uid), 6)
+        self.assertIsNone(withdrawal.customer_address)
+        self.assertIsNone(withdrawal.outgoing_tx_id)
+        self.assertIsNotNone(withdrawal.time_created)
+        self.assertIsNone(withdrawal.time_sent)
+        self.assertIsNone(withdrawal.time_broadcasted)
+        self.assertIsNone(withdrawal.time_notified)
+        self.assertIsNone(withdrawal.time_confirmed)
+        self.assertIsNone(withdrawal.time_cancelled)
+        self.assertEqual(str(withdrawal), str(withdrawal.pk))
 
 
 class BalanceChangeTestCase(TestCase):
