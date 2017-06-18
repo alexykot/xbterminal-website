@@ -1,6 +1,7 @@
 import datetime
 from decimal import Decimal
 
+from django.db import IntegrityError
 from django.test import TestCase
 from django.utils import timezone
 
@@ -15,7 +16,7 @@ from transactions.tests.factories import (
     DepositFactory,
     WithdrawalFactory,
     BalanceChangeFactory)
-from website.tests.factories import DeviceFactory
+from website.tests.factories import AccountFactory, DeviceFactory
 
 
 class DepositTestCase(TestCase):
@@ -247,10 +248,11 @@ class BalanceChangeTestCase(TestCase):
     def test_create(self):
         deposit = DepositFactory()
         change = BalanceChange.objects.create(
+            deposit=deposit,
             account=deposit.account,
             address=deposit.deposit_address,
-            amount=deposit.paid_coin_amount - deposit.fee_coin_amount,
-            deposit=deposit)
+            amount=deposit.paid_coin_amount - deposit.fee_coin_amount)
+        self.assertIsNone(change.withdrawal)
         self.assertEqual(str(change), str(change.pk))
         self.assertEqual(deposit.balancechange_set.count(), 1)
         self.assertEqual(deposit.account.balancechange_set.count(), 1)
@@ -259,7 +261,28 @@ class BalanceChangeTestCase(TestCase):
     def test_factory(self):
         change = BalanceChangeFactory()
         self.assertIsNotNone(change.deposit)
+        self.assertIsNone(change.withdrawal)
         self.assertEqual(change.deposit.status, 'received')
         self.assertEqual(change.account, change.deposit.account)
         self.assertEqual(change.address, change.deposit.deposit_address)
         self.assertEqual(change.amount, change.deposit.paid_coin_amount)
+
+    def test_deposit_and_withdrawal(self):
+        deposit = DepositFactory()
+        withdrawal = WithdrawalFactory()
+        with self.assertRaises(IntegrityError):
+            BalanceChange.objects.create(
+                deposit=deposit,
+                withdrawal=withdrawal,
+                account=deposit.account,
+                address=deposit.deposit_address,
+                amount=deposit.paid_coin_amount)
+
+    def test_no_deposit_no_withdrawal(self):
+        account = AccountFactory()
+        address = AddressFactory()
+        with self.assertRaises(IntegrityError):
+            BalanceChange.objects.create(
+                account=account,
+                address=address,
+                amount=Decimal('10.00'))

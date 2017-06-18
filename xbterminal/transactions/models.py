@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from django.contrib.postgres.fields import ArrayField
-from django.db import models
+from django.db import models, IntegrityError
 from django.db.transaction import atomic
 from django.utils import timezone
 
@@ -282,7 +282,12 @@ class BalanceChange(models.Model):
     """
     deposit = models.ForeignKey(
         Deposit,
-        on_delete=models.PROTECT)
+        on_delete=models.PROTECT,
+        null=True)
+    withdrawal = models.ForeignKey(
+        Withdrawal,
+        on_delete=models.PROTECT,
+        null=True)
 
     account = models.ForeignKey(
         'website.Account',
@@ -297,6 +302,13 @@ class BalanceChange(models.Model):
 
     def __str__(self):
         return str(self.pk)
+
+    def save(self, *args, **kwargs):
+        # Deposit or withdrawal, but not both
+        if not (self.deposit or self.withdrawal) or \
+                (self.deposit and self.withdrawal):
+            raise IntegrityError
+        super(BalanceChange, self).save(*args, **kwargs)
 
 
 def get_account_balance(account):
