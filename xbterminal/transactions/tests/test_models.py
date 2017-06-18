@@ -205,6 +205,42 @@ class WithdrawalTestCase(TestCase):
         self.assertEqual(withdrawal.currency,
                          withdrawal.account.merchant.currency)
 
+    def test_status(self):
+        withdrawal = WithdrawalFactory()
+        self.assertEqual(withdrawal.status, 'new')
+        withdrawal.time_sent = timezone.now()
+        self.assertEqual(withdrawal.status, 'sent')
+        withdrawal.time_broadcasted = timezone.now()
+        self.assertEqual(withdrawal.status, 'broadcasted')
+        withdrawal.time_notified = timezone.now()
+        self.assertEqual(withdrawal.status, 'notified')
+        withdrawal.time_confirmed = timezone.now()
+        self.assertEqual(withdrawal.status, 'confirmed')
+
+    def test_status_timeout(self):
+        withdrawal = WithdrawalFactory(
+            time_created=timezone.now() - datetime.timedelta(minutes=60))
+        self.assertEqual(withdrawal.status, 'timeout')
+
+    def test_status_failed(self):
+        withdrawal = WithdrawalFactory(
+            time_created=timezone.now() - datetime.timedelta(minutes=60),
+            time_sent=timezone.now() - datetime.timedelta(minutes=45))
+        self.assertEqual(withdrawal.status, 'failed')
+
+    def test_status_unconfirmed(self):
+        withdrawal = WithdrawalFactory(
+            time_created=timezone.now() - datetime.timedelta(minutes=500),
+            time_sent=timezone.now() - datetime.timedelta(minutes=490),
+            time_broadcasted=timezone.now() - datetime.timedelta(minutes=480),
+            time_notified=timezone.now() - datetime.timedelta(minutes=480))
+        self.assertEqual(withdrawal.status, 'unconfirmed')
+
+    def test_status_cancelled(self):
+        withdrawal = WithdrawalFactory(
+            time_cancelled=timezone.now())
+        self.assertEqual(withdrawal.status, 'cancelled')
+
 
 class BalanceChangeTestCase(TestCase):
 

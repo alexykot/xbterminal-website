@@ -12,6 +12,9 @@ from transactions.constants import (
     DEPOSIT_TIMEOUT,
     DEPOSIT_CONFIDENCE_TIMEOUT,
     DEPOSIT_CONFIRMATION_TIMEOUT,
+    WITHDRAWAL_TIMEOUT,
+    WITHDRAWAL_CONFIDENCE_TIMEOUT,
+    WITHDRAWAL_CONFIRMATION_TIMEOUT,
     PAYMENT_TYPES)
 
 
@@ -221,6 +224,46 @@ class Withdrawal(Transaction):
         Total BTC amount (for receipts)
         """
         return self.customer_coin_amount + self.tx_fee_coin_amount
+
+    @property
+    def status(self):
+        """
+        Returns status of the withdrawal:
+            new - withdrawal has just been created
+            sent - transaction has been sent
+            broadcasted: outgoing transaction has reached confidence threshold
+            notified: customer notified about successful withdrawal
+            confirmed - outgoing transaction confirmed
+            timeout - transaction has not been sent
+            failed - transaction has been sent,
+                but withdrawal is not marked as notified
+            unconfirmed - customer notified about successful withdrawal,
+                but outgoing transaction is not confirmed
+            cancelled: withdrawal cancelled by the customer
+        """
+        if self.time_notified:
+            if self.time_confirmed:
+                return 'confirmed'
+            else:
+                if self.time_created + WITHDRAWAL_CONFIRMATION_TIMEOUT < timezone.now():
+                    return 'unconfirmed'
+                else:
+                    return 'notified'
+        if self.time_cancelled:
+            return 'cancelled'
+        if self.time_sent:
+            if self.time_created + WITHDRAWAL_CONFIDENCE_TIMEOUT < timezone.now():
+                return 'failed'
+            else:
+                if self.time_broadcasted:
+                    return 'broadcasted'
+                else:
+                    return 'sent'
+        else:
+            if self.time_created + WITHDRAWAL_TIMEOUT < timezone.now():
+                return 'timeout'
+            else:
+                return 'new'
 
     @atomic
     def save(self, *args, **kwargs):
