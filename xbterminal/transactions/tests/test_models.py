@@ -210,6 +210,16 @@ class WithdrawalTestCase(TestCase):
         self.assertEqual(withdrawal.currency,
                          withdrawal.account.merchant.currency)
 
+    def test_factory_sent(self):
+        withdrawal = WithdrawalFactory(sent=True)
+        self.assertIs(withdrawal.customer_address.startswith('1'), True)
+        self.assertEqual(len(withdrawal.outgoing_tx_id), 64)
+        self.assertEqual(withdrawal.status, 'sent')
+
+    def test_factory_confirmed(self):
+        withdrawal = WithdrawalFactory(confirmed=True)
+        self.assertEqual(withdrawal.status, 'confirmed')
+
     def test_status(self):
         withdrawal = WithdrawalFactory()
         self.assertEqual(withdrawal.status, 'new')

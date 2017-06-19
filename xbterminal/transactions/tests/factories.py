@@ -101,6 +101,17 @@ class WithdrawalFactory(factory.DjangoModelFactory):
             left_digits=4,
             right_digits=2,
             positive=True)
+        # Statuses
+        sent = factory.Trait(
+            customer_address=factory.LazyAttribute(
+                lambda w: generate_random_address(w.coin_type)),
+            outgoing_tx_id=factory.LazyFunction(generate_random_tx_id),
+            time_sent=factory.LazyFunction(timezone.now))
+        confirmed = factory.Trait(
+            sent=True,
+            time_broadcasted=factory.LazyFunction(timezone.now),
+            time_notified=factory.LazyFunction(timezone.now),
+            time_confirmed=factory.LazyFunction(timezone.now))
 
     account = factory.SubFactory(AccountFactory)
     device = factory.SubFactory(
