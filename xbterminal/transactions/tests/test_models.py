@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from wallet.constants import BIP44_COIN_TYPES
-from wallet.tests.factories import AddressFactory
+from wallet.tests.factories import WalletAccountFactory, AddressFactory
 from transactions.constants import PAYMENT_TYPES
 from transactions.models import (
     Deposit,
@@ -286,3 +286,15 @@ class BalanceChangeTestCase(TestCase):
                 account=account,
                 address=address,
                 amount=Decimal('10.00'))
+
+    def test_exclude_unconfirmed(self):
+        wallet_account = WalletAccountFactory()
+        change_1 = BalanceChangeFactory(
+            deposit__deposit_address__wallet_account=wallet_account)
+        change_2 = BalanceChangeFactory(
+            deposit__deposit_address__wallet_account=wallet_account,
+            deposit__time_confirmed=timezone.now())
+        self.assertIn(change_1, BalanceChange.objects.all())
+        self.assertNotIn(change_1, BalanceChange.objects.exclude_unconfirmed())
+        self.assertIn(change_2, BalanceChange.objects.all())
+        self.assertIn(change_2, BalanceChange.objects.exclude_unconfirmed())

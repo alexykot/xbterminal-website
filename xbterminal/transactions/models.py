@@ -276,6 +276,20 @@ class Withdrawal(Transaction):
         super(Withdrawal, self).save(*args, **kwargs)
 
 
+class BalanceChangeManager(models.Manager):
+
+    def exclude_unconfirmed(self):
+        queryset = self.get_queryset()
+        return queryset.\
+            exclude(
+                deposit__isnull=False,
+                deposit__time_confirmed__isnull=True).\
+            exclude(
+                withdrawal__isnull=False,
+                withdrawal__time_confirmed__isnull=True,
+                amount__gt=0)
+
+
 class BalanceChange(models.Model):
     """
     Represents balance change on merchant account and/or wallet address
@@ -300,6 +314,8 @@ class BalanceChange(models.Model):
         max_digits=18,
         decimal_places=8)
 
+    objects = BalanceChangeManager()
+
     def __str__(self):
         return str(self.pk)
 
@@ -311,18 +327,26 @@ class BalanceChange(models.Model):
         super(BalanceChange, self).save(*args, **kwargs)
 
 
-def get_account_balance(account):
+def get_account_balance(account, only_confirmed=False):
     """
     Total balance on account, including unconfirmed deposits
     """
     # TODO: replace old balance property
-    result = account.balancechange_set.aggregate(models.Sum('amount'))
+    if only_confirmed:
+        changes = account.balancechange_set.exclude_unconfirmed()
+    else:
+        changes = account.balancechange_set.all()
+    result = changes.aggregate(models.Sum('amount'))
     return result['amount__sum'] or BTC_DEC_PLACES
 
 
-def get_address_balance(address):
+def get_address_balance(address, only_confirmed=False):
     """
     Total balance on address, including unconfirmed deposits
     """
-    result = address.balancechange_set.aggregate(models.Sum('amount'))
+    if only_confirmed:
+        changes = address.balancechange_set.exclude_unconfirmed()
+    else:
+        changes = address.balancechange_set.all()
+    result = changes.aggregate(models.Sum('amount'))
     return result['amount__sum'] or BTC_DEC_PLACES
