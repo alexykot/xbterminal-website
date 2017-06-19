@@ -24,6 +24,7 @@ oauthlib==1.0.3
 Pillow==4.0.0
 protobuf==2.5.0
 psycopg2==2.7.1
+pycoin==0.77
 pyOpenSSL==0.15.1  # requests[security]
 PyPDF2==1.26.0
 python-bitcoinlib==0.7.0

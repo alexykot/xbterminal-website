@@ -44,6 +44,12 @@ honcho start
 
 XBT server will be available at port 8083.
 
+### Create wallet keys
+
+```
+python xbterminal/manage.py create_keys
+```
+
 ### Sentry
 
 Create admin user:
