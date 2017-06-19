@@ -41,6 +41,7 @@ class DepositFactory(factory.DjangoModelFactory):
             left_digits=4,
             right_digits=2,
             positive=True)
+        # Statuses
         received = factory.Trait(
             paid_coin_amount=factory.LazyAttribute(
                 lambda d: d.merchant_coin_amount + d.fee_coin_amount),
@@ -50,6 +51,11 @@ class DepositFactory(factory.DjangoModelFactory):
                 [factory.LazyFunction(generate_random_tx_id)]),
             payment_type=PAYMENT_TYPES.BIP21,
             time_received=factory.LazyFunction(timezone.now))
+        confirmed = factory.Trait(
+            received=True,
+            time_broadcasted=factory.LazyFunction(timezone.now),
+            time_notified=factory.LazyFunction(timezone.now),
+            time_confirmed=factory.LazyFunction(timezone.now))
 
     account = factory.SubFactory(AccountFactory)
     device = factory.SubFactory(

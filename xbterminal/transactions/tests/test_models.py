@@ -88,6 +88,10 @@ class DepositTestCase(TestCase):
         self.assertEqual(deposit.payment_type, PAYMENT_TYPES.BIP21)
         self.assertEqual(deposit.status, 'received')
 
+    def test_factory_confirmed(self):
+        deposit = DepositFactory(confirmed=True)
+        self.assertEqual(deposit.status, 'confirmed')
+
     def test_merchant(self):
         deposit = DepositFactory()
         self.assertEqual(deposit.merchant,
@@ -293,7 +297,7 @@ class BalanceChangeTestCase(TestCase):
             deposit__deposit_address__wallet_account=wallet_account)
         change_2 = BalanceChangeFactory(
             deposit__deposit_address__wallet_account=wallet_account,
-            deposit__time_confirmed=timezone.now())
+            deposit__confirmed=True)
         self.assertIn(change_1, BalanceChange.objects.all())
         self.assertNotIn(change_1, BalanceChange.objects.exclude_unconfirmed())
         self.assertIn(change_2, BalanceChange.objects.all())
