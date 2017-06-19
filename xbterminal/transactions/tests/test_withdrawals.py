@@ -18,7 +18,7 @@ class PrepareWithdrawalTestCase(TestCase):
     def test_prepare(self, bc_cls_mock, get_rate_mock):
         device = DeviceFactory(max_payout=Decimal('50.0'))
         deposit = DepositFactory(
-            received=True,
+            confirmed=True,
             account=device.account,
             fee_coin_amount=0,
             paid_coin_amount=Decimal('0.01'))
@@ -45,31 +45,37 @@ class PrepareWithdrawalTestCase(TestCase):
 
         self.assertEqual(get_account_balance(device.account),
                          Decimal('0.004'))
+        self.assertEqual(get_account_balance(device.account,
+                                             only_confirmed=True), 0)
         self.assertEqual(withdrawal.balancechange_set.count(), 2)
         change_1 = withdrawal.balancechange_set.get(amount__lt=0)
         self.assertEqual(change_1.account, withdrawal.account)
         self.assertEqual(change_1.address, deposit.deposit_address)
         self.assertEqual(change_1.amount, -deposit.paid_coin_amount)
         self.assertEqual(get_address_balance(change_1.address), 0)
+        self.assertEqual(get_address_balance(change_1.address,
+                                             only_confirmed=True), 0)
         change_2 = withdrawal.balancechange_set.get(amount__gt=0)
         self.assertEqual(change_2.account, withdrawal.account)
         self.assertIs(change_2.address.is_change, True)
         self.assertEqual(change_2.amount, Decimal('0.004'))
         self.assertEqual(get_address_balance(change_2.address),
                          Decimal('0.004'))
+        self.assertEqual(get_address_balance(change_1.address,
+                                             only_confirmed=True), 0)
 
     @patch('transactions.withdrawals.get_exchange_rate')
     @patch('transactions.withdrawals.BlockChain')
     def test_from_multiple_addresses(self, bc_cls_mock, get_rate_mock):
         device = DeviceFactory(max_payout=Decimal('50.0'))
         deposit_1 = DepositFactory(
-            received=True,
+            confirmed=True,
             account=device.account,
             fee_coin_amount=0,
             paid_coin_amount=Decimal('0.01'))
         deposit_1.create_balance_changes()
         deposit_2 = DepositFactory(
-            received=True,
+            confirmed=True,
             account=device.account,
             deposit_address__wallet_account=deposit_1.deposit_address.wallet_account,
             fee_coin_amount=0,
@@ -130,7 +136,7 @@ class PrepareWithdrawalTestCase(TestCase):
     def test_insufficient_account_balance(self, bc_cls_mock, get_rate_mock):
         device = DeviceFactory(max_payout=Decimal('50.0'))
         deposit = DepositFactory(
-            received=True,
+            confirmed=True,
             fee_coin_amount=0,
             paid_coin_amount=Decimal('0.01'))
         deposit.create_balance_changes()
@@ -154,7 +160,7 @@ class PrepareWithdrawalTestCase(TestCase):
     def test_dust_change(self, bc_cls_mock, get_rate_mock):
         device = DeviceFactory(max_payout=Decimal('50.0'))
         deposit = DepositFactory(
-            received=True,
+            confirmed=True,
             account=device.account,
             fee_coin_amount=0,
             paid_coin_amount=Decimal('0.011001'))
@@ -177,7 +183,7 @@ class PrepareWithdrawalTestCase(TestCase):
     def test_prepare_no_device(self, bc_cls_mock, get_rate_mock):
         device = DeviceFactory(max_payout=Decimal('50.0'))
         deposit = DepositFactory(
-            received=True,
+            confirmed=True,
             account=device.account,
             fee_coin_amount=0,
             paid_coin_amount=Decimal('0.01'))

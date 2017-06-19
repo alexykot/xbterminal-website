@@ -65,7 +65,7 @@ def prepare_withdrawal(device_or_account, amount):
         filter(balance__gt=0)
     bc = BlockChain(withdrawal.bitcoin_network)
     for address in addresses:
-        address_balance = get_address_balance(address)
+        address_balance = get_address_balance(address, only_confirmed=True)
         if address_balance == 0:
             continue
         reserved_sum += address_balance
@@ -75,7 +75,7 @@ def prepare_withdrawal(device_or_account, amount):
             break
     else:
         raise WithdrawalError('Insufficient balance in wallet')
-    if get_account_balance(withdrawal.account) < withdrawal.coin_amount:
+    if get_account_balance(withdrawal.account, only_confirmed=True) < withdrawal.coin_amount:
         raise WithdrawalError('Insufficient balance on merchant account')
     logger.info('reserved funds on %s addresses', len(balance_changes))
     # Calculate change amount
