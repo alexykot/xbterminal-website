@@ -144,8 +144,32 @@ class BalanceChangeFactory(factory.DjangoModelFactory):
     class Meta:
         model = models.BalanceChange
 
-    deposit = factory.SubFactory(DepositFactory, received=True)
+    deposit = factory.SubFactory(
+        DepositFactory,
+        received=True,
+        fee_coin_amount=0)
 
     account = factory.SelfAttribute('deposit.account')
     address = factory.SelfAttribute('deposit.deposit_address')
     amount = factory.SelfAttribute('deposit.paid_coin_amount')
+
+
+class NegativeBalanceChangeFactory(factory.DjangoModelFactory):
+
+    class Meta:
+        model = models.BalanceChange
+
+    withdrawal = factory.SubFactory(
+        WithdrawalFactory,
+        tx_fee_coin_amount=0)
+
+    account = factory.SelfAttribute('withdrawal.account')
+    address = factory.SubFactory(
+        AddressFactory,
+        wallet_account__parent_key__coin_type=factory.SelfAttribute(
+            '....withdrawal.coin_type'))
+
+    @factory.lazy_attribute
+    def amount(self):
+        return -(self.withdrawal.customer_coin_amount +
+                 self.withdrawal.tx_fee_coin_amount)

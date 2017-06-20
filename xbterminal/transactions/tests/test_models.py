@@ -15,7 +15,8 @@ from transactions.models import (
 from transactions.tests.factories import (
     DepositFactory,
     WithdrawalFactory,
-    BalanceChangeFactory)
+    BalanceChangeFactory,
+    NegativeBalanceChangeFactory)
 from website.tests.factories import AccountFactory, DeviceFactory
 
 
@@ -272,14 +273,25 @@ class BalanceChangeTestCase(TestCase):
         self.assertEqual(deposit.account.balancechange_set.count(), 1)
         self.assertEqual(deposit.deposit_address.balancechange_set.count(), 1)
 
-    def test_factory(self):
+    def test_factory_positive(self):
         change = BalanceChangeFactory()
         self.assertIsNotNone(change.deposit)
         self.assertIsNone(change.withdrawal)
-        self.assertEqual(change.deposit.status, 'received')
         self.assertEqual(change.account, change.deposit.account)
         self.assertEqual(change.address, change.deposit.deposit_address)
+        self.assertEqual(change.amount, change.deposit.merchant_coin_amount)
         self.assertEqual(change.amount, change.deposit.paid_coin_amount)
+        self.assertEqual(change.deposit.fee_coin_amount, 0)
+        self.assertEqual(change.deposit.status, 'received')
+
+    def test_factory_negative(self):
+        change = NegativeBalanceChangeFactory()
+        self.assertIsNone(change.deposit)
+        self.assertIsNotNone(change.withdrawal)
+        self.assertEqual(change.account, change.withdrawal.account)
+        self.assertEqual(change.amount, -change.withdrawal.coin_amount)
+        self.assertEqual(change.withdrawal.tx_fee_coin_amount, 0)
+        self.assertEqual(change.withdrawal.status, 'new')
 
     def test_deposit_and_withdrawal(self):
         deposit = DepositFactory()
@@ -308,7 +320,11 @@ class BalanceChangeTestCase(TestCase):
         change_2 = BalanceChangeFactory(
             deposit__deposit_address__wallet_account=wallet_account,
             deposit__confirmed=True)
+        change_3 = NegativeBalanceChangeFactory(
+            address__wallet_account=wallet_account)
         self.assertIn(change_1, BalanceChange.objects.all())
         self.assertNotIn(change_1, BalanceChange.objects.exclude_unconfirmed())
         self.assertIn(change_2, BalanceChange.objects.all())
         self.assertIn(change_2, BalanceChange.objects.exclude_unconfirmed())
+        self.assertIn(change_3, BalanceChange.objects.all())
+        self.assertIn(change_3, BalanceChange.objects.exclude_unconfirmed())
