@@ -1,17 +1,20 @@
 from decimal import Decimal
 
 from django.test import TestCase
+from django.utils import timezone
+
 from mock import patch, Mock
 
 from transactions.models import get_account_balance, get_address_balance
 from transactions.withdrawals import (
     prepare_withdrawal,
-    send_transaction)
+    send_transaction,
+    wait_for_confidence)
 from transactions.tests.factories import (
     WithdrawalFactory,
     BalanceChangeFactory,
     NegativeBalanceChangeFactory)
-from operations.exceptions import WithdrawalError
+from operations.exceptions import WithdrawalError, TransactionModified
 from wallet.constants import BIP44_COIN_TYPES
 from wallet.tests.factories import WalletAccountFactory
 from website.tests.factories import DeviceFactory
@@ -226,7 +229,8 @@ class SendTransactionTestCase(TestCase):
 
     @patch('transactions.withdrawals.BlockChain')
     @patch('transactions.withdrawals.create_tx_')
-    def test_send(self, create_tx_mock, bc_cls_mock):
+    @patch('transactions.withdrawals.run_periodic_task')
+    def test_send(self, run_task_mock, create_tx_mock, bc_cls_mock):
         withdrawal = WithdrawalFactory(
             customer_coin_amount=Decimal('0.01'))
         wallet_account = WalletAccountFactory()
@@ -271,10 +275,14 @@ class SendTransactionTestCase(TestCase):
                          bch_2.amount)
         self.assertEqual(bc_mock.send_raw_transaction.call_args[0][0],
                          tx_mock)
+        self.assertEqual(run_task_mock.call_args[0][0].__name__,
+                         'wait_for_confidence')
+        self.assertEqual(run_task_mock.call_args[0][1], [withdrawal.pk])
 
     @patch('transactions.withdrawals.BlockChain')
     @patch('transactions.withdrawals.create_tx_')
-    def test_send_without_change(self, create_tx_mock, bc_cls_mock):
+    @patch('transactions.withdrawals.run_periodic_task')
+    def test_send_without_change(self, run_task_mock, create_tx_mock, bc_cls_mock):
         withdrawal = WithdrawalFactory()
         NegativeBalanceChangeFactory(withdrawal=withdrawal)
         customer_address = '1NdS5JCXzbhNv4STQAaknq56iGstfgRCXg'
@@ -317,3 +325,81 @@ class SendTransactionTestCase(TestCase):
             send_transaction(withdrawal, customer_address)
         self.assertEqual(context.exception.message,
                          'Error in address balance')
+
+
+class WaitForConfidenceTestCase(TestCase):
+
+    @patch('transactions.withdrawals.cancel_current_task')
+    def test_already_broadcasted(self, cancel_mock):
+        withdrawal = WithdrawalFactory(
+            sent=True,
+            time_broadcasted=timezone.now())
+        wait_for_confidence(withdrawal.pk)
+        self.assertIs(cancel_mock.called, True)
+
+    @patch('transactions.withdrawals.cancel_current_task')
+    @patch('transactions.withdrawals.BlockChain')
+    @patch('transactions.withdrawals.is_tx_reliable')
+    def test_tx_confirmed(self, is_reliable_mock, bc_cls_mock, cancel_mock):
+        withdrawal = WithdrawalFactory(sent=True)
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'is_tx_confirmed.return_value': True,
+        })
+        is_reliable_mock.return_value = True
+        wait_for_confidence(withdrawal.pk)
+
+        withdrawal.refresh_from_db()
+        self.assertEqual(withdrawal.status, 'broadcasted')
+        self.assertIs(bc_mock.is_tx_confirmed.called, True)
+        self.assertIs(is_reliable_mock.called, False)
+        self.assertIs(cancel_mock.called, True)
+
+    @patch('transactions.withdrawals.cancel_current_task')
+    @patch('transactions.withdrawals.BlockChain')
+    @patch('transactions.withdrawals.is_tx_reliable')
+    def test_tx_broadcasted(self, is_reliable_mock, bc_cls_mock, cancel_mock):
+        withdrawal = WithdrawalFactory(sent=True)
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'is_tx_confirmed.return_value': False,
+        })
+        is_reliable_mock.return_value = True
+        wait_for_confidence(withdrawal.pk)
+
+        withdrawal.refresh_from_db()
+        self.assertEqual(withdrawal.status, 'broadcasted')
+        self.assertIs(bc_mock.is_tx_confirmed.called, True)
+        self.assertIs(is_reliable_mock.called, True)
+        self.assertIs(cancel_mock.called, True)
+
+    @patch('transactions.withdrawals.cancel_current_task')
+    @patch('transactions.withdrawals.BlockChain')
+    @patch('transactions.withdrawals.is_tx_reliable')
+    def test_tx_not_broadcasted(self, is_reliable_mock, bc_cls_mock, cancel_mock):
+        withdrawal = WithdrawalFactory(sent=True)
+        bc_cls_mock.return_value = Mock(**{
+            'is_tx_confirmed.return_value': False,
+        })
+        is_reliable_mock.return_value = False
+        wait_for_confidence(withdrawal.pk)
+
+        withdrawal.refresh_from_db()
+        self.assertEqual(withdrawal.status, 'sent')
+        self.assertIs(cancel_mock.called, False)
+
+    @patch('transactions.withdrawals.cancel_current_task')
+    @patch('transactions.withdrawals.BlockChain')
+    @patch('transactions.withdrawals.is_tx_reliable')
+    def test_tx_modified(self, is_reliable_mock, bc_cls_mock, cancel_mock):
+        withdrawal = WithdrawalFactory(sent=True)
+        final_tx_id = 'e' * 64
+        bc_cls_mock.return_value = Mock(**{
+            'is_tx_confirmed.side_effect': TransactionModified(final_tx_id),
+        })
+        is_reliable_mock.return_value = False
+        wait_for_confidence(withdrawal.pk)
+
+        withdrawal.refresh_from_db()
+        self.assertEqual(withdrawal.status, 'sent')
+        self.assertEqual(withdrawal.outgoing_tx_id, final_tx_id)
+        self.assertIs(is_reliable_mock.called, False)
+        self.assertIs(cancel_mock.called, False)

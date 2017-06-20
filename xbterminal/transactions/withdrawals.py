@@ -7,9 +7,12 @@ from django.utils import timezone
 
 from constance import config
 
+from api.utils.urls import get_admin_url
+from common.rq_helpers import run_periodic_task, cancel_current_task
 from transactions.constants import (
     BTC_DEC_PLACES,
-    BTC_MIN_OUTPUT)
+    BTC_MIN_OUTPUT,
+    WITHDRAWAL_CONFIDENCE_TIMEOUT)
 from transactions.models import (
     Withdrawal,
     BalanceChange,
@@ -17,9 +20,11 @@ from transactions.models import (
     get_account_balance)
 from transactions.deposits import _get_coin_type
 from transactions.utils.tx import create_tx_
-from operations.services.wrappers import get_exchange_rate
+from operations.services.wrappers import get_exchange_rate, is_tx_reliable
 from operations.blockchain import BlockChain, validate_bitcoin_address
-from operations.exceptions import WithdrawalError
+from operations.exceptions import (
+    WithdrawalError,
+    TransactionModified)
 from wallet.models import Address
 from website.models import Device, Account
 
@@ -138,3 +143,46 @@ def send_transaction(withdrawal, customer_address):
     withdrawal.outgoing_tx_id = bc.send_raw_transaction(outgoing_tx)
     withdrawal.time_sent = timezone.now()
     withdrawal.save()
+    run_periodic_task(wait_for_confidence, [withdrawal.pk], interval=5)
+    logger.info('withdrawal sent (%s)', withdrawal.pk)
+
+
+def wait_for_confidence(withdrawal_id):
+    """
+    Periodic task for monitoring status of outgoing transactions
+    Accepts:
+        wihtdrawal_id: withdrawal ID, integer
+    """
+    withdrawal = Withdrawal.objects.get(pk=withdrawal_id)
+    if withdrawal.time_created + WITHDRAWAL_CONFIDENCE_TIMEOUT < timezone.now():
+        # Timeout, cancel job
+        logger.error(
+            'withdrawal error - confidence not reached',
+            extra={'data': {
+                'withdrawal_admin_url': get_admin_url(withdrawal),
+            }})
+        cancel_current_task()
+    if withdrawal.time_broadcasted is not None:
+        # Confidence threshold reached, cancel job
+        cancel_current_task()
+        return
+    bc = BlockChain(withdrawal.bitcoin_network)
+    try:
+        tx_confirmed = bc.is_tx_confirmed(withdrawal.outgoing_tx_id, minconf=1)
+    except TransactionModified as error:
+        logger.warning(
+            'transaction has been modified',
+            extra={'data': {
+                'withdrawal_admin_url': get_admin_url(withdrawal),
+            }})
+        withdrawal.outgoing_tx_id = error.another_tx_id
+        withdrawal.save()
+        return
+    # If transaction is already confirmed, skip confidence check
+    if tx_confirmed or is_tx_reliable(withdrawal.outgoing_tx_id,
+                                      withdrawal.merchant.get_tx_confidence_threshold(),
+                                      withdrawal.bitcoin_network):
+        cancel_current_task()
+        withdrawal.time_broadcasted = timezone.now()
+        withdrawal.save()
+        logger.info('withdrawal confidence reached (%s)', withdrawal.pk)
