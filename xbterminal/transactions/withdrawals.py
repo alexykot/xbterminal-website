@@ -3,6 +3,9 @@ import logging
 
 from django.db.models import Sum
 from django.db.transaction import atomic
+from django.utils import timezone
+
+from constance import config
 
 from transactions.constants import (
     BTC_DEC_PLACES,
@@ -13,8 +16,9 @@ from transactions.models import (
     get_address_balance,
     get_account_balance)
 from transactions.deposits import _get_coin_type
+from transactions.utils.tx import create_tx_
 from operations.services.wrappers import get_exchange_rate
-from operations.blockchain import BlockChain
+from operations.blockchain import BlockChain, validate_bitcoin_address
 from operations.exceptions import WithdrawalError
 from wallet.models import Address
 from website.models import Device, Account
@@ -95,3 +99,41 @@ def prepare_withdrawal(device_or_account, amount):
             amount=amount)
         for address, amount in balance_changes])  # noqa: F812
     return withdrawal
+
+
+def send_transaction(withdrawal, customer_address):
+    """
+    Accepts:
+        withdrawal: Withdrawal instance
+        customer_address: bitcoin address, string
+    """
+    # Validate customer address
+    error_message = validate_bitcoin_address(customer_address,
+                                             withdrawal.bitcoin_network)
+    if error_message:
+        raise WithdrawalError(error_message)
+    else:
+        withdrawal.customer_address = customer_address
+    # Create transaction
+    tx_inputs = []
+    tx_outputs = {withdrawal.customer_address: withdrawal.customer_coin_amount}
+    bc = BlockChain(withdrawal.bitcoin_network)
+    for bch in withdrawal.balancechange_set.all():
+        if bch.amount < 0:
+            # From wallet to customer
+            private_key = bch.address.get_private_key()
+            unspent_outputs = bc.get_raw_unspent_outputs(
+                bch.address.address,
+                minconf=config.TX_REQUIRED_CONFIRMATIONS)
+            if sum(output['amount'] for output in unspent_outputs) != abs(bch.amount):
+                raise WithdrawalError('Error in address balance')
+            for output in unspent_outputs:
+                tx_inputs.append(dict(output, private_key=private_key))
+        else:
+            # Remains in wallet
+            tx_outputs[bch.address.address] = bch.amount
+    outgoing_tx = create_tx_(tx_inputs, tx_outputs)
+    # Send transaction, update withdrawal status
+    withdrawal.outgoing_tx_id = bc.send_raw_transaction(outgoing_tx)
+    withdrawal.time_sent = timezone.now()
+    withdrawal.save()

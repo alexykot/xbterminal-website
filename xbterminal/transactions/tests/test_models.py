@@ -262,36 +262,36 @@ class BalanceChangeTestCase(TestCase):
 
     def test_create(self):
         deposit = DepositFactory()
-        change = BalanceChange.objects.create(
+        bch = BalanceChange.objects.create(
             deposit=deposit,
             account=deposit.account,
             address=deposit.deposit_address,
             amount=deposit.paid_coin_amount - deposit.fee_coin_amount)
-        self.assertIsNone(change.withdrawal)
-        self.assertEqual(str(change), str(change.pk))
+        self.assertIsNone(bch.withdrawal)
+        self.assertEqual(str(bch), str(bch.pk))
         self.assertEqual(deposit.balancechange_set.count(), 1)
         self.assertEqual(deposit.account.balancechange_set.count(), 1)
         self.assertEqual(deposit.deposit_address.balancechange_set.count(), 1)
 
     def test_factory_positive(self):
-        change = BalanceChangeFactory()
-        self.assertIsNotNone(change.deposit)
-        self.assertIsNone(change.withdrawal)
-        self.assertEqual(change.account, change.deposit.account)
-        self.assertEqual(change.address, change.deposit.deposit_address)
-        self.assertEqual(change.amount, change.deposit.merchant_coin_amount)
-        self.assertEqual(change.amount, change.deposit.paid_coin_amount)
-        self.assertEqual(change.deposit.fee_coin_amount, 0)
-        self.assertEqual(change.deposit.status, 'received')
+        bch = BalanceChangeFactory()
+        self.assertIsNotNone(bch.deposit)
+        self.assertIsNone(bch.withdrawal)
+        self.assertEqual(bch.account, bch.deposit.account)
+        self.assertEqual(bch.address, bch.deposit.deposit_address)
+        self.assertEqual(bch.amount, bch.deposit.merchant_coin_amount)
+        self.assertEqual(bch.amount, bch.deposit.paid_coin_amount)
+        self.assertEqual(bch.deposit.fee_coin_amount, 0)
+        self.assertEqual(bch.deposit.status, 'received')
 
     def test_factory_negative(self):
-        change = NegativeBalanceChangeFactory()
-        self.assertIsNone(change.deposit)
-        self.assertIsNotNone(change.withdrawal)
-        self.assertEqual(change.account, change.withdrawal.account)
-        self.assertEqual(change.amount, -change.withdrawal.coin_amount)
-        self.assertEqual(change.withdrawal.tx_fee_coin_amount, 0)
-        self.assertEqual(change.withdrawal.status, 'new')
+        bch = NegativeBalanceChangeFactory()
+        self.assertIsNone(bch.deposit)
+        self.assertIsNotNone(bch.withdrawal)
+        self.assertEqual(bch.account, bch.withdrawal.account)
+        self.assertEqual(bch.amount, -bch.withdrawal.coin_amount)
+        self.assertEqual(bch.withdrawal.tx_fee_coin_amount, 0)
+        self.assertEqual(bch.withdrawal.status, 'new')
 
     def test_deposit_and_withdrawal(self):
         deposit = DepositFactory()
@@ -315,16 +315,16 @@ class BalanceChangeTestCase(TestCase):
 
     def test_exclude_unconfirmed(self):
         wallet_account = WalletAccountFactory()
-        change_1 = BalanceChangeFactory(
+        bch_1 = BalanceChangeFactory(
             deposit__deposit_address__wallet_account=wallet_account)
-        change_2 = BalanceChangeFactory(
+        bch_2 = BalanceChangeFactory(
             deposit__deposit_address__wallet_account=wallet_account,
             deposit__confirmed=True)
-        change_3 = NegativeBalanceChangeFactory(
+        bch_3 = NegativeBalanceChangeFactory(
             address__wallet_account=wallet_account)
-        self.assertIn(change_1, BalanceChange.objects.all())
-        self.assertNotIn(change_1, BalanceChange.objects.exclude_unconfirmed())
-        self.assertIn(change_2, BalanceChange.objects.all())
-        self.assertIn(change_2, BalanceChange.objects.exclude_unconfirmed())
-        self.assertIn(change_3, BalanceChange.objects.all())
-        self.assertIn(change_3, BalanceChange.objects.exclude_unconfirmed())
+        self.assertIn(bch_1, BalanceChange.objects.all())
+        self.assertNotIn(bch_1, BalanceChange.objects.exclude_unconfirmed())
+        self.assertIn(bch_2, BalanceChange.objects.all())
+        self.assertIn(bch_2, BalanceChange.objects.exclude_unconfirmed())
+        self.assertIn(bch_3, BalanceChange.objects.all())
+        self.assertIn(bch_3, BalanceChange.objects.exclude_unconfirmed())
