@@ -37,6 +37,7 @@ class PrepareWithdrawalTestCase(TestCase):
         self.assertEqual(get_rate_mock.call_args[0][0],
                          withdrawal.currency.name)
         self.assertEqual(bc_mock.get_tx_fee.call_count, 1)
+        self.assertEqual(bc_mock.import_address.call_count, 1)
         self.assertEqual(withdrawal.account, device.account)
         self.assertEqual(withdrawal.device, device)
         self.assertEqual(withdrawal.currency,
@@ -62,6 +63,8 @@ class PrepareWithdrawalTestCase(TestCase):
         bch_2 = withdrawal.balancechange_set.get(amount__gt=0)
         self.assertEqual(bch_2.account, withdrawal.account)
         self.assertIs(bch_2.address.is_change, True)
+        self.assertEqual(bc_mock.import_address.call_args[0][0],
+                         bch_2.address.address)
         self.assertEqual(bch_2.amount, Decimal('0.004'))
         self.assertEqual(get_address_balance(bch_2.address),
                          Decimal('0.004'))

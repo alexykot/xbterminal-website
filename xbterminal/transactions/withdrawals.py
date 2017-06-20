@@ -88,6 +88,7 @@ def prepare_withdrawal(device_or_account, amount):
         withdrawal.customer_coin_amount += change_coin_amount
     else:
         change_address = Address.create(withdrawal.coin_type, is_change=True)
+        bc.import_address(change_address.address, rescan=False)
         balance_changes.append((change_address, change_coin_amount))
     # Save withdrawal object and balance changes
     withdrawal.save()
