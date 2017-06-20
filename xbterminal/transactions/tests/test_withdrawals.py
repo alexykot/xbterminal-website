@@ -9,7 +9,8 @@ from transactions.models import get_account_balance, get_address_balance
 from transactions.withdrawals import (
     prepare_withdrawal,
     send_transaction,
-    wait_for_confidence)
+    wait_for_confidence,
+    wait_for_confirmation)
 from transactions.tests.factories import (
     WithdrawalFactory,
     BalanceChangeFactory,
@@ -337,10 +338,12 @@ class WaitForConfidenceTestCase(TestCase):
         wait_for_confidence(withdrawal.pk)
         self.assertIs(cancel_mock.called, True)
 
-    @patch('transactions.withdrawals.cancel_current_task')
     @patch('transactions.withdrawals.BlockChain')
     @patch('transactions.withdrawals.is_tx_reliable')
-    def test_tx_confirmed(self, is_reliable_mock, bc_cls_mock, cancel_mock):
+    @patch('transactions.withdrawals.cancel_current_task')
+    @patch('transactions.withdrawals.run_periodic_task')
+    def test_tx_confirmed(self, run_task_mock, cancel_mock,
+                          is_reliable_mock, bc_cls_mock):
         withdrawal = WithdrawalFactory(sent=True)
         bc_cls_mock.return_value = bc_mock = Mock(**{
             'is_tx_confirmed.return_value': True,
@@ -353,11 +356,16 @@ class WaitForConfidenceTestCase(TestCase):
         self.assertIs(bc_mock.is_tx_confirmed.called, True)
         self.assertIs(is_reliable_mock.called, False)
         self.assertIs(cancel_mock.called, True)
+        self.assertEqual(run_task_mock.call_args[0][0].__name__,
+                         'wait_for_confirmation')
+        self.assertEqual(run_task_mock.call_args[0][1], [withdrawal.pk])
 
-    @patch('transactions.withdrawals.cancel_current_task')
     @patch('transactions.withdrawals.BlockChain')
     @patch('transactions.withdrawals.is_tx_reliable')
-    def test_tx_broadcasted(self, is_reliable_mock, bc_cls_mock, cancel_mock):
+    @patch('transactions.withdrawals.cancel_current_task')
+    @patch('transactions.withdrawals.run_periodic_task')
+    def test_tx_broadcasted(self, run_task_mock, cancel_mock,
+                            is_reliable_mock, bc_cls_mock):
         withdrawal = WithdrawalFactory(sent=True)
         bc_cls_mock.return_value = bc_mock = Mock(**{
             'is_tx_confirmed.return_value': False,
@@ -370,11 +378,14 @@ class WaitForConfidenceTestCase(TestCase):
         self.assertIs(bc_mock.is_tx_confirmed.called, True)
         self.assertIs(is_reliable_mock.called, True)
         self.assertIs(cancel_mock.called, True)
+        self.assertIs(run_task_mock.called, True)
 
-    @patch('transactions.withdrawals.cancel_current_task')
     @patch('transactions.withdrawals.BlockChain')
     @patch('transactions.withdrawals.is_tx_reliable')
-    def test_tx_not_broadcasted(self, is_reliable_mock, bc_cls_mock, cancel_mock):
+    @patch('transactions.withdrawals.cancel_current_task')
+    @patch('transactions.withdrawals.run_periodic_task')
+    def test_tx_not_broadcasted(self, run_task_mock, cancel_mock,
+                                is_reliable_mock, bc_cls_mock):
         withdrawal = WithdrawalFactory(sent=True)
         bc_cls_mock.return_value = Mock(**{
             'is_tx_confirmed.return_value': False,
@@ -385,11 +396,12 @@ class WaitForConfidenceTestCase(TestCase):
         withdrawal.refresh_from_db()
         self.assertEqual(withdrawal.status, 'sent')
         self.assertIs(cancel_mock.called, False)
+        self.assertIs(run_task_mock.called, False)
 
-    @patch('transactions.withdrawals.cancel_current_task')
     @patch('transactions.withdrawals.BlockChain')
     @patch('transactions.withdrawals.is_tx_reliable')
-    def test_tx_modified(self, is_reliable_mock, bc_cls_mock, cancel_mock):
+    @patch('transactions.withdrawals.cancel_current_task')
+    def test_tx_modified(self, cancel_mock, is_reliable_mock, bc_cls_mock):
         withdrawal = WithdrawalFactory(sent=True)
         final_tx_id = 'e' * 64
         bc_cls_mock.return_value = Mock(**{
@@ -402,4 +414,59 @@ class WaitForConfidenceTestCase(TestCase):
         self.assertEqual(withdrawal.status, 'sent')
         self.assertEqual(withdrawal.outgoing_tx_id, final_tx_id)
         self.assertIs(is_reliable_mock.called, False)
+        self.assertIs(cancel_mock.called, False)
+
+
+class WaitForConfirmationTestCase(TestCase):
+
+    @patch('transactions.withdrawals.BlockChain')
+    @patch('transactions.withdrawals.cancel_current_task')
+    def test_tx_confirmed(self, cancel_mock, bc_cls_mock):
+        withdrawal = WithdrawalFactory(
+            sent=True,
+            time_broadcasted=timezone.now(),
+            time_notified=timezone.now())
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'is_tx_confirmed.return_value': True,
+        })
+        wait_for_confirmation(withdrawal.pk)
+
+        withdrawal.refresh_from_db()
+        self.assertEqual(withdrawal.status, 'confirmed')
+        self.assertEqual(bc_mock.is_tx_confirmed.call_args[0][0],
+                         withdrawal.outgoing_tx_id)
+        self.assertIs(cancel_mock.called, True)
+
+    @patch('transactions.withdrawals.BlockChain')
+    @patch('transactions.withdrawals.cancel_current_task')
+    def test_tx_not_confirmed(self, cancel_mock, bc_cls_mock):
+        withdrawal = WithdrawalFactory(
+            sent=True,
+            time_broadcasted=timezone.now(),
+            time_notified=timezone.now())
+        bc_cls_mock.return_value = Mock(**{
+            'is_tx_confirmed.return_value': False,
+        })
+        wait_for_confirmation(withdrawal.pk)
+
+        withdrawal.refresh_from_db()
+        self.assertEqual(withdrawal.status, 'notified')
+        self.assertIs(cancel_mock.called, False)
+
+    @patch('transactions.withdrawals.BlockChain')
+    @patch('transactions.withdrawals.cancel_current_task')
+    def test_tx_modified(self, cancel_mock, bc_cls_mock):
+        withdrawal = WithdrawalFactory(
+            sent=True,
+            time_broadcasted=timezone.now(),
+            time_notified=timezone.now())
+        final_tx_id = '1' * 64
+        bc_cls_mock.return_value = Mock(**{
+            'is_tx_confirmed.side_effect': TransactionModified(final_tx_id),
+        })
+        wait_for_confirmation(withdrawal.pk)
+
+        withdrawal.refresh_from_db()
+        self.assertEqual(withdrawal.status, 'notified')
+        self.assertEqual(withdrawal.outgoing_tx_id, final_tx_id)
         self.assertIs(cancel_mock.called, False)

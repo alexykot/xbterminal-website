@@ -12,7 +12,8 @@ from common.rq_helpers import run_periodic_task, cancel_current_task
 from transactions.constants import (
     BTC_DEC_PLACES,
     BTC_MIN_OUTPUT,
-    WITHDRAWAL_CONFIDENCE_TIMEOUT)
+    WITHDRAWAL_CONFIDENCE_TIMEOUT,
+    WITHDRAWAL_CONFIRMATION_TIMEOUT)
 from transactions.models import (
     Withdrawal,
     BalanceChange,
@@ -183,6 +184,39 @@ def wait_for_confidence(withdrawal_id):
                                       withdrawal.merchant.get_tx_confidence_threshold(),
                                       withdrawal.bitcoin_network):
         cancel_current_task()
-        withdrawal.time_broadcasted = timezone.now()
+        if not withdrawal.time_broadcasted:
+            withdrawal.time_broadcasted = timezone.now()
+            withdrawal.save()
+            run_periodic_task(wait_for_confirmation, [withdrawal.pk],
+                              interval=15)
+            logger.info('withdrawal confidence reached (%s)', withdrawal.pk)
+
+
+def wait_for_confirmation(withdrawal_id):
+    """
+    Periodic task for confirmation monitoring
+    Accepts:
+        withdrawal_id: withdrawal ID, integer
+    """
+    withdrawal = Withdrawal.objects.get(pk=withdrawal_id)
+    if withdrawal.time_created + WITHDRAWAL_CONFIRMATION_TIMEOUT < timezone.now():
+        # Timeout, cancel job
+        cancel_current_task()
+    bc = BlockChain(withdrawal.bitcoin_network)
+    try:
+        tx_confirmed = bc.is_tx_confirmed(withdrawal.outgoing_tx_id)
+    except TransactionModified as error:
+        logger.warning(
+            'transaction has been modified',
+            extra={'data': {
+                'withdrawal_admin_url': get_admin_url(withdrawal),
+            }})
+        withdrawal.outgoing_tx_id = error.another_tx_id
         withdrawal.save()
-        logger.info('withdrawal confidence reached (%s)', withdrawal.pk)
+        return
+    if tx_confirmed:
+        cancel_current_task()
+        if withdrawal.time_confirmed is None:
+            withdrawal.time_confirmed = timezone.now()
+            withdrawal.save()
+            logger.info('withdrawal confirmed (%s)', withdrawal.pk)
