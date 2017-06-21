@@ -105,6 +105,7 @@ def prepare_withdrawal(device_or_account, amount):
             address=address,
             amount=amount)
         for address, amount in balance_changes])  # noqa: F812
+    run_periodic_task(check_withdrawal_status, [withdrawal.pk], interval=60)
     return withdrawal
 
 
@@ -157,11 +158,6 @@ def wait_for_confidence(withdrawal_id):
     withdrawal = Withdrawal.objects.get(pk=withdrawal_id)
     if withdrawal.time_created + WITHDRAWAL_CONFIDENCE_TIMEOUT < timezone.now():
         # Timeout, cancel job
-        logger.error(
-            'withdrawal error - confidence not reached',
-            extra={'data': {
-                'withdrawal_admin_url': get_admin_url(withdrawal),
-            }})
         cancel_current_task()
     if withdrawal.time_broadcasted is not None:
         # Confidence threshold reached, cancel job
@@ -184,7 +180,7 @@ def wait_for_confidence(withdrawal_id):
                                       withdrawal.merchant.get_tx_confidence_threshold(),
                                       withdrawal.bitcoin_network):
         cancel_current_task()
-        if not withdrawal.time_broadcasted:
+        if withdrawal.time_broadcasted is None:
             withdrawal.time_broadcasted = timezone.now()
             withdrawal.save()
             run_periodic_task(wait_for_confirmation, [withdrawal.pk],
@@ -220,3 +216,27 @@ def wait_for_confirmation(withdrawal_id):
             withdrawal.time_confirmed = timezone.now()
             withdrawal.save()
             logger.info('withdrawal confirmed (%s)', withdrawal.pk)
+
+
+def check_withdrawal_status(withdrawal_id):
+    """
+    Periodic task for monitoring withdrawal status
+    Accepts:
+        withdrawal_id: withdrawal ID, integer
+    """
+    with atomic():
+        withdrawal = Withdrawal.objects.get(pk=withdrawal_id)
+        if withdrawal.status in ['timeout', 'cancelled']:
+            # Unlock reserved addresses
+            withdrawal.balancechange_set.all().delete()
+            cancel_current_task()
+        elif withdrawal.status in ['failed', 'unconfirmed']:
+            logger.error(
+                'withdrawal failed',
+                extra={'data': {
+                    'withdrawal_admin_url': get_admin_url(withdrawal),
+                }})
+            cancel_current_task()
+        elif withdrawal.status == 'confirmed':
+            # Success
+            cancel_current_task()

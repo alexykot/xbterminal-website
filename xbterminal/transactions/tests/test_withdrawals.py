@@ -1,3 +1,4 @@
+import datetime
 from decimal import Decimal
 
 from django.test import TestCase
@@ -10,7 +11,8 @@ from transactions.withdrawals import (
     prepare_withdrawal,
     send_transaction,
     wait_for_confidence,
-    wait_for_confirmation)
+    wait_for_confirmation,
+    check_withdrawal_status)
 from transactions.tests.factories import (
     WithdrawalFactory,
     BalanceChangeFactory,
@@ -25,7 +27,8 @@ class PrepareWithdrawalTestCase(TestCase):
 
     @patch('transactions.withdrawals.get_exchange_rate')
     @patch('transactions.withdrawals.BlockChain')
-    def test_prepare(self, bc_cls_mock, get_rate_mock):
+    @patch('transactions.withdrawals.run_periodic_task')
+    def test_prepare(self, run_task_mock, bc_cls_mock, get_rate_mock):
         device = DeviceFactory(max_payout=Decimal('50.0'))
         bch_0 = BalanceChangeFactory(
             deposit__confirmed=True,
@@ -42,6 +45,10 @@ class PrepareWithdrawalTestCase(TestCase):
                          withdrawal.currency.name)
         self.assertEqual(bc_mock.get_tx_fee.call_count, 1)
         self.assertEqual(bc_mock.import_address.call_count, 1)
+        self.assertEqual(run_task_mock.call_args[0][0].__name__,
+                         'check_withdrawal_status')
+        self.assertEqual(run_task_mock.call_args[0][1], [withdrawal.pk])
+
         self.assertEqual(withdrawal.account, device.account)
         self.assertEqual(withdrawal.device, device)
         self.assertEqual(withdrawal.currency,
@@ -77,7 +84,9 @@ class PrepareWithdrawalTestCase(TestCase):
 
     @patch('transactions.withdrawals.get_exchange_rate')
     @patch('transactions.withdrawals.BlockChain')
-    def test_from_multiple_addresses(self, bc_cls_mock, get_rate_mock):
+    @patch('transactions.withdrawals.run_periodic_task')
+    def test_from_multiple_addresses(self, run_task_mock, bc_cls_mock,
+                                     get_rate_mock):
         device = DeviceFactory(max_payout=Decimal('50.0'))
         wallet_account = WalletAccountFactory()
         bch_1 = BalanceChangeFactory(
@@ -188,7 +197,8 @@ class PrepareWithdrawalTestCase(TestCase):
 
     @patch('transactions.withdrawals.get_exchange_rate')
     @patch('transactions.withdrawals.BlockChain')
-    def test_dust_change(self, bc_cls_mock, get_rate_mock):
+    @patch('transactions.withdrawals.run_periodic_task')
+    def test_dust_change(self, run_task_mock, bc_cls_mock, get_rate_mock):
         device = DeviceFactory(max_payout=Decimal('50.0'))
         bch = BalanceChangeFactory(
             deposit__confirmed=True,
@@ -209,7 +219,9 @@ class PrepareWithdrawalTestCase(TestCase):
 
     @patch('transactions.withdrawals.get_exchange_rate')
     @patch('transactions.withdrawals.BlockChain')
-    def test_prepare_no_device(self, bc_cls_mock, get_rate_mock):
+    @patch('transactions.withdrawals.run_periodic_task')
+    def test_prepare_no_device(self, run_task_mock, bc_cls_mock,
+                               get_rate_mock):
         device = DeviceFactory(max_payout=Decimal('50.0'))
         BalanceChangeFactory(
             deposit__confirmed=True,
@@ -470,3 +482,71 @@ class WaitForConfirmationTestCase(TestCase):
         self.assertEqual(withdrawal.status, 'notified')
         self.assertEqual(withdrawal.outgoing_tx_id, final_tx_id)
         self.assertIs(cancel_mock.called, False)
+
+
+class CheckWithdrawalStatusTestCase(TestCase):
+
+    @patch('transactions.withdrawals.cancel_current_task')
+    def test_new(self, cancel_mock):
+        withdrawal = WithdrawalFactory()
+        NegativeBalanceChangeFactory(withdrawal=withdrawal)
+        check_withdrawal_status(withdrawal.pk)
+        self.assertEqual(withdrawal.balancechange_set.count(), 1)
+        self.assertIs(cancel_mock.called, False)
+
+    @patch('transactions.withdrawals.cancel_current_task')
+    @patch('transactions.withdrawals.logger')
+    def test_timeout(self, logger_mock, cancel_mock):
+        withdrawal = WithdrawalFactory(
+            time_created=timezone.now() - datetime.timedelta(minutes=60))
+        NegativeBalanceChangeFactory(withdrawal=withdrawal)
+        check_withdrawal_status(withdrawal.pk)
+        self.assertEqual(withdrawal.balancechange_set.count(), 0)
+        self.assertIs(logger_mock.error.called, False)
+        self.assertIs(cancel_mock.called, True)
+
+    @patch('transactions.withdrawals.cancel_current_task')
+    @patch('transactions.withdrawals.logger')
+    def test_failed(self, logger_mock, cancel_mock):
+        withdrawal = WithdrawalFactory(
+            sent=True,
+            time_created=timezone.now() - datetime.timedelta(minutes=300),
+            time_sent=timezone.now() - datetime.timedelta(minutes=200))
+        NegativeBalanceChangeFactory(withdrawal=withdrawal)
+        check_withdrawal_status(withdrawal.pk)
+        self.assertEqual(withdrawal.balancechange_set.count(), 1)
+        self.assertIs(logger_mock.error.called, True)
+        self.assertIs(cancel_mock.called, True)
+
+    @patch('transactions.withdrawals.cancel_current_task')
+    @patch('transactions.withdrawals.logger')
+    def test_unconfirmed(self, logger_mock, cancel_mock):
+        withdrawal = WithdrawalFactory(
+            sent=True,
+            time_created=timezone.now() - datetime.timedelta(minutes=300),
+            time_sent=timezone.now() - datetime.timedelta(minutes=280),
+            time_broadcasted=timezone.now() - datetime.timedelta(minutes=260),
+            time_notified=timezone.now() - datetime.timedelta(minutes=240))
+        NegativeBalanceChangeFactory(withdrawal=withdrawal)
+        check_withdrawal_status(withdrawal.pk)
+        self.assertEqual(withdrawal.balancechange_set.count(), 1)
+        self.assertIs(logger_mock.error.called, True)
+        self.assertIs(cancel_mock.called, True)
+
+    @patch('transactions.withdrawals.cancel_current_task')
+    @patch('transactions.withdrawals.logger')
+    def test_cancelled(self, logger_mock, cancel_mock):
+        withdrawal = WithdrawalFactory(time_cancelled=timezone.now())
+        NegativeBalanceChangeFactory(withdrawal=withdrawal)
+        check_withdrawal_status(withdrawal.pk)
+        self.assertEqual(withdrawal.balancechange_set.count(), 0)
+        self.assertIs(logger_mock.error.called, False)
+        self.assertIs(cancel_mock.called, True)
+
+    @patch('transactions.withdrawals.cancel_current_task')
+    def test_confirmed(self, cancel_mock):
+        withdrawal = WithdrawalFactory(confirmed=True)
+        NegativeBalanceChangeFactory(withdrawal=withdrawal)
+        check_withdrawal_status(withdrawal.pk)
+        self.assertEqual(withdrawal.balancechange_set.count(), 1)
+        self.assertIs(cancel_mock.called, True)
