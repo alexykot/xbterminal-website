@@ -17,9 +17,9 @@ from transactions.constants import (
 from transactions.models import (
     Withdrawal,
     BalanceChange,
+    get_coin_type,
     get_address_balance,
     get_account_balance)
-from transactions.deposits import _get_coin_type
 from transactions.utils.tx import create_tx_
 from operations.services.wrappers import get_exchange_rate, is_tx_reliable
 from operations.blockchain import BlockChain, validate_bitcoin_address
@@ -52,7 +52,7 @@ def prepare_withdrawal(device_or_account, amount):
         raise WithdrawalError(
             'Amount exceeds max payout for current device')
     # Create model instance
-    coin_type = _get_coin_type(account)
+    coin_type = get_coin_type(account.currency.name)
     withdrawal = Withdrawal(
         account=account,
         device=device,

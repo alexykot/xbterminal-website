@@ -57,15 +57,7 @@ class Transaction(models.Model):
 
     @property
     def bitcoin_network(self):
-        # Property for backwards compatibility
-        # TODO: use coin types instead
-        if self.coin_type == BIP44_COIN_TYPES.BTC:
-            network = 'mainnet'
-        elif self.coin_type == BIP44_COIN_TYPES.XTN:
-            network = 'testnet'
-        else:
-            raise ValueError('Invalid coin type.')
-        return network
+        return get_bitcoin_network(self.coin_type)
 
 
 class Deposit(Transaction):
@@ -325,6 +317,33 @@ class BalanceChange(models.Model):
                 (self.deposit and self.withdrawal):
             raise IntegrityError
         super(BalanceChange, self).save(*args, **kwargs)
+
+#
+# Compatibility helpers
+#
+
+
+def get_bitcoin_network(coin_type):
+    # TODO: use coin types instead in BlokcChain class
+    if coin_type == BIP44_COIN_TYPES.BTC:
+        network = 'mainnet'
+    elif coin_type == BIP44_COIN_TYPES.XTN:
+        network = 'testnet'
+    else:
+        raise ValueError('Invalid coin type')
+    return network
+
+
+def get_coin_type(currency_name):
+    """
+    Determine coin type from currency name
+    """
+    if currency_name == 'BTC':
+        return BIP44_COIN_TYPES.BTC
+    elif currency_name == 'TBTC':
+        return BIP44_COIN_TYPES.XTN
+    else:
+        raise ValueError('Fiat currencies are not supported')
 
 
 def get_account_balance(account, only_confirmed=False):
