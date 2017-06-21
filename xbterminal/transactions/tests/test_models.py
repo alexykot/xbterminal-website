@@ -89,9 +89,39 @@ class DepositTestCase(TestCase):
         self.assertEqual(deposit.payment_type, PAYMENT_TYPES.BIP21)
         self.assertEqual(deposit.status, 'received')
 
+    def test_factory_broadcasted(self):
+        deposit = DepositFactory(broadcasted=True)
+        self.assertEqual(deposit.status, 'broadcasted')
+
+    def test_factory_notified(self):
+        deposit = DepositFactory(notified=True)
+        self.assertEqual(deposit.status, 'notified')
+
     def test_factory_confirmed(self):
         deposit = DepositFactory(confirmed=True)
         self.assertEqual(deposit.status, 'confirmed')
+
+    def test_factory_timeout(self):
+        deposit = DepositFactory(timeout=True)
+        self.assertEqual(deposit.status, 'timeout')
+
+    def test_factory_failed(self):
+        deposit = DepositFactory(failed=True)
+        self.assertEqual(deposit.status, 'failed')
+
+    def test_factory_unconfirmed(self):
+        deposit = DepositFactory(unconfirmed=True)
+        self.assertEqual(deposit.status, 'unconfirmed')
+
+    def test_factory_refunded(self):
+        deposit = DepositFactory(refunded=True)
+        self.assertIsNotNone(deposit.refund_address)
+        self.assertIsNotNone(deposit.refund_tx_id)
+        self.assertEqual(deposit.status, 'refunded')
+
+    def test_factory_cancelled(self):
+        deposit = DepositFactory(cancelled=True)
+        self.assertEqual(deposit.status, 'cancelled')
 
     def test_merchant(self):
         deposit = DepositFactory()
@@ -217,9 +247,33 @@ class WithdrawalTestCase(TestCase):
         self.assertEqual(len(withdrawal.outgoing_tx_id), 64)
         self.assertEqual(withdrawal.status, 'sent')
 
+    def test_factory_broadcasted(self):
+        withdrawal = WithdrawalFactory(broadcasted=True)
+        self.assertEqual(withdrawal.status, 'broadcasted')
+
+    def test_factory_notified(self):
+        withdrawal = WithdrawalFactory(notified=True)
+        self.assertEqual(withdrawal.status, 'notified')
+
     def test_factory_confirmed(self):
         withdrawal = WithdrawalFactory(confirmed=True)
         self.assertEqual(withdrawal.status, 'confirmed')
+
+    def test_factory_timeout(self):
+        withdrawal = WithdrawalFactory(timeout=True)
+        self.assertEqual(withdrawal.status, 'timeout')
+
+    def test_factory_failed(self):
+        withdrawal = WithdrawalFactory(failed=True)
+        self.assertEqual(withdrawal.status, 'failed')
+
+    def test_factory_unconfirmed(self):
+        withdrawal = WithdrawalFactory(unconfirmed=True)
+        self.assertEqual(withdrawal.status, 'unconfirmed')
+
+    def test_factory_cancelled(self):
+        withdrawal = WithdrawalFactory(cancelled=True)
+        self.assertEqual(withdrawal.status, 'cancelled')
 
     def test_status(self):
         withdrawal = WithdrawalFactory()

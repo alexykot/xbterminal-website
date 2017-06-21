@@ -10,7 +10,15 @@ from pycoin.encoding import hash160, hash160_sec_to_bitcoin_address
 from pycoin.networks import address_prefix_for_netcode
 
 from transactions import models
-from transactions.constants import BTC_DEC_PLACES, PAYMENT_TYPES
+from transactions.constants import (
+    BTC_DEC_PLACES,
+    PAYMENT_TYPES,
+    DEPOSIT_TIMEOUT,
+    DEPOSIT_CONFIDENCE_TIMEOUT,
+    DEPOSIT_CONFIRMATION_TIMEOUT,
+    WITHDRAWAL_TIMEOUT,
+    WITHDRAWAL_CONFIDENCE_TIMEOUT,
+    WITHDRAWAL_CONFIRMATION_TIMEOUT)
 from website.tests.factories import AccountFactory, DeviceFactory
 from wallet.constants import BIP44_COIN_TYPES
 from wallet.tests.factories import AddressFactory
@@ -51,11 +59,40 @@ class DepositFactory(factory.DjangoModelFactory):
                 [factory.LazyFunction(generate_random_tx_id)]),
             payment_type=PAYMENT_TYPES.BIP21,
             time_received=factory.LazyFunction(timezone.now))
-        confirmed = factory.Trait(
+        broadcasted = factory.Trait(
             received=True,
-            time_broadcasted=factory.LazyFunction(timezone.now),
-            time_notified=factory.LazyFunction(timezone.now),
+            time_broadcasted=factory.LazyFunction(timezone.now))
+        notified = factory.Trait(
+            broadcasted=True,
+            time_notified=factory.LazyFunction(timezone.now))
+        confirmed = factory.Trait(
+            notified=True,
             time_confirmed=factory.LazyFunction(timezone.now))
+        timeout = factory.Trait(
+            time_created=factory.LazyFunction(
+                lambda: timezone.now() - DEPOSIT_TIMEOUT * 2))
+        failed = factory.Trait(
+            received=True,
+            time_created=factory.LazyFunction(
+                lambda: timezone.now() - DEPOSIT_CONFIDENCE_TIMEOUT * 2),
+            time_received=factory.LazyFunction(
+                lambda: timezone.now() - DEPOSIT_CONFIDENCE_TIMEOUT * 2))
+        unconfirmed = factory.Trait(
+            received=True,
+            time_created=factory.LazyFunction(
+                lambda: timezone.now() - DEPOSIT_CONFIRMATION_TIMEOUT * 2),
+            time_received=factory.LazyFunction(
+                lambda: timezone.now() - DEPOSIT_CONFIRMATION_TIMEOUT * 2),
+            time_broadcasted=factory.LazyFunction(
+                lambda: timezone.now() - DEPOSIT_CONFIDENCE_TIMEOUT * 2),
+            time_notified=factory.LazyFunction(
+                lambda: timezone.now() - DEPOSIT_CONFIDENCE_TIMEOUT * 2))
+        refunded = factory.Trait(
+            received=True,
+            refund_tx_id=factory.LazyFunction(generate_random_tx_id),
+            time_refunded=factory.LazyFunction(timezone.now))
+        cancelled = factory.Trait(
+            time_cancelled=factory.LazyFunction(timezone.now))
 
     account = factory.SubFactory(AccountFactory)
     device = factory.SubFactory(
@@ -107,11 +144,36 @@ class WithdrawalFactory(factory.DjangoModelFactory):
                 lambda w: generate_random_address(w.coin_type)),
             outgoing_tx_id=factory.LazyFunction(generate_random_tx_id),
             time_sent=factory.LazyFunction(timezone.now))
-        confirmed = factory.Trait(
+        broadcasted = factory.Trait(
             sent=True,
-            time_broadcasted=factory.LazyFunction(timezone.now),
-            time_notified=factory.LazyFunction(timezone.now),
+            time_broadcasted=factory.LazyFunction(timezone.now))
+        notified = factory.Trait(
+            broadcasted=True,
+            time_notified=factory.LazyFunction(timezone.now))
+        confirmed = factory.Trait(
+            notified=True,
             time_confirmed=factory.LazyFunction(timezone.now))
+        timeout = factory.Trait(
+            time_created=factory.LazyFunction(
+                lambda: timezone.now() - WITHDRAWAL_TIMEOUT * 2))
+        failed = factory.Trait(
+            sent=True,
+            time_created=factory.LazyFunction(
+                lambda: timezone.now() - WITHDRAWAL_CONFIDENCE_TIMEOUT * 2),
+            time_sent=factory.LazyFunction(
+                lambda: timezone.now() - WITHDRAWAL_CONFIDENCE_TIMEOUT * 2))
+        unconfirmed = factory.Trait(
+            notified=True,
+            time_created=factory.LazyFunction(
+                lambda: timezone.now() - WITHDRAWAL_CONFIRMATION_TIMEOUT * 2),
+            time_sent=factory.LazyFunction(
+                lambda: timezone.now() - WITHDRAWAL_CONFIRMATION_TIMEOUT * 2),
+            time_broadcasted=factory.LazyFunction(
+                lambda: timezone.now() - WITHDRAWAL_CONFIRMATION_TIMEOUT * 2),
+            time_notified=factory.LazyFunction(
+                lambda: timezone.now() - WITHDRAWAL_CONFIRMATION_TIMEOUT * 2))
+        cancelled = factory.Trait(
+            time_cancelled=factory.LazyFunction(timezone.now))
 
     account = factory.SubFactory(AccountFactory)
     device = factory.SubFactory(
