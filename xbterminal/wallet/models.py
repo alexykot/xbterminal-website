@@ -5,8 +5,8 @@ from django.db import models
 from django.db.models import Max
 from django.db.transaction import atomic
 
-from wallet.enums import BIP44_PURPOSE, BIP44_COIN_TYPES, MAX_INDEX
-from wallet.utils.keys import generate_p2pkh_script
+from wallet.constants import BIP44_PURPOSE, BIP44_COIN_TYPES, MAX_INDEX
+from wallet.utils.keys import derive_key, generate_p2pkh_script
 
 
 class WalletKey(models.Model):
@@ -95,6 +95,13 @@ class Address(models.Model):
             self.relative_path,
             as_address=as_address)
 
+    def get_private_key(self):
+        """
+        Returns corresponding private key (BIP32Node instance)
+        """
+        return derive_key(self.wallet_account.parent_key.private_key,
+                          self.relative_path)
+
     @atomic
     def save(self, *args, **kwargs):
         if not self.pk:
@@ -105,21 +112,21 @@ class Address(models.Model):
 
     @classmethod
     @atomic
-    def create(cls, netcode, is_change):
+    def create(cls, coin_type, is_change=False):
         """
         Accepts:
-            netcode: BTC or XTN
+            coin_type: value from BIP44_COIN_TYPES enum
             is_change: boolean
         Returns:
             address: Address instance
         """
-        coin_type = BIP44_COIN_TYPES.for_constant(netcode).value
         try:
             wallet_key = WalletKey.objects.get(coin_type=coin_type)
         except WalletKey.DoesNotExist:
             raise ImproperlyConfigured
         try:
             account = wallet_key.walletaccount_set.\
+                filter(address__is_change=is_change).\
                 annotate(address_max_index=Max('address__index')).\
                 exclude(address_max_index__gte=MAX_INDEX).\
                 latest('index')

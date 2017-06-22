@@ -169,8 +169,7 @@ def wait_for_payment(payment_order_uid):
         return
     # Connect to bitcoind
     bc = blockchain.BlockChain(payment_order.bitcoin_network)
-    transactions = bc.get_unspent_transactions(
-        CBitcoinAddress(payment_order.local_address))
+    transactions = bc.get_unspent_transactions(payment_order.local_address)
     if transactions:
         if len(transactions) > 1:
             logger.warning('multiple incoming tx')

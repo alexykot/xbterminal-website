@@ -2,7 +2,7 @@ from django.db import IntegrityError
 from django.test import TestCase
 
 from wallet.models import WalletKey, WalletAccount, Address
-from wallet.enums import BIP44_COIN_TYPES, MAX_INDEX
+from wallet.constants import BIP44_COIN_TYPES, MAX_INDEX
 from wallet.tests.factories import (
     WalletKeyFactory,
     WalletAccountFactory,
@@ -64,10 +64,15 @@ class AddressTestCase(TestCase):
         self.assertEqual(address.relative_path, '0/0/0')
         self.assertEqual(str(address), address.address)
 
-    def test_factory(self):
+    def test_factory_btc(self):
         address = AddressFactory()
         self.assertIs(address.address.startswith('1'), True)
         self.assertEqual(address.relative_path, '0/0/0')
+
+    def test_factory_xtn(self):
+        address = AddressFactory(
+            wallet_account__parent_key__coin_type=BIP44_COIN_TYPES.XTN)
+        self.assertIn(address.address[0], ['m', 'n'])
 
     def test_unique_index(self):
         account = WalletAccountFactory()
@@ -80,9 +85,15 @@ class AddressTestCase(TestCase):
     def test_create_method(self):
         wallet_key = WalletKeyFactory(coin_type=BIP44_COIN_TYPES.BTC)
         self.assertEqual(wallet_key.walletaccount_set.count(), 0)
-        address = Address.create('BTC', False)
+        address_1 = Address.create(BIP44_COIN_TYPES.BTC)
         self.assertEqual(wallet_key.walletaccount_set.count(), 1)
-        self.assertEqual(address.wallet_account.parent_key, wallet_key)
+        self.assertEqual(address_1.wallet_account.parent_key, wallet_key)
+        self.assertIs(address_1.is_change, False)
+        self.assertEqual(address_1.index, 0)
+        address_2 = Address.create(BIP44_COIN_TYPES.BTC, is_change=True)
+        self.assertEqual(wallet_key.walletaccount_set.count(), 2)
+        self.assertIs(address_2.is_change, True)
+        self.assertEqual(address_2.index, 0)
 
     def test_create_method_max_index(self):
         wallet_key = WalletKeyFactory(coin_type=BIP44_COIN_TYPES.BTC)
@@ -91,7 +102,12 @@ class AddressTestCase(TestCase):
         address_1 = AddressFactory(wallet_account=account)
         address_1.index = MAX_INDEX + 1
         address_1.save()
-        address_2 = Address.create('BTC', False)
+        address_2 = Address.create(BIP44_COIN_TYPES.BTC)
         self.assertNotEqual(address_2.wallet_account,
                             address_1.wallet_account)
         self.assertEqual(wallet_key.walletaccount_set.count(), 2)
+
+    def test_get_private_key(self):
+        address = AddressFactory()
+        private_key = address.get_private_key()
+        self.assertEqual(private_key.address(), address.address)

@@ -14,6 +14,19 @@ def create_wallet_key(master_key, netcode, path, as_private=False):
     return key.hwif(as_private=as_private)
 
 
+def derive_key(parent_key, path):
+    """
+    Accepts:
+        parent_key: extended key in WIF, string
+        path: BIP32 path, string
+    Returns:
+        BIP32Node instance
+    """
+    parent_key = BIP32Node.from_hwif(parent_key)
+    child_key = parent_key.subkey_for_path(path)
+    return child_key
+
+
 def generate_p2pkh_script(parent_key, path, as_address=True):
     """
     Generate BTC/LTC P2PKH script or address
@@ -24,8 +37,7 @@ def generate_p2pkh_script(parent_key, path, as_address=True):
     Returns:
         address or script, string
     """
-    parent_key = BIP32Node.from_hwif(parent_key)
-    child_key = parent_key.subkey_for_path(path)
+    child_key = derive_key(parent_key, path)
     address = child_key.address()
     if as_address:
         return address

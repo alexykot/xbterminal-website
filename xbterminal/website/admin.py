@@ -9,13 +9,7 @@ from website import forms, models
 from website.utils.qr import generate_qr_code
 from website.widgets import BitcoinAddressWidget
 from operations.instantfiat import cryptopay
-from api.utils.urls import get_admin_url
-
-
-def url_to_object(obj):
-    return format_html(u'<a href="{0}">{1}</a>',
-                       get_admin_url(obj, absolute=False),
-                       str(obj))
+from api.utils.urls import get_link_to_object
 
 
 @admin.register(models.Language)
@@ -70,7 +64,7 @@ class DeviceAdmin(FSMTransitionMixin, admin.ModelAdmin):
         if device.status == 'registered':
             return '-'
         else:
-            return url_to_object(device.merchant)
+            return get_link_to_object(device.merchant)
     merchant_link.allow_tags = True
     merchant_link.short_description = 'merchant'
 
@@ -78,7 +72,7 @@ class DeviceAdmin(FSMTransitionMixin, admin.ModelAdmin):
         if not device.account:
             return '-'
         else:
-            return url_to_object(device.account)
+            return get_link_to_object(device.account)
     account_link.allow_tags = True
     account_link.short_description = 'account'
 
@@ -113,7 +107,7 @@ class UserAdmin(UserAdmin):
     def merchant_link(self, user):
         if not hasattr(user, 'merchant'):
             return u'-'
-        return url_to_object(user.merchant)
+        return get_link_to_object(user.merchant)
 
     merchant_link.allow_tags = True
     merchant_link.short_description = 'merchant account'
@@ -189,9 +183,9 @@ class TransactionInline(admin.TabularInline):
 
     def order(self, obj):
         if obj.payment:
-            return url_to_object(obj.payment)
+            return get_link_to_object(obj.payment)
         elif obj.withdrawal:
-            return url_to_object(obj.withdrawal)
+            return get_link_to_object(obj.withdrawal)
         else:
             return '-'
     order.allow_tags = True
@@ -288,7 +282,7 @@ class MerchantAccountAdmin(admin.ModelAdmin):
         return merchant.user.last_login.strftime('%d %b %Y %l:%M %p')
 
     def user_link(self, merchant):
-        return url_to_object(merchant.user)
+        return get_link_to_object(merchant.user)
 
     user_link.allow_tags = True
     user_link.short_description = 'user'

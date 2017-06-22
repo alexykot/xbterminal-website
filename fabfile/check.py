@@ -18,7 +18,7 @@ def security():
 
 
 @task
-def unit(apps='website operations api wallet'):
+def unit(apps='website operations api transactions wallet'):
     with prefix('. venv/bin/activate'):
         local('coverage run '
               'xbterminal/manage.py test {}'.format(apps))

@@ -105,6 +105,7 @@ INSTALLED_APPS = [
     'operations',
     'api',
     'wallet.apps.WalletConfig',
+    'transactions.apps.TransactionsConfig',
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -345,6 +346,8 @@ if TESTING:
     CACHES['default'] = {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
+    # Disable RQ
+    RQ_QUEUES = {}
     # Don't connect to bitcoind
     BITCOIND_AUTH = {
         'mainnet': (None, None),

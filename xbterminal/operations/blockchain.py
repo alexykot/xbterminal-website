@@ -38,6 +38,16 @@ class BlockChain(object):
         address = self._proxy.getnewaddress()
         return address
 
+    def import_address(self, address, rescan=False):
+        """
+        Accepts:
+            address: bitcoin address
+            rescan: do blockchain rescan after import or not
+        """
+        result = self._proxy.importaddress(address, rescan=rescan)
+        if result is not None:
+            raise ValueError
+
     def get_balance(self, minconf=1):
         """
         Accepts:
@@ -74,13 +84,28 @@ class BlockChain(object):
             out['amount'] = Decimal(out['amount']) / COIN
         return txouts
 
+    def get_raw_unspent_outputs(self, address, minconf=0):
+        """
+        Accepts:
+            address: bitcoin address, string
+        Returns:
+            list of dicts
+        """
+        results = self._proxy.call(
+            'listunspent',
+            minconf,
+            9999999,
+            [address])
+        return results
+
     def get_unspent_transactions(self, address):
         """
         Accepts:
-            address: CBitcoinAddress
+            address: bitcoin address, string
         Returns:
             transactions: list of CTransaction
         """
+        address = CBitcoinAddress(address)
         txouts = self._proxy.listunspent(minconf=0, addrs=[address])
         transactions = []
         for out in txouts:
