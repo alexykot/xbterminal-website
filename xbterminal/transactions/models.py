@@ -348,7 +348,10 @@ def get_coin_type(currency_name):
 
 def get_account_balance(account, only_confirmed=False):
     """
-    Total balance on account, including unconfirmed deposits
+    Return total balance on account
+    Accepts:
+        account: Account instance
+        only_confirmed: whether to exclude unconfirmed changes, bool
     """
     # TODO: replace old balance property
     if only_confirmed:
@@ -359,9 +362,27 @@ def get_account_balance(account, only_confirmed=False):
     return result['amount__sum'] or BTC_DEC_PLACES
 
 
+def get_fee_account_balance(coin_type, only_confirmed=False):
+    """
+    Return total collected fees
+    """
+    if only_confirmed:
+        changes = BalanceChange.objects.exclude_unconfirmed()
+    else:
+        changes = BalanceChange.objects.all()
+    result = changes.\
+        filter(address__wallet_account__parent_key__coin_type=coin_type).\
+        filter(account__isnull=True).\
+        aggregate(models.Sum('amount'))
+    return result['amount__sum'] or BTC_DEC_PLACES
+
+
 def get_address_balance(address, only_confirmed=False):
     """
-    Total balance on address, including unconfirmed deposits
+    Return total balance on address
+    Accepts:
+        account: Account instance
+        only_confirmed: whether to exclude unconfirmed changes, bool
     """
     if only_confirmed:
         changes = address.balancechange_set.exclude_unconfirmed()
