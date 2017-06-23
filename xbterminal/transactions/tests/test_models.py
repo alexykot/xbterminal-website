@@ -345,7 +345,7 @@ class BalanceChangeTestCase(TestCase):
         self.assertEqual(bch.account, bch.withdrawal.account)
         self.assertEqual(bch.amount, -bch.withdrawal.coin_amount)
         self.assertEqual(bch.withdrawal.tx_fee_coin_amount, 0)
-        self.assertEqual(bch.withdrawal.status, 'new')
+        self.assertEqual(bch.withdrawal.status, 'sent')
 
     def test_deposit_and_withdrawal(self):
         deposit = DepositFactory()

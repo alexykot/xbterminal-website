@@ -106,11 +106,11 @@ class ValidatePaymentTestCase(TestCase):
         self.assertEqual(get_account_balance(deposit.account),
                          deposit.paid_coin_amount - deposit.fee_coin_amount)
         self.assertEqual(get_account_balance(deposit.account,
-                                             only_confirmed=True), 0)
+                                             include_unconfirmed=False), 0)
         self.assertEqual(get_address_balance(deposit.deposit_address),
                          deposit.paid_coin_amount)
         self.assertEqual(get_address_balance(deposit.deposit_address,
-                                             only_confirmed=True), 0)
+                                             include_unconfirmed=False), 0)
 
     @patch('transactions.deposits.BlockChain')
     def test_validate_multiple_tx(self, bc_cls_mock):

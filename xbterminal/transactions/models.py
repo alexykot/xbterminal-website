@@ -346,30 +346,41 @@ def get_coin_type(currency_name):
         raise ValueError('Fiat currencies are not supported')
 
 
-def get_account_balance(account, only_confirmed=False):
+def get_account_balance(account,
+                        include_unconfirmed=True,
+                        include_offchain=True):
     """
     Return total balance on account
     Accepts:
         account: Account instance
-        only_confirmed: whether to exclude unconfirmed changes, bool
+        include_unconfirmed: include unconfirmed changes, bool
+        include_offchain: include reserved amounts
     """
     # TODO: replace old balance property
-    if only_confirmed:
+    if not include_unconfirmed:
         changes = account.balancechange_set.exclude_unconfirmed()
     else:
         changes = account.balancechange_set.all()
+    if not include_offchain:
+        changes = changes.exclude(withdrawal__isnull=False,
+                                  withdrawal__time_sent__isnull=True)
     result = changes.aggregate(models.Sum('amount'))
     return result['amount__sum'] or BTC_DEC_PLACES
 
 
-def get_fee_account_balance(coin_type, only_confirmed=False):
+def get_fee_account_balance(coin_type,
+                            include_unconfirmed=True,
+                            include_offchain=True):
     """
     Return total collected fees
     """
-    if only_confirmed:
+    if not include_unconfirmed:
         changes = BalanceChange.objects.exclude_unconfirmed()
     else:
         changes = BalanceChange.objects.all()
+    if not include_offchain:
+        changes = changes.exclude(withdrawal__isnull=False,
+                                  withdrawal__time_sent__isnull=True)
     result = changes.\
         filter(address__wallet_account__parent_key__coin_type=coin_type).\
         filter(account__isnull=True).\
@@ -377,14 +388,14 @@ def get_fee_account_balance(coin_type, only_confirmed=False):
     return result['amount__sum'] or BTC_DEC_PLACES
 
 
-def get_address_balance(address, only_confirmed=False):
+def get_address_balance(address, include_unconfirmed=True):
     """
     Return total balance on address
     Accepts:
         account: Account instance
         only_confirmed: whether to exclude unconfirmed changes, bool
     """
-    if only_confirmed:
+    if not include_unconfirmed:
         changes = address.balancechange_set.exclude_unconfirmed()
     else:
         changes = address.balancechange_set.all()

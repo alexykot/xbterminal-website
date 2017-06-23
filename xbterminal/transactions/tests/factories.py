@@ -223,6 +223,7 @@ class NegativeBalanceChangeFactory(factory.DjangoModelFactory):
 
     withdrawal = factory.SubFactory(
         WithdrawalFactory,
+        sent=True,
         tx_fee_coin_amount=0)
 
     account = factory.SelfAttribute('withdrawal.account')

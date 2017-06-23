@@ -32,8 +32,8 @@ def check_wallet(currency_name):
     wallet_value = Decimal(0)
     db_value = Decimal(0)
     for account in Account.objects.filter(currency__name=currency_name):
-        db_value += get_account_balance(account)
-    db_value += get_fee_account_balance(coin_type)
+        db_value += get_account_balance(account, include_offchain=False)
+    db_value += get_fee_account_balance(coin_type, include_offchain=False)
     for address in Address.objects.filter(
             wallet_account__parent_key__coin_type=coin_type):
         wallet_value += bc.get_address_balance(address.address)

@@ -60,7 +60,7 @@ class PrepareWithdrawalTestCase(TestCase):
         self.assertEqual(get_account_balance(device.account),
                          Decimal('0.004'))
         self.assertEqual(get_account_balance(device.account,
-                                             only_confirmed=True), 0)
+                                             include_unconfirmed=False), 0)
         self.assertEqual(withdrawal.balancechange_set.count(), 2)
         bch_1 = withdrawal.balancechange_set.get(amount__lt=0)
         self.assertEqual(bch_1.account, withdrawal.account)
@@ -68,7 +68,7 @@ class PrepareWithdrawalTestCase(TestCase):
         self.assertEqual(bch_1.amount, -bch_0.amount)
         self.assertEqual(get_address_balance(bch_1.address), 0)
         self.assertEqual(get_address_balance(bch_1.address,
-                                             only_confirmed=True), 0)
+                                             include_unconfirmed=False), 0)
         bch_2 = withdrawal.balancechange_set.get(amount__gt=0)
         self.assertEqual(bch_2.account, withdrawal.account)
         self.assertIs(bch_2.address.is_change, True)
@@ -78,7 +78,7 @@ class PrepareWithdrawalTestCase(TestCase):
         self.assertEqual(get_address_balance(bch_2.address),
                          Decimal('0.004'))
         self.assertEqual(get_address_balance(bch_1.address,
-                                             only_confirmed=True), 0)
+                                             include_unconfirmed=False), 0)
 
     @patch('transactions.withdrawals.get_exchange_rate')
     @patch('transactions.withdrawals.BlockChain')
