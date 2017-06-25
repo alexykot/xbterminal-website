@@ -93,7 +93,7 @@
             {% elif order.order_type == 'withdrawal' %}{% trans 'Bitcoin amount withdrawn' %}
             {% endif %}
         </td>
-        <td class="col2 btc-amount">m<span class="btc-symbol">&#xf15a;</span> {{ order.scaled_btc_amount|floatformat:5 }}</td>
+        <td class="col2 btc-amount">m<span class="btc-symbol">&#xf15a;</span> {{ order.btc_amount|scale|floatformat:5 }}</td>
     </tr>
     {% if order.order_type == 'withdrawal' %}
     <tr>
@@ -103,7 +103,7 @@
     {% endif %}
     <tr>
         <td class="col1">{% trans 'Effective exchange rate' %}</td>
-        <td class="col2">{{ order.merchant.currency.prefix }}{{ order.scaled_effective_exchange_rate|floatformat:4 }}{{ order.merchant.currency.postfix }}</td>
+        <td class="col2">{{ order.merchant.currency.prefix }}{{ order.effective_exchange_rate|unscale|floatformat:4 }}{{ order.merchant.currency.postfix }}</td>
     </tr>
     <tr></tr>
     <tr>

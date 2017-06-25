@@ -3,7 +3,6 @@ import uuid
 from bitcoin import base58
 
 from django.db import models
-from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
@@ -191,14 +190,6 @@ class PaymentOrder(models.Model):
     def effective_exchange_rate(self):
         return (self.fiat_amount / self.btc_amount).quantize(BTC_DEC_PLACES)
 
-    @property
-    def scaled_btc_amount(self):
-        return self.btc_amount * settings.BITCOIN_SCALE_DIVIZER
-
-    @property
-    def scaled_effective_exchange_rate(self):
-        return self.effective_exchange_rate / settings.BITCOIN_SCALE_DIVIZER
-
     def create_payment_request(self, response_url):
         return create_payment_request(
             self.bitcoin_network,
@@ -288,14 +279,6 @@ class WithdrawalOrder(models.Model):
     @property
     def effective_exchange_rate(self):
         return (self.fiat_amount / self.btc_amount).quantize(BTC_DEC_PLACES)
-
-    @property
-    def scaled_btc_amount(self):
-        return self.btc_amount * settings.BITCOIN_SCALE_DIVIZER
-
-    @property
-    def scaled_effective_exchange_rate(self):
-        return self.effective_exchange_rate / settings.BITCOIN_SCALE_DIVIZER
 
     @property
     def receipt_url(self):

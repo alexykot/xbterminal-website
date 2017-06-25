@@ -18,6 +18,11 @@ def scale(value):
 
 
 @register.filter
+def unscale(value):
+    return value / settings.BITCOIN_SCALE_DIVIZER
+
+
+@register.filter
 def amount(value, currency_name):
     if currency_name in ['BTC', 'TBTC']:
         return '{0:.8f}'.format(float(value))
