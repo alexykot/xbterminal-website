@@ -9,7 +9,6 @@ from transactions.tests.factories import (
     DepositFactory,
     BalanceChangeFactory,
     NegativeBalanceChangeFactory)
-from wallet.tests.factories import WalletAccountFactory
 
 
 class CheckWalletTestCase(TestCase):
@@ -17,11 +16,8 @@ class CheckWalletTestCase(TestCase):
     @patch('transactions.management.commands.check_wallet_.BlockChain')
     @patch('transactions.management.commands.check_wallet_.logger')
     def test_balance_ok(self, logger_mock, bc_cls_mock):
-        wallet_account = WalletAccountFactory()
-        bch_1, bch_2 = BalanceChangeFactory.create_batch(
-            2, deposit__deposit_address__wallet_account=wallet_account)
+        bch_1, bch_2 = BalanceChangeFactory.create_batch(2)
         deposit = DepositFactory(
-            deposit_address__wallet_account=wallet_account,
             amount=Decimal('0.01'),
             exchange_rate=Decimal('1000.0'))
         bch_3 = BalanceChangeFactory(

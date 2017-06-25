@@ -25,15 +25,24 @@ class WalletKeyTestCase(TestCase):
         self.assertGreater(len(key.private_key), 100)
         self.assertEqual(key.path, "0'/0'")
 
+    def test_factory_already_created(self):
+        key_1 = WalletKeyFactory()
+        key_2 = WalletKeyFactory()
+        self.assertEqual(key_2.pk, key_1.pk)
+
     def test_unique_coin_type(self):
-        WalletKeyFactory(coin_type=BIP44_COIN_TYPES.BTC)
+        WalletKey.objects.create(coin_type=BIP44_COIN_TYPES.BTC,
+                                 private_key='a' * 100)
         with self.assertRaises(IntegrityError):
-            WalletKeyFactory(coin_type=BIP44_COIN_TYPES.BTC)
+            WalletKey.objects.create(coin_type=BIP44_COIN_TYPES.BTC,
+                                     private_key='b' * 100)
 
     def test_unique_private_key(self):
-        WalletKeyFactory(private_key='a' * 100)
+        WalletKey.objects.create(coin_type=BIP44_COIN_TYPES.BTC,
+                                 private_key='a' * 100)
         with self.assertRaises(IntegrityError):
-            WalletKeyFactory(private_key='a' * 100)
+            WalletKey.objects.create(coin_type=BIP44_COIN_TYPES.XTN,
+                                     private_key='a' * 100)
 
 
 class WalletAccountTestCase(TestCase):

@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from wallet.constants import BIP44_COIN_TYPES
-from wallet.tests.factories import WalletAccountFactory, AddressFactory
+from wallet.tests.factories import AddressFactory
 from transactions.constants import PAYMENT_TYPES
 from transactions.models import (
     Deposit,
@@ -369,14 +369,9 @@ class BalanceChangeTestCase(TestCase):
                 amount=Decimal('10.00'))
 
     def test_exclude_unconfirmed(self):
-        wallet_account = WalletAccountFactory()
-        bch_1 = BalanceChangeFactory(
-            deposit__deposit_address__wallet_account=wallet_account)
-        bch_2 = BalanceChangeFactory(
-            deposit__deposit_address__wallet_account=wallet_account,
-            deposit__confirmed=True)
-        bch_3 = NegativeBalanceChangeFactory(
-            address__wallet_account=wallet_account)
+        bch_1 = BalanceChangeFactory()
+        bch_2 = BalanceChangeFactory(deposit__confirmed=True)
+        bch_3 = NegativeBalanceChangeFactory()
         self.assertIn(bch_1, BalanceChange.objects.all())
         self.assertNotIn(bch_1, BalanceChange.objects.exclude_unconfirmed())
         self.assertIn(bch_2, BalanceChange.objects.all())
@@ -385,25 +380,18 @@ class BalanceChangeTestCase(TestCase):
         self.assertIn(bch_3, BalanceChange.objects.exclude_unconfirmed())
 
     def test_is_confirmed(self):
-        wallet_account = WalletAccountFactory()
-        bch_1 = BalanceChangeFactory(
-            deposit__deposit_address__wallet_account=wallet_account)
+        bch_1 = BalanceChangeFactory()
         self.assertIs(bch_1.is_confirmed(), False)
-        bch_2 = BalanceChangeFactory(
-            deposit__deposit_address__wallet_account=wallet_account,
-            deposit__confirmed=True)
+        bch_2 = BalanceChangeFactory(deposit__confirmed=True)
         self.assertIs(bch_2.is_confirmed(), True)
-        bch_3 = NegativeBalanceChangeFactory(
-            address__wallet_account=wallet_account)
+        bch_3 = NegativeBalanceChangeFactory()
         self.assertIs(bch_3.is_confirmed(), True)
         bch_4 = NegativeBalanceChangeFactory(
-            address__wallet_account=wallet_account,
             address__is_change=True,
             amount=Decimal('0.01'))
         self.assertIs(bch_4.is_confirmed(), False)
         bch_5 = NegativeBalanceChangeFactory(
             withdrawal__confirmed=True,
-            address__wallet_account=wallet_account,
             address__is_change=True,
             amount=Decimal('0.01'))
         self.assertIs(bch_5.is_confirmed(), True)
