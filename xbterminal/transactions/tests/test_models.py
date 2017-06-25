@@ -73,6 +73,7 @@ class DepositTestCase(TestCase):
                                  exchange_rate=Decimal('2000.00'))
         self.assertEqual(deposit.merchant_coin_amount, Decimal('0.005'))
         self.assertEqual(deposit.fee_coin_amount, Decimal('0.000025'))
+        self.assertEqual(deposit.exchange_rate, Decimal('2000.00'))
 
     def test_factory_no_device(self):
         deposit = DepositFactory(device=None)
@@ -127,6 +128,15 @@ class DepositTestCase(TestCase):
         deposit = DepositFactory()
         self.assertEqual(deposit.merchant,
                          deposit.account.merchant)
+
+    def test_exchange_rate(self):
+        deposit = DepositFactory(
+            amount=Decimal('10.0'),
+            merchant_coin_amount=Decimal('0.01'),
+            fee_coin_amount=Decimal('0.0005'))
+        self.assertEqual(deposit.exchange_rate, Decimal('1000.00'))
+        self.assertEqual(deposit.effective_exchange_rate,
+                         Decimal('952.38095238'))
 
     def test_status(self):
         deposit = DepositFactory()
@@ -274,6 +284,15 @@ class WithdrawalTestCase(TestCase):
     def test_factory_cancelled(self):
         withdrawal = WithdrawalFactory(cancelled=True)
         self.assertEqual(withdrawal.status, 'cancelled')
+
+    def test_exchange_rate(self):
+        withdrawal = WithdrawalFactory(
+            amount=Decimal('10.0'),
+            customer_coin_amount=Decimal('0.01'),
+            tx_fee_coin_amount=Decimal('0.0005'))
+        self.assertEqual(withdrawal.exchange_rate, Decimal('1000.00'))
+        self.assertEqual(withdrawal.effective_exchange_rate,
+                         Decimal('952.38095238'))
 
     def test_status(self):
         withdrawal = WithdrawalFactory()
