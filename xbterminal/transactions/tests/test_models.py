@@ -322,6 +322,7 @@ class BalanceChangeTestCase(TestCase):
             address=deposit.deposit_address,
             amount=deposit.paid_coin_amount - deposit.fee_coin_amount)
         self.assertIsNone(bch.withdrawal)
+        self.assertIsNotNone(bch.created_at)
         self.assertEqual(str(bch), str(bch.pk))
         self.assertEqual(deposit.balancechange_set.count(), 1)
         self.assertEqual(deposit.account.balancechange_set.count(), 1)
