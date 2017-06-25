@@ -417,3 +417,13 @@ def get_address_balance(address, include_unconfirmed=True):
         changes = address.balancechange_set.all()
     result = changes.aggregate(models.Sum('amount'))
     return result['amount__sum'] or BTC_DEC_PLACES
+
+
+def get_account_transactions(account):
+    return account.balancechange_set.all()
+
+
+def get_device_transactions(device):
+    return BalanceChange.objects.filter(
+        models.Q(deposit__device=device) |
+        models.Q(withdrawal__device=device)).order_by('created_at')
