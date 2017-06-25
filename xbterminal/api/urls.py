@@ -2,7 +2,7 @@ from django.conf.urls import include, url
 from rest_framework import routers
 from rest_framework_jwt.views import obtain_jwt_token
 
-from api import views_v1, views_v2, views_v3, renderers
+from api import views_v1, views_v2, views_v2_new, views_v3, renderers
 
 
 api_v1_urls = [
@@ -57,6 +57,9 @@ api_v2_router = routers.DefaultRouter()
 api_v2_router.register('payments',
                        views_v2.PaymentViewSet,
                        base_name='payment')
+api_v2_router.register('deposits',
+                       views_v2_new.DepositViewSet,
+                       base_name='deposit')
 api_v2_router.register('withdrawals',
                        views_v2.WithdrawalViewSet,
                        base_name='withdrawal')
