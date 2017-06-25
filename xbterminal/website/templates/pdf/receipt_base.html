@@ -1,0 +1,83 @@
+{% load i18n website_tags %}
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8"> 
+<style type="text/css">
+    @font-face {
+        font-family: FontAwesome;
+        src: url('{% pdf_static 'fonts/fontawesome-webfont.ttf' %}');
+    }
+    body {
+        font-size: 16px;
+    }
+    @page {
+        margin: 1cm;
+        margin-top: 3cm;
+        @frame qrcode-text {
+            -pdf-frame-content: qrcode-text;
+            width: 12cm;
+            bottom: 5cm;
+            height: 2.5cm;
+            right: 6cm;
+        }
+        @frame qrcode {
+            -pdf-frame-content: qrcode;
+            width: 5cm;
+            bottom: 5cm;
+            height: 5cm;
+            right: 0cm;
+        }
+        @frame footer {
+            -pdf-frame-content: footer;
+            bottom: 0.25cm;
+            text-align: center;
+            height: 2cm;
+            left: 6cm;
+            vertical-align: middle;
+        }
+        @frame footer-image {
+            -pdf-frame-content: footer-image;
+            bottom: 0cm;
+            height: 2.5cm;
+            left: 9cm;
+        }
+    }
+    #qrcode-text {
+        font-size: 14px;
+        color: #555;
+    }
+    #footer {
+        color: #777;
+    }
+    .title {
+        text-align: center;
+        font-weight: bold;
+        font-size: 20px;
+    }
+    .btc-symbol {
+        font-family: FontAwesome;
+    }
+    table {
+        margin-top: 30px;
+        color: #555;
+        border: 1px;
+    }
+    td, th {
+        padding: 5px;
+        padding-bottom: 0px;
+    }
+    .col1 {
+        text-align: right;
+    }
+    .external-link {
+        font-size: 13px;
+    }
+</style>
+</head>
+<body>
+{% block content %}{% endblock %}
+<div id="footer">{% trans 'processed by' %}</div>
+<div id="footer-image"><img src="{% pdf_static 'img/xbt_logo_small.png' %}"></div>
+</body>
+</html>
