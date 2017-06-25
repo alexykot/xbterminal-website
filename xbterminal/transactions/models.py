@@ -16,6 +16,7 @@ from transactions.constants import (
     WITHDRAWAL_CONFIDENCE_TIMEOUT,
     WITHDRAWAL_CONFIRMATION_TIMEOUT,
     PAYMENT_TYPES)
+from operations.protocol import create_payment_request
 
 
 class Transaction(models.Model):
@@ -164,6 +165,15 @@ class Deposit(Transaction):
                     return 'underpaid'
                 else:
                     return 'new'
+
+    def create_payment_request(self, response_url):
+        return create_payment_request(
+            self.bitcoin_network,
+            [(self.deposit_address.address, self.coin_amount)],
+            self.time_created,
+            self.time_created + DEPOSIT_TIMEOUT,
+            response_url,
+            self.merchant.company_name)
 
     @atomic
     def create_balance_changes(self):

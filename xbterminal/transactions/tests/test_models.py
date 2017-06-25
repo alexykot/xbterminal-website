@@ -183,6 +183,13 @@ class DepositTestCase(TestCase):
             time_cancelled=timezone.now())
         self.assertEqual(deposit.status, 'cancelled')
 
+    def test_create_payment_request(self):
+        deposit = DepositFactory()
+        response_url = 'http://some-url'
+        payment_request = deposit.create_payment_request(response_url)
+        self.assertIs(isinstance(payment_request, bytes), True)
+        self.assertGreater(len(payment_request), 0)
+
     def test_create_balance_changes(self):
         deposit = DepositFactory(received=True)
         deposit.create_balance_changes()
