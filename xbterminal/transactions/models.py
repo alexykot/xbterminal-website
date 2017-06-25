@@ -311,6 +311,20 @@ class BalanceChange(models.Model):
     def __str__(self):
         return str(self.pk)
 
+    def is_confirmed(self):
+        """
+        If true, transaction will be included in calculation of
+        confirmed balance of the account/address
+        """
+        if self.deposit:
+            return self.deposit.time_confirmed is not None
+        elif self.withdrawal:
+            # Always include negative balance changes
+            return (self.amount < 0 or
+                    self.withdrawal.time_confirmed is not None)
+
+    is_confirmed.boolean = True
+
     def save(self, *args, **kwargs):
         # Deposit or withdrawal, but not both
         if not (self.deposit or self.withdrawal) or \

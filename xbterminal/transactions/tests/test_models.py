@@ -382,3 +382,27 @@ class BalanceChangeTestCase(TestCase):
         self.assertIn(bch_2, BalanceChange.objects.exclude_unconfirmed())
         self.assertIn(bch_3, BalanceChange.objects.all())
         self.assertIn(bch_3, BalanceChange.objects.exclude_unconfirmed())
+
+    def test_is_confirmed(self):
+        wallet_account = WalletAccountFactory()
+        bch_1 = BalanceChangeFactory(
+            deposit__deposit_address__wallet_account=wallet_account)
+        self.assertIs(bch_1.is_confirmed(), False)
+        bch_2 = BalanceChangeFactory(
+            deposit__deposit_address__wallet_account=wallet_account,
+            deposit__confirmed=True)
+        self.assertIs(bch_2.is_confirmed(), True)
+        bch_3 = NegativeBalanceChangeFactory(
+            address__wallet_account=wallet_account)
+        self.assertIs(bch_3.is_confirmed(), True)
+        bch_4 = NegativeBalanceChangeFactory(
+            address__wallet_account=wallet_account,
+            address__is_change=True,
+            amount=Decimal('0.01'))
+        self.assertIs(bch_4.is_confirmed(), False)
+        bch_5 = NegativeBalanceChangeFactory(
+            withdrawal__confirmed=True,
+            address__wallet_account=wallet_account,
+            address__is_change=True,
+            amount=Decimal('0.01'))
+        self.assertIs(bch_5.is_confirmed(), True)
