@@ -21,7 +21,9 @@ class CheckWalletTestCase(TestCase):
         bch_1, bch_2 = BalanceChangeFactory.create_batch(
             2, deposit__deposit_address__wallet_account=wallet_account)
         deposit = DepositFactory(
-            deposit_address__wallet_account=wallet_account)
+            deposit_address__wallet_account=wallet_account,
+            amount=Decimal('0.01'),
+            exchange_rate=Decimal('1000.0'))
         bch_3 = BalanceChangeFactory(
             deposit=deposit,
             amount=deposit.merchant_coin_amount)
