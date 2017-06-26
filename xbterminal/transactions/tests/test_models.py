@@ -1,19 +1,23 @@
 import datetime
 from decimal import Decimal
 
+from django.db import IntegrityError
 from django.test import TestCase
 from django.utils import timezone
 
 from wallet.constants import BIP44_COIN_TYPES
-from wallet.tests.factories import AddressFactory
+from wallet.tests.factories import WalletAccountFactory, AddressFactory
 from transactions.constants import PAYMENT_TYPES
 from transactions.models import (
     Deposit,
+    Withdrawal,
     BalanceChange)
 from transactions.tests.factories import (
     DepositFactory,
-    BalanceChangeFactory)
-from website.tests.factories import DeviceFactory
+    WithdrawalFactory,
+    BalanceChangeFactory,
+    NegativeBalanceChangeFactory)
+from website.tests.factories import AccountFactory, DeviceFactory
 
 
 class DepositTestCase(TestCase):
@@ -84,6 +88,40 @@ class DepositTestCase(TestCase):
         self.assertEqual(len(deposit.incoming_tx_ids[0]), 64)
         self.assertEqual(deposit.payment_type, PAYMENT_TYPES.BIP21)
         self.assertEqual(deposit.status, 'received')
+
+    def test_factory_broadcasted(self):
+        deposit = DepositFactory(broadcasted=True)
+        self.assertEqual(deposit.status, 'broadcasted')
+
+    def test_factory_notified(self):
+        deposit = DepositFactory(notified=True)
+        self.assertEqual(deposit.status, 'notified')
+
+    def test_factory_confirmed(self):
+        deposit = DepositFactory(confirmed=True)
+        self.assertEqual(deposit.status, 'confirmed')
+
+    def test_factory_timeout(self):
+        deposit = DepositFactory(timeout=True)
+        self.assertEqual(deposit.status, 'timeout')
+
+    def test_factory_failed(self):
+        deposit = DepositFactory(failed=True)
+        self.assertEqual(deposit.status, 'failed')
+
+    def test_factory_unconfirmed(self):
+        deposit = DepositFactory(unconfirmed=True)
+        self.assertEqual(deposit.status, 'unconfirmed')
+
+    def test_factory_refunded(self):
+        deposit = DepositFactory(refunded=True)
+        self.assertIsNotNone(deposit.refund_address)
+        self.assertIsNotNone(deposit.refund_tx_id)
+        self.assertEqual(deposit.status, 'refunded')
+
+    def test_factory_cancelled(self):
+        deposit = DepositFactory(cancelled=True)
+        self.assertEqual(deposit.status, 'cancelled')
 
     def test_merchant(self):
         deposit = DepositFactory()
@@ -157,24 +195,190 @@ class DepositTestCase(TestCase):
                          deposit.paid_coin_amount)
 
 
+class WithdrawalTestCase(TestCase):
+
+    def test_create(self):
+        device = DeviceFactory()
+        withdrawal = Withdrawal.objects.create(
+            account=device.account,
+            device=device,
+            currency=device.merchant.currency,
+            amount=Decimal('10.0'),
+            coin_type=BIP44_COIN_TYPES.BTC,
+            customer_coin_amount=Decimal('0.005'),
+            tx_fee_coin_amount=Decimal('0.0002'))
+        self.assertEqual(len(withdrawal.uid), 6)
+        self.assertIsNone(withdrawal.customer_address)
+        self.assertIsNone(withdrawal.outgoing_tx_id)
+        self.assertIsNotNone(withdrawal.time_created)
+        self.assertIsNone(withdrawal.time_sent)
+        self.assertIsNone(withdrawal.time_broadcasted)
+        self.assertIsNone(withdrawal.time_notified)
+        self.assertIsNone(withdrawal.time_confirmed)
+        self.assertIsNone(withdrawal.time_cancelled)
+        self.assertEqual(str(withdrawal), str(withdrawal.pk))
+
+    def test_factory(self):
+        withdrawal = WithdrawalFactory()
+        self.assertEqual(withdrawal.device.account, withdrawal.account)
+        self.assertEqual(withdrawal.currency,
+                         withdrawal.account.merchant.currency)
+        self.assertGreater(withdrawal.amount, 0)
+        self.assertEqual(withdrawal.coin_type, BIP44_COIN_TYPES.BTC)
+        self.assertGreater(withdrawal.customer_coin_amount, 0)
+        self.assertEqual(withdrawal.tx_fee_coin_amount, Decimal('0.0005'))
+        self.assertIsNone(withdrawal.customer_address)
+        self.assertIsNone(withdrawal.outgoing_tx_id)
+
+    def test_factory_exchange_rate(self):
+        withdrawal = WithdrawalFactory(amount=Decimal('10.00'),
+                                       exchange_rate=Decimal('2000.00'))
+        self.assertEqual(withdrawal.customer_coin_amount, Decimal('0.005'))
+
+    def test_factory_no_device(self):
+        withdrawal = WithdrawalFactory(device=None)
+        self.assertIsNone(withdrawal.device)
+        self.assertEqual(withdrawal.currency,
+                         withdrawal.account.merchant.currency)
+
+    def test_factory_sent(self):
+        withdrawal = WithdrawalFactory(sent=True)
+        self.assertIs(withdrawal.customer_address.startswith('1'), True)
+        self.assertEqual(len(withdrawal.outgoing_tx_id), 64)
+        self.assertEqual(withdrawal.status, 'sent')
+
+    def test_factory_broadcasted(self):
+        withdrawal = WithdrawalFactory(broadcasted=True)
+        self.assertEqual(withdrawal.status, 'broadcasted')
+
+    def test_factory_notified(self):
+        withdrawal = WithdrawalFactory(notified=True)
+        self.assertEqual(withdrawal.status, 'notified')
+
+    def test_factory_confirmed(self):
+        withdrawal = WithdrawalFactory(confirmed=True)
+        self.assertEqual(withdrawal.status, 'confirmed')
+
+    def test_factory_timeout(self):
+        withdrawal = WithdrawalFactory(timeout=True)
+        self.assertEqual(withdrawal.status, 'timeout')
+
+    def test_factory_failed(self):
+        withdrawal = WithdrawalFactory(failed=True)
+        self.assertEqual(withdrawal.status, 'failed')
+
+    def test_factory_unconfirmed(self):
+        withdrawal = WithdrawalFactory(unconfirmed=True)
+        self.assertEqual(withdrawal.status, 'unconfirmed')
+
+    def test_factory_cancelled(self):
+        withdrawal = WithdrawalFactory(cancelled=True)
+        self.assertEqual(withdrawal.status, 'cancelled')
+
+    def test_status(self):
+        withdrawal = WithdrawalFactory()
+        self.assertEqual(withdrawal.status, 'new')
+        withdrawal.time_sent = timezone.now()
+        self.assertEqual(withdrawal.status, 'sent')
+        withdrawal.time_broadcasted = timezone.now()
+        self.assertEqual(withdrawal.status, 'broadcasted')
+        withdrawal.time_notified = timezone.now()
+        self.assertEqual(withdrawal.status, 'notified')
+        withdrawal.time_confirmed = timezone.now()
+        self.assertEqual(withdrawal.status, 'confirmed')
+
+    def test_status_timeout(self):
+        withdrawal = WithdrawalFactory(
+            time_created=timezone.now() - datetime.timedelta(minutes=60))
+        self.assertEqual(withdrawal.status, 'timeout')
+
+    def test_status_failed(self):
+        withdrawal = WithdrawalFactory(
+            time_created=timezone.now() - datetime.timedelta(minutes=60),
+            time_sent=timezone.now() - datetime.timedelta(minutes=45))
+        self.assertEqual(withdrawal.status, 'failed')
+
+    def test_status_unconfirmed(self):
+        withdrawal = WithdrawalFactory(
+            time_created=timezone.now() - datetime.timedelta(minutes=500),
+            time_sent=timezone.now() - datetime.timedelta(minutes=490),
+            time_broadcasted=timezone.now() - datetime.timedelta(minutes=480),
+            time_notified=timezone.now() - datetime.timedelta(minutes=480))
+        self.assertEqual(withdrawal.status, 'unconfirmed')
+
+    def test_status_cancelled(self):
+        withdrawal = WithdrawalFactory(
+            time_cancelled=timezone.now())
+        self.assertEqual(withdrawal.status, 'cancelled')
+
+
 class BalanceChangeTestCase(TestCase):
 
     def test_create(self):
         deposit = DepositFactory()
-        change = BalanceChange.objects.create(
+        bch = BalanceChange.objects.create(
+            deposit=deposit,
             account=deposit.account,
             address=deposit.deposit_address,
-            amount=deposit.paid_coin_amount - deposit.fee_coin_amount,
-            deposit=deposit)
-        self.assertEqual(str(change), str(change.pk))
+            amount=deposit.paid_coin_amount - deposit.fee_coin_amount)
+        self.assertIsNone(bch.withdrawal)
+        self.assertEqual(str(bch), str(bch.pk))
         self.assertEqual(deposit.balancechange_set.count(), 1)
         self.assertEqual(deposit.account.balancechange_set.count(), 1)
         self.assertEqual(deposit.deposit_address.balancechange_set.count(), 1)
 
-    def test_factory(self):
-        change = BalanceChangeFactory()
-        self.assertIsNotNone(change.deposit)
-        self.assertEqual(change.deposit.status, 'received')
-        self.assertEqual(change.account, change.deposit.account)
-        self.assertEqual(change.address, change.deposit.deposit_address)
-        self.assertEqual(change.amount, change.deposit.paid_coin_amount)
+    def test_factory_positive(self):
+        bch = BalanceChangeFactory()
+        self.assertIsNotNone(bch.deposit)
+        self.assertIsNone(bch.withdrawal)
+        self.assertEqual(bch.account, bch.deposit.account)
+        self.assertEqual(bch.address, bch.deposit.deposit_address)
+        self.assertEqual(bch.amount, bch.deposit.merchant_coin_amount)
+        self.assertEqual(bch.amount, bch.deposit.paid_coin_amount)
+        self.assertEqual(bch.deposit.fee_coin_amount, 0)
+        self.assertEqual(bch.deposit.status, 'received')
+
+    def test_factory_negative(self):
+        bch = NegativeBalanceChangeFactory()
+        self.assertIsNone(bch.deposit)
+        self.assertIsNotNone(bch.withdrawal)
+        self.assertEqual(bch.account, bch.withdrawal.account)
+        self.assertEqual(bch.amount, -bch.withdrawal.coin_amount)
+        self.assertEqual(bch.withdrawal.tx_fee_coin_amount, 0)
+        self.assertEqual(bch.withdrawal.status, 'sent')
+
+    def test_deposit_and_withdrawal(self):
+        deposit = DepositFactory()
+        withdrawal = WithdrawalFactory()
+        with self.assertRaises(IntegrityError):
+            BalanceChange.objects.create(
+                deposit=deposit,
+                withdrawal=withdrawal,
+                account=deposit.account,
+                address=deposit.deposit_address,
+                amount=deposit.paid_coin_amount)
+
+    def test_no_deposit_no_withdrawal(self):
+        account = AccountFactory()
+        address = AddressFactory()
+        with self.assertRaises(IntegrityError):
+            BalanceChange.objects.create(
+                account=account,
+                address=address,
+                amount=Decimal('10.00'))
+
+    def test_exclude_unconfirmed(self):
+        wallet_account = WalletAccountFactory()
+        bch_1 = BalanceChangeFactory(
+            deposit__deposit_address__wallet_account=wallet_account)
+        bch_2 = BalanceChangeFactory(
+            deposit__deposit_address__wallet_account=wallet_account,
+            deposit__confirmed=True)
+        bch_3 = NegativeBalanceChangeFactory(
+            address__wallet_account=wallet_account)
+        self.assertIn(bch_1, BalanceChange.objects.all())
+        self.assertNotIn(bch_1, BalanceChange.objects.exclude_unconfirmed())
+        self.assertIn(bch_2, BalanceChange.objects.all())
+        self.assertIn(bch_2, BalanceChange.objects.exclude_unconfirmed())
+        self.assertIn(bch_3, BalanceChange.objects.all())
+        self.assertIn(bch_3, BalanceChange.objects.exclude_unconfirmed())

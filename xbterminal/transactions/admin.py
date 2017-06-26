@@ -114,6 +114,79 @@ class DepositAdmin(admin.ModelAdmin):
     refund_tx_id_widget.short_description = 'refund tx ID'
 
 
+@admin.register(models.Withdrawal)
+class WithdrawalAdmin(admin.ModelAdmin):
+
+    list_display = [
+        '__str__',
+        'uid',
+        'device_link',
+        'account_link',
+        'merchant_link',
+        'time_created',
+        'status',
+    ]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def get_readonly_fields(self, request, obj=None):
+        readonly_fields = []
+        for field in self.model._meta.get_fields():
+            if field.name == 'balancechange':
+                continue
+            if field.name in ['customer_address', 'outgoing_tx_id']:
+                readonly_fields.append(field.name + '_widget')
+            else:
+                readonly_fields.append(field.name)
+        readonly_fields += ['status', 'coin_amount']
+        return readonly_fields
+
+    def get_form(self, request, obj=None, **kwargs):
+        """
+        Remove all fields from the admin form
+        """
+        form = super(WithdrawalAdmin, self).get_form(request, obj, **kwargs)
+        form.base_fields.clear()
+        return form
+
+    def device_link(self, withdrawal):
+        if withdrawal.device:
+            return get_link_to_object(withdrawal.device)
+        else:
+            return '-'
+
+    device_link.allow_tags = True
+    device_link.short_description = 'device'
+
+    def account_link(self, withdrawal):
+        return get_link_to_object(withdrawal.account)
+
+    account_link.allow_tags = True
+    account_link.short_description = 'account'
+
+    def merchant_link(self, withdrawal):
+        return get_link_to_object(withdrawal.merchant)
+
+    merchant_link.allow_tags = True
+    merchant_link.short_description = 'merchant'
+
+    def customer_address_widget(self, withdrawal):
+        return get_address_link(withdrawal.customer_address,
+                                withdrawal.bitcoin_network)
+
+    customer_address_widget.short_description = 'customer address'
+
+    def outgoing_tx_id_widget(self, withdrawal):
+        return get_tx_link(withdrawal.outgoing_tx_id,
+                           withdrawal.bitcoin_network)
+
+    outgoing_tx_id_widget.short_description = 'outgoing tx ID'
+
+
 @admin.register(models.BalanceChange)
 class BalanceChangeAdmin(admin.ModelAdmin):
 

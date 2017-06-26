@@ -13,6 +13,10 @@ DEPOSIT_TIMEOUT = datetime.timedelta(minutes=15)
 DEPOSIT_CONFIDENCE_TIMEOUT = datetime.timedelta(minutes=30)
 DEPOSIT_CONFIRMATION_TIMEOUT = datetime.timedelta(minutes=180)
 
+WITHDRAWAL_TIMEOUT = datetime.timedelta(minutes=5)
+WITHDRAWAL_CONFIDENCE_TIMEOUT = datetime.timedelta(minutes=45)
+WITHDRAWAL_CONFIRMATION_TIMEOUT = datetime.timedelta(minutes=180)
+
 PAYMENT_TYPES = Choices(
     ('BIP21', 1, _('BIP 0021 (Bitcoin URI)')),
     ('BIP70', 2, _('BIP 0070 (Payment Protocol)')),

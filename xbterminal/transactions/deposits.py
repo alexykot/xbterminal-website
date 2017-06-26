@@ -13,7 +13,7 @@ from transactions.constants import (
     DEPOSIT_CONFIDENCE_TIMEOUT,
     DEPOSIT_CONFIRMATION_TIMEOUT,
     PAYMENT_TYPES)
-from transactions.models import Deposit
+from transactions.models import Deposit, get_coin_type
 from transactions.utils.tx import create_tx_
 from operations.exceptions import (
     InsufficientFunds,
@@ -22,23 +22,10 @@ from operations.exceptions import (
     RefundError)
 from operations.blockchain import BlockChain, get_txid
 from operations.services.wrappers import get_exchange_rate, is_tx_reliable
-from wallet.constants import BIP44_COIN_TYPES
 from wallet.models import Address
 from website.models import Account, Device
 
 logger = logging.getLogger(__name__)
-
-
-def _get_coin_type(account):
-    """
-    Determine coin type from account currency
-    """
-    if account.currency.name == 'BTC':
-        return BIP44_COIN_TYPES.BTC
-    elif account.currency.name == 'TBTC':
-        return BIP44_COIN_TYPES.XTN
-    else:
-        raise ValueError('Instantfiat accounts are not supported.')
 
 
 def prepare_deposit(device_or_account, amount):
@@ -56,7 +43,7 @@ def prepare_deposit(device_or_account, amount):
         device = None
         account = device_or_account
     # Create new address
-    coin_type = _get_coin_type(account)
+    coin_type = get_coin_type(account.currency.name)
     deposit_address = Address.create(coin_type, is_change=False)
     # Create model instance
     deposit = Deposit(

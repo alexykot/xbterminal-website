@@ -61,7 +61,7 @@ class BlockChain(object):
     def get_address_balance(self, address):
         """
         Accepts:
-            address: CBitcoinAddress
+            address: CBitcoinAddress or string
         Returns:
             balance: BTC amount (Decimal)
         """
