@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.test import TestCase
+from django.utils import timezone
 
 from mock import patch, Mock
 
@@ -359,6 +360,36 @@ class WaitForConfidenceTestCase(TestCase):
         wait_for_confidence(deposit.pk)
         self.assertIs(cancel_mock.called, True)
         self.assertIs(bc_cls_mock.called, False)
+
+    @patch('transactions.deposits.cancel_current_task')
+    @patch('transactions.deposits.BlockChain')
+    def test_cancelled_1(self, bc_cls_mock, cancel_mock):
+        deposit = DepositFactory(cancelled=True)
+        wait_for_confidence(deposit.pk)
+        self.assertIs(cancel_mock.called, True)
+        self.assertIs(bc_cls_mock.called, False)
+
+    @patch('transactions.deposits.cancel_current_task')
+    @patch('transactions.deposits.BlockChain')
+    @patch('transactions.deposits.is_tx_reliable')
+    @patch('transactions.deposits.run_periodic_task')
+    def test_cancelled_2(self, run_task_mock, is_reliable_mock,
+                         bc_cls_mock, cancel_mock):
+        deposit = DepositFactory(received=True)
+        bc_cls_mock.return_value = Mock(**{
+            'is_tx_confirmed.return_value': False,
+        })
+        def cancel_deposit(*args):  # noqa: E306
+            deposit.time_cancelled = timezone.now()
+            deposit.save()
+            return True
+        # Cancel deposit while checking for confidence
+        is_reliable_mock.side_effect = cancel_deposit
+        wait_for_confidence(deposit.pk)
+
+        self.assertIs(is_reliable_mock.called, True)
+        self.assertIs(cancel_mock.called, True)
+        self.assertIs(run_task_mock.called, False)
 
     @patch('transactions.deposits.cancel_current_task')
     @patch('transactions.deposits.BlockChain')

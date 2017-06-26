@@ -1,6 +1,7 @@
 from decimal import Decimal
 import logging
 
+from django.db.transaction import atomic
 from django.utils import timezone
 
 from constance import config
@@ -112,7 +113,7 @@ def wait_for_payment(deposit_id):
         # Payment already validated, cancel job
         cancel_current_task()
         return
-    if deposit.status == 'cancelled':
+    if deposit.time_cancelled is not None:
         cancel_current_task()
         return
     # Connect to bitcoind
@@ -165,6 +166,9 @@ def wait_for_confidence(deposit_id):
         # Confidence threshold reached, cancel job
         cancel_current_task()
         return
+    if deposit.time_cancelled is not None:
+        cancel_current_task()
+        return
     bc = BlockChain(deposit.bitcoin_network)
     for incoming_tx_id in deposit.incoming_tx_ids:
         try:
@@ -202,8 +206,13 @@ def wait_for_confidence(deposit_id):
             break
     else:
         cancel_current_task()
-        deposit.time_broadcasted = timezone.now()
-        deposit.save()
+        with atomic():
+            deposit.refresh_from_db()
+            if deposit.time_cancelled is not None:
+                # Do not set broadcasted status for cancelled deposits
+                return
+            deposit.time_broadcasted = timezone.now()
+            deposit.save()
         run_periodic_task(wait_for_confirmation, [deposit.pk], interval=30)
         logger.info('payment confidence reached (%s)', deposit.pk)
 
