@@ -207,6 +207,24 @@ class DepositViewSet(viewsets.GenericViewSet):
                 payment_request_url)
         return Response(data)
 
+    def retrieve(self, *args, **kwargs):
+        deposit = self.get_object()
+        if deposit.time_broadcasted and not deposit.time_notified:
+            deposit.time_notified = timezone.now()
+            deposit.save()
+        serializer = self.get_serializer(deposit)
+        return Response(serializer.data)
+
+    @detail_route(methods=['POST'])
+    @atomic
+    def cancel(self, *args, **kwargs):
+        deposit = self.get_object()
+        if deposit.status not in ['new', 'underpaid', 'received']:
+            raise Http404
+        deposit.time_cancelled = timezone.now()
+        deposit.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class WithdrawalViewSet(viewsets.GenericViewSet):
 

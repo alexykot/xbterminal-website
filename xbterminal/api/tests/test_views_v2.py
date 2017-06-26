@@ -435,7 +435,7 @@ class DepositViewSetTestCase(APITestCase):
                          'Invalid device key.')
 
     @patch('api.views_v2.prepare_deposit')
-    def test_payment_error(self, prepare_mock):
+    def test_create_payment_error(self, prepare_mock):
         prepare_mock.side_effect = exceptions.PaymentError
         device = DeviceFactory(long_key=True)
         amount = 10
@@ -449,6 +449,51 @@ class DepositViewSetTestCase(APITestCase):
         response = self.client.post(url, form_data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['device'][0], 'Payment error')
+
+    def test_retrieve_not_notified(self):
+        deposit = DepositFactory()
+        url = reverse('api:v2:deposit-detail',
+                      kwargs={'uid': deposit.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.data
+        self.assertEqual(data['uid'], deposit.uid)
+        self.assertEqual(data['status'], 'new')
+
+    def test_retrieve_notified(self):
+        deposit = DepositFactory(broadcasted=True)
+        self.assertIsNone(deposit.time_notified)
+        url = reverse('api:v2:deposit-detail',
+                      kwargs={'uid': deposit.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.data
+        self.assertEqual(data['uid'], deposit.uid)
+        self.assertEqual(data['status'], 'notified')
+        deposit.refresh_from_db()
+        self.assertIsNotNone(deposit.time_notified)
+
+    def test_cancel_new(self):
+        deposit = DepositFactory()
+        url = reverse('api:v2:deposit-cancel', kwargs={'uid': deposit.uid})
+        response = self.client.post(url, {})
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        deposit.refresh_from_db()
+        self.assertEqual(deposit.status, 'cancelled')
+
+    def test_cancel_received(self):
+        deposit = DepositFactory(received=True)
+        url = reverse('api:v2:deposit-cancel', kwargs={'uid': deposit.uid})
+        response = self.client.post(url, {})
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        deposit.refresh_from_db()
+        self.assertEqual(deposit.status, 'cancelled')
+
+    def test_cancel_broadcasted(self):
+        deposit = DepositFactory(broadcasted=True)
+        url = reverse('api:v2:payment-cancel', kwargs={'uid': deposit.uid})
+        response = self.client.post(url, {})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
 class WithdrawalViewSetTestCase(APITestCase):
