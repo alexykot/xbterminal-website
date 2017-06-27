@@ -5,6 +5,7 @@ from django.db import models, IntegrityError
 from django.db.transaction import atomic
 from django.utils import timezone
 
+from api.utils.urls import construct_absolute_url
 from common.uids import generate_b58_uid
 from wallet.constants import BIP44_COIN_TYPES
 from transactions.constants import (
@@ -165,6 +166,12 @@ class Deposit(Transaction):
                     return 'underpaid'
                 else:
                     return 'new'
+
+    @property
+    def receipt_url(self):
+        return construct_absolute_url(
+            'api:short:deposit-receipt',
+            kwargs={'uid': self.uid})
 
     def create_payment_request(self, response_url):
         return create_payment_request(

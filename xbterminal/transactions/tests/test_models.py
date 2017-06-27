@@ -183,6 +183,10 @@ class DepositTestCase(TestCase):
             time_cancelled=timezone.now())
         self.assertEqual(deposit.status, 'cancelled')
 
+    def test_receipt_url(self):
+        deposit = DepositFactory(notified=True)
+        self.assertIn('/drc/{0}'.format(deposit.uid), deposit.receipt_url)
+
     def test_create_payment_request(self):
         deposit = DepositFactory()
         response_url = 'http://some-url'

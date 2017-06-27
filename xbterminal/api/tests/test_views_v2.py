@@ -552,6 +552,50 @@ class DepositViewSetTestCase(APITestCase):
             content_type='application/bitcoin-payment')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    @patch('api.utils.pdf.get_template')
+    def test_receipt(self, get_template_mock):
+        deposit = DepositFactory(notified=True)
+        get_template_mock.return_value = template_mock = Mock(**{
+            'render.return_value': 'test',
+        })
+        url = reverse('api:v2:deposit-receipt',
+                      kwargs={'uid': deposit.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertEqual(get_template_mock.call_args[0][0],
+                         'pdf/receipt_deposit.html')
+        self.assertIs(template_mock.render.called, True)
+        self.assertEqual(template_mock.render.call_args[0][0]['deposit'],
+                         deposit)
+
+    def test_receipt_not_notified(self):
+        deposit = DepositFactory(broadcasted=True)
+        url = reverse('api:v2:deposit-receipt',
+                      kwargs={'uid': deposit.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @patch('api.utils.pdf.get_template')
+    def test_receipt_short(self, get_template_mock):
+        deposit = DepositFactory(notified=True)
+        get_template_mock.return_value = Mock(**{
+            'render.return_value': 'test',
+        })
+        url = reverse('api:short:deposit-receipt',
+                      kwargs={'uid': deposit.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+
+    def test_receipt_short_post(self):
+        deposit = DepositFactory(notified=True)
+        url = reverse('api:short:deposit-receipt',
+                      kwargs={'uid': deposit.uid})
+        response = self.client.post(url, {})
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
 class WithdrawalViewSetTestCase(APITestCase):
 

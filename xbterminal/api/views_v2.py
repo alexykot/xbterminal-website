@@ -261,6 +261,19 @@ class DepositViewSet(viewsets.GenericViewSet):
         response['Content-Transfer-Encoding'] = 'binary'
         return response
 
+    @detail_route(methods=['GET'], renderer_classes=[PDFRenderer])
+    def receipt(self, *args, **kwargs):
+        deposit = self.get_object()
+        if not deposit.time_notified:
+            raise Http404
+        result = generate_pdf('pdf/receipt_deposit.html',
+                              {'deposit': deposit})
+        response = Response(result.getvalue())
+        response['Content-Disposition'] = 'inline; filename="receipt #{0} {1}.pdf"'.format(
+            deposit.id,
+            deposit.merchant.company_name)
+        return response
+
 
 class WithdrawalViewSet(viewsets.GenericViewSet):
 

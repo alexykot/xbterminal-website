@@ -46,6 +46,11 @@ short_urls = [
             actions={'get': 'receipt'},
             renderer_classes=[renderers.PDFRenderer]),
         name='payment-receipt'),
+    url(r'^drc/(?P<uid>[0-9a-zA-Z]{6})/?$',
+        views_v2.DepositViewSet.as_view(
+            actions={'get': 'receipt'},
+            renderer_classes=[renderers.PDFRenderer]),
+        name='deposit-receipt'),
     url(r'^wrc/(?P<uid>[0-9a-zA-Z]{6})/?$',
         views_v2.WithdrawalViewSet.as_view(
             actions={'get': 'receipt'},
