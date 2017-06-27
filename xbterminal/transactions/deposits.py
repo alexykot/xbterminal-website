@@ -4,6 +4,7 @@ import logging
 from django.db.transaction import atomic
 from django.utils import timezone
 
+from bitcoin.rpc import JSONRPCError
 from constance import config
 
 from api.utils.urls import get_admin_url
@@ -18,10 +19,12 @@ from transactions.models import Deposit, get_coin_type
 from transactions.utils.tx import create_tx_
 from operations.exceptions import (
     InsufficientFunds,
+    InvalidPaymentMessage,
     DoubleSpend,
     TransactionModified,
     RefundError)
 from operations.blockchain import BlockChain, get_txid
+from operations.protocol import parse_payment
 from operations.services.wrappers import get_exchange_rate, is_tx_reliable
 from wallet.models import Address
 from website.models import Account, Device
@@ -97,6 +100,47 @@ def validate_payment(deposit, transactions):
     deposit.create_balance_changes()
     if deposit.status == 'underpaid':
         raise InsufficientFunds
+
+
+def handle_bip70_payment(deposit, payment_message):
+    """
+    Parse and validate BIP70 Payment message
+    Accepts:
+        deposit: Deposit instance
+        payment_message: pb2-encoded message
+    Returns:
+        payment_ack: pb2-encoded message
+    """
+    bc = BlockChain(deposit.bitcoin_network)
+    try:
+        transactions, refund_addresses, payment_ack = \
+            parse_payment(payment_message)
+    except Exception as error:
+        logger.exception(error)
+        raise InvalidPaymentMessage
+    # Broadcast transactions, save IDs
+    for incoming_tx in transactions:
+        try:
+            incoming_tx_signed = bc.sign_raw_transaction(incoming_tx)
+            bc.send_raw_transaction(incoming_tx_signed)
+        except JSONRPCError as error:
+            # Don't raise, only log exception
+            logger.exception(error)
+        incoming_tx_id = get_txid(incoming_tx)
+        if incoming_tx_id not in deposit.incoming_tx_ids:
+            deposit.incoming_tx_ids.append(incoming_tx_id)
+    # Save refund address
+    if refund_addresses:
+        deposit.refund_address = refund_addresses[0]
+    deposit.save()
+    # Validate payment
+    validate_payment(deposit, transactions)
+    # Update status
+    deposit.payment_type = PAYMENT_TYPES.BIP70
+    deposit.time_received = timezone.now()
+    deposit.save()
+    logger.info('payment received (%s)', deposit.pk)
+    return payment_ack
 
 
 def wait_for_payment(deposit_id):
