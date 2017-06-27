@@ -495,6 +495,63 @@ class DepositViewSetTestCase(APITestCase):
         response = self.client.post(url, {})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    @patch('transactions.models.create_payment_request')
+    def test_payment_request(self, create_mock):
+        deposit = DepositFactory()
+        create_mock.return_value = payment_request = '009A8B'.decode('hex')
+        url = reverse('api:v2:deposit-request',
+                      kwargs={'uid': deposit.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'],
+                         'application/bitcoin-paymentrequest')
+        self.assertEqual(response.content, payment_request)
+
+    def test_payment_request_timeout(self):
+        deposit = DepositFactory(timeout=True)
+        url = reverse('api:v2:deposit-request', kwargs={'uid': deposit.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_payment_request_cancelled(self):
+        deposit = DepositFactory(cancelled=True)
+        url = reverse('api:v2:deposit-request', kwargs={'uid': deposit.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @patch('api.views_v2.handle_bip70_payment')
+    def test_payment_response(self, parse_mock):
+        deposit = DepositFactory()
+        parse_mock.return_value = payment_ack = 'test'
+        payment_response = '009A8B'.decode('hex')
+        url = reverse('api:v2:deposit-response',
+                      kwargs={'uid': deposit.uid})
+        response = self.client.post(
+            url, payment_response,
+            content_type='application/bitcoin-payment')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'],
+                         'application/bitcoin-paymentack')
+        self.assertEqual(response.content, payment_ack)
+
+    def test_payment_response_invalid_headers(self):
+        deposit = DepositFactory()
+        payment_response = '009A8B'.decode('hex')
+        url = reverse('api:v2:deposit-response',
+                      kwargs={'uid': deposit.uid})
+        response = self.client.post(
+            url, payment_response,
+            content_type='application/octet-stream')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_payment_response_already_received(self):
+        deposit = DepositFactory(received=True)
+        url = reverse('api:v2:deposit-response', kwargs={'uid': deposit.uid})
+        response = self.client.post(
+            url, '',
+            content_type='application/bitcoin-payment')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
 
 class WithdrawalViewSetTestCase(APITestCase):
 

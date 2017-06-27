@@ -39,7 +39,7 @@ from operations import (
     exceptions)
 from operations.models import PaymentOrder, WithdrawalOrder
 from transactions.models import Deposit
-from transactions.deposits import prepare_deposit
+from transactions.deposits import prepare_deposit, handle_bip70_payment
 
 from common import rq_helpers
 
@@ -224,6 +224,42 @@ class DepositViewSet(viewsets.GenericViewSet):
         deposit.time_cancelled = timezone.now()
         deposit.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @detail_route(methods=['GET'], renderer_classes=[PaymentRequestRenderer])
+    def request(self, *args, **kwargs):
+        deposit = self.get_object()
+        if deposit.status not in ['new', 'underpaid']:
+            raise Http404
+        payment_response_url = construct_absolute_url(
+            'api:v2:deposit-response',
+            kwargs={'uid': deposit.uid})
+        payment_request = deposit.create_payment_request(
+            payment_response_url)
+        response = Response(payment_request)
+        response['Content-Transfer-Encoding'] = 'binary'
+        return response
+
+    @detail_route(methods=['POST'], renderer_classes=[PaymentACKRenderer])
+    def response(self, *args, **kwargs):
+        deposit = self.get_object()
+        if deposit.status not in ['new', 'underpaid']:
+            raise Http404
+        # Check and parse message
+        content_type = self.request.META.get('CONTENT_TYPE')
+        if content_type != 'application/bitcoin-payment':
+            logger.warning("PaymentResponseView: wrong content type")
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        if len(self.request.body) > 50000:
+            # Payment messages larger than 50,000 bytes should be rejected by server
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        try:
+            payment_ack = handle_bip70_payment(deposit, self.request.body)
+        except Exception as error:
+            logger.exception(error)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        response = Response(payment_ack)
+        response['Content-Transfer-Encoding'] = 'binary'
+        return response
 
 
 class WithdrawalViewSet(viewsets.GenericViewSet):
