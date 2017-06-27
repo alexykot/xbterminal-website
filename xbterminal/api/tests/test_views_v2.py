@@ -499,7 +499,7 @@ class DepositViewSetTestCase(APITestCase):
     def test_payment_request(self, create_mock):
         deposit = DepositFactory()
         create_mock.return_value = payment_request = '009A8B'.decode('hex')
-        url = reverse('api:v2:deposit-request',
+        url = reverse('api:v2:deposit-payment-request',
                       kwargs={'uid': deposit.uid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -509,13 +509,15 @@ class DepositViewSetTestCase(APITestCase):
 
     def test_payment_request_timeout(self):
         deposit = DepositFactory(timeout=True)
-        url = reverse('api:v2:deposit-request', kwargs={'uid': deposit.uid})
+        url = reverse('api:v2:deposit-payment-request',
+                      kwargs={'uid': deposit.uid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_payment_request_cancelled(self):
         deposit = DepositFactory(cancelled=True)
-        url = reverse('api:v2:deposit-request', kwargs={'uid': deposit.uid})
+        url = reverse('api:v2:deposit-payment-request',
+                      kwargs={'uid': deposit.uid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -524,7 +526,7 @@ class DepositViewSetTestCase(APITestCase):
         deposit = DepositFactory()
         parse_mock.return_value = payment_ack = 'test'
         payment_response = '009A8B'.decode('hex')
-        url = reverse('api:v2:deposit-response',
+        url = reverse('api:v2:deposit-payment-response',
                       kwargs={'uid': deposit.uid})
         response = self.client.post(
             url, payment_response,
@@ -537,7 +539,7 @@ class DepositViewSetTestCase(APITestCase):
     def test_payment_response_invalid_headers(self):
         deposit = DepositFactory()
         payment_response = '009A8B'.decode('hex')
-        url = reverse('api:v2:deposit-response',
+        url = reverse('api:v2:deposit-payment-response',
                       kwargs={'uid': deposit.uid})
         response = self.client.post(
             url, payment_response,
@@ -546,7 +548,8 @@ class DepositViewSetTestCase(APITestCase):
 
     def test_payment_response_already_received(self):
         deposit = DepositFactory(received=True)
-        url = reverse('api:v2:deposit-response', kwargs={'uid': deposit.uid})
+        url = reverse('api:v2:deposit-payment-response',
+                      kwargs={'uid': deposit.uid})
         response = self.client.post(
             url, '',
             content_type='application/bitcoin-payment')

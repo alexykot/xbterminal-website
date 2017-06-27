@@ -181,7 +181,7 @@ class DepositViewSet(viewsets.GenericViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
         # Urls
         payment_request_url = construct_absolute_url(
-            'api:v2:deposit-request',
+            'api:v2:deposit-payment-request',
             kwargs={'uid': deposit.uid})
         # Prepare json response
         data = self.get_serializer(deposit).data
@@ -225,13 +225,17 @@ class DepositViewSet(viewsets.GenericViewSet):
         deposit.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @detail_route(methods=['GET'], renderer_classes=[PaymentRequestRenderer])
-    def request(self, *args, **kwargs):
+    @detail_route(
+        methods=['GET'],
+        url_name='payment-request',
+        url_path='request',
+        renderer_classes=[PaymentRequestRenderer])
+    def payment_request(self, *args, **kwargs):
         deposit = self.get_object()
         if deposit.status not in ['new', 'underpaid']:
             raise Http404
         payment_response_url = construct_absolute_url(
-            'api:v2:deposit-response',
+            'api:v2:deposit-payment-response',
             kwargs={'uid': deposit.uid})
         payment_request = deposit.create_payment_request(
             payment_response_url)
@@ -239,15 +243,18 @@ class DepositViewSet(viewsets.GenericViewSet):
         response['Content-Transfer-Encoding'] = 'binary'
         return response
 
-    @detail_route(methods=['POST'], renderer_classes=[PaymentACKRenderer])
-    def response(self, *args, **kwargs):
+    @detail_route(
+        methods=['POST'],
+        url_name='payment-response',
+        url_path='response',
+        renderer_classes=[PaymentACKRenderer])
+    def payment_response(self, *args, **kwargs):
         deposit = self.get_object()
         if deposit.status not in ['new', 'underpaid']:
             raise Http404
         # Check and parse message
         content_type = self.request.META.get('CONTENT_TYPE')
         if content_type != 'application/bitcoin-payment':
-            logger.warning("PaymentResponseView: wrong content type")
             return Response(status=status.HTTP_400_BAD_REQUEST)
         if len(self.request.body) > 50000:
             # Payment messages larger than 50,000 bytes should be rejected by server
