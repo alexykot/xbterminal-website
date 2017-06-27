@@ -9,24 +9,19 @@ from operations.tests.factories import (
     PaymentOrderFactory,
     WithdrawalOrderFactory)
 from website.models import Language, Currency
-from website.utils.kyc import REQUIRED_DOCUMENTS
 from website.tests.factories import (
     MerchantAccountFactory,
     AccountFactory,
-    TransactionFactory,
     DeviceBatchFactory,
     DeviceFactory)
 from api.serializers import (
     MerchantSerializer,
-    KYCDocumentsSerializer,
     PaymentInitSerializer,
     PaymentOrderSerializer,
     WithdrawalInitSerializer,
     WithdrawalOrderSerializer,
     DeviceSerializer,
-    DeviceRegistrationSerializer,
-    ThirdPartyDeviceSerializer,
-    TransactionSerializer)
+    DeviceRegistrationSerializer)
 from api.utils.crypto import create_test_public_key
 
 
@@ -44,46 +39,6 @@ class MerchantSerializerTestCase(TestCase):
         self.assertEqual(data['contact_email'], merchant.contact_email)
         self.assertEqual(data['verification_status'],
                          merchant.verification_status)
-
-
-class KYCDocumentsSerializerTestCase(TestCase):
-
-    def test_validation(self):
-        merchant = MerchantAccountFactory.create()
-        data = {
-            'id_document_frontside': 'data:image/png;base64,dGVzdA==',
-            'id_document_backside': 'data:image/png;base64,dGVzdA==',
-            'residence_document': 'data:image/png;base64,dGVzdA==',
-        }
-        serializer = KYCDocumentsSerializer(
-            data=data, context={'merchant': merchant})
-        self.assertTrue(serializer.is_valid())
-        uploaded = serializer.save()
-        self.assertEqual(len(uploaded), 3)
-        for document_type in REQUIRED_DOCUMENTS:
-            document = merchant.get_kyc_document(document_type, 'uploaded')
-            self.assertIsNotNone(document)
-            self.assertTrue(document.base_name.endswith('.png'))
-            self.assertIsNone(document.instantfiat_document_id)
-
-    def test_required(self):
-        serializer = KYCDocumentsSerializer(data={})
-        self.assertFalse(serializer.is_valid())
-        self.assertEqual(serializer.errors['id_document_frontside'][0],
-                         'This field is required.')
-        self.assertEqual(serializer.errors['id_document_backside'][0],
-                         'This field is required.')
-        self.assertEqual(serializer.errors['residence_document'][0],
-                         'This field is required.')
-
-    def test_invalid_file(self):
-        data = {
-            'id_document_frontside': 'aaa',
-        }
-        serializer = KYCDocumentsSerializer(data=data)
-        self.assertFalse(serializer.is_valid())
-        self.assertEqual(serializer.errors['id_document_frontside'][0],
-                         'Invalid encoded file.')
 
 
 class PaymentInitSerializerTestCase(TestCase):
@@ -376,71 +331,3 @@ class DeviceRegistrationSerializerTestCase(TestCase):
         self.assertTrue(salt_mock.check_fingerprint.called)
         self.assertEqual(serializer.errors['salt_fingerprint'][0],
                          'Invalid salt key fingerprint.')
-
-
-class ThirdPartyDeviceSerializerTestCase(TestCase):
-
-    def test_serialization(self):
-        device = DeviceFactory.create()
-        data = ThirdPartyDeviceSerializer(device).data
-        self.assertEqual(data['name'], device.name)
-        self.assertEqual(data['currency_code'],
-                         device.account.currency.name)
-        self.assertEqual(data['key'], device.key)
-        self.assertEqual(data['status'], device.status)
-
-    def test_create(self):
-        merchant = MerchantAccountFactory.create()
-        account = AccountFactory.create(merchant=merchant,
-                                        currency__name='USD')
-        data = {
-            'name': 'PoS 10',
-            'currency_code': 'USD',
-        }
-        serializer = ThirdPartyDeviceSerializer(
-            data=data,
-            context={'merchant': merchant})
-        self.assertTrue(serializer.is_valid())
-        device = serializer.save()
-        self.assertEqual(device.merchant.pk, merchant.pk)
-        self.assertEqual(device.account.pk, account.pk)
-        self.assertEqual(device.device_type, 'mobile')
-        self.assertEqual(device.status, 'active')
-        self.assertEqual(device.name, data['name'])
-        self.assertEqual(len(device.key), 8)
-        self.assertIsNone(device.api_key)
-
-    def test_invalid_currency_code(self):
-        merchant = MerchantAccountFactory.create()
-        data = {
-            'name': 'PoS 11',
-            'currency_code': 'XXX',
-        }
-        serializer = ThirdPartyDeviceSerializer(
-            data=data, context={'merchant': merchant})
-        self.assertFalse(serializer.is_valid())
-        self.assertEqual(serializer.errors['currency_code'][0],
-                         'Invalid currency code.')
-
-    def test_account_does_not_exist(self):
-        merchant = MerchantAccountFactory.create()
-        data = {
-            'name': 'PoS 11',
-            'currency_code': 'USD',
-        }
-        serializer = ThirdPartyDeviceSerializer(
-            data=data, context={'merchant': merchant})
-        self.assertFalse(serializer.is_valid())
-        self.assertEqual(serializer.errors['currency_code'][0],
-                         'Account does not exist.')
-
-
-class TransactionSerializerTestCase(TestCase):
-
-    def test_serialization(self):
-        transaction = TransactionFactory.create()
-        data = TransactionSerializer(transaction).data
-        self.assertEqual(data['amount'].rstrip('0'),
-                         str(transaction.amount).rstrip('0'))
-        self.assertIn('created_at', data)
-        self.assertTrue(data['is_confirmed'])
