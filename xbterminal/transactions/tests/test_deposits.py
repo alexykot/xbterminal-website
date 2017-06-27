@@ -176,7 +176,8 @@ class HandleBIP70PaymentTestCase(TestCase):
     @patch('transactions.deposits.parse_payment')
     @patch('transactions.deposits.get_txid')
     @patch('transactions.deposits.validate_payment')
-    def test_valid(self, validate_mock, get_txid_mock,
+    @patch('transactions.deposits.run_periodic_task')
+    def test_valid(self, run_task_mock, validate_mock, get_txid_mock,
                    parse_mock, bc_cls_mock):
         deposit = DepositFactory()
         parse_mock.return_value = (['test_tx'], ['test_address'], 'test_ack')
@@ -190,6 +191,9 @@ class HandleBIP70PaymentTestCase(TestCase):
         self.assertEqual(bc_mock.send_raw_transaction.call_count, 1)
         self.assertIs(validate_mock.called, True)
         self.assertEqual(validate_mock.call_args[0][1], ['test_tx'])
+        self.assertEqual(run_task_mock.call_args[0][0].__name__,
+                         'wait_for_confidence')
+        self.assertEqual(run_task_mock.call_args[0][1], [deposit.pk])
         self.assertEqual(payment_ack, 'test_ack')
 
         deposit.refresh_from_db()
@@ -202,7 +206,8 @@ class HandleBIP70PaymentTestCase(TestCase):
     @patch('transactions.deposits.parse_payment')
     @patch('transactions.deposits.get_txid')
     @patch('transactions.deposits.validate_payment')
-    def test_multiple_tx(self, validate_mock, get_txid_mock,
+    @patch('transactions.deposits.run_periodic_task')
+    def test_multiple_tx(self, run_task_mock, validate_mock, get_txid_mock,
                          parse_mock, bc_cls_mock):
         deposit = DepositFactory()
         bc_cls_mock.return_value = bc_mock = Mock()
@@ -230,7 +235,8 @@ class HandleBIP70PaymentTestCase(TestCase):
     @patch('transactions.deposits.parse_payment')
     @patch('transactions.deposits.get_txid')
     @patch('transactions.deposits.validate_payment')
-    def test_repeat(self, validate_mock, get_txid_mock,
+    @patch('transactions.deposits.run_periodic_task')
+    def test_repeat(self, run_task_mock, validate_mock, get_txid_mock,
                     parse_mock, bc_cls_mock):
         deposit = DepositFactory()
         bc_cls_mock.return_value = bc_mock = Mock()
@@ -242,6 +248,8 @@ class HandleBIP70PaymentTestCase(TestCase):
 
         self.assertEqual(bc_mock.sign_raw_transaction.call_count, 2)
         self.assertEqual(bc_mock.send_raw_transaction.call_count, 2)
+        self.assertEqual(validate_mock.call_count, 2)
+        self.assertEqual(run_task_mock.call_count, 1)
         deposit.refresh_from_db()
         self.assertEqual(deposit.incoming_tx_ids, [incoming_tx_id])
 
@@ -266,7 +274,8 @@ class HandleBIP70PaymentTestCase(TestCase):
     @patch('transactions.deposits.parse_payment')
     @patch('transactions.deposits.get_txid')
     @patch('transactions.deposits.validate_payment')
-    def test_insufficient_funds(self, validate_mock, get_txid_mock,
+    @patch('transactions.deposits.run_periodic_task')
+    def test_insufficient_funds(self, run_task_mock, validate_mock, get_txid_mock,
                                 parse_mock, bc_cls_mock):
         deposit = DepositFactory()
         bc_cls_mock.return_value = bc_mock = Mock()
@@ -279,6 +288,7 @@ class HandleBIP70PaymentTestCase(TestCase):
 
         self.assertIs(bc_mock.sign_raw_transaction.called, True)
         self.assertIs(bc_mock.send_raw_transaction.called, True)
+        self.assertIs(run_task_mock.called, False)
         deposit.refresh_from_db()
         self.assertEqual(deposit.incoming_tx_ids, [incoming_tx_id])
         self.assertIsNone(deposit.time_received)

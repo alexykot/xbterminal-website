@@ -136,10 +136,12 @@ def handle_bip70_payment(deposit, payment_message):
     # Validate payment
     validate_payment(deposit, transactions)
     # Update status
-    deposit.payment_type = PAYMENT_TYPES.BIP70
-    deposit.time_received = timezone.now()
-    deposit.save()
-    logger.info('payment received (%s)', deposit.pk)
+    if deposit.time_received is None:
+        deposit.payment_type = PAYMENT_TYPES.BIP70
+        deposit.time_received = timezone.now()
+        deposit.save()
+        run_periodic_task(wait_for_confidence, [deposit.pk], interval=5)
+        logger.info('payment received (%s)', deposit.pk)
     return payment_ack
 
 

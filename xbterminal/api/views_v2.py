@@ -181,7 +181,7 @@ class DepositViewSet(viewsets.GenericViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
         # Urls
         payment_request_url = construct_absolute_url(
-            'api:v2:payment-request',
+            'api:v2:deposit-request',
             kwargs={'uid': deposit.uid})
         # Prepare json response
         data = self.get_serializer(deposit).data
