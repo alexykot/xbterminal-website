@@ -2,7 +2,7 @@ import random
 
 from django.core.management.base import BaseCommand
 
-from wallet.enums import BIP44_PURPOSE, BIP44_COIN_TYPES
+from wallet.constants import BIP44_PURPOSE, BIP44_COIN_TYPES
 from wallet.models import WalletKey
 from wallet.utils.keys import create_master_key, create_wallet_key
 

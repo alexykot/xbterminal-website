@@ -1,8 +1,7 @@
 from django.conf.urls import include, url
 from rest_framework import routers
-from rest_framework_jwt.views import obtain_jwt_token
 
-from api import views_v1, views_v2, views_v3, renderers
+from api import views_v1, views_v2, renderers
 
 
 api_v1_urls = [
@@ -80,26 +79,8 @@ api_v2_urls = [
     url(r'^ping/', views_v2.PingView.as_view(), name='ping'),
 ]
 
-api_v3_router = routers.DefaultRouter()
-api_v3_router.register('merchants',
-                       views_v3.MerchantViewSet,
-                       base_name='merchant')
-api_v3_router.register('devices',
-                       views_v3.DeviceViewSet,
-                       base_name='device')
-api_v3_router.register('payments',
-                       views_v3.PaymentViewSet,
-                       base_name='payment')
-
-api_v3_urls = [
-    url(r'^', include(api_v3_router.urls)),
-    url(r'^swagger.yaml', views_v3.SwaggerView.as_view(), name='swagger'),
-    url(r'^token/', obtain_jwt_token, name='token'),
-]
-
 urlpatterns = [
     url(r'^api/', include(api_v1_urls)),
     url(r'', include(short_urls, namespace='short')),
     url(r'^api/v2/', include(api_v2_urls, namespace='v2')),
-    url(r'^api/v3/', include(api_v3_urls, namespace='v3')),
 ]
