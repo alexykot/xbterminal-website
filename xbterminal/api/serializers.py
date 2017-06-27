@@ -9,13 +9,9 @@ from website.models import (
     Currency,
     MerchantAccount,
     Account,
-    Transaction,
-    KYCDocument,
     Device,
-    DeviceBatch,
-    KYC_DOCUMENT_TYPES)
+    DeviceBatch)
 from website.validators import validate_public_key
-from website.utils.files import decode_base64
 
 
 class MerchantSerializer(serializers.ModelSerializer):
@@ -30,41 +26,6 @@ class MerchantSerializer(serializers.ModelSerializer):
             'contact_email',
             'verification_status',
         ]
-
-
-class KYCDocumentsSerializer(serializers.Serializer):
-
-    id_document_frontside = serializers.CharField()
-    id_document_backside = serializers.CharField()
-    residence_document = serializers.CharField()
-
-    def validate_id_document_frontside(self, value):
-        try:
-            return decode_base64(value), KYC_DOCUMENT_TYPES.ID_FRONT
-        except:
-            raise serializers.ValidationError('Invalid encoded file.')
-
-    def validate_id_document_backside(self, value):
-        try:
-            return decode_base64(value), KYC_DOCUMENT_TYPES.ID_BACK
-        except:
-            raise serializers.ValidationError('Invalid encoded file.')
-
-    def validate_residence_document(self, value):
-        try:
-            return decode_base64(value), KYC_DOCUMENT_TYPES.ADDRESS
-        except:
-            raise serializers.ValidationError('Invalid encoded file.')
-
-    def create(self, validated_data):
-        uploaded = []
-        for file, document_type in validated_data.values():
-            document = KYCDocument(merchant=self.context['merchant'],
-                                   document_type=document_type)
-            document.file.save(file.name, file)
-            document.save()
-            uploaded.append(document)
-        return uploaded
 
 
 class PaymentInitSerializer(serializers.Serializer):
@@ -266,50 +227,3 @@ class DeviceRegistrationSerializer(serializers.ModelSerializer):
             key=validated_data['key'],
             batch=validated_data['batch'],
             api_key=validated_data['api_key'])
-
-
-class ThirdPartyDeviceSerializer(serializers.ModelSerializer):
-
-    currency_code = serializers.CharField(source='account.currency.name')
-
-    class Meta:
-        model = Device
-        fields = [
-            'name',
-            'currency_code',
-            'key',
-            'status',
-        ]
-        read_only_fields = ['key', 'status']
-
-    def validate_currency_code(self, value):
-        try:
-            currency = Currency.objects.get(name=value)
-        except Currency.DoesNotExist:
-            raise serializers.ValidationError('Invalid currency code.')
-        try:
-            self.context['merchant'].account_set.get(currency=currency)
-        except Account.DoesNotExist:
-            raise serializers.ValidationError('Account does not exist.')
-        return value
-
-    def create(self, validated_data):
-        account = self.context['merchant'].account_set.get(
-            currency__name=validated_data['account']['currency']['name'])
-        return Device.objects.create(
-            merchant=self.context['merchant'],
-            account=account,
-            device_type='mobile',
-            status='active',
-            name=validated_data['name'])
-
-
-class TransactionSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Transaction
-        fields = [
-            'amount',
-            'created_at',
-            'is_confirmed',
-        ]
