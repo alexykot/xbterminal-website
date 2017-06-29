@@ -6,7 +6,6 @@ from mock import Mock, patch
 from django.test import TestCase
 
 from operations.tests.factories import (
-    PaymentOrderFactory,
     WithdrawalOrderFactory)
 from transactions.tests.factories import DepositFactory
 from website.models import Language, Currency
@@ -18,7 +17,6 @@ from website.tests.factories import (
 from api.serializers import (
     MerchantSerializer,
     PaymentInitSerializer,
-    PaymentOrderSerializer,
     DepositSerializer,
     WithdrawalInitSerializer,
     WithdrawalOrderSerializer,
@@ -100,20 +98,6 @@ class PaymentInitSerializerTestCase(TestCase):
         self.assertFalse(serializer.is_valid())
         self.assertEqual(serializer.errors['bt_mac'][0],
                          'This value does not match the required pattern.')
-
-
-class PaymentOrderSerializerTestCase(TestCase):
-
-    def test_serialization(self):
-        order = PaymentOrderFactory.create(received=True)
-        data = PaymentOrderSerializer(order).data
-        self.assertEqual(data['uid'], order.uid)
-        self.assertEqual(data['fiat_amount'], str(order.fiat_amount))
-        self.assertEqual(data['btc_amount'], str(order.btc_amount))
-        self.assertEqual(data['paid_btc_amount'], str(order.paid_btc_amount))
-        self.assertEqual(data['exchange_rate'],
-                         str(order.effective_exchange_rate))
-        self.assertEqual(data['status'], order.status)
 
 
 class DepositSerializerTestCase(TestCase):

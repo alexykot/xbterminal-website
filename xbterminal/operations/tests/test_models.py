@@ -141,10 +141,6 @@ class PaymentOrderTestCase(TestCase):
             tx_fee_btc_amount=Decimal('0.05'))
         self.assertEqual(order.effective_exchange_rate, Decimal('10'))
 
-    def test_urls_for_receipts(self):
-        order = PaymentOrderFactory.create(incoming_tx_ids=['0' * 64])
-        self.assertIn('/prc/{0}'.format(order.uid), order.receipt_url)
-
     def test_create_payment_request(self):
         order = PaymentOrderFactory.create()
         url = 'http://some-url'

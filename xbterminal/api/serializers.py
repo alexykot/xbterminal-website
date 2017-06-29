@@ -3,7 +3,7 @@ import re
 from rest_framework import serializers
 
 from api.utils.salt import Salt
-from operations.models import PaymentOrder, WithdrawalOrder
+from operations.models import WithdrawalOrder
 from transactions.models import Deposit
 from website.models import (
     Language,
@@ -60,28 +60,6 @@ class PaymentInitSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 'Either device or account must be specified.')
         return data
-
-
-class PaymentOrderSerializer(serializers.ModelSerializer):
-
-    btc_amount = serializers.DecimalField(
-        max_digits=18,
-        decimal_places=8)
-    exchange_rate = serializers.DecimalField(
-        max_digits=18,
-        decimal_places=8,
-        source='effective_exchange_rate')
-
-    class Meta:
-        model = PaymentOrder
-        fields = [
-            'uid',
-            'fiat_amount',
-            'btc_amount',
-            'paid_btc_amount',
-            'exchange_rate',
-            'status',
-        ]
 
 
 class DepositSerializer(serializers.ModelSerializer):

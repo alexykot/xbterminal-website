@@ -41,11 +41,6 @@ short_urls = [
         views_v1.ReceiptView.as_view(),
         name='receipt'),
     url(r'^prc/(?P<uid>[0-9a-zA-Z]{6})/?$',
-        views_v2.PaymentViewSet.as_view(
-            actions={'get': 'receipt'},
-            renderer_classes=[renderers.PDFRenderer]),
-        name='payment-receipt'),
-    url(r'^drc/(?P<uid>[0-9a-zA-Z]{6})/?$',
         views_v2.DepositViewSet.as_view(
             actions={'get': 'receipt'},
             renderer_classes=[renderers.PDFRenderer]),
@@ -59,9 +54,6 @@ short_urls = [
 
 api_v2_router = routers.DefaultRouter()
 api_v2_router.register('payments',
-                       views_v2.PaymentViewSet,
-                       base_name='payment')
-api_v2_router.register('deposits',
                        views_v2.DepositViewSet,
                        base_name='deposit')
 api_v2_router.register('withdrawals',
