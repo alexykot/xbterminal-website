@@ -19,7 +19,7 @@ from api.serializers import (
     PaymentInitSerializer,
     DepositSerializer,
     WithdrawalInitSerializer,
-    WithdrawalOrderSerializer,
+    WithdrawalSerializer,
     DeviceSerializer,
     DeviceRegistrationSerializer)
 from api.renderers import (
@@ -33,11 +33,10 @@ from api.utils.urls import construct_absolute_url
 
 from operations import (
     blockchain,
-    withdrawal,
     exceptions)
-from operations.models import WithdrawalOrder
-from transactions.models import Deposit
+from transactions.models import Deposit, Withdrawal
 from transactions.deposits import prepare_deposit, handle_bip70_payment
+from transactions.withdrawals import prepare_withdrawal, send_transaction
 
 from common import rq_helpers
 
@@ -167,9 +166,9 @@ class DepositViewSet(viewsets.GenericViewSet):
 
 class WithdrawalViewSet(viewsets.GenericViewSet):
 
-    queryset = WithdrawalOrder.objects.all()
+    queryset = Withdrawal.objects.all()
     lookup_field = 'uid'
-    serializer_class = WithdrawalOrderSerializer
+    serializer_class = WithdrawalSerializer
 
     def initialize_request(self, request, *args, **kwargs):
         """
@@ -197,61 +196,62 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
         if not self._verify_signature(serializer.validated_data['device']):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
         try:
-            order = withdrawal.prepare_withdrawal(
+            withdrawal = prepare_withdrawal(
                 serializer.validated_data['device'],
                 serializer.validated_data['amount'])
         except exceptions.WithdrawalError as error:
             return Response({'device': [error.message]},
                             status=status.HTTP_400_BAD_REQUEST)
-        serializer = self.get_serializer(order)
+        serializer = self.get_serializer(withdrawal)
         return Response(serializer.data)
 
     @detail_route(methods=['POST'])
     def confirm(self, request, uid=None):
-        order = self.get_object()
-        if not self._verify_signature(order.device):
+        withdrawal = self.get_object()
+        if not self._verify_signature(withdrawal.device):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
-        if order.status != 'new':
+        if withdrawal.status != 'new':
             raise Http404
         customer_address = self.request.data.get('address')
         try:
-            withdrawal.send_transaction(order, customer_address)
+            send_transaction(withdrawal, customer_address)
         except exceptions.WithdrawalError as error:
             return Response({'error': error.message},
                             status=status.HTTP_400_BAD_REQUEST)
-        serializer = self.get_serializer(order)
+        serializer = self.get_serializer(withdrawal)
         return Response(serializer.data)
 
     @detail_route(methods=['POST'])
     def cancel(self, *args, **kwargs):
-        order = self.get_object()
-        if not self._verify_signature(order.device):
+        withdrawal = self.get_object()
+        if not self._verify_signature(withdrawal.device):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
-        if order.status != 'new':
+        if withdrawal.status != 'new':
             raise Http404
-        order.time_cancelled = timezone.now()
-        order.save()
+        withdrawal.time_cancelled = timezone.now()
+        withdrawal.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def retrieve(self, request, uid=None):
-        order = self.get_object()
-        if order.time_broadcasted and not order.time_notified:
+        withdrawal = self.get_object()
+        if withdrawal.time_broadcasted and not withdrawal.time_notified:
             # Close order
-            order.time_notified = timezone.now()
-            order.save()
-        serializer = self.get_serializer(order)
+            withdrawal.time_notified = timezone.now()
+            withdrawal.save()
+        serializer = self.get_serializer(withdrawal)
         return Response(serializer.data)
 
     @detail_route(methods=['GET'], renderer_classes=[PDFRenderer])
     def receipt(self, *args, **kwargs):
-        order = self.get_object()
-        if not order.time_notified:
+        withdrawal = self.get_object()
+        if not withdrawal.time_notified:
             raise Http404
-        result = generate_pdf('pdf/receipt.html', {'order': order})
+        result = generate_pdf('pdf/receipt_withdrawal.html',
+                              {'withdrawal': withdrawal})
         response = Response(result.getvalue())
         response['Content-Disposition'] = 'inline; filename="receipt #{0} {1}.pdf"'.format(
-            order.id,
-            order.merchant.company_name)
+            withdrawal.id,
+            withdrawal.merchant.company_name)
         return response
 
 

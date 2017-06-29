@@ -5,9 +5,7 @@ import hashlib
 from mock import Mock, patch
 from django.test import TestCase
 
-from operations.tests.factories import (
-    WithdrawalOrderFactory)
-from transactions.tests.factories import DepositFactory
+from transactions.tests.factories import DepositFactory, WithdrawalFactory
 from website.models import Language, Currency
 from website.tests.factories import (
     MerchantAccountFactory,
@@ -19,7 +17,7 @@ from api.serializers import (
     PaymentInitSerializer,
     DepositSerializer,
     WithdrawalInitSerializer,
-    WithdrawalOrderSerializer,
+    WithdrawalSerializer,
     DeviceSerializer,
     DeviceRegistrationSerializer)
 from api.utils.crypto import create_test_public_key
@@ -154,19 +152,20 @@ class WithdrawalInitSerializerTestCase(TestCase):
             'Ensure this value is greater than or equal to 0.01.')
 
 
-class WithdrawalOrderSerializerTestCase(TestCase):
+class WithdrawalSerializerTestCase(TestCase):
 
     def test_serialization(self):
-        order = WithdrawalOrderFactory.create()
-        data = WithdrawalOrderSerializer(order).data
-        self.assertEqual(data['uid'], order.uid)
-        self.assertEqual(data['fiat_amount'], str(order.fiat_amount))
-        self.assertEqual(data['btc_amount'], str(order.btc_amount))
+        withdrawal = WithdrawalFactory()
+        data = WithdrawalSerializer(withdrawal).data
+        self.assertEqual(data['uid'], withdrawal.uid)
+        self.assertEqual(data['fiat_amount'].rstrip('0'),
+                         str(withdrawal.amount).rstrip('0'))
+        self.assertEqual(data['btc_amount'], str(withdrawal.coin_amount))
         self.assertEqual(data['tx_fee_btc_amount'].rstrip('0'),
-                         str(order.tx_fee_btc_amount))
+                         str(withdrawal.tx_fee_coin_amount))
         self.assertEqual(data['exchange_rate'],
-                         str(order.effective_exchange_rate))
-        self.assertEqual(data['status'], order.status)
+                         str(withdrawal.effective_exchange_rate))
+        self.assertEqual(data['status'], withdrawal.status)
 
 
 class DeviceSerializerTestCase(TestCase):

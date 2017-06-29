@@ -13,9 +13,7 @@ from constance.test import override_config
 from api.views_v2 import WithdrawalViewSet
 from api.utils.crypto import create_test_signature, create_test_public_key
 from operations import exceptions
-from operations.tests.factories import (
-    WithdrawalOrderFactory)
-from transactions.tests.factories import DepositFactory
+from transactions.tests.factories import DepositFactory, WithdrawalFactory
 from website.models import Device
 from website.tests.factories import (
     AccountFactory,
@@ -314,12 +312,11 @@ class WithdrawalViewSetTestCase(APITestCase):
     def setUp(self):
         self.factory = APIRequestFactory()
 
-    @patch('api.views_v2.withdrawal.prepare_withdrawal')
-    def test_create_order(self, prepare_mock):
+    @patch('api.views_v2.prepare_withdrawal')
+    def test_create(self, prepare_mock):
         device = DeviceFactory.create()
-        order = WithdrawalOrderFactory.create(
-            device=device, fiat_amount=Decimal('1.00'))
-        prepare_mock.return_value = order
+        withdrawal = WithdrawalFactory(device=device, amount=Decimal('1.00'))
+        prepare_mock.return_value = withdrawal
 
         view = WithdrawalViewSet.as_view(actions={'post': 'create'})
         form_data = {
@@ -334,11 +331,11 @@ class WithdrawalViewSetTestCase(APITestCase):
 
         response = view(request)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['uid'], order.uid)
+        self.assertEqual(response.data['uid'], withdrawal.uid)
         self.assertEqual(response.data['btc_amount'],
-                         str(order.btc_amount))
+                         str(withdrawal.coin_amount))
         self.assertEqual(response.data['exchange_rate'],
-                         str(order.effective_exchange_rate))
+                         str(withdrawal.effective_exchange_rate))
         self.assertEqual(response.data['status'], 'new')
 
     def test_create_invalid_device_key(self):
@@ -364,11 +361,11 @@ class WithdrawalViewSetTestCase(APITestCase):
         self.assertEqual(response.data['device'][0],
                          'Invalid device key.')
 
-    @patch('api.views_v2.withdrawal.prepare_withdrawal')
+    @patch('api.views_v2.prepare_withdrawal')
     def test_create_withdrawal_error(self, prepare_mock):
         device = DeviceFactory.create()
         prepare_mock.side_effect = exceptions.WithdrawalError(
-            'Account is not set for device.')
+            'Amount exceeds max payout for current device')
         view = WithdrawalViewSet.as_view(actions={'post': 'create'})
         data = {
             'device': device.key,
@@ -382,9 +379,9 @@ class WithdrawalViewSetTestCase(APITestCase):
         response = view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['device'][0],
-                         'Account is not set for device.')
+                         'Amount exceeds max payout for current device')
 
-    def test_invalid_signature(self):
+    def test_create_invalid_signature(self):
         device = DeviceFactory.create()
 
         view = WithdrawalViewSet.as_view(actions={'post': 'create'})
@@ -401,98 +398,105 @@ class WithdrawalViewSetTestCase(APITestCase):
         response = view(request)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    @patch('api.views_v2.withdrawal.send_transaction')
+    @patch('api.views_v2.send_transaction')
     def test_confirm(self, send_mock):
-        def write_time_sent(order, address):
-            order.time_sent = timezone.now()
-            order.save()
+        def write_time_sent(withdrawal, address):
+            withdrawal.time_sent = timezone.now()
+            withdrawal.save()
         send_mock.side_effect = write_time_sent
 
-        order = WithdrawalOrderFactory.create()
-        view = WithdrawalViewSet.as_view(
-            actions={'post': 'confirm'})
+        withdrawal = WithdrawalFactory()
+        view = WithdrawalViewSet.as_view(actions={'post': 'confirm'})
         form_data = {'address': '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'}
-        url = reverse('api:v2:withdrawal-confirm', kwargs={'uid': order.uid})
+        url = reverse('api:v2:withdrawal-confirm',
+                      kwargs={'uid': withdrawal.uid})
         request = self.factory.post(url, form_data, format='multipart')
-        order.device.api_key, request.META['HTTP_X_SIGNATURE'] = \
+        withdrawal.device.api_key, request.META['HTTP_X_SIGNATURE'] = \
             create_test_signature(request.body)
-        order.device.save()
+        withdrawal.device.save()
 
-        response = view(request, uid=order.uid)
+        response = view(request, uid=withdrawal.uid)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['status'], 'sent')
         self.assertTrue(send_mock.called)
 
     def test_confirm_already_sent(self):
-        order = WithdrawalOrderFactory.create(time_sent=timezone.now())
+        withdrawal = WithdrawalFactory(sent=True)
         view = WithdrawalViewSet.as_view(actions={'post': 'confirm'})
         form_data = {'address': '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE'}
-        url = reverse('api:v2:withdrawal-confirm', kwargs={'uid': order.uid})
+        url = reverse('api:v2:withdrawal-confirm',
+                      kwargs={'uid': withdrawal.uid})
         request = self.factory.post(url, form_data, format='multipart')
-        order.device.api_key, request.META['HTTP_X_SIGNATURE'] = \
+        withdrawal.device.api_key, request.META['HTTP_X_SIGNATURE'] = \
             create_test_signature(request.body)
-        order.device.save()
+        withdrawal.device.save()
 
-        response = view(request, uid=order.uid)
+        response = view(request, uid=withdrawal.uid)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_cancel(self):
-        order = WithdrawalOrderFactory.create()
+        withdrawal = WithdrawalFactory.create()
         view = WithdrawalViewSet.as_view(actions={'post': 'cancel'})
-        url = reverse('api:v2:withdrawal-cancel', kwargs={'uid': order.uid})
+        url = reverse('api:v2:withdrawal-cancel',
+                      kwargs={'uid': withdrawal.uid})
         request = self.factory.post(url, {}, format='multipart')
-        order.device.api_key, request.META['HTTP_X_SIGNATURE'] = \
+        withdrawal.device.api_key, request.META['HTTP_X_SIGNATURE'] = \
             create_test_signature(request.body)
-        order.device.save()
+        withdrawal.device.save()
 
-        response = view(request, uid=order.uid)
+        response = view(request, uid=withdrawal.uid)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        order.refresh_from_db()
-        self.assertEqual(order.status, 'cancelled')
+        withdrawal.refresh_from_db()
+        self.assertEqual(withdrawal.status, 'cancelled')
 
     def test_cancel_not_new(self):
-        order = WithdrawalOrderFactory.create(time_sent=timezone.now())
+        withdrawal = WithdrawalFactory(sent=True)
         view = WithdrawalViewSet.as_view(actions={'post': 'cancel'})
-        url = reverse('api:v2:withdrawal-cancel', kwargs={'uid': order.uid})
+        url = reverse('api:v2:withdrawal-cancel',
+                      kwargs={'uid': withdrawal.uid})
         request = self.factory.post(url, {}, format='multipart')
-        order.device.api_key, request.META['HTTP_X_SIGNATURE'] = \
+        withdrawal.device.api_key, request.META['HTTP_X_SIGNATURE'] = \
             create_test_signature(request.body)
-        order.device.save()
+        withdrawal.device.save()
 
-        response = view(request, uid=order.uid)
+        response = view(request, uid=withdrawal.uid)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_check(self):
-        order = WithdrawalOrderFactory.create(time_sent=timezone.now())
-        url = reverse('api:v2:withdrawal-detail', kwargs={'uid': order.uid})
+    def test_retrieve(self):
+        withdrawal = WithdrawalFactory(sent=True)
+        url = reverse('api:v2:withdrawal-detail',
+                      kwargs={'uid': withdrawal.uid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['status'], 'sent')
 
-        order.time_broadcasted = timezone.now()
-        order.save()
+        withdrawal.time_broadcasted = timezone.now()
+        withdrawal.save()
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['status'], 'completed')
+        self.assertEqual(response.data['status'], 'notified')
 
     @patch('api.utils.pdf.get_template')
     def test_receipt(self, get_template_mock):
         get_template_mock.return_value = template_mock = Mock(**{
             'render.return_value': 'test',
         })
-        order = WithdrawalOrderFactory.create(
-            time_notified=timezone.now())
+        withdrawal = WithdrawalFactory(notified=True)
         url = reverse('api:v2:withdrawal-receipt',
-                      kwargs={'uid': order.uid})
+                      kwargs={'uid': withdrawal.uid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response['Content-Type'], 'application/pdf')
-        self.assertTrue(template_mock.render.called)
+        self.assertEqual(get_template_mock.call_args[0][0],
+                         'pdf/receipt_withdrawal.html')
+        self.assertIs(template_mock.render.called, True)
+        self.assertEqual(template_mock.render.call_args[0][0]['withdrawal'],
+                         withdrawal)
 
     def test_receipt_not_notified(self):
-        order = WithdrawalOrderFactory.create()
+        withdrawal = WithdrawalFactory(broadcasted=True)
         url = reverse('api:v2:withdrawal-receipt',
-                      kwargs={'uid': order.uid})
+                      kwargs={'uid': withdrawal.uid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -501,19 +505,17 @@ class WithdrawalViewSetTestCase(APITestCase):
         get_template_mock.return_value = Mock(**{
             'render.return_value': 'test',
         })
-        order = WithdrawalOrderFactory.create(
-            time_notified=timezone.now())
+        withdrawal = WithdrawalFactory(notified=True)
         url = reverse('api:short:withdrawal-receipt',
-                      kwargs={'uid': order.uid})
+                      kwargs={'uid': withdrawal.uid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response['Content-Type'], 'application/pdf')
 
     def test_receipt_short_post(self):
-        order = WithdrawalOrderFactory.create(
-            time_notified=timezone.now())
+        withdrawal = WithdrawalFactory(notified=True)
         url = reverse('api:short:withdrawal-receipt',
-                      kwargs={'uid': order.uid})
+                      kwargs={'uid': withdrawal.uid})
         response = self.client.post(url, {})
         self.assertEqual(response.status_code,
                          status.HTTP_405_METHOD_NOT_ALLOWED)
