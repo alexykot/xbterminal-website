@@ -195,7 +195,7 @@ def wait_for_payment(deposit_id):
             deposit.time_received = timezone.now()
             deposit.save()
             run_periodic_task(wait_for_confidence, [deposit.pk], interval=5)
-            logger.info('payment received (%s)', deposit.uid)
+            logger.info('payment received (%s)', deposit.pk)
 
 
 def wait_for_confidence(deposit_id):
