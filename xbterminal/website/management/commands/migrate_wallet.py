@@ -12,7 +12,6 @@ from transactions.models import (
 from transactions.deposits import (
     wait_for_payment,
     check_deposit_status)
-from transactions.tests.factories import generate_random_address
 from operations.blockchain import BlockChain
 from wallet.models import Address
 from website.models import Account
@@ -63,7 +62,7 @@ def migrate_wallet(currency_name, fee_address, is_test):
         tx_inputs += account_outputs
         tx_amount += account_amount
         if is_test:
-            tx_outputs[generate_random_address(coin_type)] = account_amount
+            tx_outputs[account.pk] = account_amount
             continue
         # Create deposit
         deposit_address = Address.create(coin_type, is_change=False)
