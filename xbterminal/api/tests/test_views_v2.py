@@ -491,7 +491,7 @@ class DepositViewSetTestCase(APITestCase):
 
     def test_cancel_broadcasted(self):
         deposit = DepositFactory(broadcasted=True)
-        url = reverse('api:v2:payment-cancel', kwargs={'uid': deposit.uid})
+        url = reverse('api:v2:deposit-cancel', kwargs={'uid': deposit.uid})
         response = self.client.post(url, {})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
