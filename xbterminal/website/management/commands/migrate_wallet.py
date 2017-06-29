@@ -12,6 +12,7 @@ from transactions.models import (
 from transactions.deposits import (
     wait_for_payment,
     check_deposit_status)
+from transactions.tests.factories import generate_random_address
 from operations.blockchain import BlockChain
 from wallet.models import Address
 from website.models import Account
@@ -48,20 +49,26 @@ def migrate_wallet(currency_name, fee_address, is_test):
     for account in Account.objects.filter(currency__name=currency_name):
         # Get unspent outputs
         account_amount = BTC_DEC_PLACES
+        account_outputs = []
         for address in account.address_set.all():
             for output in bc.get_unspent_outputs(address.address):
-                tx_inputs.append(output['outpoint'])
+                account_outputs.append(output['outpoint'])
                 account_amount += output['amount']
+        if not account_outputs:
+            # No outputs
+            continue
         yield 'merchant: {}'.format(account.merchant)
         yield 'found {0} outputs, total amount {1}'.format(
-            len(tx_inputs), account_amount)
+            len(account_outputs), account_amount)
+        tx_inputs += account_outputs
+        tx_amount += account_amount
         if is_test:
+            tx_outputs[generate_random_address(coin_type)] = account_amount
             continue
         # Create deposit
         deposit_address = Address.create(coin_type, is_change=False)
         bc.import_address(deposit_address.address, rescan=False)
         tx_outputs[deposit_address.address] = account_amount
-        tx_amount += account_amount
         deposit = Deposit.objects.create(
             account=account,
             currency=account.merchant.currency,
