@@ -197,7 +197,7 @@ class DepositTestCase(TestCase):
     def test_create_balance_changes(self):
         deposit = DepositFactory(received=True)
         deposit.create_balance_changes()
-        changes = list(deposit.balancechange_set.order_by('account'))
+        changes = list(deposit.balancechange_set.order_by('created_at'))
         self.assertEqual(len(changes), 2)
         self.assertEqual(changes[0].account, deposit.account)
         self.assertEqual(changes[0].address, deposit.deposit_address)
@@ -205,6 +205,21 @@ class DepositTestCase(TestCase):
                          deposit.paid_coin_amount - deposit.fee_coin_amount)
         self.assertIsNone(changes[1].account)
         self.assertEqual(changes[1].address, deposit.deposit_address)
+        self.assertEqual(changes[1].amount,
+                         deposit.fee_coin_amount)
+
+    def test_create_balance_changes_repeat(self):
+        deposit = DepositFactory(received=True)
+        deposit.create_balance_changes()
+        deposit.paid_coin_amount *= 2
+        deposit.save()
+        deposit.create_balance_changes()
+        changes = list(deposit.balancechange_set.order_by('created_at'))
+        self.assertEqual(len(changes), 2)
+        self.assertEqual(changes[0].account, deposit.account)
+        self.assertEqual(changes[0].amount,
+                         deposit.paid_coin_amount - deposit.fee_coin_amount)
+        self.assertIsNone(changes[1].account)
         self.assertEqual(changes[1].amount,
                          deposit.fee_coin_amount)
 
