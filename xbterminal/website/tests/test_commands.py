@@ -11,7 +11,7 @@ from website.tests.factories import (
     MerchantAccountFactory,
     AccountFactory,
     AddressFactory)
-from website.management.commands.check_wallet import \
+from website.management.commands.check_wallet_ import \
     check_wallet, check_wallet_strict
 from website.management.commands.withdraw_btc import withdraw_btc
 from website.management.commands.cryptopay_sync import cryptopay_sync
@@ -22,8 +22,8 @@ from wallet.tests.factories import WalletKeyFactory
 
 class CheckWalletTestCase(TestCase):
 
-    @patch('website.management.commands.check_wallet.BlockChain')
-    @patch('website.management.commands.check_wallet.logger')
+    @patch('website.management.commands.check_wallet_.BlockChain')
+    @patch('website.management.commands.check_wallet_.logger')
     def test_check_ok(self, logger_mock, bc_cls_mock):
         account_1 = AccountFactory.create(
             currency__name='BTC', balance_=Decimal('0.2'))
@@ -42,8 +42,8 @@ class CheckWalletTestCase(TestCase):
         self.assertIs(logger_mock.critical.called, False)
         self.assertIs(logger_mock.info.called, True)
 
-    @patch('website.management.commands.check_wallet.BlockChain')
-    @patch('website.management.commands.check_wallet.logger')
+    @patch('website.management.commands.check_wallet_.BlockChain')
+    @patch('website.management.commands.check_wallet_.logger')
     def test_check_mismatch(self, logger_mock, bc_cls_mock):
         account = AccountFactory.create(
             currency__name='BTC', balance_=Decimal('0.2'))
@@ -56,8 +56,8 @@ class CheckWalletTestCase(TestCase):
                          address.address)
         self.assertIs(logger_mock.critical.called, True)
 
-    @patch('website.management.commands.check_wallet.BlockChain')
-    @patch('website.management.commands.check_wallet.logger')
+    @patch('website.management.commands.check_wallet_.BlockChain')
+    @patch('website.management.commands.check_wallet_.logger')
     def test_strict_check_mismatch(self, logger_mock, bc_cls_mock):
         AccountFactory.create_batch(
             2, currency__name='BTC', balance_=Decimal('0.2'))

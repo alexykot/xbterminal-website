@@ -13,8 +13,8 @@ from transactions.tests.factories import (
 
 class CheckWalletTestCase(TestCase):
 
-    @patch('transactions.management.commands.check_wallet_.BlockChain')
-    @patch('transactions.management.commands.check_wallet_.logger')
+    @patch('transactions.management.commands.check_wallet.BlockChain')
+    @patch('transactions.management.commands.check_wallet.logger')
     def test_balance_ok(self, logger_mock, bc_cls_mock):
         bch_1, bch_2 = BalanceChangeFactory.create_batch(2)
         deposit = DepositFactory(
@@ -40,7 +40,7 @@ class CheckWalletTestCase(TestCase):
                 bch_3.amount + bch_4.amount + bch_5.amount,
             ],
         })
-        call_command('check_wallet_', 'BTC')
+        call_command('check_wallet', 'BTC')
 
         self.assertEqual(bc_cls_mock.call_args[0][0], 'mainnet')
         self.assertEqual(bc_mock.get_address_balance.call_count, 3)
@@ -48,15 +48,15 @@ class CheckWalletTestCase(TestCase):
         self.assertEqual(logger_mock.info.call_args[0][1], 'BTC')
         self.assertEqual(logger_mock.info.call_args[0][2], expected_balance)
 
-    @patch('transactions.management.commands.check_wallet_.BlockChain')
-    @patch('transactions.management.commands.check_wallet_.logger')
+    @patch('transactions.management.commands.check_wallet.BlockChain')
+    @patch('transactions.management.commands.check_wallet.logger')
     def test_balance_mismatch(self, logger_mock, bc_cls_mock):
         bch = BalanceChangeFactory()
         wallet_balance = Decimal('0.01')
         bc_cls_mock.return_value = bc_mock = Mock(**{
             'get_address_balance.return_value': wallet_balance,
         })
-        call_command('check_wallet_', 'BTC')
+        call_command('check_wallet', 'BTC')
 
         self.assertEqual(bc_mock.get_address_balance.call_count, 1)
         self.assertIs(logger_mock.critical.called, True)
