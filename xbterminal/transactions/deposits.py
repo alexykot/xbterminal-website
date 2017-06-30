@@ -214,7 +214,6 @@ def wait_for_confidence(deposit_id):
             logger.error(
                 'double spend detected',
                 extra={'data': {
-                    'deposit_id': deposit.pk,
                     'deposit_admin_url': get_admin_url(deposit),
                 }})
             cancel_current_task()
@@ -224,7 +223,6 @@ def wait_for_confidence(deposit_id):
             logger.warning(
                 'transaction has been modified',
                 extra={'data': {
-                    'deposit_id': deposit.pk,
                     'deposit_admin_url': get_admin_url(deposit),
                 }})
             deposit.incoming_tx_ids = [
@@ -272,7 +270,6 @@ def wait_for_confirmation(deposit_id):
             logger.warning(
                 'transaction has been modified',
                 extra={'data': {
-                    'deposit_id': deposit.pk,
                     'deposit_admin_url': get_admin_url(deposit),
                 }})
             deposit.incoming_tx_ids = [
@@ -321,9 +318,9 @@ def refund_deposit(deposit):
     deposit.save()
     deposit.balancechange_set.all().delete()
     logger.warning(
-        'payment returned',
+        'payment refunded (%s)',
+        deposit.pk,
         extra={'data': {
-            'deposit_id': deposit.pk,
             'deposit_admin_url': get_admin_url(deposit),
         }})
 
@@ -347,17 +344,17 @@ def check_deposit_status(deposit_id):
         except RefundError:
             pass
         logger.error(
-            'payment failed',
+            'payment failed (%s)',
+            deposit.pk,
             extra={'data': {
-                'deposit_id': deposit.pk,
                 'deposit_admin_url': get_admin_url(deposit),
             }})
         cancel_current_task()
     elif deposit.status == 'unconfirmed':
         logger.error(
-            'payment not confirmed',
+            'payment not confirmed (%s)',
+            deposit.pk,
             extra={'data': {
-                'deposit_id': deposit.pk,
                 'deposit_admin_url': get_admin_url(deposit),
             }})
         cancel_current_task()

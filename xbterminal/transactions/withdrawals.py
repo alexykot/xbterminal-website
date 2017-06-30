@@ -231,7 +231,8 @@ def check_withdrawal_status(withdrawal_id):
             cancel_current_task()
         elif withdrawal.status in ['failed', 'unconfirmed']:
             logger.error(
-                'withdrawal failed',
+                'withdrawal failed (%s)',
+                withdrawal.pk,
                 extra={'data': {
                     'withdrawal_admin_url': get_admin_url(withdrawal),
                 }})
