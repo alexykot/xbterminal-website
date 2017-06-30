@@ -35,6 +35,7 @@ from website.utils.files import (
     get_verification_file_name,
     verification_file_path_gen)
 from common.uids import generate_alphanumeric_code, generate_b58_uid
+from transactions.utils.compat import get_account_balance
 
 
 class UserManager(BaseUserManager):
@@ -430,11 +431,25 @@ class Account(models.Model):
         """
         Total balance on account, including unconfirmed deposits
         """
+        return get_account_balance(self)
+
+    @property
+    def balance_(self):
+        """
+        Total balance on account, including unconfirmed deposits
+        """
         result = self.transaction_set.aggregate(models.Sum('amount'))
         return result['amount__sum'] or Decimal('0.00000000')
 
     @property
     def balance_confirmed(self):
+        """
+        Amount available for withdrawal
+        """
+        return get_account_balance(self, include_unconfirmed=False)
+
+    @property
+    def balance_confirmed_(self):
         """
         Amount available for withdrawal (inaccurate)
         """

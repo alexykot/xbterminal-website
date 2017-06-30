@@ -180,7 +180,7 @@ class AccountFactory(factory.DjangoModelFactory):
             return fake.uuid4()
 
     @factory.post_generation
-    def balance(self, create, extracted, **kwargs):
+    def balance_(self, create, extracted, **kwargs):
         if create and extracted:
             self.transaction_set.create(amount=extracted)
 

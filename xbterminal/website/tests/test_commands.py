@@ -26,10 +26,10 @@ class CheckWalletTestCase(TestCase):
     @patch('website.management.commands.check_wallet.logger')
     def test_check_ok(self, logger_mock, bc_cls_mock):
         account_1 = AccountFactory.create(
-            currency__name='BTC', balance=Decimal('0.2'))
+            currency__name='BTC', balance_=Decimal('0.2'))
         AddressFactory.create(account=account_1)
         account_2 = AccountFactory.create(
-            currency__name='BTC', balance=Decimal('0.2'))
+            currency__name='BTC', balance_=Decimal('0.2'))
         AddressFactory.create(account=account_2)
         bc_cls_mock.return_value = bc_mock = Mock(**{
             'get_balance.return_value': Decimal('0.4'),
@@ -46,7 +46,7 @@ class CheckWalletTestCase(TestCase):
     @patch('website.management.commands.check_wallet.logger')
     def test_check_mismatch(self, logger_mock, bc_cls_mock):
         account = AccountFactory.create(
-            currency__name='BTC', balance=Decimal('0.2'))
+            currency__name='BTC', balance_=Decimal('0.2'))
         address = AddressFactory.create(account=account)
         bc_cls_mock.return_value = bc_mock = Mock(**{
             'get_address_balance.return_value': Decimal('0.3'),
@@ -60,7 +60,7 @@ class CheckWalletTestCase(TestCase):
     @patch('website.management.commands.check_wallet.logger')
     def test_strict_check_mismatch(self, logger_mock, bc_cls_mock):
         AccountFactory.create_batch(
-            2, currency__name='BTC', balance=Decimal('0.2'))
+            2, currency__name='BTC', balance_=Decimal('0.2'))
         bc_cls_mock.return_value = Mock(**{
             'get_balance.return_value': Decimal('0.5'),
         })
@@ -74,7 +74,7 @@ class WithdrawBTCTestCase(TestCase):
     def test_command(self, bc_cls_mock):
         account = AccountFactory.create(
             currency__name='BTC',
-            balance=Decimal('0.2'))
+            balance_=Decimal('0.2'))
         address = AddressFactory.create(account=account)
         bc_cls_mock.return_value = bc_mock = Mock(**{
             'get_unspent_outputs.return_value': [

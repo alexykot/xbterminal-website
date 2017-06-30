@@ -217,10 +217,10 @@ class PrepareWithdrawalTestCase(TestCase):
     def test_prepare_instantfiat(self, get_rate_mock):
         device = DeviceFactory.create(
             account__currency__name='GBP',
-            account__balance=Decimal('2.00'),
+            account__balance_=Decimal('2.00'),
             max_payout=Decimal('10.0'))
         self.assertTrue(device.account.instantfiat)
-        self.assertEqual(device.account.balance_confirmed, Decimal('2.00'))
+        self.assertEqual(device.account.balance_confirmed_, Decimal('2.00'))
         fiat_amount = Decimal('1.00')
         get_rate_mock.return_value = exchange_rate = Decimal(100)
 
@@ -243,7 +243,7 @@ class PrepareWithdrawalTestCase(TestCase):
     def test_insufficient_funds_instantfiat(self, get_rate_mock):
         device = DeviceFactory.create(account__currency__name='GBP',
                                       max_payout=Decimal('1000.0'))
-        self.assertEqual(device.account.balance_confirmed, 0)
+        self.assertEqual(device.account.balance_confirmed_, 0)
         fiat_amount = Decimal('200.00')
         get_rate_mock.return_value = Decimal(200)
         with self.assertRaises(exceptions.WithdrawalError) as context:
@@ -276,7 +276,7 @@ class SendTransactionTestCase(TestCase):
     @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.run_periodic_task')
     def test_send_btc(self, run_task_mock, bc_cls_mock):
-        account = AccountFactory(balance=Decimal('0.01'))
+        account = AccountFactory(balance_=Decimal('0.01'))
         account_address = AddressFactory.create(account=account)
         device = DeviceFactory.create(account=account)
         incoming_tx_hash = b'\x01' * 32
@@ -324,12 +324,12 @@ class SendTransactionTestCase(TestCase):
         self.assertEqual(account_tx_2.amount,
                          order.change_btc_amount)
 
-        self.assertEqual(device.account.balance, Decimal('0.0049'))
+        self.assertEqual(device.account.balance_, Decimal('0.0049'))
 
     @patch('operations.withdrawal.BlockChain')
     @patch('operations.withdrawal.run_periodic_task')
     def test_send_btc_without_change(self, run_task_mock, bc_cls_mock):
-        account = AccountFactory.create(balance=Decimal('0.0051'))
+        account = AccountFactory.create(balance_=Decimal('0.0051'))
         account_address = AddressFactory.create(account=account)
         device = DeviceFactory.create(account=account)
         order = WithdrawalOrderFactory.create(
@@ -352,7 +352,7 @@ class SendTransactionTestCase(TestCase):
         self.assertEqual(order.transaction_set.count(), 1)
         account_tx_1 = order.transaction_set.get(amount__lt=0)
         self.assertEqual(account_tx_1.amount, -order.btc_amount)
-        self.assertEqual(device.account.balance, 0)
+        self.assertEqual(device.account.balance_, 0)
         self.assertIn(account_address.address,
                       bc_mock.create_raw_transaction.call_args[0][1])
 
@@ -379,7 +379,7 @@ class SendTransactionTestCase(TestCase):
     def test_send_instantfiat(self, run_task_mock, send_mock):
         device = DeviceFactory.create(
             account__currency__name='GBP',
-            account__balance=Decimal('2.00'))
+            account__balance_=Decimal('2.00'))
         self.assertTrue(device.account.instantfiat)
         order = WithdrawalOrderFactory.create(
             device=device,
@@ -405,7 +405,7 @@ class SendTransactionTestCase(TestCase):
         self.assertEqual(order.transaction_set.count(), 1)
         account_tx = order.transaction_set.get(amount__lt=0)
         self.assertEqual(account_tx.amount, -order.fiat_amount)
-        self.assertEqual(device.account.balance, Decimal('1.00'))
+        self.assertEqual(device.account.balance_, Decimal('1.00'))
 
         self.assertTrue(run_task_mock.called)
         self.assertEqual(run_task_mock.call_args[0][0].__name__,
@@ -415,7 +415,7 @@ class SendTransactionTestCase(TestCase):
     def test_send_instantfiat_insufficient_funds(self, send_mock):
         device = DeviceFactory.create(
             account__currency__name='GBP',
-            account__balance=Decimal('2.00'))
+            account__balance_=Decimal('2.00'))
         order = WithdrawalOrderFactory.create(
             device=device,
             fiat_amount=Decimal('1.00'),
@@ -433,7 +433,7 @@ class SendTransactionTestCase(TestCase):
     def test_send_instantfiat_error(self, send_mock):
         device = DeviceFactory.create(
             account__currency__name='GBP',
-            account__balance=Decimal('2.00'))
+            account__balance_=Decimal('2.00'))
         order = WithdrawalOrderFactory.create(
             device=device,
             fiat_amount=Decimal('1.00'),

@@ -41,6 +41,7 @@ from operations.tests.factories import (
 from operations.blockchain import validate_bitcoin_address
 from transactions.utils.compat import get_device_transactions
 from transactions.tests.factories import (
+    WithdrawalFactory,
     BalanceChangeFactory,
     NegativeBalanceChangeFactory)
 
@@ -354,16 +355,56 @@ class AccountTestCase(TestCase):
         self.assertEqual(account_3.bitcoin_network, 'mainnet')
 
     def test_balance(self):
+        account = AccountFactory()
+        self.assertEqual(account.balance, 0)
+        transactions = BalanceChangeFactory.create_batch(
+            3, deposit__account=account)
+        self.assertEqual(account.balance,
+                         sum(t.amount for t in transactions))
+
+    def test_balance_(self):
         account_1 = AccountFactory.create()
-        self.assertEqual(account_1.balance, 0)
+        self.assertEqual(account_1.balance_, 0)
         transactions = TransactionFactory.create_batch(
             3, account=account_1)
-        self.assertEqual(account_1.balance,
+        self.assertEqual(account_1.balance_,
                          sum(t.amount for t in transactions))
-        account_2 = AccountFactory.create(balance=Decimal('0.5'))
-        self.assertEqual(account_2.balance, Decimal('0.5'))
+        account_2 = AccountFactory.create(balance_=Decimal('0.5'))
+        self.assertEqual(account_2.balance_, Decimal('0.5'))
 
     def test_balance_confirmed(self):
+        account = AccountFactory()
+        # Deposit - broadcasted
+        BalanceChangeFactory(
+            deposit__account=account,
+            deposit__broadcasted=True,
+            deposit__merchant_coin_amount=Decimal('0.2'))
+        # Deposit - confirmed
+        BalanceChangeFactory(
+            deposit__account=account,
+            deposit__confirmed=True,
+            deposit__merchant_coin_amount=Decimal('0.3'))
+        # Withdrawal - new
+        withdrawal_1 = WithdrawalFactory(
+            account=account,
+            customer_coin_amount=Decimal('0.18'),
+            tx_fee_coin_amount=0)
+        NegativeBalanceChangeFactory(withdrawal=withdrawal_1)
+        NegativeBalanceChangeFactory(withdrawal=withdrawal_1,
+                                     amount=Decimal('0.03'))
+        # Withdrawal - confirmed
+        withdrawal_2 = WithdrawalFactory(
+            account=account,
+            confirmed=True,
+            customer_coin_amount=Decimal('0.06'),
+            tx_fee_coin_amount=0)
+        NegativeBalanceChangeFactory(withdrawal=withdrawal_2)
+        NegativeBalanceChangeFactory(withdrawal=withdrawal_2,
+                                     amount=Decimal('0.01'))
+        self.assertEqual(account.balance, Decimal('0.30'))
+        self.assertEqual(account.balance_confirmed, Decimal('0.07'))
+
+    def test_balance_confirmed_(self):
         account = AccountFactory.create()
         # Payment - forwarded
         TransactionFactory.create(
@@ -404,8 +445,8 @@ class AccountTestCase(TestCase):
         # Without order
         TransactionFactory.create(
             account=account, amount=Decimal('0.13'))
-        self.assertEqual(account.balance, Decimal('0.43'))
-        self.assertEqual(account.balance_confirmed, Decimal('0.20'))
+        self.assertEqual(account.balance_, Decimal('0.43'))
+        self.assertEqual(account.balance_confirmed_, Decimal('0.20'))
 
     def test_balance_min_max(self):
         account_btc = AccountFactory.create(currency__name='BTC')

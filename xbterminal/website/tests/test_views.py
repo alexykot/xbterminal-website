@@ -1165,7 +1165,7 @@ class AddFundsViewTestCase(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
-class WithdrawToBankAccountForm(TestCase):
+class WithdrawToBankAccountViewTestCase(TestCase):
 
     def setUp(self):
         self.merchant = MerchantAccountFactory.create()

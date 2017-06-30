@@ -85,7 +85,7 @@ class MerchantRegistrationFormTestCase(TestCase):
         self.assertEqual(merchant.account_set.count(), 1)
         account_btc_internal = merchant.account_set.get(
             currency__name='BTC', instantfiat=False)
-        self.assertEqual(account_btc_internal.balance, 0)
+        self.assertEqual(account_btc_internal.balance_, 0)
         self.assertEqual(account_btc_internal.balance_max, 0)
         self.assertIsNone(account_btc_internal.instantfiat_account_id)
         # Email
@@ -521,7 +521,7 @@ class WithdrawToBankAccountFormTestCase(TestCase):
                              max_payout=Decimal('0.2'))
         TransactionFactory.create(account=account, amount=Decimal('1.0'))
         DeviceFactory.create(merchant=account.merchant, account=account)
-        self.assertEqual(account.balance_confirmed, Decimal('1.0'))
+        self.assertEqual(account.balance_confirmed_, Decimal('1.0'))
         self.assertEqual(account.balance_min, Decimal('0.2'))
         data = {'amount': '0.5'}
         form = WithdrawToBankAccountForm(data=data, account=account)
