@@ -22,12 +22,10 @@ from api.forms import PaymentForm
 from api.utils.pdf import generate_pdf
 from api.utils.urls import construct_absolute_url
 
-from operations.models import PaymentOrder
-import operations.payment
-import operations.blockchain
-import operations.protocol
+from operations import blockchain, exceptions
 from operations.instantfiat import gocoin
-from operations import exceptions
+from transactions.models import Deposit
+from transactions.deposits import prepare_deposit, handle_bip70_payment
 
 logger = logging.getLogger(__name__)
 
@@ -142,20 +140,20 @@ class ReceiptView(View):
     Download PDF receipt
     """
     def get(self, *args, **kwargs):
-        order_uid = self.kwargs.get('order_uid')
+        deposit_uid = self.kwargs.get('uid')
         try:
-            order = PaymentOrder.objects.get(
-                uid=order_uid, time_notified__isnull=False)
-        except PaymentOrder.DoesNotExist:
+            deposit = Deposit.objects.get(
+                uid=deposit_uid, time_notified__isnull=False)
+        except Deposit.DoesNotExist:
             raise Http404
         result = generate_pdf(
-            'pdf/receipt.html',
-            {'order': order})
+            'pdf/receipt_deposit.html',
+            {'deposit': deposit})
         response = HttpResponse(result.getvalue(),
                                 content_type='application/pdf')
         disposition = 'inline; filename="receipt #{0} {1}.pdf"'.format(
-            order.id,
-            order.device.merchant.company_name)
+            deposit.id,
+            deposit.device.merchant.company_name)
         response['Content-Disposition'] = disposition
         return response
 
@@ -182,7 +180,7 @@ class PaymentInitView(View):
         except Device.DoesNotExist:
             raise Http404
         try:
-            payment_order = operations.payment.prepare_payment(
+            deposit = prepare_deposit(
                 device, form.cleaned_data['amount'])
         except exceptions.PaymentError as error:
             return HttpResponseBadRequest(
@@ -191,17 +189,17 @@ class PaymentInitView(View):
         # Urls
         payment_request_url = construct_absolute_url(
             'api:short:payment_request',
-            kwargs={'payment_uid': payment_order.uid})
+            kwargs={'uid': deposit.uid})
         payment_check_url = construct_absolute_url(
             'api:payment_check',
-            kwargs={'payment_uid': payment_order.uid})
+            kwargs={'uid': deposit.uid})
         # Prepare json response
-        fiat_amount = payment_order.fiat_amount.quantize(Decimal('0.00'))
-        btc_amount = payment_order.btc_amount
-        exchange_rate = payment_order.effective_exchange_rate.\
+        fiat_amount = deposit.amount.quantize(Decimal('0.00'))
+        btc_amount = deposit.coin_amount
+        exchange_rate = deposit.effective_exchange_rate.\
             quantize(Decimal('0.000000'))
         data = {
-            'payment_uid': payment_order.uid,
+            'payment_uid': deposit.uid,
             'fiat_amount': float(fiat_amount),
             'btc_amount': float(btc_amount),
             'exchange_rate': float(exchange_rate),
@@ -211,20 +209,20 @@ class PaymentInitView(View):
             # Enable payment via bluetooth
             payment_bluetooth_url = 'bt:{mac}'.\
                 format(mac=form.cleaned_data['bt_mac'].replace(':', ''))
-            payment_bluetooth_request = payment_order.create_payment_request(
+            payment_bluetooth_request = deposit.create_payment_request(
                 payment_bluetooth_url)
             # Send payment request in response
-            data['payment_uri'] = operations.blockchain.construct_bitcoin_uri(
-                payment_order.local_address,
-                payment_order.btc_amount,
+            data['payment_uri'] = blockchain.construct_bitcoin_uri(
+                deposit.deposit_address.address,
+                deposit.coin_amount,
                 device.merchant.company_name,
                 payment_bluetooth_url,
                 payment_request_url)
             data['payment_request'] = payment_bluetooth_request.encode('base64')
         else:
-            data['payment_uri'] = operations.blockchain.construct_bitcoin_uri(
-                payment_order.local_address,
-                payment_order.btc_amount,
+            data['payment_uri'] = blockchain.construct_bitcoin_uri(
+                deposit.deposit_address.address,
+                deposit.coin_amount,
                 device.merchant.company_name,
                 payment_request_url)
         # TODO: append QR code as data URI only when needed
@@ -241,15 +239,15 @@ class PaymentRequestView(View):
 
     def get(self, *args, **kwargs):
         try:
-            payment_order = PaymentOrder.objects.get(uid=self.kwargs.get('payment_uid'))
-        except PaymentOrder.DoesNotExist:
+            deposit = Deposit.objects.get(uid=self.kwargs.get('uid'))
+        except Deposit.DoesNotExist:
             raise Http404
-        if payment_order.expires_at < timezone.now():
+        if deposit.status not in ['new', 'underpaid']:
             raise Http404
         payment_response_url = construct_absolute_url(
             'api:payment_response',
-            kwargs={'payment_uid': payment_order.uid})
-        payment_request = payment_order.create_payment_request(
+            kwargs={'uid': deposit.uid})
+        payment_request = deposit.create_payment_request(
             payment_response_url)
         response = HttpResponse(payment_request,
                                 content_type='application/bitcoin-paymentrequest')
@@ -268,20 +266,18 @@ class PaymentResponseView(View):
 
     def post(self, *args, **kwargs):
         try:
-            payment_order = PaymentOrder.objects.get(uid=self.kwargs.get('payment_uid'))
-        except PaymentOrder.DoesNotExist:
+            deposit = Deposit.objects.get(uid=self.kwargs.get('uid'))
+        except Deposit.DoesNotExist:
             raise Http404
         # Check and parse message
         content_type = self.request.META.get('CONTENT_TYPE')
         if content_type != 'application/bitcoin-payment':
-            logger.warning("PaymentResponseView: wrong content type")
             return HttpResponseBadRequest()
         if len(self.request.body) > 50000:
             # Payment messages larger than 50,000 bytes should be rejected by server
-            logger.warning("PaymentResponseView: message is too large")
             return HttpResponseBadRequest()
         try:
-            payment_ack = operations.payment.parse_payment(payment_order, self.request.body)
+            payment_ack = handle_bip70_payment(deposit, self.request.body)
         except Exception as error:
             logger.exception(error)
             return HttpResponseBadRequest()
@@ -299,22 +295,22 @@ class PaymentCheckView(View):
 
     def get(self, *args, **kwargs):
         try:
-            payment_order = PaymentOrder.objects.get(uid=self.kwargs.get('payment_uid'))
-        except PaymentOrder.DoesNotExist:
+            deposit = Deposit.objects.get(uid=self.kwargs.get('uid'))
+        except Deposit.DoesNotExist:
             raise Http404
-        if payment_order.time_forwarded is not None:
+        if deposit.time_broadcasted is not None:
             receipt_url = construct_absolute_url(
                 'api:short:receipt',
-                kwargs={'order_uid': payment_order.uid})
+                kwargs={'uid': deposit.uid})
             qr_code_src = generate_qr_code(receipt_url, size=3)
             data = {
                 'paid': 1,
                 'receipt_url': receipt_url,
                 'qr_code_src': qr_code_src,
             }
-            if payment_order.time_notified is None:
-                payment_order.time_notified = timezone.now()
-                payment_order.save()
+            if deposit.time_notified is None:
+                deposit.time_notified = timezone.now()
+                deposit.save()
         else:
             data = {'paid': 0}
         response = HttpResponse(json.dumps(data),

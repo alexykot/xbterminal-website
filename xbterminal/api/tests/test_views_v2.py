@@ -229,9 +229,9 @@ class DepositViewSetTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     @patch('api.views_v2.handle_bip70_payment')
-    def test_payment_response(self, parse_mock):
+    def test_payment_response(self, handle_mock):
         deposit = DepositFactory()
-        parse_mock.return_value = payment_ack = 'test'
+        handle_mock.return_value = payment_ack = 'test'
         payment_response = '009A8B'.decode('hex')
         url = reverse('api:v2:deposit-payment-response',
                       kwargs={'uid': deposit.uid})
