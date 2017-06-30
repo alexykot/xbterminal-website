@@ -74,8 +74,7 @@ class WithdrawBTCTestCase(TestCase):
     def test_command(self, bc_cls_mock):
         account = AccountFactory.create(
             currency__name='BTC',
-            balance=Decimal('0.2'),
-            balance_max=Decimal('0.5'))
+            balance=Decimal('0.2'))
         address = AddressFactory.create(account=account)
         bc_cls_mock.return_value = bc_mock = Mock(**{
             'get_unspent_outputs.return_value': [
