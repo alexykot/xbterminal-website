@@ -4,7 +4,7 @@ from django.test import TestCase
 
 from mock import patch, Mock
 
-from transactions.models import get_account_balance, get_address_balance
+from transactions.utils.compat import get_account_balance, get_address_balance
 from transactions.withdrawals import (
     prepare_withdrawal,
     send_transaction,

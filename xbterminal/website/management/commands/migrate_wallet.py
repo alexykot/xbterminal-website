@@ -5,13 +5,11 @@ from django.db.transaction import atomic
 
 from common.rq_helpers import run_periodic_task
 from transactions.constants import BTC_DEC_PLACES, BTC_MIN_OUTPUT
-from transactions.models import (
-    Deposit,
-    get_bitcoin_network,
-    get_coin_type)
+from transactions.models import Deposit
 from transactions.deposits import (
     wait_for_payment,
     check_deposit_status)
+from transactions.utils.compat import get_bitcoin_network, get_coin_type
 from operations.blockchain import BlockChain
 from wallet.models import Address
 from website.models import Account

@@ -14,7 +14,8 @@ from transactions.constants import (
     DEPOSIT_CONFIDENCE_TIMEOUT,
     DEPOSIT_CONFIRMATION_TIMEOUT,
     PAYMENT_TYPES)
-from transactions.models import Deposit, get_coin_type
+from transactions.models import Deposit
+from transactions.utils.compat import get_coin_type
 from transactions.utils.tx import create_tx_
 from operations.exceptions import (
     InsufficientFunds,

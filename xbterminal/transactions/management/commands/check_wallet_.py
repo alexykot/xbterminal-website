@@ -2,7 +2,7 @@ from decimal import Decimal
 import logging
 from django.core.management.base import BaseCommand
 
-from transactions.models import (
+from transactions.utils.compat import (
     get_bitcoin_network,
     get_coin_type,
     get_account_balance,

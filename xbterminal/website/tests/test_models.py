@@ -39,7 +39,7 @@ from operations.tests.factories import (
     PaymentOrderFactory,
     WithdrawalOrderFactory)
 from operations.blockchain import validate_bitcoin_address
-from transactions.models import get_device_transactions
+from transactions.utils.compat import get_device_transactions
 from transactions.tests.factories import (
     BalanceChangeFactory,
     NegativeBalanceChangeFactory)

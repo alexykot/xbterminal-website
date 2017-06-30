@@ -14,9 +14,8 @@ from transactions.constants import (
     BTC_MIN_OUTPUT,
     WITHDRAWAL_CONFIDENCE_TIMEOUT,
     WITHDRAWAL_CONFIRMATION_TIMEOUT)
-from transactions.models import (
-    Withdrawal,
-    BalanceChange,
+from transactions.models import Withdrawal, BalanceChange
+from transactions.utils.compat import (
     get_coin_type,
     get_address_balance,
     get_account_balance)
