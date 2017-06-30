@@ -215,6 +215,13 @@ class BalanceChangeFactory(factory.DjangoModelFactory):
     address = factory.SelfAttribute('deposit.deposit_address')
     amount = factory.SelfAttribute('deposit.paid_coin_amount')
 
+    @factory.post_generation
+    def created_at(self, create, extracted, **kwargs):
+        if extracted:
+            self.created_at = extracted
+            if create:
+                self.save()
+
 
 class NegativeBalanceChangeFactory(factory.DjangoModelFactory):
 
@@ -236,3 +243,10 @@ class NegativeBalanceChangeFactory(factory.DjangoModelFactory):
     def amount(self):
         return -(self.withdrawal.customer_coin_amount +
                  self.withdrawal.tx_fee_coin_amount)
+
+    @factory.post_generation
+    def created_at(self, create, extracted, **kwargs):
+        if extracted:
+            self.created_at = extracted
+            if create:
+                self.save()

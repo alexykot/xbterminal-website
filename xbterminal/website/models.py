@@ -35,7 +35,10 @@ from website.utils.files import (
     get_verification_file_name,
     verification_file_path_gen)
 from common.uids import generate_alphanumeric_code, generate_b58_uid
-from transactions.utils.compat import get_account_balance
+from transactions.utils.compat import (
+    get_account_balance,
+    get_account_transactions,
+    get_device_transactions)
 
 
 class UserManager(BaseUserManager):
@@ -483,6 +486,23 @@ class Account(models.Model):
         end = timezone.make_aware(
             datetime.datetime.combine(range_end, datetime.time.max),
             timezone.get_current_timezone())
+        return get_account_transactions(self).\
+            filter(created_at__range=(beg, end)).\
+            order_by('created_at')
+
+    def get_transactions_by_date_(self, range_beg, range_end):
+        """
+        Returns list of account transactions for date range
+        Accepts:
+            range_beg: beginning of range, datetime.date instance
+            range_end: end of range, datetime.date instance
+        """
+        beg = timezone.make_aware(
+            datetime.datetime.combine(range_beg, datetime.time.min),
+            timezone.get_current_timezone())
+        end = timezone.make_aware(
+            datetime.datetime.combine(range_end, datetime.time.max),
+            timezone.get_current_timezone())
         return self.transaction_set.\
             filter(created_at__range=(beg, end)).\
             order_by('created_at')
@@ -783,6 +803,12 @@ class Device(models.Model):
         """
         Returns list of device transactions
         """
+        return get_device_transactions(self)
+
+    def get_transactions_(self):
+        """
+        Returns list of device transactions
+        """
         return Transaction.objects.filter(
             models.Q(payment__device=self) |
             models.Q(withdrawal__device=self)).order_by('created_at')
@@ -801,6 +827,23 @@ class Device(models.Model):
             datetime.datetime.combine(range_end, datetime.time.max),
             timezone.get_current_timezone())
         return self.get_transactions().\
+            filter(created_at__range=(beg, end)).\
+            order_by('created_at')
+
+    def get_transactions_by_date_(self, range_beg, range_end):
+        """
+        Returns list of device transactions for date range
+        Accepts:
+            range_beg: beginning of range, datetime.date instance
+            range_end: end of range, datetime.date instance
+        """
+        beg = timezone.make_aware(
+            datetime.datetime.combine(range_beg, datetime.time.min),
+            timezone.get_current_timezone())
+        end = timezone.make_aware(
+            datetime.datetime.combine(range_end, datetime.time.max),
+            timezone.get_current_timezone())
+        return self.get_transactions_().\
             filter(created_at__range=(beg, end)).\
             order_by('created_at')
 

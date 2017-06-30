@@ -22,7 +22,7 @@ from website.tests.factories import (
     AccountFactory,
     TransactionFactory,
     DeviceFactory)
-from operations.tests.factories import PaymentOrderFactory
+from transactions.tests.factories import BalanceChangeFactory
 
 
 class LandingViewTestCase(TestCase):
@@ -976,15 +976,11 @@ class DeviceTransactionListViewTestCase(TestCase):
 
     def test_get(self):
         device = DeviceFactory.create(merchant=self.merchant)
-        orders = PaymentOrderFactory.create_batch(
+        transactions = BalanceChangeFactory.create_batch(
             5,
-            device=device,
-            time_notified=timezone.now())
-        for order in orders:
-            TransactionFactory.create(
-                payment=order,
-                account=order.account,
-                amount=order.merchant_btc_amount)
+            deposit__account=device.account,
+            deposit__device=device,
+            deposit__notified=True)
         self.client.login(username=self.merchant.user.email,
                           password='password')
         url = reverse('website:device_transactions',
@@ -997,17 +993,17 @@ class DeviceTransactionListViewTestCase(TestCase):
         self.assertIn('search_form', response.context)
         self.assertEqual(response.context['range_beg'],
                          response.context['range_end'])
-        transactions = response.context['transactions']
-        self.assertEqual(transactions.count(), len(orders))
-        self.assertEqual(transactions[0].amount,
-                         orders[0].merchant_btc_amount)
+        transactions_qs = response.context['transactions']
+        self.assertEqual(transactions_qs.count(), len(transactions))
+        self.assertEqual(transactions_qs[0].amount,
+                         transactions[0].amount)
 
     def test_post(self):
         device = DeviceFactory.create(merchant=self.merchant)
         now = timezone.now()
-        tx = TransactionFactory.create(
-            payment=PaymentOrderFactory.create(device=device),
-            account=device.account,
+        tx = BalanceChangeFactory(
+            deposit__account=device.account,
+            deposit__device=device,
             created_at=now)
         self.client.login(username=self.merchant.user.email,
                           password='password')
@@ -1051,7 +1047,7 @@ class AccountTransactionListViewTestCase(TestCase):
 
     def test_get(self):
         account = AccountFactory.create(merchant=self.merchant)
-        tx = TransactionFactory.create(account=account)
+        tx = BalanceChangeFactory(deposit__account=account)
         self.client.login(username=self.merchant.user.email,
                           password='password')
         url = reverse('website:account_transactions',
@@ -1070,7 +1066,7 @@ class AccountTransactionListViewTestCase(TestCase):
     def test_post(self):
         account = AccountFactory.create(merchant=self.merchant)
         now = timezone.now()
-        tx = TransactionFactory.create(account=account, created_at=now)
+        tx = BalanceChangeFactory(deposit__account=account, created_at=now)
         self.client.login(username=self.merchant.user.email,
                           password='password')
         url = reverse('website:account_transactions',
@@ -1098,9 +1094,9 @@ class DeviceReportViewTestCase(TestCase):
 
     def test_view(self):
         device = DeviceFactory.create(merchant=self.merchant)
-        tx = TransactionFactory.create(
-            payment=PaymentOrderFactory.create(device=device),
-            account=device.account)
+        tx = BalanceChangeFactory(
+            deposit__account=device.account,
+            deposit__device=device)
         self.client.login(username=self.merchant.user.email,
                           password='password')
         url = reverse('website:device_report',
@@ -1128,7 +1124,7 @@ class AccountReportViewTestCase(TestCase):
 
     def test_view(self):
         account = AccountFactory.create(merchant=self.merchant)
-        tx = TransactionFactory.create(account=account)
+        tx = BalanceChangeFactory(deposit__account=account)
         self.client.login(username=self.merchant.user.email,
                           password='password')
         url = reverse('website:account_report',

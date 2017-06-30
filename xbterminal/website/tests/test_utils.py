@@ -29,6 +29,7 @@ from website.tests.factories import (
 from operations.tests.factories import (
     PaymentOrderFactory,
     WithdrawalOrderFactory)
+from transactions.tests.factories import BalanceChangeFactory
 
 
 class AccountsUtilsTestCase(TestCase):
@@ -342,7 +343,7 @@ class FileUtilsTestCase(TestCase):
 class ReportUtilsTestCase(TestCase):
 
     def test_get_report_csv(self):
-        transactions = TransactionFactory.create_batch(3)
+        transactions = BalanceChangeFactory.create_batch(3)
         report = get_report_csv(transactions)
         report.seek(0)
         rows = list(unicodecsv.reader(report, encoding='utf-8'))
