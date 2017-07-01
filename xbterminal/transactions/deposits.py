@@ -302,21 +302,22 @@ def refund_deposit(deposit):
     bc = BlockChain(deposit.bitcoin_network)
     private_key = deposit.deposit_address.get_private_key()
     tx_inputs = []
-    amount = BTC_DEC_PLACES
+    tx_amount = BTC_DEC_PLACES
     for output in bc.get_raw_unspent_outputs(deposit.deposit_address.address):
         tx_inputs.append(dict(output, private_key=private_key))
-        amount += output['amount']
-    if amount == 0:
+        tx_amount += output['amount']
+    if tx_amount == 0:
         raise RefundError('Nothing to refund')
-    amount -= bc.get_tx_fee(1, 1)
-    if amount < BTC_MIN_OUTPUT:
+    tx_fee = bc.get_tx_fee(1, 1)
+    if tx_amount - tx_fee < BTC_MIN_OUTPUT:
         raise RefundError('Output is below dust threshold')
-    tx_outputs = {deposit.refund_address: amount}
+    tx_outputs = {deposit.refund_address: tx_amount - tx_fee}
     refund_tx = create_tx_(tx_inputs, tx_outputs)
     deposit.refund_tx_id = bc.send_raw_transaction(refund_tx)
+    deposit.refund_coin_amount = tx_amount
     deposit.time_refunded = timezone.now()
     deposit.save()
-    deposit.balancechange_set.all().delete()
+    deposit.create_balance_changes()
     logger.warning(
         'payment refunded (%s)',
         deposit.pk,

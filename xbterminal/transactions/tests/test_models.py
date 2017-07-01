@@ -37,6 +37,7 @@ class DepositTestCase(TestCase):
         self.assertIsNotNone(deposit.uid)
         self.assertEqual(len(deposit.uid), 6)
         self.assertEqual(deposit.paid_coin_amount, 0)
+        self.assertEqual(deposit.refund_coin_amount, 0)
         self.assertIsNone(deposit.refund_address)
         self.assertEqual(len(deposit.incoming_tx_ids), 0)
         self.assertIsNone(deposit.refund_tx_id)
@@ -60,6 +61,7 @@ class DepositTestCase(TestCase):
         self.assertGreater(deposit.merchant_coin_amount, 0)
         self.assertGreater(deposit.fee_coin_amount, 0)
         self.assertEqual(deposit.paid_coin_amount, 0)
+        self.assertEqual(deposit.refund_coin_amount, 0)
         self.assertEqual(
             deposit.deposit_address.wallet_account.parent_key.coin_type,
             BIP44_COIN_TYPES.BTC)
@@ -116,6 +118,7 @@ class DepositTestCase(TestCase):
 
     def test_factory_refunded(self):
         deposit = DepositFactory(refunded=True)
+        self.assertEqual(deposit.refund_coin_amount, deposit.paid_coin_amount)
         self.assertIsNotNone(deposit.refund_address)
         self.assertIsNotNone(deposit.refund_tx_id)
         self.assertEqual(deposit.status, 'refunded')
@@ -229,6 +232,26 @@ class DepositTestCase(TestCase):
         self.assertEqual(deposit.balancechange_set.count(), 1)
         self.assertEqual(deposit.balancechange_set.get().amount,
                          deposit.paid_coin_amount)
+
+    def test_create_balance_changes_refund(self):
+        deposit = DepositFactory(refunded=True)
+        deposit.create_balance_changes()
+        changes = list(deposit.balancechange_set.order_by('created_at'))
+        self.assertEqual(len(changes), 0)
+
+    def test_create_balance_changes_partial_refund(self):
+        deposit = DepositFactory(
+            refunded=True,
+            merchant_coin_amount=Decimal('0.010'),
+            fee_coin_amount=Decimal('0.001'),
+            paid_coin_amount=Decimal('0.015'),
+            refund_coin_amount=Decimal('0.004'))
+        deposit.create_balance_changes()
+        changes = list(deposit.balancechange_set.order_by('created_at'))
+        self.assertEqual(len(changes), 3)
+        self.assertEqual(changes[2].account, deposit.account)
+        self.assertEqual(changes[2].address, deposit.deposit_address)
+        self.assertEqual(changes[2].amount, -deposit.refund_coin_amount)
 
 
 class WithdrawalTestCase(TestCase):

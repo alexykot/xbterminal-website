@@ -89,6 +89,7 @@ class DepositFactory(factory.DjangoModelFactory):
                 lambda: timezone.now() - DEPOSIT_CONFIDENCE_TIMEOUT * 2))
         refunded = factory.Trait(
             received=True,
+            refund_coin_amount=factory.SelfAttribute('.paid_coin_amount'),
             refund_tx_id=factory.LazyFunction(generate_random_tx_id),
             time_refunded=factory.LazyFunction(timezone.now))
         cancelled = factory.Trait(

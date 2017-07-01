@@ -641,7 +641,8 @@ class RefundDepositTestCase(TestCase):
         deposit = DepositFactory(
             received=True,
             amount=Decimal('10.00'),
-            exchange_rate=Decimal('1000.00'))
+            exchange_rate=Decimal('1000.00'),
+            fee_coin_amount=0)
         deposit.create_balance_changes()
         refund_tx_id = '5' * 64
         bc_cls_mock.return_value = bc_mock = Mock(**{
@@ -656,6 +657,7 @@ class RefundDepositTestCase(TestCase):
         refund_deposit(deposit)
 
         deposit.refresh_from_db()
+        self.assertEqual(deposit.refund_coin_amount, Decimal('0.01'))
         self.assertEqual(deposit.refund_tx_id, refund_tx_id)
         self.assertEqual(deposit.status, 'refunded')
         self.assertEqual(deposit.balancechange_set.count(), 0)

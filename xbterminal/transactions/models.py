@@ -75,6 +75,10 @@ class Deposit(Transaction):
         max_digits=18,
         decimal_places=8,
         default=0)
+    refund_coin_amount = models.DecimalField(
+        max_digits=18,
+        decimal_places=8,
+        default=0)
 
     deposit_address = models.OneToOneField(
         'wallet.Address',
@@ -185,9 +189,14 @@ class Deposit(Transaction):
 
     @atomic
     def create_balance_changes(self):
+        if self.refund_coin_amount == self.paid_coin_amount:
+            # Full refund, delete balance changes
+            self.balancechange_set.all().delete()
+            return
         self.balancechange_set.update_or_create(
             account=self.account,
             address=self.deposit_address,
+            amount__gt=0,
             defaults={
                 'amount': self.paid_coin_amount - self.fee_coin_amount,
             })
@@ -195,8 +204,20 @@ class Deposit(Transaction):
             self.balancechange_set.update_or_create(
                 account__isnull=True,
                 address=self.deposit_address,
+                amount__gt=0,
                 defaults={
                     'amount': self.fee_coin_amount,
+                })
+        if self.refund_coin_amount > 0:
+            # Partial refund
+            if self.refund_coin_amount > self.paid_coin_amount - self.coin_amount:
+                raise ValueError
+            self.balancechange_set.update_or_create(
+                account=self.account,
+                address=self.deposit_address,
+                amount__lt=0,
+                defaults={
+                    'amount': -self.refund_coin_amount,
                 })
 
     @atomic
