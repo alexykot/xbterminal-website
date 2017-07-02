@@ -102,7 +102,6 @@ class Deposit(Transaction):
     time_broadcasted = models.DateTimeField(null=True)
     time_notified = models.DateTimeField(null=True)
     time_confirmed = models.DateTimeField(null=True)
-    time_refunded = models.DateTimeField(null=True)
     time_cancelled = models.DateTimeField(null=True)
 
     @property
@@ -136,7 +135,6 @@ class Deposit(Transaction):
                 reached the confidence threshold
             notified - customer notified about successful payment
             confirmed - incoming transaction confirmed
-            refunded - money sent back to customer
             timeout - incoming transaction did not received
             failed - incoming transaction received,
                 but payment order is not marked as notified
@@ -144,8 +142,6 @@ class Deposit(Transaction):
                 but incoming transaction is not confirmed
             cancelled: deposit cancelled by the customer
         """
-        if self.time_refunded:
-            return 'refunded'
         if self.time_cancelled:
             return 'cancelled'
         if self.time_notified:

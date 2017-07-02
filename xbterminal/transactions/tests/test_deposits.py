@@ -639,7 +639,7 @@ class RefundDepositTestCase(TestCase):
     @patch('transactions.deposits.create_tx_')
     def test_refund(self, create_tx_mock, bc_cls_mock):
         deposit = DepositFactory(
-            received=True,
+            failed=True,
             amount=Decimal('10.00'),
             exchange_rate=Decimal('1000.00'),
             fee_coin_amount=0)
@@ -659,7 +659,7 @@ class RefundDepositTestCase(TestCase):
         deposit.refresh_from_db()
         self.assertEqual(deposit.refund_coin_amount, Decimal('0.01'))
         self.assertEqual(deposit.refund_tx_id, refund_tx_id)
-        self.assertEqual(deposit.status, 'refunded')
+        self.assertEqual(deposit.status, 'failed')
         self.assertEqual(deposit.balancechange_set.count(), 0)
         self.assertEqual(bc_mock.get_raw_unspent_outputs.call_count, 1)
         self.assertEqual(bc_mock.get_raw_unspent_outputs.call_args[0][0],
@@ -702,7 +702,7 @@ class RefundDepositTestCase(TestCase):
     @patch('transactions.deposits.BlockChain')
     def test_nothing_to_send(self, bc_cls_mock):
         deposit = DepositFactory(
-            received=True,
+            failed=True,
             amount=Decimal('10.00'),
             exchange_rate=Decimal('1000.00'))
         bc_cls_mock.return_value = Mock(**{
@@ -717,7 +717,7 @@ class RefundDepositTestCase(TestCase):
     @patch('transactions.deposits.BlockChain')
     def test_dust_output(self, bc_cls_mock):
         deposit = DepositFactory(
-            received=True,
+            failed=True,
             amount=Decimal('0.50'),
             exchange_rate=Decimal('1000.00'))
         bc_cls_mock.return_value = Mock(**{
@@ -783,16 +783,6 @@ class CheckDepositStatusTestCase(TestCase):
         self.assertIs(cancel_mock.called, True)
         self.assertIs(refund_mock.called, False)
         self.assertIs(logger_mock.error.called, True)
-
-    @patch('transactions.deposits.cancel_current_task')
-    @patch('transactions.deposits.refund_deposit')
-    @patch('transactions.deposits.logger')
-    def test_refunded(self, logger_mock, refund_mock, cancel_mock):
-        deposit = DepositFactory(refunded=True)
-        check_deposit_status(deposit.pk)
-        self.assertIs(cancel_mock.called, True)
-        self.assertIs(refund_mock.called, False)
-        self.assertIs(logger_mock.error.called, False)
 
     @patch('transactions.deposits.cancel_current_task')
     @patch('transactions.deposits.refund_deposit')

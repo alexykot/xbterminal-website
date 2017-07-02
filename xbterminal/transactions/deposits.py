@@ -295,7 +295,7 @@ def refund_deposit(deposit):
     """
     if deposit.time_notified is not None:
         raise RefundError('User already notified')
-    if deposit.time_refunded is not None:
+    if deposit.refund_tx_id is not None:
         raise RefundError('Deposit already refunded')
     if not deposit.refund_address:
         raise RefundError('No refund address')
@@ -315,7 +315,6 @@ def refund_deposit(deposit):
     refund_tx = create_tx_(tx_inputs, tx_outputs)
     deposit.refund_tx_id = bc.send_raw_transaction(refund_tx)
     deposit.refund_coin_amount = tx_amount
-    deposit.time_refunded = timezone.now()
     deposit.save()
     deposit.create_balance_changes()
     logger.warning(
@@ -359,5 +358,5 @@ def check_deposit_status(deposit_id):
                 'deposit_admin_url': get_admin_url(deposit),
             }})
         cancel_current_task()
-    elif deposit.status in ['refunded', 'confirmed']:
+    elif deposit.status == 'confirmed':
         cancel_current_task()

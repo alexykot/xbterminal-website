@@ -46,7 +46,6 @@ class DepositTestCase(TestCase):
         self.assertIsNone(deposit.time_received)
         self.assertIsNone(deposit.time_notified)
         self.assertIsNone(deposit.time_confirmed)
-        self.assertIsNone(deposit.time_refunded)
         self.assertIsNone(deposit.time_cancelled)
         self.assertEqual(str(deposit), str(deposit.pk))
 
@@ -121,7 +120,7 @@ class DepositTestCase(TestCase):
         self.assertEqual(deposit.refund_coin_amount, deposit.paid_coin_amount)
         self.assertIsNotNone(deposit.refund_address)
         self.assertIsNotNone(deposit.refund_tx_id)
-        self.assertEqual(deposit.status, 'refunded')
+        self.assertEqual(deposit.status, 'failed')
 
     def test_factory_cancelled(self):
         deposit = DepositFactory(cancelled=True)
@@ -173,13 +172,6 @@ class DepositTestCase(TestCase):
             time_received=timezone.now() - datetime.timedelta(minutes=490),
             time_notified=timezone.now() - datetime.timedelta(minutes=480))
         self.assertEqual(deposit.status, 'unconfirmed')
-
-    def test_status_refunded(self):
-        deposit = DepositFactory(
-            time_created=timezone.now() - datetime.timedelta(minutes=120),
-            time_received=timezone.now() - datetime.timedelta(minutes=100),
-            time_refunded=timezone.now())
-        self.assertEqual(deposit.status, 'refunded')
 
     def test_status_cancelled(self):
         deposit = DepositFactory(
