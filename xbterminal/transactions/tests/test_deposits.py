@@ -6,6 +6,7 @@ from django.utils import timezone
 from mock import patch, Mock
 
 from transactions.constants import PAYMENT_TYPES
+from transactions.exceptions import DustOutput
 from transactions.deposits import (
     prepare_deposit,
     validate_payment,
@@ -715,7 +716,8 @@ class RefundDepositTestCase(TestCase):
                          'Nothing to refund')
 
     @patch('transactions.deposits.BlockChain')
-    def test_dust_output(self, bc_cls_mock):
+    @patch('transactions.deposits.create_tx_')
+    def test_dust_output(self, create_tx_mock, bc_cls_mock):
         deposit = DepositFactory(
             failed=True,
             amount=Decimal('0.50'),
@@ -727,6 +729,7 @@ class RefundDepositTestCase(TestCase):
             }],
             'get_tx_fee.return_value': Decimal('0.000499'),
         })
+        create_tx_mock.side_effect = DustOutput
         with self.assertRaises(RefundError) as context:
             refund_deposit(deposit)
         self.assertEqual(context.exception.message,
