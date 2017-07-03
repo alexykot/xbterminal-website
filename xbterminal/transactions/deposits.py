@@ -253,8 +253,8 @@ def wait_for_confidence(deposit_id):
             # Return extra coins to customer
             try:
                 refund_deposit(deposit, only_extra=True)
-            except RefundError:
-                pass
+            except RefundError as error:
+                logger.exception(error)
         run_periodic_task(wait_for_confirmation, [deposit.pk], interval=30)
         logger.info('payment confidence reached (%s)', deposit.pk)
 
