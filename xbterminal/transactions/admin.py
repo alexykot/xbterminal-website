@@ -195,6 +195,8 @@ class BalanceChangeAdmin(admin.ModelAdmin):
         'account_link',
         'address_link',
         'amount_colored',
+        'created_at',
+        'is_confirmed',
     ]
 
     readonly_fields = [
@@ -202,6 +204,7 @@ class BalanceChangeAdmin(admin.ModelAdmin):
         'account',
         'address',
         'amount',
+        'created_at',
     ]
 
     def has_add_permission(self, request):

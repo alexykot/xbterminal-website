@@ -18,6 +18,7 @@ from website.utils.devices import get_device_info
 from api.serializers import (
     PaymentInitSerializer,
     PaymentOrderSerializer,
+    DepositSerializer,
     WithdrawalInitSerializer,
     WithdrawalOrderSerializer,
     DeviceSerializer,
@@ -37,6 +38,8 @@ from operations import (
     withdrawal,
     exceptions)
 from operations.models import PaymentOrder, WithdrawalOrder
+from transactions.models import Deposit
+from transactions.deposits import prepare_deposit, handle_bip70_payment
 
 from common import rq_helpers
 
@@ -155,6 +158,127 @@ class PaymentViewSet(viewsets.GenericViewSet):
         response['Content-Disposition'] = 'inline; filename="receipt #{0} {1}.pdf"'.format(
             order.id,
             order.merchant.company_name)
+        return response
+
+
+class DepositViewSet(viewsets.GenericViewSet):
+
+    queryset = Deposit.objects.all()
+    lookup_field = 'uid'
+    serializer_class = DepositSerializer
+
+    def create(self, *args, **kwargs):
+        serializer = PaymentInitSerializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        # Prepare deposit
+        try:
+            deposit = prepare_deposit(
+                (serializer.validated_data.get('device') or
+                 serializer.validated_data.get('account')),
+                serializer.validated_data['amount'])
+        except exceptions.PaymentError as error:
+            return Response({'device': [error.message]},
+                            status=status.HTTP_400_BAD_REQUEST)
+        # Urls
+        payment_request_url = construct_absolute_url(
+            'api:v2:deposit-payment-request',
+            kwargs={'uid': deposit.uid})
+        # Prepare json response
+        data = self.get_serializer(deposit).data
+        if serializer.validated_data.get('bt_mac'):
+            # Enable payment via bluetooth
+            payment_bluetooth_url = 'bt:{mac}'.\
+                format(mac=serializer.validated_data['bt_mac'].replace(':', ''))
+            payment_bluetooth_request = deposit.create_payment_request(
+                payment_bluetooth_url)
+            # Send payment request in response
+            data['payment_uri'] = blockchain.construct_bitcoin_uri(
+                deposit.deposit_address.address,
+                deposit.coin_amount,
+                deposit.merchant.company_name,
+                payment_bluetooth_url,
+                payment_request_url)
+            data['payment_request'] = payment_bluetooth_request.encode('base64')
+        else:
+            data['payment_uri'] = blockchain.construct_bitcoin_uri(
+                deposit.deposit_address.address,
+                deposit.coin_amount,
+                deposit.merchant.company_name,
+                payment_request_url)
+        return Response(data)
+
+    def retrieve(self, *args, **kwargs):
+        deposit = self.get_object()
+        if deposit.time_broadcasted and not deposit.time_notified:
+            deposit.time_notified = timezone.now()
+            deposit.save()
+        serializer = self.get_serializer(deposit)
+        return Response(serializer.data)
+
+    @detail_route(methods=['POST'])
+    @atomic
+    def cancel(self, *args, **kwargs):
+        deposit = self.get_object()
+        if deposit.status not in ['new', 'underpaid', 'received']:
+            raise Http404
+        deposit.time_cancelled = timezone.now()
+        deposit.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @detail_route(
+        methods=['GET'],
+        url_name='payment-request',
+        url_path='request',
+        renderer_classes=[PaymentRequestRenderer])
+    def payment_request(self, *args, **kwargs):
+        deposit = self.get_object()
+        if deposit.status not in ['new', 'underpaid']:
+            raise Http404
+        payment_response_url = construct_absolute_url(
+            'api:v2:deposit-payment-response',
+            kwargs={'uid': deposit.uid})
+        payment_request = deposit.create_payment_request(
+            payment_response_url)
+        response = Response(payment_request)
+        response['Content-Transfer-Encoding'] = 'binary'
+        return response
+
+    @detail_route(
+        methods=['POST'],
+        url_name='payment-response',
+        url_path='response',
+        renderer_classes=[PaymentACKRenderer])
+    def payment_response(self, *args, **kwargs):
+        deposit = self.get_object()
+        if deposit.status not in ['new', 'underpaid']:
+            raise Http404
+        # Check and parse message
+        content_type = self.request.META.get('CONTENT_TYPE')
+        if content_type != 'application/bitcoin-payment':
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        if len(self.request.body) > 50000:
+            # Payment messages larger than 50,000 bytes should be rejected by server
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        try:
+            payment_ack = handle_bip70_payment(deposit, self.request.body)
+        except Exception as error:
+            logger.exception(error)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        response = Response(payment_ack)
+        response['Content-Transfer-Encoding'] = 'binary'
+        return response
+
+    @detail_route(methods=['GET'], renderer_classes=[PDFRenderer])
+    def receipt(self, *args, **kwargs):
+        deposit = self.get_object()
+        if not deposit.time_notified:
+            raise Http404
+        result = generate_pdf('pdf/receipt_deposit.html',
+                              {'deposit': deposit})
+        response = Response(result.getvalue())
+        response['Content-Disposition'] = 'inline; filename="receipt #{0} {1}.pdf"'.format(
+            deposit.id,
+            deposit.merchant.company_name)
         return response
 
 

@@ -39,6 +39,10 @@ from operations.tests.factories import (
     PaymentOrderFactory,
     WithdrawalOrderFactory)
 from operations.blockchain import validate_bitcoin_address
+from transactions.utils.compat import get_device_transactions
+from transactions.tests.factories import (
+    BalanceChangeFactory,
+    NegativeBalanceChangeFactory)
 
 
 class UserTestCase(TestCase):
@@ -663,6 +667,24 @@ class DeviceTestCase(TestCase):
             account=device.account,
             amount=Decimal('0.5'))
         transactions = device.get_transactions()
+        self.assertEqual(transactions[0].amount, Decimal('0.2'))
+        self.assertEqual(transactions[1].amount, Decimal('-0.1'))
+
+    def test_get_transactions_new_wallet(self):
+        device = DeviceFactory()
+        BalanceChangeFactory(
+            deposit__account=device.account,
+            deposit__device=device,
+            amount=Decimal('0.2'))
+        NegativeBalanceChangeFactory(
+            withdrawal__account=device.account,
+            withdrawal__device=device,
+            amount=Decimal('-0.1'))
+        BalanceChangeFactory(
+            deposit__account=device.account,
+            deposit__device=None,
+            amount=Decimal('0.5'))
+        transactions = get_device_transactions(device)
         self.assertEqual(transactions[0].amount, Decimal('0.2'))
         self.assertEqual(transactions[1].amount, Decimal('-0.1'))
 

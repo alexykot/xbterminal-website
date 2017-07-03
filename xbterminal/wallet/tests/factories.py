@@ -9,6 +9,7 @@ class WalletKeyFactory(factory.DjangoModelFactory):
 
     class Meta:
         model = models.WalletKey
+        django_get_or_create = ('coin_type',)
 
     coin_type = BIP44_COIN_TYPES.BTC
 

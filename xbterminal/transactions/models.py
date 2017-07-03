@@ -5,6 +5,7 @@ from django.db import models, IntegrityError
 from django.db.transaction import atomic
 from django.utils import timezone
 
+from api.utils.urls import construct_absolute_url
 from common.uids import generate_b58_uid
 from wallet.constants import BIP44_COIN_TYPES
 from transactions.constants import (
@@ -16,6 +17,8 @@ from transactions.constants import (
     WITHDRAWAL_CONFIDENCE_TIMEOUT,
     WITHDRAWAL_CONFIRMATION_TIMEOUT,
     PAYMENT_TYPES)
+from transactions.utils.compat import get_bitcoin_network
+from operations.protocol import create_payment_request
 
 
 class Transaction(models.Model):
@@ -99,16 +102,23 @@ class Deposit(Transaction):
     time_cancelled = models.DateTimeField(null=True)
 
     @property
-    def exchange_rate(self):
-        return (self.amount /
-                self.merchant_coin_amount).quantize(BTC_DEC_PLACES)
-
-    @property
     def coin_amount(self):
         """
         Total BTC amount (for payment)
         """
         return self.merchant_coin_amount + self.fee_coin_amount
+
+    @property
+    def exchange_rate(self):
+        return (self.amount /
+                self.merchant_coin_amount).quantize(BTC_DEC_PLACES)
+
+    @property
+    def effective_exchange_rate(self):
+        """
+        For receipts
+        """
+        return (self.amount / self.coin_amount).quantize(BTC_DEC_PLACES)
 
     @property
     def status(self):
@@ -158,6 +168,21 @@ class Deposit(Transaction):
                 else:
                     return 'new'
 
+    @property
+    def receipt_url(self):
+        return construct_absolute_url(
+            'api:short:deposit-receipt',
+            kwargs={'uid': self.uid})
+
+    def create_payment_request(self, response_url):
+        return create_payment_request(
+            self.bitcoin_network,
+            [(self.deposit_address.address, self.coin_amount)],
+            self.time_created,
+            self.time_created + DEPOSIT_TIMEOUT,
+            response_url,
+            self.merchant.company_name)
+
     @atomic
     def create_balance_changes(self):
         self.balancechange_set.all().delete()
@@ -206,16 +231,23 @@ class Withdrawal(Transaction):
     time_cancelled = models.DateTimeField(null=True)
 
     @property
-    def exchange_rate(self):
-        return (self.amount /
-                self.customer_coin_amount).quantize(BTC_DEC_PLACES)
-
-    @property
     def coin_amount(self):
         """
         Total BTC amount (for receipts)
         """
         return self.customer_coin_amount + self.tx_fee_coin_amount
+
+    @property
+    def exchange_rate(self):
+        return (self.amount /
+                self.customer_coin_amount).quantize(BTC_DEC_PLACES)
+
+    @property
+    def effective_exchange_rate(self):
+        """
+        For receipts
+        """
+        return (self.amount / self.coin_amount).quantize(BTC_DEC_PLACES)
 
     @property
     def status(self):
@@ -305,11 +337,27 @@ class BalanceChange(models.Model):
     amount = models.DecimalField(
         max_digits=18,
         decimal_places=8)
+    created_at = models.DateTimeField(
+        auto_now_add=True)
 
     objects = BalanceChangeManager()
 
     def __str__(self):
         return str(self.pk)
+
+    def is_confirmed(self):
+        """
+        If true, transaction will be included in calculation of
+        confirmed balance of the account/address
+        """
+        if self.deposit:
+            return self.deposit.time_confirmed is not None
+        elif self.withdrawal:
+            # Always include negative balance changes
+            return (self.amount < 0 or
+                    self.withdrawal.time_confirmed is not None)
+
+    is_confirmed.boolean = True
 
     def save(self, *args, **kwargs):
         # Deposit or withdrawal, but not both
@@ -317,87 +365,3 @@ class BalanceChange(models.Model):
                 (self.deposit and self.withdrawal):
             raise IntegrityError
         super(BalanceChange, self).save(*args, **kwargs)
-
-#
-# Compatibility helpers
-#
-
-
-def get_bitcoin_network(coin_type):
-    # TODO: use coin types instead in BlokcChain class
-    if coin_type == BIP44_COIN_TYPES.BTC:
-        network = 'mainnet'
-    elif coin_type == BIP44_COIN_TYPES.XTN:
-        network = 'testnet'
-    else:
-        raise ValueError('Invalid coin type')
-    return network
-
-
-def get_coin_type(currency_name):
-    """
-    Determine coin type from currency name
-    """
-    if currency_name == 'BTC':
-        return BIP44_COIN_TYPES.BTC
-    elif currency_name == 'TBTC':
-        return BIP44_COIN_TYPES.XTN
-    else:
-        raise ValueError('Fiat currencies are not supported')
-
-
-def get_account_balance(account,
-                        include_unconfirmed=True,
-                        include_offchain=True):
-    """
-    Return total balance on account
-    Accepts:
-        account: Account instance
-        include_unconfirmed: include unconfirmed changes, bool
-        include_offchain: include reserved amounts
-    """
-    # TODO: replace old balance property
-    if not include_unconfirmed:
-        changes = account.balancechange_set.exclude_unconfirmed()
-    else:
-        changes = account.balancechange_set.all()
-    if not include_offchain:
-        changes = changes.exclude(withdrawal__isnull=False,
-                                  withdrawal__time_sent__isnull=True)
-    result = changes.aggregate(models.Sum('amount'))
-    return result['amount__sum'] or BTC_DEC_PLACES
-
-
-def get_fee_account_balance(coin_type,
-                            include_unconfirmed=True,
-                            include_offchain=True):
-    """
-    Return total collected fees
-    """
-    if not include_unconfirmed:
-        changes = BalanceChange.objects.exclude_unconfirmed()
-    else:
-        changes = BalanceChange.objects.all()
-    if not include_offchain:
-        changes = changes.exclude(withdrawal__isnull=False,
-                                  withdrawal__time_sent__isnull=True)
-    result = changes.\
-        filter(address__wallet_account__parent_key__coin_type=coin_type).\
-        filter(account__isnull=True).\
-        aggregate(models.Sum('amount'))
-    return result['amount__sum'] or BTC_DEC_PLACES
-
-
-def get_address_balance(address, include_unconfirmed=True):
-    """
-    Return total balance on address
-    Accepts:
-        account: Account instance
-        only_confirmed: whether to exclude unconfirmed changes, bool
-    """
-    if not include_unconfirmed:
-        changes = address.balancechange_set.exclude_unconfirmed()
-    else:
-        changes = address.balancechange_set.all()
-    result = changes.aggregate(models.Sum('amount'))
-    return result['amount__sum'] or BTC_DEC_PLACES

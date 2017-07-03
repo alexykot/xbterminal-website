@@ -1,6 +1,9 @@
 from decimal import Decimal
+from StringIO import StringIO
 
+from django.core.management import call_command
 from django.test import TestCase
+
 from mock import patch, Mock
 
 from website.models import INSTANTFIAT_PROVIDERS
@@ -14,6 +17,7 @@ from website.management.commands.withdraw_btc import withdraw_btc
 from website.management.commands.cryptopay_sync import cryptopay_sync
 from operations.exceptions import CryptoPayInvalidAPIKey
 from operations.tests.factories import outpoint_factory
+from wallet.tests.factories import WalletKeyFactory
 
 
 class CheckWalletTestCase(TestCase):
@@ -129,3 +133,54 @@ class CryptoPaySyncTestCase(TestCase):
         merchant.refresh_from_db()
         self.assertIsNone(merchant.instantfiat_api_key)
         self.assertEqual(len(messages), 1)
+
+
+class MigrateWalletTestCase(TestCase):
+
+    def setUp(self):
+        WalletKeyFactory()
+
+    @patch('website.management.commands.migrate_wallet.BlockChain')
+    @patch('website.management.commands.migrate_wallet.run_periodic_task')
+    def test_migrate(self, run_task_mock, bc_cls_mock):
+        account = AccountFactory(currency__name='BTC')
+        address = AddressFactory(account=account)
+        transfer_tx_id = '1' * 64
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'get_unspent_outputs.side_effect': [
+                [{'amount': Decimal('0.2'), 'outpoint': outpoint_factory()}],
+                [{'amount': Decimal('0.002'), 'outpoint': outpoint_factory()}],
+            ],
+            'get_tx_fee.return_value': Decimal('0.0005'),
+            'create_raw_transaction.return_value': 'tx',
+            'sign_raw_transaction.return_value': 'tx_signed',
+            'send_raw_transaction.return_value': transfer_tx_id,
+        })
+        fee_address = 'test_address'
+        buffer = StringIO()
+        call_command('migrate_wallet', 'BTC', fee_address, stdout=buffer)
+
+        self.assertEqual(bc_mock.get_unspent_outputs.call_count, 2)
+        self.assertEqual(bc_mock.get_unspent_outputs.call_args_list[0][0][0],
+                         address.address)
+        self.assertEqual(bc_mock.get_unspent_outputs.call_args_list[1][0][0],
+                         fee_address)
+        self.assertEqual(bc_mock.import_address.call_count, 1)
+        self.assertEqual(account.deposit_set.count(), 1)
+        deposit = account.deposit_set.get()
+        self.assertEqual(deposit.merchant_coin_amount, Decimal('0.2'))
+        self.assertEqual(deposit.fee_coin_amount, 0)
+        self.assertEqual(bc_mock.get_tx_fee.call_args[0], (2, 2))
+        tx_inputs = bc_mock.create_raw_transaction.call_args[0][0]
+        self.assertEqual(len(tx_inputs), 2)
+        tx_outputs = bc_mock.create_raw_transaction.call_args[0][1]
+        self.assertEqual(tx_outputs, {
+            deposit.deposit_address.address: Decimal('0.2'),
+            fee_address: Decimal('0.0015'),
+        })
+        self.assertEqual(run_task_mock.call_count, 2)
+        self.assertEqual(run_task_mock.call_args_list[0][0][0].__name__,
+                         'wait_for_payment')
+        self.assertEqual(run_task_mock.call_args_list[1][0][0].__name__,
+                         'check_deposit_status')
+        self.assertIn(transfer_tx_id, buffer.getvalue())

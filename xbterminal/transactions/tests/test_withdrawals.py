@@ -4,7 +4,7 @@ from django.test import TestCase
 
 from mock import patch, Mock
 
-from transactions.models import get_account_balance, get_address_balance
+from transactions.utils.compat import get_account_balance, get_address_balance
 from transactions.withdrawals import (
     prepare_withdrawal,
     send_transaction,
@@ -17,7 +17,6 @@ from transactions.tests.factories import (
     NegativeBalanceChangeFactory)
 from operations.exceptions import WithdrawalError, TransactionModified
 from wallet.constants import BIP44_COIN_TYPES
-from wallet.tests.factories import WalletAccountFactory
 from website.tests.factories import DeviceFactory
 
 
@@ -86,16 +85,13 @@ class PrepareWithdrawalTestCase(TestCase):
     def test_from_multiple_addresses(self, run_task_mock, bc_cls_mock,
                                      get_rate_mock):
         device = DeviceFactory(max_payout=Decimal('50.0'))
-        wallet_account = WalletAccountFactory()
         bch_1 = BalanceChangeFactory(
             deposit__confirmed=True,
             deposit__account=device.account,
-            deposit__deposit_address__wallet_account=wallet_account,
             deposit__merchant_coin_amount=Decimal('0.01'))
         bch_2 = BalanceChangeFactory(
             deposit__confirmed=True,
             deposit__account=device.account,
-            deposit__deposit_address__wallet_account=wallet_account,
             deposit__merchant_coin_amount=Decimal('0.01'))
         get_rate_mock.return_value = Decimal('2000.00')
         bc_cls_mock.return_value = bc_mock = Mock(**{
@@ -168,16 +164,13 @@ class PrepareWithdrawalTestCase(TestCase):
     @patch('transactions.withdrawals.BlockChain')
     def test_already_reserved(self, bc_cls_mock, get_rate_mock):
         device = DeviceFactory(max_payout=Decimal('50.0'))
-        wallet_account = WalletAccountFactory()
         bch_1 = BalanceChangeFactory(
             deposit__confirmed=True,
             deposit__account=device.account,
-            deposit__deposit_address__wallet_account=wallet_account,
             deposit__merchant_coin_amount=Decimal('0.01'))
         bch_2 = BalanceChangeFactory(  # noqa: F841
             deposit__confirmed=True,
             deposit__account=device.account,
-            deposit__deposit_address__wallet_account=wallet_account,
             deposit__merchant_coin_amount=Decimal('0.01'))
         bch_3 = NegativeBalanceChangeFactory(  # noqa: F841
             withdrawal__account=device.account,
@@ -244,14 +237,11 @@ class SendTransactionTestCase(TestCase):
     def test_send(self, run_task_mock, create_tx_mock, bc_cls_mock):
         withdrawal = WithdrawalFactory(
             customer_coin_amount=Decimal('0.01'))
-        wallet_account = WalletAccountFactory()
         bch_1 = NegativeBalanceChangeFactory(
             withdrawal=withdrawal,
-            address__wallet_account=wallet_account,
             amount=Decimal('-0.01'))
         bch_2 = NegativeBalanceChangeFactory(
             withdrawal=withdrawal,
-            address__wallet_account=wallet_account,
             amount=Decimal('0.02'))
         customer_address = '1NdS5JCXzbhNv4STQAaknq56iGstfgRCXg'
         outgoing_tx_id = '0' * 64

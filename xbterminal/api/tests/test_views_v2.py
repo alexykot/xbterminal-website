@@ -16,6 +16,7 @@ from operations import exceptions
 from operations.tests.factories import (
     PaymentOrderFactory,
     WithdrawalOrderFactory)
+from transactions.tests.factories import DepositFactory
 from website.models import Device
 from website.tests.factories import (
     AccountFactory,
@@ -308,6 +309,292 @@ class PaymentViewSetTestCase(APITestCase):
             time_notified=timezone.now())
         url = reverse('api:short:payment-receipt',
                       kwargs={'uid': order.uid})
+        response = self.client.post(url, {})
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+class DepositViewSetTestCase(APITestCase):
+
+    @patch('api.views_v2.prepare_deposit')
+    def test_create_from_website(self, prepare_mock):
+        device = DeviceFactory()
+        amount = 10
+        prepare_mock.return_value = deposit = DepositFactory(
+            account=device.account,
+            device=device,
+            amount=Decimal(amount),
+            merchant_coin_amount=Decimal('0.0499'),
+            fee_coin_amount=Decimal('0.0001'))
+
+        url = reverse('api:v2:deposit-list')
+        form_data = {
+            'device': device.key,
+            'amount': amount,
+        }
+        response = self.client.post(url, form_data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.data
+        self.assertEqual(data['uid'], deposit.uid)
+        self.assertEqual(data['fiat_amount'], '10.00')
+        self.assertEqual(data['btc_amount'], '0.05000000')
+        self.assertEqual(data['exchange_rate'], '200.00000000')
+        self.assertIn('payment_uri', data)
+
+        self.assertEqual(prepare_mock.call_args[0][0], device)
+        self.assertEqual(prepare_mock.call_args[0][1], Decimal('10'))
+
+    @patch('api.views_v2.prepare_deposit')
+    def test_create_from_terminal(self, prepare_mock):
+        device = DeviceFactory(long_key=True)
+        amount = 10
+        bluetooth_mac = '12:34:56:78:9A:BC'
+        prepare_mock.return_value = deposit = DepositFactory(
+            account=device.account,
+            device=device,
+            amount=Decimal(amount),
+            merchant_coin_amount=Decimal('0.0499'),
+            fee_coin_amount=Decimal('0.0001'))
+
+        url = reverse('api:v2:deposit-list')
+        form_data = {
+            'device': device.key,
+            'amount': amount,
+            'bt_mac': bluetooth_mac,
+        }
+        response = self.client.post(url, form_data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.data
+        self.assertEqual(data['uid'], deposit.uid)
+        self.assertEqual(data['fiat_amount'], '10.00')
+        self.assertEqual(data['btc_amount'], '0.05000000')
+        self.assertEqual(data['exchange_rate'], '200.00000000')
+        self.assertIn('payment_uri', data)
+        self.assertIn('payment_request', data)
+
+    @patch('api.views_v2.prepare_deposit')
+    def test_create_for_account(self, prepare_mock):
+        account = AccountFactory()
+        amount = 10
+        prepare_mock.return_value = deposit = DepositFactory(
+            account=account,
+            device=None,
+            amount=Decimal(amount),
+            merchant_coin_amount=Decimal('0.0499'),
+            fee_coin_amount=Decimal('0.0001'))
+
+        url = reverse('api:v2:deposit-list')
+        form_data = {
+            'account': account.pk,
+            'amount': amount,
+        }
+        response = self.client.post(url, form_data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.data
+        self.assertEqual(data['uid'], deposit.uid)
+        self.assertEqual(data['fiat_amount'], '10.00')
+        self.assertEqual(data['btc_amount'], '0.05000000')
+        self.assertEqual(data['exchange_rate'], '200.00000000')
+        self.assertIn('payment_uri', data)
+        self.assertEqual(prepare_mock.call_args[0][0], account)
+        self.assertEqual(prepare_mock.call_args[0][1], Decimal('10'))
+
+    def test_create_invalid_amount(self):
+        device = DeviceFactory()
+        url = reverse('api:v2:deposit-list')
+        form_data = {
+            'device': device.key,
+            'amount': 'aaa',
+        }
+        response = self.client.post(url, form_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['amount'][0],
+                         'A valid number is required.')
+
+    def test_create_invalid_device_key(self):
+        url = reverse('api:v2:deposit-list')
+        form_data = {
+            'device': 'invalidkey',
+            'amount': '0.5',
+        }
+        response = self.client.post(url, form_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['device'][0],
+                         'Invalid device key.')
+
+    def test_create_not_active(self):
+        device = DeviceFactory(status='activation_in_progress')
+        url = reverse('api:v2:deposit-list')
+        form_data = {
+            'device': device.key,
+            'amount': '0.5',
+        }
+        response = self.client.post(url, form_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['device'][0],
+                         'Invalid device key.')
+
+    @patch('api.views_v2.prepare_deposit')
+    def test_create_payment_error(self, prepare_mock):
+        prepare_mock.side_effect = exceptions.PaymentError
+        device = DeviceFactory(long_key=True)
+        amount = 10
+        bluetooth_mac = '12:34:56:78:9A:BC'
+        url = reverse('api:v2:deposit-list')
+        form_data = {
+            'device': device.key,
+            'amount': amount,
+            'bt_mac': bluetooth_mac,
+        }
+        response = self.client.post(url, form_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['device'][0], 'Payment error')
+
+    def test_retrieve_not_notified(self):
+        deposit = DepositFactory()
+        url = reverse('api:v2:deposit-detail',
+                      kwargs={'uid': deposit.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.data
+        self.assertEqual(data['uid'], deposit.uid)
+        self.assertEqual(data['status'], 'new')
+
+    def test_retrieve_notified(self):
+        deposit = DepositFactory(broadcasted=True)
+        self.assertIsNone(deposit.time_notified)
+        url = reverse('api:v2:deposit-detail',
+                      kwargs={'uid': deposit.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.data
+        self.assertEqual(data['uid'], deposit.uid)
+        self.assertEqual(data['status'], 'notified')
+        deposit.refresh_from_db()
+        self.assertIsNotNone(deposit.time_notified)
+
+    def test_cancel_new(self):
+        deposit = DepositFactory()
+        url = reverse('api:v2:deposit-cancel', kwargs={'uid': deposit.uid})
+        response = self.client.post(url, {})
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        deposit.refresh_from_db()
+        self.assertEqual(deposit.status, 'cancelled')
+
+    def test_cancel_received(self):
+        deposit = DepositFactory(received=True)
+        url = reverse('api:v2:deposit-cancel', kwargs={'uid': deposit.uid})
+        response = self.client.post(url, {})
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        deposit.refresh_from_db()
+        self.assertEqual(deposit.status, 'cancelled')
+
+    def test_cancel_broadcasted(self):
+        deposit = DepositFactory(broadcasted=True)
+        url = reverse('api:v2:deposit-cancel', kwargs={'uid': deposit.uid})
+        response = self.client.post(url, {})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @patch('transactions.models.create_payment_request')
+    def test_payment_request(self, create_mock):
+        deposit = DepositFactory()
+        create_mock.return_value = payment_request = '009A8B'.decode('hex')
+        url = reverse('api:v2:deposit-payment-request',
+                      kwargs={'uid': deposit.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'],
+                         'application/bitcoin-paymentrequest')
+        self.assertEqual(response.content, payment_request)
+
+    def test_payment_request_timeout(self):
+        deposit = DepositFactory(timeout=True)
+        url = reverse('api:v2:deposit-payment-request',
+                      kwargs={'uid': deposit.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_payment_request_cancelled(self):
+        deposit = DepositFactory(cancelled=True)
+        url = reverse('api:v2:deposit-payment-request',
+                      kwargs={'uid': deposit.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @patch('api.views_v2.handle_bip70_payment')
+    def test_payment_response(self, parse_mock):
+        deposit = DepositFactory()
+        parse_mock.return_value = payment_ack = 'test'
+        payment_response = '009A8B'.decode('hex')
+        url = reverse('api:v2:deposit-payment-response',
+                      kwargs={'uid': deposit.uid})
+        response = self.client.post(
+            url, payment_response,
+            content_type='application/bitcoin-payment')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'],
+                         'application/bitcoin-paymentack')
+        self.assertEqual(response.content, payment_ack)
+
+    def test_payment_response_invalid_headers(self):
+        deposit = DepositFactory()
+        payment_response = '009A8B'.decode('hex')
+        url = reverse('api:v2:deposit-payment-response',
+                      kwargs={'uid': deposit.uid})
+        response = self.client.post(
+            url, payment_response,
+            content_type='application/octet-stream')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_payment_response_already_received(self):
+        deposit = DepositFactory(received=True)
+        url = reverse('api:v2:deposit-payment-response',
+                      kwargs={'uid': deposit.uid})
+        response = self.client.post(
+            url, '',
+            content_type='application/bitcoin-payment')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @patch('api.utils.pdf.get_template')
+    def test_receipt(self, get_template_mock):
+        deposit = DepositFactory(notified=True)
+        get_template_mock.return_value = template_mock = Mock(**{
+            'render.return_value': 'test',
+        })
+        url = reverse('api:v2:deposit-receipt',
+                      kwargs={'uid': deposit.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertEqual(get_template_mock.call_args[0][0],
+                         'pdf/receipt_deposit.html')
+        self.assertIs(template_mock.render.called, True)
+        self.assertEqual(template_mock.render.call_args[0][0]['deposit'],
+                         deposit)
+
+    def test_receipt_not_notified(self):
+        deposit = DepositFactory(broadcasted=True)
+        url = reverse('api:v2:deposit-receipt',
+                      kwargs={'uid': deposit.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @patch('api.utils.pdf.get_template')
+    def test_receipt_short(self, get_template_mock):
+        deposit = DepositFactory(notified=True)
+        get_template_mock.return_value = Mock(**{
+            'render.return_value': 'test',
+        })
+        url = reverse('api:short:deposit-receipt',
+                      kwargs={'uid': deposit.uid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+
+    def test_receipt_short_post(self):
+        deposit = DepositFactory(notified=True)
+        url = reverse('api:short:deposit-receipt',
+                      kwargs={'uid': deposit.uid})
         response = self.client.post(url, {})
         self.assertEqual(response.status_code,
                          status.HTTP_405_METHOD_NOT_ALLOWED)

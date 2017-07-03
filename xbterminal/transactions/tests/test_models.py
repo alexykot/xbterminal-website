@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from wallet.constants import BIP44_COIN_TYPES
-from wallet.tests.factories import WalletAccountFactory, AddressFactory
+from wallet.tests.factories import AddressFactory
 from transactions.constants import PAYMENT_TYPES
 from transactions.models import (
     Deposit,
@@ -73,6 +73,7 @@ class DepositTestCase(TestCase):
                                  exchange_rate=Decimal('2000.00'))
         self.assertEqual(deposit.merchant_coin_amount, Decimal('0.005'))
         self.assertEqual(deposit.fee_coin_amount, Decimal('0.000025'))
+        self.assertEqual(deposit.exchange_rate, Decimal('2000.00'))
 
     def test_factory_no_device(self):
         deposit = DepositFactory(device=None)
@@ -128,6 +129,15 @@ class DepositTestCase(TestCase):
         self.assertEqual(deposit.merchant,
                          deposit.account.merchant)
 
+    def test_exchange_rate(self):
+        deposit = DepositFactory(
+            amount=Decimal('10.0'),
+            merchant_coin_amount=Decimal('0.01'),
+            fee_coin_amount=Decimal('0.0005'))
+        self.assertEqual(deposit.exchange_rate, Decimal('1000.00'))
+        self.assertEqual(deposit.effective_exchange_rate,
+                         Decimal('952.38095238'))
+
     def test_status(self):
         deposit = DepositFactory()
         self.assertEqual(deposit.status, 'new')
@@ -172,6 +182,17 @@ class DepositTestCase(TestCase):
         deposit = DepositFactory(
             time_cancelled=timezone.now())
         self.assertEqual(deposit.status, 'cancelled')
+
+    def test_receipt_url(self):
+        deposit = DepositFactory(notified=True)
+        self.assertIn('/drc/{0}'.format(deposit.uid), deposit.receipt_url)
+
+    def test_create_payment_request(self):
+        deposit = DepositFactory()
+        response_url = 'http://some-url'
+        payment_request = deposit.create_payment_request(response_url)
+        self.assertIs(isinstance(payment_request, bytes), True)
+        self.assertGreater(len(payment_request), 0)
 
     def test_create_balance_changes(self):
         deposit = DepositFactory(received=True)
@@ -275,6 +296,15 @@ class WithdrawalTestCase(TestCase):
         withdrawal = WithdrawalFactory(cancelled=True)
         self.assertEqual(withdrawal.status, 'cancelled')
 
+    def test_exchange_rate(self):
+        withdrawal = WithdrawalFactory(
+            amount=Decimal('10.0'),
+            customer_coin_amount=Decimal('0.01'),
+            tx_fee_coin_amount=Decimal('0.0005'))
+        self.assertEqual(withdrawal.exchange_rate, Decimal('1000.00'))
+        self.assertEqual(withdrawal.effective_exchange_rate,
+                         Decimal('952.38095238'))
+
     def test_status(self):
         withdrawal = WithdrawalFactory()
         self.assertEqual(withdrawal.status, 'new')
@@ -322,6 +352,7 @@ class BalanceChangeTestCase(TestCase):
             address=deposit.deposit_address,
             amount=deposit.paid_coin_amount - deposit.fee_coin_amount)
         self.assertIsNone(bch.withdrawal)
+        self.assertIsNotNone(bch.created_at)
         self.assertEqual(str(bch), str(bch.pk))
         self.assertEqual(deposit.balancechange_set.count(), 1)
         self.assertEqual(deposit.account.balancechange_set.count(), 1)
@@ -368,17 +399,29 @@ class BalanceChangeTestCase(TestCase):
                 amount=Decimal('10.00'))
 
     def test_exclude_unconfirmed(self):
-        wallet_account = WalletAccountFactory()
-        bch_1 = BalanceChangeFactory(
-            deposit__deposit_address__wallet_account=wallet_account)
-        bch_2 = BalanceChangeFactory(
-            deposit__deposit_address__wallet_account=wallet_account,
-            deposit__confirmed=True)
-        bch_3 = NegativeBalanceChangeFactory(
-            address__wallet_account=wallet_account)
+        bch_1 = BalanceChangeFactory()
+        bch_2 = BalanceChangeFactory(deposit__confirmed=True)
+        bch_3 = NegativeBalanceChangeFactory()
         self.assertIn(bch_1, BalanceChange.objects.all())
         self.assertNotIn(bch_1, BalanceChange.objects.exclude_unconfirmed())
         self.assertIn(bch_2, BalanceChange.objects.all())
         self.assertIn(bch_2, BalanceChange.objects.exclude_unconfirmed())
         self.assertIn(bch_3, BalanceChange.objects.all())
         self.assertIn(bch_3, BalanceChange.objects.exclude_unconfirmed())
+
+    def test_is_confirmed(self):
+        bch_1 = BalanceChangeFactory()
+        self.assertIs(bch_1.is_confirmed(), False)
+        bch_2 = BalanceChangeFactory(deposit__confirmed=True)
+        self.assertIs(bch_2.is_confirmed(), True)
+        bch_3 = NegativeBalanceChangeFactory()
+        self.assertIs(bch_3.is_confirmed(), True)
+        bch_4 = NegativeBalanceChangeFactory(
+            address__is_change=True,
+            amount=Decimal('0.01'))
+        self.assertIs(bch_4.is_confirmed(), False)
+        bch_5 = NegativeBalanceChangeFactory(
+            withdrawal__confirmed=True,
+            address__is_change=True,
+            amount=Decimal('0.01'))
+        self.assertIs(bch_5.is_confirmed(), True)

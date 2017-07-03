@@ -7,6 +7,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 TEMP_DIR = tempfile.mkdtemp(prefix='xbt')
 
 DEBUG = False
+SQL_DEBUG = False
 TESTING = 'test' in sys.argv
 
 LOGGING = {
@@ -27,7 +28,7 @@ LOGGING = {
     },
     'handlers': {
         'console': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'short',
         },
@@ -336,6 +337,13 @@ if DEBUG:
     LOGGING['loggers']['']['handlers'].append('console')
     LOGGING['loggers']['django.request']['handlers'].append('console')
     LOGGING['loggers']['rq.worker']['handlers'].append('console')
+
+if SQL_DEBUG:
+    LOGGING['loggers']['django.db.backends'] = {
+        'level': 'DEBUG',
+        'handlers': ['console'],
+        'propagate': False,
+    }
 
 if TESTING:
     # Disable logging

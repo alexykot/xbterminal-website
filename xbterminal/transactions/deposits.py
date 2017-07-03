@@ -1,6 +1,7 @@
 from decimal import Decimal
 import logging
 
+from django.db.transaction import atomic
 from django.utils import timezone
 
 from constance import config
@@ -13,14 +14,17 @@ from transactions.constants import (
     DEPOSIT_CONFIDENCE_TIMEOUT,
     DEPOSIT_CONFIRMATION_TIMEOUT,
     PAYMENT_TYPES)
-from transactions.models import Deposit, get_coin_type
+from transactions.models import Deposit
+from transactions.utils.compat import get_coin_type
 from transactions.utils.tx import create_tx_
 from operations.exceptions import (
     InsufficientFunds,
+    InvalidPaymentMessage,
     DoubleSpend,
     TransactionModified,
     RefundError)
-from operations.blockchain import BlockChain, get_txid
+from operations.blockchain import BlockChain
+from operations.protocol import parse_payment
 from operations.services.wrappers import get_exchange_rate, is_tx_reliable
 from wallet.models import Address
 from website.models import Account, Device
@@ -74,28 +78,66 @@ def prepare_deposit(device_or_account, amount):
     return deposit
 
 
-def validate_payment(deposit, transactions):
+def validate_payment(deposit, transactions, refund_addresses):
     """
-    Validates payment
+    Validates payment and saves details to database
     Accepts:
         deposit: Deposit instance
         transactions: list of CTransaction
+        refund_addresses: list of addresses
     """
     bc = BlockChain(deposit.bitcoin_network)
-    # Validate transactions
-    for incoming_tx in transactions:
-        bc.sign_raw_transaction(incoming_tx)
-    # Check and save received amount
+    incoming_tx_ids = set()
     received_amount = BTC_DEC_PLACES
     for incoming_tx in transactions:
+        # Validate and broadcast TX
+        incoming_tx_signed = bc.sign_raw_transaction(incoming_tx)
+        incoming_tx_id = bc.send_raw_transaction(incoming_tx_signed)
+        incoming_tx_ids.add(incoming_tx_id)
+        # Get amount
         for output in bc.get_tx_outputs(incoming_tx):
             if str(output['address']) == deposit.deposit_address.address:
                 received_amount += output['amount']
-    deposit.paid_coin_amount = received_amount
-    deposit.save()
-    deposit.create_balance_changes()
+    # Save deposit details
+    with atomic():
+        deposit.refresh_from_db()
+        deposit.paid_coin_amount = received_amount
+        if refund_addresses:
+            deposit.refund_address = refund_addresses[0]
+        for incoming_tx_id in incoming_tx_ids:
+            if incoming_tx_id not in deposit.incoming_tx_ids:
+                deposit.incoming_tx_ids.append(incoming_tx_id)
+        deposit.save()
+        deposit.create_balance_changes()
     if deposit.status == 'underpaid':
         raise InsufficientFunds
+
+
+def handle_bip70_payment(deposit, payment_message):
+    """
+    Parse and validate BIP70 Payment message
+    Accepts:
+        deposit: Deposit instance
+        payment_message: pb2-encoded message
+    Returns:
+        payment_ack: pb2-encoded message
+    """
+    try:
+        transactions, refund_addresses, payment_ack = \
+            parse_payment(payment_message)
+    except Exception as error:
+        logger.exception(error)
+        raise InvalidPaymentMessage
+    # Validate payment
+    validate_payment(deposit, transactions, refund_addresses)
+    # Update status
+    if deposit.time_received is None:
+        deposit.payment_type = PAYMENT_TYPES.BIP70
+        deposit.time_received = timezone.now()
+        deposit.save()
+        run_periodic_task(wait_for_confidence, [deposit.pk], interval=5)
+        logger.info('payment received (%s)', deposit.pk)
+    return payment_ack
 
 
 def wait_for_payment(deposit_id):
@@ -112,7 +154,7 @@ def wait_for_payment(deposit_id):
         # Payment already validated, cancel job
         cancel_current_task()
         return
-    if deposit.status == 'cancelled':
+    if deposit.time_cancelled is not None:
         cancel_current_task()
         return
     # Connect to bitcoind
@@ -121,20 +163,14 @@ def wait_for_payment(deposit_id):
     if transactions:
         if len(transactions) > 1:
             logger.warning('multiple incoming tx')
-        # Save tx ids
-        for incoming_tx in transactions:
-            incoming_tx_id = get_txid(incoming_tx)
-            if incoming_tx_id not in deposit.incoming_tx_ids:
-                deposit.incoming_tx_ids.append(incoming_tx_id)
-        # Save refund address
+        # Get refund addresses
         tx_inputs = bc.get_tx_inputs(transactions[0])
         if len(tx_inputs) > 1:
             logger.warning('incoming tx contains more than one input')
-        deposit.refund_address = str(tx_inputs[0]['address'])
-        deposit.save()
+        refund_addresses = [str(inp['address']) for inp in tx_inputs]
         # Validate payment
         try:
-            validate_payment(deposit, transactions)
+            validate_payment(deposit, transactions, refund_addresses)
         except InsufficientFunds:
             # Don't cancel task, wait for next transaction
             pass
@@ -144,11 +180,12 @@ def wait_for_payment(deposit_id):
         else:
             cancel_current_task()
             # Update status and wait for confidence
-            deposit.payment_type = PAYMENT_TYPES.BIP21
-            deposit.time_received = timezone.now()
-            deposit.save()
-            run_periodic_task(wait_for_confidence, [deposit.pk], interval=5)
-            logger.info('payment received (%s)', deposit.uid)
+            if deposit.time_received is None:
+                deposit.payment_type = PAYMENT_TYPES.BIP21
+                deposit.time_received = timezone.now()
+                deposit.save()
+                run_periodic_task(wait_for_confidence, [deposit.pk], interval=5)
+                logger.info('payment received (%s)', deposit.pk)
 
 
 def wait_for_confidence(deposit_id):
@@ -165,6 +202,9 @@ def wait_for_confidence(deposit_id):
         # Confidence threshold reached, cancel job
         cancel_current_task()
         return
+    if deposit.time_cancelled is not None:
+        cancel_current_task()
+        return
     bc = BlockChain(deposit.bitcoin_network)
     for incoming_tx_id in deposit.incoming_tx_ids:
         try:
@@ -174,7 +214,6 @@ def wait_for_confidence(deposit_id):
             logger.error(
                 'double spend detected',
                 extra={'data': {
-                    'deposit_id': deposit.pk,
                     'deposit_admin_url': get_admin_url(deposit),
                 }})
             cancel_current_task()
@@ -184,7 +223,6 @@ def wait_for_confidence(deposit_id):
             logger.warning(
                 'transaction has been modified',
                 extra={'data': {
-                    'deposit_id': deposit.pk,
                     'deposit_admin_url': get_admin_url(deposit),
                 }})
             deposit.incoming_tx_ids = [
@@ -202,8 +240,13 @@ def wait_for_confidence(deposit_id):
             break
     else:
         cancel_current_task()
-        deposit.time_broadcasted = timezone.now()
-        deposit.save()
+        with atomic():
+            deposit.refresh_from_db()
+            if deposit.time_cancelled is not None:
+                # Do not set broadcasted status for cancelled deposits
+                return
+            deposit.time_broadcasted = timezone.now()
+            deposit.save()
         run_periodic_task(wait_for_confirmation, [deposit.pk], interval=30)
         logger.info('payment confidence reached (%s)', deposit.pk)
 
@@ -227,7 +270,6 @@ def wait_for_confirmation(deposit_id):
             logger.warning(
                 'transaction has been modified',
                 extra={'data': {
-                    'deposit_id': deposit.pk,
                     'deposit_admin_url': get_admin_url(deposit),
                 }})
             deposit.incoming_tx_ids = [
@@ -276,9 +318,9 @@ def refund_deposit(deposit):
     deposit.save()
     deposit.balancechange_set.all().delete()
     logger.warning(
-        'payment returned',
+        'payment refunded (%s)',
+        deposit.pk,
         extra={'data': {
-            'deposit_id': deposit.pk,
             'deposit_admin_url': get_admin_url(deposit),
         }})
 
@@ -302,17 +344,17 @@ def check_deposit_status(deposit_id):
         except RefundError:
             pass
         logger.error(
-            'payment failed',
+            'payment failed (%s)',
+            deposit.pk,
             extra={'data': {
-                'deposit_id': deposit.pk,
                 'deposit_admin_url': get_admin_url(deposit),
             }})
         cancel_current_task()
     elif deposit.status == 'unconfirmed':
         logger.error(
-            'payment not confirmed',
+            'payment not confirmed (%s)',
+            deposit.pk,
             extra={'data': {
-                'deposit_id': deposit.pk,
                 'deposit_admin_url': get_admin_url(deposit),
             }})
         cancel_current_task()

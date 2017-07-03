@@ -1,22 +1,25 @@
 from decimal import Decimal
 
 from django.test import TestCase
+from django.utils import timezone
 
 from mock import patch, Mock
 
 from transactions.constants import PAYMENT_TYPES
-from transactions.models import get_account_balance, get_address_balance
 from transactions.deposits import (
     prepare_deposit,
     validate_payment,
+    handle_bip70_payment,
     wait_for_payment,
     wait_for_confidence,
     wait_for_confirmation,
     refund_deposit,
     check_deposit_status)
 from transactions.tests.factories import DepositFactory
+from transactions.utils.compat import get_account_balance, get_address_balance
 from operations.exceptions import (
     InsufficientFunds,
+    InvalidPaymentMessage,
     DoubleSpend,
     TransactionModified,
     RefundError)
@@ -90,18 +93,25 @@ class ValidatePaymentTestCase(TestCase):
     @patch('transactions.deposits.BlockChain')
     def test_validate(self, bc_cls_mock):
         deposit = DepositFactory()
-        transactions = [Mock()]
+        incoming_tx = Mock()
+        incoming_tx_id = '1' * 64
+        refund_address = 'a' * 32
         bc_cls_mock.return_value = bc_mock = Mock(**{
+            'sign_raw_transaction.return_value': Mock(),
+            'send_raw_transaction.return_value': incoming_tx_id,
             'get_tx_outputs.return_value': [{
                 'address': deposit.deposit_address.address,
                 'amount': deposit.coin_amount,
             }],
         })
 
-        validate_payment(deposit, transactions)
+        validate_payment(deposit, [incoming_tx], [refund_address])
         self.assertEqual(bc_mock.sign_raw_transaction.call_count, 1)
+        self.assertEqual(bc_mock.send_raw_transaction.call_count, 1)
         deposit.refresh_from_db()
         self.assertEqual(deposit.paid_coin_amount, deposit.coin_amount)
+        self.assertEqual(deposit.refund_address, refund_address)
+        self.assertEqual(deposit.incoming_tx_ids, [incoming_tx_id])
         self.assertEqual(deposit.status, 'new')
         self.assertEqual(get_account_balance(deposit.account),
                          deposit.paid_coin_amount - deposit.fee_coin_amount)
@@ -117,11 +127,16 @@ class ValidatePaymentTestCase(TestCase):
         deposit = DepositFactory(
             merchant_coin_amount=Decimal('0.1'),
             fee_coin_amount=Decimal('0.01'),
-            paid_coin_amount=Decimal('0.05'))
+            paid_coin_amount=Decimal('0.05'),
+            incoming_tx_ids=['1' * 64])
         deposit.create_balance_changes()
         self.assertEqual(deposit.status, 'underpaid')
-        transactions = [Mock(), Mock()]
+        incoming_txs = [Mock(), Mock()]
+        incoming_tx_ids = ['2' * 64, '3' * 64]
+        refund_address = 'b' * 32
         bc_cls_mock.return_value = bc_mock = Mock(**{
+            'sign_raw_transaction.return_value': Mock(),
+            'send_raw_transaction.side_effect': incoming_tx_ids,
             'get_tx_outputs.side_effect': [
                 [{
                     'address': deposit.deposit_address.address,
@@ -134,37 +149,125 @@ class ValidatePaymentTestCase(TestCase):
             ],
         })
 
-        validate_payment(deposit, transactions)
+        validate_payment(deposit, incoming_txs, [refund_address])
         self.assertEqual(bc_mock.sign_raw_transaction.call_count, 2)
+        self.assertEqual(bc_mock.send_raw_transaction.call_count, 2)
         deposit.refresh_from_db()
         self.assertEqual(deposit.paid_coin_amount, Decimal('0.15'))
+        self.assertEqual(deposit.refund_address, refund_address)
+        self.assertEqual(deposit.incoming_tx_ids,
+                         ['1' * 64, '2' * 64, '3' * 64])
         self.assertEqual(get_account_balance(deposit.account),
                          deposit.paid_coin_amount - deposit.fee_coin_amount)
         self.assertEqual(get_address_balance(deposit.deposit_address),
                          deposit.paid_coin_amount)
 
     @patch('transactions.deposits.BlockChain')
+    def test_no_refund_address(self, bc_cls_mock):
+        deposit = DepositFactory()
+        bc_cls_mock.return_value = Mock(**{
+            'send_raw_transaction.return_value': '1' * 64,
+            'get_tx_outputs.return_value': [{
+                'address': deposit.deposit_address.address,
+                'amount': deposit.coin_amount,
+            }],
+        })
+
+        validate_payment(deposit, [Mock()], [])
+        deposit.refresh_from_db()
+        self.assertIsNone(deposit.refund_address)
+
+    @patch('transactions.deposits.BlockChain')
     def test_insufficient_funds(self, bc_cls_mock):
         deposit = DepositFactory(
             merchant_coin_amount=Decimal('0.1'),
             fee_coin_amount=Decimal('0.01'))
-        transactions = [Mock()]
+        incoming_tx = Mock()
+        incoming_tx_id = '1' * 64
+        refund_address = 'b' * 32
         bc_cls_mock.return_value = bc_mock = Mock(**{
+            'send_raw_transaction.return_value': incoming_tx_id,
             'get_tx_outputs.return_value': [{
                 'address': deposit.deposit_address.address,
                 'amount': Decimal('0.05'),
             }],
         })
-
         with self.assertRaises(InsufficientFunds):
-            validate_payment(deposit, transactions)
-        self.assertEqual(bc_mock.sign_raw_transaction.call_count, 1)
+            validate_payment(deposit, [incoming_tx], [refund_address])
+
+        self.assertEqual(bc_mock.send_raw_transaction.call_count, 1)
         deposit.refresh_from_db()
         self.assertEqual(deposit.paid_coin_amount, Decimal('0.05'))
+        self.assertEqual(deposit.refund_address, refund_address)
+        self.assertEqual(deposit.incoming_tx_ids, [incoming_tx_id])
         self.assertEqual(get_account_balance(deposit.account),
                          deposit.paid_coin_amount - deposit.fee_coin_amount)
         self.assertEqual(get_address_balance(deposit.deposit_address),
                          deposit.paid_coin_amount)
+
+
+class HandleBIP70PaymentTestCase(TestCase):
+
+    @patch('transactions.deposits.parse_payment')
+    @patch('transactions.deposits.validate_payment')
+    @patch('transactions.deposits.run_periodic_task')
+    def test_valid(self, run_task_mock, validate_mock, parse_mock):
+        deposit = DepositFactory()
+        parse_mock.return_value = (['test_tx'], ['test_address'], 'test_ack')
+        payment_ack = handle_bip70_payment(deposit, 'test_message')
+
+        self.assertIs(parse_mock.called, True)
+        self.assertIs(validate_mock.called, True)
+        self.assertEqual(validate_mock.call_args[0][1], ['test_tx'])
+        self.assertEqual(validate_mock.call_args[0][2], ['test_address'])
+        self.assertEqual(run_task_mock.call_args[0][0].__name__,
+                         'wait_for_confidence')
+        self.assertEqual(run_task_mock.call_args[0][1], [deposit.pk])
+        self.assertEqual(payment_ack, 'test_ack')
+
+        deposit.refresh_from_db()
+        self.assertEqual(deposit.payment_type, PAYMENT_TYPES.BIP70)
+        self.assertEqual(deposit.status, 'received')
+
+    @patch('transactions.deposits.parse_payment')
+    @patch('transactions.deposits.validate_payment')
+    @patch('transactions.deposits.run_periodic_task')
+    def test_repeat(self, run_task_mock, validate_mock, parse_mock):
+        deposit = DepositFactory()
+        parse_mock.return_value = (['test_tx'], ['test_address'], 'test_ack')
+        handle_bip70_payment(deposit, 'test_message_1')
+        handle_bip70_payment(deposit, 'test_message_2')
+
+        self.assertEqual(validate_mock.call_count, 2)
+        self.assertEqual(run_task_mock.call_count, 1)
+
+    @patch('transactions.deposits.parse_payment')
+    @patch('transactions.deposits.validate_payment')
+    def test_invalid_message(self, validate_mock, parse_mock):
+        deposit = DepositFactory()
+        parse_mock.side_effect = ValueError
+        with self.assertRaises(InvalidPaymentMessage):
+            handle_bip70_payment(deposit, 'test_message')
+
+        self.assertIs(parse_mock.called, True)
+        self.assertIs(validate_mock.called, False)
+        deposit.refresh_from_db()
+        self.assertIsNone(deposit.time_received)
+
+    @patch('transactions.deposits.parse_payment')
+    @patch('transactions.deposits.validate_payment')
+    @patch('transactions.deposits.run_periodic_task')
+    def test_insufficient_funds(self, run_task_mock, validate_mock,
+                                parse_mock):
+        deposit = DepositFactory()
+        parse_mock.return_value = (['test_tx'], ['test_address'], 'test_ack')
+        validate_mock.side_effect = InsufficientFunds
+        with self.assertRaises(InsufficientFunds):
+            handle_bip70_payment(deposit, 'test_message')
+
+        self.assertIs(run_task_mock.called, False)
+        deposit.refresh_from_db()
+        self.assertIsNone(deposit.time_received)
 
 
 class WaitForPaymentTestCase(TestCase):
@@ -211,19 +314,16 @@ class WaitForPaymentTestCase(TestCase):
 
     @patch('transactions.deposits.cancel_current_task')
     @patch('transactions.deposits.BlockChain')
-    @patch('transactions.deposits.get_txid')
     @patch('transactions.deposits.validate_payment')
     @patch('transactions.deposits.run_periodic_task')
     def test_validate_payment(self, run_task_mock, validate_mock,
-                              get_txid_mock, bc_cls_mock, cancel_mock):
+                              bc_cls_mock, cancel_mock):
         customer_address = 'a' * 32
         incoming_tx = Mock()
-        incoming_tx_id = '1' * 64
         bc_cls_mock.return_value = bc_mock = Mock(**{
             'get_unspent_transactions.return_value': [incoming_tx],
             'get_tx_inputs.return_value': [{'address': customer_address}],
         })
-        get_txid_mock.return_value = incoming_tx_id
         deposit = DepositFactory()
         wait_for_payment(deposit.pk)
 
@@ -233,6 +333,7 @@ class WaitForPaymentTestCase(TestCase):
         self.assertEqual(validate_mock.call_count, 1)
         self.assertEqual(validate_mock.call_args[0][0], deposit)
         self.assertEqual(validate_mock.call_args[0][1], [incoming_tx])
+        self.assertEqual(validate_mock.call_args[0][2], [customer_address])
         self.assertIs(cancel_mock.called, True)
         self.assertIs(run_task_mock.called, True)
         self.assertEqual(run_task_mock.call_args[0][0].__name__,
@@ -240,49 +341,19 @@ class WaitForPaymentTestCase(TestCase):
         self.assertEqual(run_task_mock.call_args[0][1], [deposit.pk])
 
         deposit.refresh_from_db()
-        self.assertEqual(deposit.refund_address, customer_address)
-        self.assertEqual(deposit.incoming_tx_ids, [incoming_tx_id])
         self.assertEqual(deposit.payment_type, PAYMENT_TYPES.BIP21)
         self.assertEqual(deposit.status, 'received')
 
     @patch('transactions.deposits.cancel_current_task')
     @patch('transactions.deposits.BlockChain')
-    @patch('transactions.deposits.get_txid')
     @patch('transactions.deposits.validate_payment')
-    @patch('transactions.deposits.run_periodic_task')
-    def test_mutilple_tx(self, run_task_mock, validate_mock, get_txid_mock,
-                         bc_cls_mock, cancel_mock):
-        bc_cls_mock.return_value = Mock(**{
-            'get_unspent_transactions.return_value': [Mock(), Mock()],
-            'get_tx_inputs.return_value': [{'address': 'test_address'}],
-        })
-        incoming_tx_id_1 = '1' * 64
-        incoming_tx_id_2 = '2' * 64
-        get_txid_mock.side_effect = [incoming_tx_id_1, incoming_tx_id_2]
-        deposit = DepositFactory()
-        wait_for_payment(deposit.pk)
-
-        self.assertEqual(validate_mock.call_count, 1)
-        self.assertIs(cancel_mock.called, True)
-        self.assertIs(run_task_mock.called, True)
-        deposit.refresh_from_db()
-        self.assertEqual(deposit.incoming_tx_ids,
-                         [incoming_tx_id_1, incoming_tx_id_2])
-
-    @patch('transactions.deposits.cancel_current_task')
-    @patch('transactions.deposits.BlockChain')
-    @patch('transactions.deposits.get_txid')
-    @patch('transactions.deposits.validate_payment')
-    def test_insufficient_funds(self, validate_mock, get_txid_mock,
-                                bc_cls_mock, cancel_mock):
+    def test_insufficient_funds(self, validate_mock, bc_cls_mock, cancel_mock):
         bc_cls_mock.return_value = Mock(**{
             'get_unspent_transactions.return_value': [Mock()],
             'get_tx_inputs.return_value': [{'address': 'test_address'}],
         })
-        incoming_tx_id = '1' * 64
-        get_txid_mock.return_value = incoming_tx_id
 
-        def validate(deposit, _):
+        def validate(deposit, _, __):
             deposit.paid_coin_amount = Decimal('0.001')
             deposit.save()
             raise InsufficientFunds
@@ -294,36 +365,29 @@ class WaitForPaymentTestCase(TestCase):
 
         self.assertIs(cancel_mock.called, False)
         deposit.refresh_from_db()
-        self.assertEqual(deposit.incoming_tx_ids, [incoming_tx_id])
         self.assertEqual(deposit.status, 'underpaid')
 
     @patch('transactions.deposits.cancel_current_task')
     @patch('transactions.deposits.BlockChain')
-    @patch('transactions.deposits.get_txid')
     @patch('transactions.deposits.validate_payment')
-    def test_validation_error(self, validate_mock, get_txid_mock,
-                              bc_cls_mock, cancel_mock):
+    def test_validation_error(self, validate_mock, bc_cls_mock, cancel_mock):
         bc_cls_mock.return_value = Mock(**{
             'get_unspent_transactions.return_value': [Mock()],
             'get_tx_inputs.return_value': [{'address': 'test_address'}],
         })
-        incoming_tx_id = '1' * 64
-        get_txid_mock.return_value = incoming_tx_id
         validate_mock.side_effect = ValueError
         deposit = DepositFactory()
         wait_for_payment(deposit.pk)
 
         self.assertIs(cancel_mock.called, True)
         deposit.refresh_from_db()
-        self.assertEqual(deposit.incoming_tx_ids, [incoming_tx_id])
         self.assertEqual(deposit.status, 'new')
 
     @patch('transactions.deposits.cancel_current_task')
     @patch('transactions.deposits.BlockChain')
-    @patch('transactions.deposits.get_txid')
     @patch('transactions.deposits.validate_payment')
     @patch('transactions.deposits.run_periodic_task')
-    def test_repeat(self, run_task_mock, validate_mock, get_txid_mock,
+    def test_repeat(self, run_task_mock, validate_mock,
                     bc_cls_mock, cancel_mock):
         bc_cls_mock.return_value = Mock(**{
             'get_unspent_transactions.side_effect': [
@@ -332,21 +396,14 @@ class WaitForPaymentTestCase(TestCase):
             ],
             'get_tx_inputs.return_value': [{'address': 'test_address'}],
         })
-        incoming_tx_id_1 = '1' * 64
-        incoming_tx_id_2 = '2' * 64
-        get_txid_mock.side_effect = [
-            incoming_tx_id_1,
-            incoming_tx_id_1,
-            incoming_tx_id_2,
-        ]
         validate_mock.side_effect = [InsufficientFunds, None]
         deposit = DepositFactory()
         wait_for_payment(deposit.pk)
         wait_for_payment(deposit.pk)
 
+        self.assertEqual(validate_mock.call_count, 2)
+        self.assertEqual(run_task_mock.call_count, 1)
         deposit.refresh_from_db()
-        self.assertEqual(deposit.incoming_tx_ids,
-                         [incoming_tx_id_1, incoming_tx_id_2])
         self.assertEqual(deposit.status, 'received')
 
 
@@ -359,6 +416,36 @@ class WaitForConfidenceTestCase(TestCase):
         wait_for_confidence(deposit.pk)
         self.assertIs(cancel_mock.called, True)
         self.assertIs(bc_cls_mock.called, False)
+
+    @patch('transactions.deposits.cancel_current_task')
+    @patch('transactions.deposits.BlockChain')
+    def test_cancelled_1(self, bc_cls_mock, cancel_mock):
+        deposit = DepositFactory(cancelled=True)
+        wait_for_confidence(deposit.pk)
+        self.assertIs(cancel_mock.called, True)
+        self.assertIs(bc_cls_mock.called, False)
+
+    @patch('transactions.deposits.cancel_current_task')
+    @patch('transactions.deposits.BlockChain')
+    @patch('transactions.deposits.is_tx_reliable')
+    @patch('transactions.deposits.run_periodic_task')
+    def test_cancelled_2(self, run_task_mock, is_reliable_mock,
+                         bc_cls_mock, cancel_mock):
+        deposit = DepositFactory(received=True)
+        bc_cls_mock.return_value = Mock(**{
+            'is_tx_confirmed.return_value': False,
+        })
+        def cancel_deposit(*args):  # noqa: E306
+            deposit.time_cancelled = timezone.now()
+            deposit.save()
+            return True
+        # Cancel deposit while checking for confidence
+        is_reliable_mock.side_effect = cancel_deposit
+        wait_for_confidence(deposit.pk)
+
+        self.assertIs(is_reliable_mock.called, True)
+        self.assertIs(cancel_mock.called, True)
+        self.assertIs(run_task_mock.called, False)
 
     @patch('transactions.deposits.cancel_current_task')
     @patch('transactions.deposits.BlockChain')
