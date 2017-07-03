@@ -44,9 +44,10 @@ class CheckWalletTestCase(TestCase):
 
         self.assertEqual(bc_cls_mock.call_args[0][0], 'mainnet')
         self.assertEqual(bc_mock.get_address_balance.call_count, 3)
-        self.assertIs(logger_mock.info.called, True)
-        self.assertEqual(logger_mock.info.call_args[0][1], 'BTC')
-        self.assertEqual(logger_mock.info.call_args[0][2], expected_balance)
+        self.assertIs(logger_mock.info.call_count, 2)
+        self.assertEqual(logger_mock.info.call_args_list[0][0][1], 'BTC')
+        self.assertEqual(logger_mock.info.call_args_list[0][0][2], expected_balance)
+        self.assertEqual(logger_mock.info.call_args_list[1][0][1], 3)
 
     @patch('transactions.management.commands.check_wallet.BlockChain')
     @patch('transactions.management.commands.check_wallet.logger')
