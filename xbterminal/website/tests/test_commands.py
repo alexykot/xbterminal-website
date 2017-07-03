@@ -169,6 +169,7 @@ class MigrateWalletTestCase(TestCase):
         deposit = account.deposit_set.get()
         self.assertEqual(deposit.merchant_coin_amount, Decimal('0.2'))
         self.assertEqual(deposit.fee_coin_amount, 0)
+        self.assertIsNotNone(deposit.time_notified)
         self.assertEqual(bc_mock.get_tx_fee.call_args[0], (2, 2))
         tx_inputs = bc_mock.create_raw_transaction.call_args[0][0]
         self.assertEqual(len(tx_inputs), 2)
