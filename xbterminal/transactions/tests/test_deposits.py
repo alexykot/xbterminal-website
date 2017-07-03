@@ -522,9 +522,10 @@ class WaitForConfidenceTestCase(TestCase):
     @patch('transactions.deposits.cancel_current_task')
     @patch('transactions.deposits.BlockChain')
     @patch('transactions.deposits.is_tx_reliable')
+    @patch('transactions.deposits.refund_deposit')
     @patch('transactions.deposits.run_periodic_task')
-    def test_broadcasted(self, run_task_mock, is_reliable_mock,
-                         bc_cls_mock, cancel_mock):
+    def test_broadcasted(self, run_task_mock, refund_mock,
+                         is_reliable_mock, bc_cls_mock, cancel_mock):
         deposit = DepositFactory(received=True)
         bc_cls_mock.return_value = bc_mock = Mock(**{
             'is_tx_confirmed.return_value': False,
@@ -535,6 +536,7 @@ class WaitForConfidenceTestCase(TestCase):
         self.assertIs(bc_mock.is_tx_confirmed.called, True)
         self.assertIs(is_reliable_mock.called, True)
         self.assertIs(cancel_mock.called, True)
+        self.assertIs(refund_mock.called, False)
         self.assertIs(run_task_mock.called, True)
         self.assertEqual(run_task_mock.call_args[0][0].__name__,
                          'wait_for_confirmation')
@@ -559,6 +561,29 @@ class WaitForConfidenceTestCase(TestCase):
         self.assertIs(run_task_mock.called, True)
         deposit.refresh_from_db()
         self.assertIsNotNone(deposit.time_broadcasted)
+
+    @patch('transactions.deposits.cancel_current_task')
+    @patch('transactions.deposits.BlockChain')
+    @patch('transactions.deposits.is_tx_reliable')
+    @patch('transactions.deposits.refund_deposit')
+    @patch('transactions.deposits.run_periodic_task')
+    def test_refund_extra(self, run_task_mock, refund_mock,
+                          is_reliable_mock, bc_cls_mock, cancel_mock):
+        deposit = DepositFactory(
+            received=True,
+            merchant_coin_amount=Decimal('0.010'),
+            fee_coin_amount=Decimal('0.001'),
+            paid_coin_amount=Decimal('0.015'))
+        bc_cls_mock.return_value = Mock(**{
+            'is_tx_confirmed.return_value': False,
+        })
+        is_reliable_mock.return_value = True
+        wait_for_confidence(deposit.pk)
+
+        self.assertIs(cancel_mock.called, True)
+        self.assertIs(refund_mock.called, True)
+        self.assertIs(refund_mock.call_args[1]['only_extra'], True)
+        self.assertIs(run_task_mock.called, True)
 
     @patch('transactions.deposits.cancel_current_task')
     @patch('transactions.deposits.BlockChain')

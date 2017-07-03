@@ -249,6 +249,12 @@ def wait_for_confidence(deposit_id):
                 return
             deposit.time_broadcasted = timezone.now()
             deposit.save()
+        if deposit.paid_coin_amount > deposit.coin_amount:
+            # Return extra coins to customer
+            try:
+                refund_deposit(deposit, only_extra=True)
+            except RefundError:
+                pass
         run_periodic_task(wait_for_confirmation, [deposit.pk], interval=30)
         logger.info('payment confidence reached (%s)', deposit.pk)
 
