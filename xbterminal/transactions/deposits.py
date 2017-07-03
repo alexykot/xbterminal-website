@@ -240,6 +240,7 @@ def wait_for_confidence(deposit_id):
             # Break cycle, wait for confidence
             break
     else:
+        # Update deposit status
         cancel_current_task()
         with atomic():
             deposit.refresh_from_db()
@@ -288,13 +289,15 @@ def wait_for_confirmation(deposit_id):
         logger.info('payment confirmed (%s)', deposit.pk)
 
 
-def refund_deposit(deposit):
+def refund_deposit(deposit, only_extra=False):
     """
     Send all money back to customer
     Accepts:
         deposit: Deposit instance
+        only_extra: return only extra coins to customer, boolean
+            return full amount by default
     """
-    if deposit.time_notified is not None:
+    if not only_extra and deposit.time_notified is not None:
         raise RefundError('User already notified')
     if deposit.refund_tx_id is not None:
         raise RefundError('Deposit already refunded')
@@ -309,8 +312,15 @@ def refund_deposit(deposit):
         tx_amount += output['amount']
     if tx_amount == 0:
         raise RefundError('Nothing to refund')
-    tx_fee = bc.get_tx_fee(1, 1)
-    tx_outputs = {deposit.refund_address: tx_amount - tx_fee}
+    if only_extra:
+        # Send back to customer only extra amount
+        tx_amount -= deposit.coin_amount
+    tx_fee = bc.get_tx_fee(len(tx_inputs), 2)
+    tx_outputs = {}
+    tx_outputs[deposit.refund_address] = tx_amount - tx_fee
+    if only_extra:
+        # Send change to deposit address
+        tx_outputs[deposit.deposit_address.address] = deposit.coin_amount
     try:
         refund_tx = create_tx_(tx_inputs, tx_outputs)
     except DustOutput:

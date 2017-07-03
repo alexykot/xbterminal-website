@@ -665,7 +665,7 @@ class RefundDepositTestCase(TestCase):
         self.assertEqual(bc_mock.get_raw_unspent_outputs.call_count, 1)
         self.assertEqual(bc_mock.get_raw_unspent_outputs.call_args[0][0],
                          deposit.deposit_address.address)
-        self.assertEqual(bc_mock.get_tx_fee.call_args[0], (1, 1))
+        self.assertEqual(bc_mock.get_tx_fee.call_args[0], (1, 2))
         tx_inputs = create_tx_mock.call_args[0][0]
         self.assertEqual(len(tx_inputs), 1)
         self.assertIn('txid', tx_inputs[0])
@@ -676,6 +676,38 @@ class RefundDepositTestCase(TestCase):
                          Decimal('0.0095'))
         self.assertEqual(bc_mock.send_raw_transaction.call_args[0][0],
                          tx_mock)
+
+    @patch('transactions.deposits.BlockChain')
+    @patch('transactions.deposits.create_tx_')
+    def test_refund_only_extra(self, create_tx_mock, bc_cls_mock):
+        deposit = DepositFactory(
+            received=True,
+            merchant_coin_amount=Decimal('0.010'),
+            fee_coin_amount=Decimal('0.001'),
+            paid_coin_amount=Decimal('0.015'))
+        deposit.create_balance_changes()
+        refund_tx_id = '5' * 64
+        bc_cls_mock.return_value = Mock(**{
+            'get_raw_unspent_outputs.return_value': [{
+                'txid': '1' * 64,
+                'amount': Decimal('0.015'),
+            }],
+            'get_tx_fee.return_value': Decimal('0.0005'),
+            'send_raw_transaction.return_value': refund_tx_id,
+        })
+        refund_deposit(deposit, only_extra=True)
+
+        deposit.refresh_from_db()
+        self.assertEqual(deposit.refund_coin_amount, Decimal('0.004'))
+        self.assertEqual(deposit.refund_tx_id, refund_tx_id)
+        self.assertEqual(deposit.status, 'received')
+        self.assertEqual(deposit.balancechange_set.count(), 3)
+        tx_outputs = create_tx_mock.call_args[0][1]
+        self.assertEqual(len(tx_outputs.keys()), 2)
+        self.assertEqual(tx_outputs[deposit.refund_address],
+                         Decimal('0.0035'))
+        self.assertEqual(tx_outputs[deposit.deposit_address.address],
+                         Decimal('0.011'))
 
     def test_already_notified(self):
         deposit = DepositFactory(notified=True)

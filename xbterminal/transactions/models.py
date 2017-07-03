@@ -206,7 +206,7 @@ class Deposit(Transaction):
                 })
         if self.refund_coin_amount > 0:
             # Partial refund
-            if self.refund_coin_amount > self.paid_coin_amount - self.coin_amount:
+            if self.refund_coin_amount != self.paid_coin_amount - self.coin_amount:
                 raise ValueError
             self.balancechange_set.update_or_create(
                 account=self.account,
