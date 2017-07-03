@@ -170,9 +170,7 @@ class RegistrationViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'website/registration.html')
 
-    @patch('website.forms.cryptopay.create_merchant')
-    def test_post(self, cryptopay_mock):
-        cryptopay_mock.return_value = 'merchant_id'
+    def test_post(self):
         form_data = {
             'company_name': 'Test Company 1',
             'business_address': 'Test Address',
@@ -264,10 +262,8 @@ class ActivationWizardTestCase(TestCase):
         self.assertEqual(device.account.pk, account_btc.pk)
 
     @patch('api.utils.activation.rq_helpers')
-    @patch('website.forms.cryptopay.create_merchant')
-    def test_register(self, cryptopay_mock, rq_helpers_mock):
+    def test_register(self, rq_helpers_mock):
         device = DeviceFactory.create(status='registered')
-        cryptopay_mock.return_value = 'merchant_id'
         form_data_0 = {
             'activation_wizard-current_step': '0',
             '0-activation_code': device.activation_code,
@@ -309,8 +305,6 @@ class ActivationWizardTestCase(TestCase):
         self.assertEqual(device.account.currency.name, 'BTC')
         merchant = device.merchant
         self.assertEqual(merchant.device_set.count(), 1)
-        self.assertEqual(merchant.instantfiat_merchant_id,
-                         'merchant_id')
         self.assertEqual(len(mail.outbox), 2)
         self.assertEqual(mail.outbox[0].to[0],
                          form_data_3['3-contact_email'])
