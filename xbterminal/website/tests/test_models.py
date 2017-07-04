@@ -39,8 +39,8 @@ from operations.tests.factories import (
     PaymentOrderFactory,
     WithdrawalOrderFactory)
 from operations.blockchain import validate_bitcoin_address
-from transactions.utils.compat import get_device_transactions
 from transactions.tests.factories import (
+    WithdrawalFactory,
     BalanceChangeFactory,
     NegativeBalanceChangeFactory)
 
@@ -354,16 +354,56 @@ class AccountTestCase(TestCase):
         self.assertEqual(account_3.bitcoin_network, 'mainnet')
 
     def test_balance(self):
+        account = AccountFactory()
+        self.assertEqual(account.balance, 0)
+        transactions = BalanceChangeFactory.create_batch(
+            3, deposit__account=account)
+        self.assertEqual(account.balance,
+                         sum(t.amount for t in transactions))
+
+    def test_balance_(self):
         account_1 = AccountFactory.create()
-        self.assertEqual(account_1.balance, 0)
+        self.assertEqual(account_1.balance_, 0)
         transactions = TransactionFactory.create_batch(
             3, account=account_1)
-        self.assertEqual(account_1.balance,
+        self.assertEqual(account_1.balance_,
                          sum(t.amount for t in transactions))
-        account_2 = AccountFactory.create(balance=Decimal('0.5'))
-        self.assertEqual(account_2.balance, Decimal('0.5'))
+        account_2 = AccountFactory.create(balance_=Decimal('0.5'))
+        self.assertEqual(account_2.balance_, Decimal('0.5'))
 
     def test_balance_confirmed(self):
+        account = AccountFactory()
+        # Deposit - broadcasted
+        BalanceChangeFactory(
+            deposit__account=account,
+            deposit__broadcasted=True,
+            deposit__merchant_coin_amount=Decimal('0.2'))
+        # Deposit - confirmed
+        BalanceChangeFactory(
+            deposit__account=account,
+            deposit__confirmed=True,
+            deposit__merchant_coin_amount=Decimal('0.3'))
+        # Withdrawal - new
+        withdrawal_1 = WithdrawalFactory(
+            account=account,
+            customer_coin_amount=Decimal('0.18'),
+            tx_fee_coin_amount=0)
+        NegativeBalanceChangeFactory(withdrawal=withdrawal_1)
+        NegativeBalanceChangeFactory(withdrawal=withdrawal_1,
+                                     amount=Decimal('0.03'))
+        # Withdrawal - confirmed
+        withdrawal_2 = WithdrawalFactory(
+            account=account,
+            confirmed=True,
+            customer_coin_amount=Decimal('0.06'),
+            tx_fee_coin_amount=0)
+        NegativeBalanceChangeFactory(withdrawal=withdrawal_2)
+        NegativeBalanceChangeFactory(withdrawal=withdrawal_2,
+                                     amount=Decimal('0.01'))
+        self.assertEqual(account.balance, Decimal('0.30'))
+        self.assertEqual(account.balance_confirmed, Decimal('0.07'))
+
+    def test_balance_confirmed_(self):
         account = AccountFactory.create()
         # Payment - forwarded
         TransactionFactory.create(
@@ -404,8 +444,8 @@ class AccountTestCase(TestCase):
         # Without order
         TransactionFactory.create(
             account=account, amount=Decimal('0.13'))
-        self.assertEqual(account.balance, Decimal('0.43'))
-        self.assertEqual(account.balance_confirmed, Decimal('0.20'))
+        self.assertEqual(account.balance_, Decimal('0.43'))
+        self.assertEqual(account.balance_confirmed_, Decimal('0.20'))
 
     def test_balance_min_max(self):
         account_btc = AccountFactory.create(currency__name='BTC')
@@ -428,6 +468,31 @@ class AccountTestCase(TestCase):
                          account_gbp.currency.max_payout * 3)
 
     def test_get_transactions_by_date(self):
+        account = AccountFactory()
+        now = timezone.now()
+        range_beg = (now - datetime.timedelta(days=5)).date()
+        range_end = (now - datetime.timedelta(days=4)).date()
+        tx_1 = BalanceChangeFactory(  # noqa: F841
+            deposit__account=account,
+            created_at=now - datetime.timedelta(days=6))
+        tx_2 = BalanceChangeFactory(  # noqa: F841
+            deposit__account=account,
+            created_at=now - datetime.timedelta(days=3))
+        tx_3 = BalanceChangeFactory(  # noqa: F841
+            created_at=now - datetime.timedelta(days=5))
+        tx_4 = BalanceChangeFactory(
+            deposit__account=account,
+            created_at=now - datetime.timedelta(days=5))
+        tx_5 = BalanceChangeFactory(
+            deposit__account=account,
+            created_at=now - datetime.timedelta(days=4))
+        transactions = account.get_transactions_by_date(range_beg,
+                                                        range_end)
+        self.assertEqual(transactions.count(), 2)
+        self.assertEqual(transactions[0].pk, tx_4.pk)
+        self.assertEqual(transactions[1].pk, tx_5.pk)
+
+    def test_get_transactions_by_date_(self):
         account = AccountFactory.create()
         now = timezone.now()
         range_beg = (now - datetime.timedelta(days=5)).date()
@@ -446,8 +511,8 @@ class AccountTestCase(TestCase):
         tx_2 = TransactionFactory.create(
             account=account,
             created_at=now - datetime.timedelta(days=4))
-        transactions = account.get_transactions_by_date(range_beg,
-                                                        range_end)
+        transactions = account.get_transactions_by_date_(range_beg,
+                                                         range_end)
         self.assertEqual(transactions.count(), 2)
         self.assertEqual(transactions[0].pk, tx_1.pk)
         self.assertEqual(transactions[1].pk, tx_2.pk)
@@ -651,6 +716,24 @@ class DeviceTestCase(TestCase):
         self.assertEqual(device_3.bitcoin_network, 'testnet')
 
     def test_get_transactions(self):
+        device = DeviceFactory()
+        BalanceChangeFactory(
+            deposit__account=device.account,
+            deposit__device=device,
+            amount=Decimal('0.2'))
+        NegativeBalanceChangeFactory(
+            withdrawal__account=device.account,
+            withdrawal__device=device,
+            amount=Decimal('-0.1'))
+        BalanceChangeFactory(
+            deposit__account=device.account,
+            deposit__device=None,
+            amount=Decimal('0.5'))
+        transactions = device.get_transactions()
+        self.assertEqual(transactions[0].amount, Decimal('0.2'))
+        self.assertEqual(transactions[1].amount, Decimal('-0.1'))
+
+    def test_get_transactions_(self):
         device = DeviceFactory.create()
         TransactionFactory.create(
             payment=PaymentOrderFactory.create(device=device),
@@ -666,29 +749,42 @@ class DeviceTestCase(TestCase):
                 account=device.account),
             account=device.account,
             amount=Decimal('0.5'))
-        transactions = device.get_transactions()
-        self.assertEqual(transactions[0].amount, Decimal('0.2'))
-        self.assertEqual(transactions[1].amount, Decimal('-0.1'))
-
-    def test_get_transactions_new_wallet(self):
-        device = DeviceFactory()
-        BalanceChangeFactory(
-            deposit__account=device.account,
-            deposit__device=device,
-            amount=Decimal('0.2'))
-        NegativeBalanceChangeFactory(
-            withdrawal__account=device.account,
-            withdrawal__device=device,
-            amount=Decimal('-0.1'))
-        BalanceChangeFactory(
-            deposit__account=device.account,
-            deposit__device=None,
-            amount=Decimal('0.5'))
-        transactions = get_device_transactions(device)
+        transactions = device.get_transactions_()
         self.assertEqual(transactions[0].amount, Decimal('0.2'))
         self.assertEqual(transactions[1].amount, Decimal('-0.1'))
 
     def test_get_transactions_by_date(self):
+        device = DeviceFactory.create()
+        now = timezone.now()
+        date_1 = (now - datetime.timedelta(days=5)).date()
+        date_2 = (now - datetime.timedelta(days=3)).date()
+        tx_1 = BalanceChangeFactory(  # noqa: F841
+            deposit__account=device.account,
+            deposit__device=device,
+            created_at=now - datetime.timedelta(days=6))
+        tx_2 = BalanceChangeFactory(  # noqa: F841
+            deposit__account=device.account,
+            deposit__device=device,
+            created_at=now - datetime.timedelta(days=2))
+        tx_3 = BalanceChangeFactory(
+            deposit__account=device.account,
+            deposit__device=device,
+            created_at=now - datetime.timedelta(days=5))
+        tx_4 = BalanceChangeFactory(
+            deposit__account=device.account,
+            deposit__device=device,
+            created_at=now - datetime.timedelta(days=4))
+        tx_5 = NegativeBalanceChangeFactory(
+            withdrawal__account=device.account,
+            withdrawal__device=device,
+            created_at=now - datetime.timedelta(days=3))
+        transactions = device.get_transactions_by_date(date_1, date_2)
+        self.assertEqual(transactions.count(), 3)
+        self.assertEqual(transactions[0].pk, tx_3.pk)
+        self.assertEqual(transactions[1].pk, tx_4.pk)
+        self.assertEqual(transactions[2].pk, tx_5.pk)
+
+    def test_get_transactions_by_date_(self):
         device = DeviceFactory.create()
         now = timezone.now()
         date_1 = (now - datetime.timedelta(days=5)).date()
@@ -709,7 +805,7 @@ class DeviceTestCase(TestCase):
             payment=PaymentOrderFactory.create(device=device),
             account=device.account,
             created_at=now - datetime.timedelta(days=4))
-        transactions = device.get_transactions_by_date(date_1, date_2)
+        transactions = device.get_transactions_by_date_(date_1, date_2)
         self.assertEqual(transactions.count(), 2)
         self.assertEqual(transactions[0].pk, tx_1.pk)
         self.assertEqual(transactions[1].pk, tx_2.pk)

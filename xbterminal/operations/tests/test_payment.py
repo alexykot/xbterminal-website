@@ -993,7 +993,7 @@ class ForwardTransactionTestCase(TestCase):
         expected_final_amount = Decimal('11.88')
         self.assertEqual(account_tx.amount, expected_final_amount)
         self.assertIsNotNone(order.time_forwarded)
-        self.assertEqual(order.device.account.balance,
+        self.assertEqual(order.device.account.balance_,
                          expected_final_amount)
 
     @patch('operations.payment.blockchain.BlockChain')
@@ -1078,7 +1078,7 @@ class ForwardTransactionTestCase(TestCase):
         address_obj = btc_account.address_set.first()
         self.assertIsNotNone(address_obj)
         self.assertEqual(address_obj.address, account_address)
-        self.assertEqual(btc_account.balance,
+        self.assertEqual(btc_account.balance_,
                          payment_order.merchant_btc_amount)
 
     @patch('operations.payment.blockchain.BlockChain')
@@ -1123,7 +1123,7 @@ class ForwardTransactionTestCase(TestCase):
         self.assertEqual(order.transaction_set.count(), 1)
         account.refresh_from_db()
         self.assertEqual(account.address_set.count(), 3)
-        self.assertEqual(account.balance, order.merchant_btc_amount)
+        self.assertEqual(account.balance_, order.merchant_btc_amount)
 
 
 class WaitForConfirmationTestCase(TestCase):

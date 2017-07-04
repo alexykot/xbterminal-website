@@ -29,6 +29,7 @@ from website.tests.factories import (
 from operations.tests.factories import (
     PaymentOrderFactory,
     WithdrawalOrderFactory)
+from transactions.tests.factories import BalanceChangeFactory
 
 
 class AccountsUtilsTestCase(TestCase):
@@ -85,7 +86,7 @@ class AccountsUtilsTestCase(TestCase):
             account=account,
             instantfiat_tx_id='115',
             amount=Decimal('1.15'))
-        self.assertEqual(account.balance, Decimal('1.35'))
+        self.assertEqual(account.balance_, Decimal('1.35'))
         list_mock.return_value = [
             {'id': 110, 'amount': 0.55, 'type': 'Invoice',
              'description': 'Order 00bb555b-3ebc-4476-8aa8-214e28aa6c03'},
@@ -101,7 +102,7 @@ class AccountsUtilsTestCase(TestCase):
         self.assertEqual(list_mock.call_args[0][0], 'test-id')
         self.assertEqual(list_mock.call_args[0][1], 'test-key')
         self.assertEqual(account.transaction_set.count(), 5)
-        self.assertEqual(account.balance, Decimal('1.15'))
+        self.assertEqual(account.balance_, Decimal('1.15'))
         payment_tx.refresh_from_db()
         self.assertEqual(payment_tx.instantfiat_tx_id, '110')
         withdrawal_tx.refresh_from_db()
@@ -342,7 +343,7 @@ class FileUtilsTestCase(TestCase):
 class ReportUtilsTestCase(TestCase):
 
     def test_get_report_csv(self):
-        transactions = TransactionFactory.create_batch(3)
+        transactions = BalanceChangeFactory.create_batch(3)
         report = get_report_csv(transactions)
         report.seek(0)
         rows = list(unicodecsv.reader(report, encoding='utf-8'))

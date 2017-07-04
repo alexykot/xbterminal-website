@@ -3,8 +3,7 @@ import re
 from rest_framework import serializers
 
 from api.utils.salt import Salt
-from operations.models import PaymentOrder, WithdrawalOrder
-from transactions.models import Deposit
+from transactions.models import Deposit, Withdrawal
 from website.models import (
     Language,
     Currency,
@@ -62,28 +61,6 @@ class PaymentInitSerializer(serializers.Serializer):
         return data
 
 
-class PaymentOrderSerializer(serializers.ModelSerializer):
-
-    btc_amount = serializers.DecimalField(
-        max_digits=18,
-        decimal_places=8)
-    exchange_rate = serializers.DecimalField(
-        max_digits=18,
-        decimal_places=8,
-        source='effective_exchange_rate')
-
-    class Meta:
-        model = PaymentOrder
-        fields = [
-            'uid',
-            'fiat_amount',
-            'btc_amount',
-            'paid_btc_amount',
-            'exchange_rate',
-            'status',
-        ]
-
-
 class DepositSerializer(serializers.ModelSerializer):
 
     fiat_amount = serializers.DecimalField(
@@ -131,18 +108,27 @@ class WithdrawalInitSerializer(serializers.Serializer):
             raise serializers.ValidationError('Invalid device key.')
 
 
-class WithdrawalOrderSerializer(serializers.ModelSerializer):
+class WithdrawalSerializer(serializers.ModelSerializer):
 
+    fiat_amount = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        source='amount')
     btc_amount = serializers.DecimalField(
         max_digits=18,
-        decimal_places=8)
+        decimal_places=8,
+        source='coin_amount')
+    tx_fee_btc_amount = serializers.DecimalField(
+        max_digits=18,
+        decimal_places=8,
+        source='tx_fee_coin_amount')
     exchange_rate = serializers.DecimalField(
         max_digits=18,
         decimal_places=8,
         source='effective_exchange_rate')
 
     class Meta:
-        model = WithdrawalOrder
+        model = Withdrawal
         fields = [
             'uid',
             'fiat_amount',

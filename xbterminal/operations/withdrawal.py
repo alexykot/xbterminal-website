@@ -137,7 +137,7 @@ def prepare_withdrawal(device_or_account, fiat_amount):
     else:
         # Check confirmed balance of instantfiat account
         # TODO: improve calculation of balance_confirmed
-        if account.balance_confirmed < order.fiat_amount:
+        if account.balance_confirmed_ < order.fiat_amount:
             logger.error(
                 'Withdrawal error - insufficient funds',
                 extra={'data': {

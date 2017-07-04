@@ -3,13 +3,12 @@ import json
 
 from django.core.urlresolvers import reverse
 from django.test import TestCase
-from django.utils import timezone
+
 from mock import patch, Mock
 from rest_framework import status
 
 from operations import exceptions
-from operations.models import PaymentOrder
-from operations.tests.factories import PaymentOrderFactory
+from transactions.tests.factories import DepositFactory
 from website.models import Device
 from website.tests.factories import (
     MerchantAccountFactory,
@@ -99,18 +98,17 @@ class PaymentInitViewTestCase(TestCase):
     def setUp(self):
         self.url = reverse('api:payment_init')
 
-    @patch('api.views_v1.operations.payment.prepare_payment')
+    @patch('api.views_v1.prepare_deposit')
     def test_payment_website(self, prepare_mock):
         device = DeviceFactory.create()
         fiat_amount = 10
         btc_amount = 0.05
         exchange_rate = 200
-        payment_order = PaymentOrderFactory.create(
+        prepare_mock.return_value = deposit = DepositFactory(
             device=device,
-            fiat_amount=Decimal(fiat_amount),
-            merchant_btc_amount=Decimal('0.0499'),
-            tx_fee_btc_amount=Decimal('0.0001'))
-        prepare_mock.return_value = payment_order
+            amount=Decimal(fiat_amount),
+            merchant_coin_amount=Decimal('0.0499'),
+            fee_coin_amount=Decimal('0.0001'))
 
         form_data = {
             'device_key': device.key,
@@ -125,21 +123,21 @@ class PaymentInitViewTestCase(TestCase):
         self.assertEqual(data['exchange_rate'], exchange_rate)
         self.assertIn('check_url', data)
         self.assertIn('payment_uri', data)
+        self.assertEqual(data['payment_uid'], deposit.uid)
         self.assertIn('qr_code_src', data)
 
-    @patch('api.views_v1.operations.payment.prepare_payment')
+    @patch('api.views_v1.prepare_deposit')
     def test_payment_terminal(self, prepare_mock):
         device = DeviceFactory.create(long_key=True)
         fiat_amount = 10
         btc_amount = 0.05
         exchange_rate = 200
         bluetooth_mac = '12:34:56:78:9A:BC'
-        payment_order = PaymentOrderFactory.create(
+        prepare_mock.return_value = deposit = DepositFactory(
             device=device,
-            fiat_amount=Decimal(fiat_amount),
-            merchant_btc_amount=Decimal('0.0499'),
-            tx_fee_btc_amount=Decimal('0.0001'))
-        prepare_mock.return_value = payment_order
+            amount=Decimal(fiat_amount),
+            merchant_coin_amount=Decimal('0.0499'),
+            fee_coin_amount=Decimal('0.0001'))
 
         form_data = {
             'device_key': device.key,
@@ -154,7 +152,7 @@ class PaymentInitViewTestCase(TestCase):
         self.assertEqual(data['exchange_rate'], exchange_rate)
         self.assertIn('check_url', data)
         self.assertIn('payment_uri', data)
-        self.assertEqual(data['payment_uid'], payment_order.uid)
+        self.assertEqual(data['payment_uid'], deposit.uid)
         self.assertIn('payment_request', data)
         self.assertIn('qr_code_src', data)
 
@@ -186,7 +184,7 @@ class PaymentInitViewTestCase(TestCase):
         response = self.client.post(self.url, form_data)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    @patch('api.views_v1.operations.payment.prepare_payment')
+    @patch('api.views_v1.prepare_deposit')
     def test_payment_error(self, prepare_mock):
         prepare_mock.side_effect = exceptions.PaymentError
         device = DeviceFactory.create(long_key=True)
@@ -205,12 +203,12 @@ class PaymentInitViewTestCase(TestCase):
 
 class PaymentRequestViewTestCase(TestCase):
 
-    @patch('operations.models.create_payment_request')
+    @patch('transactions.models.create_payment_request')
     def test_payment_request(self, create_mock):
         create_mock.return_value = data = '009A8B'.decode('hex')
-        payment_order = PaymentOrderFactory.create()
+        deposit = DepositFactory()
         url = reverse('api:payment_request',
-                      kwargs={'payment_uid': payment_order.uid})
+                      kwargs={'uid': deposit.uid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'],
@@ -221,14 +219,14 @@ class PaymentRequestViewTestCase(TestCase):
 class PaymentResponseViewTestCase(TestCase):
 
     def setUp(self):
-        self.payment_order = PaymentOrderFactory.create()
+        self.deposit = DepositFactory()
         self.url = reverse(
             'api:payment_response',
-            kwargs={'payment_uid': self.payment_order.uid})
+            kwargs={'uid': self.deposit.uid})
 
-    @patch('api.views_v1.operations.payment.parse_payment')
-    def test_payment_response(self, parse_mock):
-        parse_mock.return_value = 'test'
+    @patch('api.views_v1.handle_bip70_payment')
+    def test_payment_response(self, handle_mock):
+        handle_mock.return_value = 'test'
         data = '009A8B'.decode('hex')
         response = self.client.post(
             self.url, data,
@@ -237,7 +235,7 @@ class PaymentResponseViewTestCase(TestCase):
         self.assertEqual(response['Content-Type'],
                          'application/bitcoin-paymentack')
         self.assertEqual(response.content, 'test')
-        self.assertTrue(parse_mock.called)
+        self.assertIs(handle_mock.called, True)
 
     def test_invalid_headers(self):
         data = '009A8B'.decode('hex')
@@ -250,50 +248,47 @@ class PaymentResponseViewTestCase(TestCase):
 class PaymentCheckViewTestCase(TestCase):
 
     def test_payment_not_notified(self):
-        payment_order = PaymentOrderFactory.create()
+        deposit = DepositFactory()
         url = reverse('api:payment_check',
-                      kwargs={'payment_uid': payment_order.uid})
+                      kwargs={'uid': deposit.uid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
         self.assertEqual(data['paid'], 0)
 
     def test_payment_notified(self):
-        payment_order = PaymentOrderFactory.create(
-            time_forwarded=timezone.now())
-        self.assertIsNone(payment_order.time_notified)
+        deposit = DepositFactory(broadcasted=True)
+        self.assertIsNone(deposit.time_notified)
         url = reverse('api:payment_check',
-                      kwargs={'payment_uid': payment_order.uid})
+                      kwargs={'uid': deposit.uid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
         self.assertEqual(data['paid'], 1)
         self.assertIn('receipt_url', data)
         self.assertIn('qr_code_src', data)
-        payment_order = PaymentOrder.objects.get(uid=payment_order.uid)
-        self.assertIsNotNone(payment_order.time_notified)
+        deposit.refresh_from_db()
+        self.assertIsNotNone(deposit.time_notified)
 
 
 class ReceiptViewTestCase(TestCase):
 
     @patch('api.utils.pdf.get_template')
     def test_payment_order(self, get_template_mock):
-        template_mock = Mock(**{
+        get_template_mock.return_value = template_mock = Mock(**{
             'render.return_value': 'test',
         })
-        get_template_mock.return_value = template_mock
-        payment_order = PaymentOrderFactory.create(
-            time_notified=timezone.now())
+        deposit = DepositFactory(notified=True)
         url = reverse('api:receipt',
-                      kwargs={'order_uid': payment_order.uid})
+                      kwargs={'uid': deposit.uid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pdf')
         self.assertTrue(template_mock.render.called)
 
     def test_payment_not_notified(self):
-        payment_order = PaymentOrderFactory.create()
+        deposit = DepositFactory()
         url = reverse('api:receipt',
-                      kwargs={'order_uid': payment_order.uid})
+                      kwargs={'uid': deposit.uid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)

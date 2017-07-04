@@ -22,7 +22,7 @@ def withdraw_btc(account_id, destination_address):
         account = Account.objects.get(pk=account_id)
     except Account.DoesNotExist:
         return 'invalid account id'
-    if account.address_set.count() == 0 or account.balance == 0:
+    if account.address_set.count() == 0 or account.balance_ == 0:
         return 'nothing to withdraw'
     if blockchain.validate_bitcoin_address(destination_address,
                                            account.bitcoin_network):
@@ -37,7 +37,7 @@ def withdraw_btc(account_id, destination_address):
     if not amount:
         return 'nothing to withdraw'
     account.transaction_set.create(amount=-amount)
-    if account.balance != 0:
+    if account.balance_ != 0:
         return 'invalid balance'
     amount -= bc.get_tx_fee(len(tx_inputs), 1)
     tx_outputs = {destination_address: amount}

@@ -2,6 +2,7 @@ import logging
 
 from django.core.management.base import BaseCommand
 from django.db.transaction import atomic
+from django.utils import timezone
 
 from common.rq_helpers import run_periodic_task
 from transactions.constants import BTC_DEC_PLACES, BTC_MIN_OUTPUT
@@ -73,7 +74,8 @@ def migrate_wallet(currency_name, fee_address, is_test):
             coin_type=coin_type,
             deposit_address=deposit_address,
             merchant_coin_amount=account_amount,
-            fee_coin_amount=BTC_DEC_PLACES)
+            fee_coin_amount=BTC_DEC_PLACES,
+            time_notified=timezone.now())
         deposits.append(deposit)
     # Create transaction
     yield '-----'

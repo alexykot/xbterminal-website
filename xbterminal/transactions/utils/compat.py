@@ -92,6 +92,9 @@ def get_account_transactions(account):
 
 def get_device_transactions(device):
     BalanceChange = apps.get_model('transactions', 'BalanceChange')
-    return BalanceChange.objects.filter(
-        Q(deposit__device=device) |
-        Q(withdrawal__device=device)).order_by('created_at')
+    return BalanceChange.objects.\
+        filter(account__isnull=False).\
+        filter(
+            Q(deposit__device=device) |
+            Q(withdrawal__device=device)).\
+        order_by('created_at')

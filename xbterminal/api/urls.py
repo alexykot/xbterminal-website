@@ -18,34 +18,29 @@ api_v1_urls = [
     url(r'^payments/init/?$',
         views_v1.PaymentInitView.as_view(),
         name='payment_init'),
-    url(r'^payments/(?P<payment_uid>[0-9a-zA-Z]{6,32})/request/?$',
+    url(r'^payments/(?P<uid>[0-9a-zA-Z]{6,32})/request/?$',
         views_v1.PaymentRequestView.as_view(),
         name='payment_request'),
-    url(r'^payments/(?P<payment_uid>[0-9a-zA-Z]{6,32})/response/?$',
+    url(r'^payments/(?P<uid>[0-9a-zA-Z]{6,32})/response/?$',
         views_v1.PaymentResponseView.as_view(),
         name='payment_response'),
-    url(r'^payments/(?P<payment_uid>[0-9a-zA-Z]{6,32})/check/?$',
+    url(r'^payments/(?P<uid>[0-9a-zA-Z]{6,32})/check/?$',
         views_v1.PaymentCheckView.as_view(),
         name='payment_check'),
 
-    url(r'^receipts/(?P<order_uid>[0-9a-zA-Z]{6,32})/?$',
+    url(r'^receipts/(?P<uid>[0-9a-zA-Z]{6,32})/?$',
         views_v1.ReceiptView.as_view(),
         name='receipt'),
 ]
 
 short_urls = [
-    url(r'^pr/(?P<payment_uid>[0-9a-zA-Z]{6,32})/?$',
+    url(r'^pr/(?P<uid>[0-9a-zA-Z]{6,32})/?$',
         views_v1.PaymentRequestView.as_view(),
         name='payment_request'),
-    url(r'^rc/(?P<order_uid>[0-9a-zA-Z]{6,32})/?$',
+    url(r'^rc/(?P<uid>[0-9a-zA-Z]{6,32})/?$',
         views_v1.ReceiptView.as_view(),
         name='receipt'),
     url(r'^prc/(?P<uid>[0-9a-zA-Z]{6})/?$',
-        views_v2.PaymentViewSet.as_view(
-            actions={'get': 'receipt'},
-            renderer_classes=[renderers.PDFRenderer]),
-        name='payment-receipt'),
-    url(r'^drc/(?P<uid>[0-9a-zA-Z]{6})/?$',
         views_v2.DepositViewSet.as_view(
             actions={'get': 'receipt'},
             renderer_classes=[renderers.PDFRenderer]),
@@ -59,9 +54,6 @@ short_urls = [
 
 api_v2_router = routers.DefaultRouter()
 api_v2_router.register('payments',
-                       views_v2.PaymentViewSet,
-                       base_name='payment')
-api_v2_router.register('deposits',
                        views_v2.DepositViewSet,
                        base_name='deposit')
 api_v2_router.register('withdrawals',

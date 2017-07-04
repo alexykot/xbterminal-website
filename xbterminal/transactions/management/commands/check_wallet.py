@@ -26,17 +26,27 @@ class Command(BaseCommand):
 
 
 def check_wallet(currency_name):
+    # For compatibility with old setups
+    if currency_name == 'mainnet':
+        currency_name = 'BTC'
+    elif currency_name == 'testnet':
+        currency_name = 'TBTC'
+
     coin_type = get_coin_type(currency_name)
     bitcoin_network = get_bitcoin_network(coin_type)
     bc = BlockChain(bitcoin_network)
     wallet_value = Decimal(0)
     db_value = Decimal(0)
+    pool_size = 0
     for account in Account.objects.filter(currency__name=currency_name):
         db_value += get_account_balance(account, include_offchain=False)
     db_value += get_fee_account_balance(coin_type, include_offchain=False)
     for address in Address.objects.filter(
             wallet_account__parent_key__coin_type=coin_type):
-        wallet_value += bc.get_address_balance(address.address)
+        address_balance = bc.get_address_balance(address.address)
+        if address_balance > 0:
+            wallet_value += address_balance
+            pool_size += 1
     if wallet_value != db_value:
         logger.critical(
             'balance mismatch on %s wallet (%s != %s)',
@@ -45,3 +55,4 @@ def check_wallet(currency_name):
         logger.info(
             'balance OK on %s wallet (%s total)',
             currency_name, wallet_value)
+    logger.info('address pool size %s', pool_size)

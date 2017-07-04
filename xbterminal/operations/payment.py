@@ -127,7 +127,7 @@ def prepare_payment(device_or_account, fiat_amount):
         order.merchant_btc_amount = BTC_MIN_OUTPUT
     # TX fee
     if not account.instantfiat and \
-            account.balance + order.merchant_btc_amount <= account.balance_max:
+            account.balance_ + order.merchant_btc_amount <= account.balance_max:
         # Output will be splitted, adjust fee
         n_outputs = 2 + len(blockchain.split_amount(
             order.merchant_btc_amount,
@@ -409,7 +409,7 @@ def forward_transaction(payment_order):
         create_account_txs(payment_order)
     else:
         assert not payment_order.instantfiat_btc_amount
-        if account.balance + payment_order.merchant_btc_amount <= \
+        if account.balance_ + payment_order.merchant_btc_amount <= \
                 account.balance_max or not payment_order.merchant_address:
             # Store bitcoins on merchant's internal account
             splitted = blockchain.split_amount(

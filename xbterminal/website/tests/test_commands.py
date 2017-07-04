@@ -11,7 +11,7 @@ from website.tests.factories import (
     MerchantAccountFactory,
     AccountFactory,
     AddressFactory)
-from website.management.commands.check_wallet import \
+from website.management.commands.check_wallet_ import \
     check_wallet, check_wallet_strict
 from website.management.commands.withdraw_btc import withdraw_btc
 from website.management.commands.cryptopay_sync import cryptopay_sync
@@ -22,14 +22,14 @@ from wallet.tests.factories import WalletKeyFactory
 
 class CheckWalletTestCase(TestCase):
 
-    @patch('website.management.commands.check_wallet.BlockChain')
-    @patch('website.management.commands.check_wallet.logger')
+    @patch('website.management.commands.check_wallet_.BlockChain')
+    @patch('website.management.commands.check_wallet_.logger')
     def test_check_ok(self, logger_mock, bc_cls_mock):
         account_1 = AccountFactory.create(
-            currency__name='BTC', balance=Decimal('0.2'))
+            currency__name='BTC', balance_=Decimal('0.2'))
         AddressFactory.create(account=account_1)
         account_2 = AccountFactory.create(
-            currency__name='BTC', balance=Decimal('0.2'))
+            currency__name='BTC', balance_=Decimal('0.2'))
         AddressFactory.create(account=account_2)
         bc_cls_mock.return_value = bc_mock = Mock(**{
             'get_balance.return_value': Decimal('0.4'),
@@ -42,11 +42,11 @@ class CheckWalletTestCase(TestCase):
         self.assertIs(logger_mock.critical.called, False)
         self.assertIs(logger_mock.info.called, True)
 
-    @patch('website.management.commands.check_wallet.BlockChain')
-    @patch('website.management.commands.check_wallet.logger')
+    @patch('website.management.commands.check_wallet_.BlockChain')
+    @patch('website.management.commands.check_wallet_.logger')
     def test_check_mismatch(self, logger_mock, bc_cls_mock):
         account = AccountFactory.create(
-            currency__name='BTC', balance=Decimal('0.2'))
+            currency__name='BTC', balance_=Decimal('0.2'))
         address = AddressFactory.create(account=account)
         bc_cls_mock.return_value = bc_mock = Mock(**{
             'get_address_balance.return_value': Decimal('0.3'),
@@ -56,11 +56,11 @@ class CheckWalletTestCase(TestCase):
                          address.address)
         self.assertIs(logger_mock.critical.called, True)
 
-    @patch('website.management.commands.check_wallet.BlockChain')
-    @patch('website.management.commands.check_wallet.logger')
+    @patch('website.management.commands.check_wallet_.BlockChain')
+    @patch('website.management.commands.check_wallet_.logger')
     def test_strict_check_mismatch(self, logger_mock, bc_cls_mock):
         AccountFactory.create_batch(
-            2, currency__name='BTC', balance=Decimal('0.2'))
+            2, currency__name='BTC', balance_=Decimal('0.2'))
         bc_cls_mock.return_value = Mock(**{
             'get_balance.return_value': Decimal('0.5'),
         })
@@ -74,8 +74,7 @@ class WithdrawBTCTestCase(TestCase):
     def test_command(self, bc_cls_mock):
         account = AccountFactory.create(
             currency__name='BTC',
-            balance=Decimal('0.2'),
-            balance_max=Decimal('0.5'))
+            balance_=Decimal('0.2'))
         address = AddressFactory.create(account=account)
         bc_cls_mock.return_value = bc_mock = Mock(**{
             'get_unspent_outputs.return_value': [
@@ -170,6 +169,7 @@ class MigrateWalletTestCase(TestCase):
         deposit = account.deposit_set.get()
         self.assertEqual(deposit.merchant_coin_amount, Decimal('0.2'))
         self.assertEqual(deposit.fee_coin_amount, 0)
+        self.assertIsNotNone(deposit.time_notified)
         self.assertEqual(bc_mock.get_tx_fee.call_args[0], (2, 2))
         tx_inputs = bc_mock.create_raw_transaction.call_args[0][0]
         self.assertEqual(len(tx_inputs), 2)

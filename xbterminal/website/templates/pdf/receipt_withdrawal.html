@@ -1,0 +1,73 @@
+{% extends 'pdf/receipt_base.html' %}
+{% load i18n website_tags %}
+
+{% block content %}
+<div class="title">
+    {% trans 'Withdrawal Receipt' %} - #{{ withdrawal.id }}
+</div>
+<table>
+    <tr>
+        <td style="width: 400px;" class="col1">{% trans 'Amount' %}</td>
+        <td class="col2">{{ withdrawal.merchant.currency.prefix }}{{ withdrawal.amount|floatformat:2 }}{{ withdrawal.merchant.currency.postfix }}</td>
+    </tr>
+    <tr>
+        <td class="col1">
+            {% trans 'Bitcoin amount withdrawn' %}
+        </td>
+        <td class="col2 btc-amount">m<span class="btc-symbol">&#xf15a;</span> {{ withdrawal.coin_amount|scale|floatformat:5 }}</td>
+    </tr>
+    <tr>
+        <td class="col1">{% trans 'Network fee' %}</td>
+        <td class="col2 btc-amount">m<span class="btc-symbol">&#xf15a;</span> {{ withdrawal.tx_fee_coin_amount|scale|floatformat:5 }}</td>
+    </tr>
+    <tr>
+        <td class="col1">{% trans 'Effective exchange rate' %}</td>
+        <td class="col2">{{ withdrawal.merchant.currency.prefix }}{{ withdrawal.effective_exchange_rate|unscale|floatformat:4 }}{{ withdrawal.merchant.currency.postfix }}</td>
+    </tr>
+    <tr></tr>
+    <tr>
+        <td class="col1">{% trans 'Destination address' %}</td>
+        <td class="col2">
+            <a class="external-link" href="{% btc_address_url withdrawal.customer_address withdrawal.bitcoin_network %}">
+                {{ withdrawal.customer_address }}
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <td class="col1">{% trans 'Bitcoin transaction ID' %}</td>
+        <td class="col2">
+            <a class="external-link" href="{% btc_tx_url withdrawal.outgoing_tx_id withdrawal.bitcoin_network %}">
+                {{ withdrawal.outgoing_tx_id }}
+            </a>
+        </td>
+    </tr>
+    <tr></tr>
+    <tr>
+        <td class="col1">{% trans 'Merchant name' %}</td>
+        <td class="col2">{{ withdrawal.merchant.company_name }}</td>
+    </tr>
+    <tr>
+        <td class="col1">{% trans 'Merchant address' %}</td>
+        <td class="col2">{{ withdrawal.merchant.billing_address|join:', ' }}</td>
+    </tr>
+    <tr>
+        <td class="col1">{% trans 'Receipt number' %}</td>
+        <td class="col2">{{ withdrawal.id }}</td>
+    </tr>
+    <tr>
+        <td class="col1">{% trans 'Transaction time' %}</td>
+        <td class="col2">
+            {% language 'en' %}
+            {{ withdrawal.time_notified|date:'d M Y, h:i A' }}
+            {% endlanguage %}
+        </td>
+    </tr>
+</table>
+<div id="qrcode-text">
+    <div><a href="{{ withdrawal.receipt_url }}">{{ withdrawal.receipt_url }}</a></div>
+    <div>{% trans 'View this receipt online by visiting the link above, or by scanning the QR code adjacent.' %}</div>
+</div>
+<div id="qrcode">
+    {% qr_from_text withdrawal.receipt_url 4 %}
+</div>
+{% endblock %}
