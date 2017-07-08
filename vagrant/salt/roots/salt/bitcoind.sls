@@ -4,8 +4,7 @@ bitcoin_ppa:
     - refresh_db: true
 
 bitcoind_package:
-  pkg:
-    - installed
+  pkg.latest:
     - name: bitcoind
     - require:
       - pkgrepo: bitcoin_ppa
@@ -64,3 +63,5 @@ bitcoind_service:
       - pkg: bitcoind_package
       - file: /lib/systemd/system/bitcoind.service
       - file: /etc/bitcoin/bitcoin.conf
+    - watch:
+      - pkg: bitcoind_package
