@@ -23,6 +23,8 @@ Vagrant.configure("2") do |config|
     vb.cpus = settings['vm']['cpus']
   end
 
+  config.disksize.size = settings['vm']['disk']
+
   config.vm.provision "fix-no-tty", type: "shell" do |sh|
     sh.privileged = false
     sh.inline = "sudo sed -i '/tty/!s/mesg n/tty -s \\&\\& mesg n/' /root/.profile"
