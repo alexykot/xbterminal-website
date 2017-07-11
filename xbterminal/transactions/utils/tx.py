@@ -7,6 +7,9 @@ from pycoin.tx.TxOut import TxOut
 from pycoin.tx.pay_to import build_hash160_lookup
 from pycoin.ui import standard_tx_out_script
 
+from transactions.constants import BTC_MIN_OUTPUT
+from transactions.exceptions import DustOutput
+
 
 def create_tx(tx_inputs, tx_outputs):
     """
@@ -29,6 +32,8 @@ def create_tx(tx_inputs, tx_outputs):
     txs_in = [spendable.tx_in() for spendable in spendables]
     txs_out = []
     for address, amount in tx_outputs.items():
+        if amount < BTC_MIN_OUTPUT:
+            raise DustOutput
         script = standard_tx_out_script(address)
         out = TxOut(int(amount * COIN), script)
         txs_out.append(out)

@@ -14,6 +14,7 @@ from transactions.constants import (
     DEPOSIT_CONFIDENCE_TIMEOUT,
     DEPOSIT_CONFIRMATION_TIMEOUT,
     PAYMENT_TYPES)
+from transactions.exceptions import DustOutput
 from transactions.models import Deposit
 from transactions.utils.compat import get_coin_type
 from transactions.utils.tx import create_tx_
@@ -239,6 +240,7 @@ def wait_for_confidence(deposit_id):
             # Break cycle, wait for confidence
             break
     else:
+        # Update deposit status
         cancel_current_task()
         with atomic():
             deposit.refresh_from_db()
@@ -247,6 +249,12 @@ def wait_for_confidence(deposit_id):
                 return
             deposit.time_broadcasted = timezone.now()
             deposit.save()
+        if deposit.paid_coin_amount > deposit.coin_amount:
+            # Return extra coins to customer
+            try:
+                refund_deposit(deposit, only_extra=True)
+            except RefundError as error:
+                logger.exception(error)
         run_periodic_task(wait_for_confirmation, [deposit.pk], interval=30)
         logger.info('payment confidence reached (%s)', deposit.pk)
 
@@ -287,36 +295,46 @@ def wait_for_confirmation(deposit_id):
         logger.info('payment confirmed (%s)', deposit.pk)
 
 
-def refund_deposit(deposit):
+def refund_deposit(deposit, only_extra=False):
     """
     Send all money back to customer
     Accepts:
         deposit: Deposit instance
+        only_extra: return only extra coins to customer, boolean
+            return full amount by default
     """
-    if deposit.time_notified is not None:
+    if not only_extra and deposit.time_notified is not None:
         raise RefundError('User already notified')
-    if deposit.time_refunded is not None:
+    if deposit.refund_tx_id is not None:
         raise RefundError('Deposit already refunded')
     if not deposit.refund_address:
         raise RefundError('No refund address')
     bc = BlockChain(deposit.bitcoin_network)
     private_key = deposit.deposit_address.get_private_key()
     tx_inputs = []
-    amount = BTC_DEC_PLACES
+    tx_amount = BTC_DEC_PLACES
     for output in bc.get_raw_unspent_outputs(deposit.deposit_address.address):
         tx_inputs.append(dict(output, private_key=private_key))
-        amount += output['amount']
-    if amount == 0:
+        tx_amount += output['amount']
+    if tx_amount == 0:
         raise RefundError('Nothing to refund')
-    amount -= bc.get_tx_fee(1, 1)
-    if amount < BTC_MIN_OUTPUT:
+    if only_extra:
+        # Send back to customer only extra amount
+        tx_amount -= deposit.coin_amount
+    tx_fee = bc.get_tx_fee(len(tx_inputs), 2)
+    tx_outputs = {}
+    tx_outputs[deposit.refund_address] = tx_amount - tx_fee
+    if only_extra:
+        # Send change to deposit address
+        tx_outputs[deposit.deposit_address.address] = deposit.coin_amount
+    try:
+        refund_tx = create_tx_(tx_inputs, tx_outputs)
+    except DustOutput:
         raise RefundError('Output is below dust threshold')
-    tx_outputs = {deposit.refund_address: amount}
-    refund_tx = create_tx_(tx_inputs, tx_outputs)
     deposit.refund_tx_id = bc.send_raw_transaction(refund_tx)
-    deposit.time_refunded = timezone.now()
+    deposit.refund_coin_amount = tx_amount
     deposit.save()
-    deposit.balancechange_set.all().delete()
+    deposit.create_balance_changes()
     logger.warning(
         'payment refunded (%s)',
         deposit.pk,
@@ -358,5 +376,5 @@ def check_deposit_status(deposit_id):
                 'deposit_admin_url': get_admin_url(deposit),
             }})
         cancel_current_task()
-    elif deposit.status in ['refunded', 'confirmed']:
+    elif deposit.status == 'confirmed':
         cancel_current_task()

@@ -37,6 +37,7 @@ class DepositTestCase(TestCase):
         self.assertIsNotNone(deposit.uid)
         self.assertEqual(len(deposit.uid), 6)
         self.assertEqual(deposit.paid_coin_amount, 0)
+        self.assertEqual(deposit.refund_coin_amount, 0)
         self.assertIsNone(deposit.refund_address)
         self.assertEqual(len(deposit.incoming_tx_ids), 0)
         self.assertIsNone(deposit.refund_tx_id)
@@ -45,7 +46,6 @@ class DepositTestCase(TestCase):
         self.assertIsNone(deposit.time_received)
         self.assertIsNone(deposit.time_notified)
         self.assertIsNone(deposit.time_confirmed)
-        self.assertIsNone(deposit.time_refunded)
         self.assertIsNone(deposit.time_cancelled)
         self.assertEqual(str(deposit), str(deposit.pk))
 
@@ -60,6 +60,7 @@ class DepositTestCase(TestCase):
         self.assertGreater(deposit.merchant_coin_amount, 0)
         self.assertGreater(deposit.fee_coin_amount, 0)
         self.assertEqual(deposit.paid_coin_amount, 0)
+        self.assertEqual(deposit.refund_coin_amount, 0)
         self.assertEqual(
             deposit.deposit_address.wallet_account.parent_key.coin_type,
             BIP44_COIN_TYPES.BTC)
@@ -116,9 +117,10 @@ class DepositTestCase(TestCase):
 
     def test_factory_refunded(self):
         deposit = DepositFactory(refunded=True)
+        self.assertEqual(deposit.refund_coin_amount, deposit.paid_coin_amount)
         self.assertIsNotNone(deposit.refund_address)
         self.assertIsNotNone(deposit.refund_tx_id)
-        self.assertEqual(deposit.status, 'refunded')
+        self.assertEqual(deposit.status, 'failed')
 
     def test_factory_cancelled(self):
         deposit = DepositFactory(cancelled=True)
@@ -171,13 +173,6 @@ class DepositTestCase(TestCase):
             time_notified=timezone.now() - datetime.timedelta(minutes=480))
         self.assertEqual(deposit.status, 'unconfirmed')
 
-    def test_status_refunded(self):
-        deposit = DepositFactory(
-            time_created=timezone.now() - datetime.timedelta(minutes=120),
-            time_received=timezone.now() - datetime.timedelta(minutes=100),
-            time_refunded=timezone.now())
-        self.assertEqual(deposit.status, 'refunded')
-
     def test_status_cancelled(self):
         deposit = DepositFactory(
             time_cancelled=timezone.now())
@@ -197,7 +192,7 @@ class DepositTestCase(TestCase):
     def test_create_balance_changes(self):
         deposit = DepositFactory(received=True)
         deposit.create_balance_changes()
-        changes = list(deposit.balancechange_set.order_by('account'))
+        changes = list(deposit.balancechange_set.order_by('created_at'))
         self.assertEqual(len(changes), 2)
         self.assertEqual(changes[0].account, deposit.account)
         self.assertEqual(changes[0].address, deposit.deposit_address)
@@ -208,12 +203,47 @@ class DepositTestCase(TestCase):
         self.assertEqual(changes[1].amount,
                          deposit.fee_coin_amount)
 
+    def test_create_balance_changes_repeat(self):
+        deposit = DepositFactory(received=True)
+        deposit.create_balance_changes()
+        deposit.paid_coin_amount *= 2
+        deposit.save()
+        deposit.create_balance_changes()
+        changes = list(deposit.balancechange_set.order_by('created_at'))
+        self.assertEqual(len(changes), 2)
+        self.assertEqual(changes[0].account, deposit.account)
+        self.assertEqual(changes[0].amount,
+                         deposit.paid_coin_amount - deposit.fee_coin_amount)
+        self.assertIsNone(changes[1].account)
+        self.assertEqual(changes[1].amount,
+                         deposit.fee_coin_amount)
+
     def test_create_balance_changes_no_fee(self):
         deposit = DepositFactory(received=True, fee_coin_amount=0)
         deposit.create_balance_changes()
         self.assertEqual(deposit.balancechange_set.count(), 1)
         self.assertEqual(deposit.balancechange_set.get().amount,
                          deposit.paid_coin_amount)
+
+    def test_create_balance_changes_refund(self):
+        deposit = DepositFactory(refunded=True)
+        deposit.create_balance_changes()
+        changes = list(deposit.balancechange_set.order_by('created_at'))
+        self.assertEqual(len(changes), 0)
+
+    def test_create_balance_changes_partial_refund(self):
+        deposit = DepositFactory(
+            refunded=True,
+            merchant_coin_amount=Decimal('0.010'),
+            fee_coin_amount=Decimal('0.001'),
+            paid_coin_amount=Decimal('0.015'),
+            refund_coin_amount=Decimal('0.004'))
+        deposit.create_balance_changes()
+        changes = list(deposit.balancechange_set.order_by('created_at'))
+        self.assertEqual(len(changes), 3)
+        self.assertEqual(changes[2].account, deposit.account)
+        self.assertEqual(changes[2].address, deposit.deposit_address)
+        self.assertEqual(changes[2].amount, -deposit.refund_coin_amount)
 
 
 class WithdrawalTestCase(TestCase):
