@@ -4,8 +4,7 @@ bitcoin_ppa:
     - refresh_db: true
 
 bitcoind_package:
-  pkg:
-    - installed
+  pkg.latest:
     - name: bitcoind
     - require:
       - pkgrepo: bitcoin_ppa
@@ -26,7 +25,7 @@ bitcoin_user:
     - require:
       - group: bitcoin_group
 
-/etc/bitcoin:
+bitcoin_config_dir:
   file.directory:
     - name: /etc/bitcoin
     - user: bitcoin
@@ -34,7 +33,7 @@ bitcoin_user:
     - require:
       - user: bitcoin_user
 
-/etc/bitcoin/bitcoin.conf:
+bitcoin_config:
   file.managed:
     - name: /etc/bitcoin/bitcoin.conf
     - source: salt://bitcoind/bitcoin.conf
@@ -46,14 +45,15 @@ bitcoin_user:
     - group: bitcoin
     - mode: 660
     - require:
-      - file: /etc/bitcoin
+      - file: bitcoin_config_dir
       - user: bitcoin_user
 
-/lib/systemd/system/bitcoind.service:
+bitcoind_service_file:
   file.managed:
+    - name: /lib/systemd/system/bitcoind.service
     - source: salt://bitcoind/bitcoind.service
     - require:
-      - pkg: bitcoind
+      - pkg: bitcoind_package
 
 bitcoind_service:
   service:
@@ -62,5 +62,8 @@ bitcoind_service:
     - enable: true
     - require:
       - pkg: bitcoind_package
-      - file: /lib/systemd/system/bitcoind.service
-      - file: /etc/bitcoin/bitcoin.conf
+      - file: bitcoind_service_file
+      - file: bitcoin_config
+    - watch:
+      - pkg: bitcoind_package
+      - file: bitcoin_config

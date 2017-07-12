@@ -8,6 +8,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.box = "ubuntu/xenial64"
+  config.vm.box_version = "20170706.0.0"
   config.vm.hostname = "xbt-server-dev"
 
   config.vm.network "forwarded_port", guest: 5432, host: settings['vm']['ports']['postgresql']
@@ -21,6 +22,8 @@ Vagrant.configure("2") do |config|
     vb.memory = settings['vm']['memory']
     vb.cpus = settings['vm']['cpus']
   end
+
+  config.disksize.size = settings['vm']['disk']
 
   config.vm.provision "fix-no-tty", type: "shell" do |sh|
     sh.privileged = false

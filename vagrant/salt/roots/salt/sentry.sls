@@ -90,6 +90,8 @@ sentry_db_upgrade:
       - file: /etc/sentry/sentry.conf.py
       - file: /etc/sentry/config.yml
       - postgres_database: sentry_pg_database
+    - onchanges:
+      - virtualenv: /var/lib/sentry/venv
 
 /lib/systemd/system/sentry-worker.service:
   file.managed:

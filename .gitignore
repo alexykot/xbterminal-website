@@ -15,3 +15,4 @@ config/xbterminal.conf
 config/supervisor.ini
 /logs
 *.mo
+ubuntu-*.log

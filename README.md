@@ -8,6 +8,7 @@ Requirements:
 * VirtualBox
 * vagrant
 * vagrant-triggers plugin
+* vagrant-disksize plugin
 * fabric (optional)
 
 ### Run vagrant

@@ -1,6 +1,7 @@
 vm:
   memory: 2048
-  cpus: 1
+  cpus: 2
+  disk: 30GB
   ports:
     postgresql: 5432
     redis: 6379
