@@ -31,7 +31,6 @@ from website.models import Device, Account
 logger = logging.getLogger(__name__)
 
 
-@atomic
 def prepare_withdrawal(device_or_account, amount):
     """
     Check merchant's account balance, create withdrawal
@@ -64,46 +63,47 @@ def prepare_withdrawal(device_or_account, amount):
         quantize(BTC_DEC_PLACES)
     if withdrawal.customer_coin_amount < BTC_MIN_OUTPUT:
         raise WithdrawalError('Customer coin amount is below dust threshold')
-    # Find unspent outputs which are not reserved by other withdrawals
-    # and check balance
-    reserved_sum = Decimal(0)
-    balance_changes = []
-    addresses = Address.objects.\
-        filter(wallet_account__parent_key__coin_type=withdrawal.coin_type).\
-        annotate(balance=Sum('balancechange__amount')).\
-        filter(balance__gt=0)
-    bc = BlockChain(withdrawal.bitcoin_network)
-    for address in addresses:
-        address_balance = get_address_balance(address, include_unconfirmed=False)
-        if address_balance == 0:
-            continue
-        reserved_sum += address_balance
-        balance_changes.append((address, -address_balance))
-        withdrawal.tx_fee_coin_amount = bc.get_tx_fee(len(balance_changes), 2)
-        if reserved_sum >= withdrawal.coin_amount:
-            break
-    else:
-        raise WithdrawalError('Insufficient balance in wallet')
-    if get_account_balance(withdrawal.account, include_unconfirmed=False) < withdrawal.coin_amount:
-        raise WithdrawalError('Insufficient balance on merchant account')
-    logger.info('reserved funds on %s addresses', len(balance_changes))
-    # Calculate change amount
-    change_coin_amount = reserved_sum - withdrawal.coin_amount
-    if change_coin_amount < BTC_MIN_OUTPUT:
-        withdrawal.customer_coin_amount += change_coin_amount
-    else:
-        change_address = Address.create(withdrawal.coin_type, is_change=True)
-        bc.import_address(change_address.address, rescan=False)
-        balance_changes.append((change_address, change_coin_amount))
-    # Save withdrawal object and balance changes
-    withdrawal.save()
-    BalanceChange.objects.bulk_create([
-        BalanceChange(
-            withdrawal=withdrawal,
-            account=withdrawal.account,
-            address=address,
-            amount=amount)
-        for address, amount in balance_changes])  # noqa: F812
+    with atomic():
+        # Find unspent outputs which are not reserved by other withdrawals
+        # and check balance
+        reserved_sum = Decimal(0)
+        balance_changes = []
+        addresses = Address.objects.\
+            filter(wallet_account__parent_key__coin_type=withdrawal.coin_type).\
+            annotate(balance=Sum('balancechange__amount')).\
+            filter(balance__gt=0)
+        bc = BlockChain(withdrawal.bitcoin_network)
+        for address in addresses:
+            address_balance = get_address_balance(address, include_unconfirmed=False)
+            if address_balance == 0:
+                continue
+            reserved_sum += address_balance
+            balance_changes.append((address, -address_balance))
+            withdrawal.tx_fee_coin_amount = bc.get_tx_fee(len(balance_changes), 2)
+            if reserved_sum >= withdrawal.coin_amount:
+                break
+        else:
+            raise WithdrawalError('Insufficient balance in wallet')
+        if get_account_balance(withdrawal.account, include_unconfirmed=False) < withdrawal.coin_amount:
+            raise WithdrawalError('Insufficient balance on merchant account')
+        logger.info('reserved funds on %s addresses', len(balance_changes))
+        # Calculate change amount
+        change_coin_amount = reserved_sum - withdrawal.coin_amount
+        if change_coin_amount < BTC_MIN_OUTPUT:
+            withdrawal.customer_coin_amount += change_coin_amount
+        else:
+            change_address = Address.create(withdrawal.coin_type, is_change=True)
+            bc.import_address(change_address.address, rescan=False)
+            balance_changes.append((change_address, change_coin_amount))
+        # Save withdrawal object and balance changes
+        withdrawal.save()
+        BalanceChange.objects.bulk_create([
+            BalanceChange(
+                withdrawal=withdrawal,
+                account=withdrawal.account,
+                address=address,
+                amount=amount)
+            for address, amount in balance_changes])  # noqa: F812
     run_periodic_task(check_withdrawal_status, [withdrawal.pk], interval=60)
     return withdrawal
 
