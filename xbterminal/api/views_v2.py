@@ -189,7 +189,6 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
                                 self.request.body,
                                 signature)
 
-    @atomic
     def create(self, request):
         serializer = WithdrawalInitSerializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)

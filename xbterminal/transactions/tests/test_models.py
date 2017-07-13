@@ -439,6 +439,12 @@ class BalanceChangeTestCase(TestCase):
         self.assertIn(bch_3, BalanceChange.objects.all())
         self.assertIn(bch_3, BalanceChange.objects.exclude_unconfirmed())
 
+    def test_change_type(self):
+        bch_1 = BalanceChangeFactory()
+        self.assertEqual(bch_1.change_type, 'deposit')
+        bch_2 = NegativeBalanceChangeFactory()
+        self.assertEqual(bch_2.change_type, 'withdrawal')
+
     def test_is_confirmed(self):
         bch_1 = BalanceChangeFactory()
         self.assertIs(bch_1.is_confirmed(), False)

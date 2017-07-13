@@ -22,7 +22,8 @@ class Command(BaseCommand):
         parser.add_argument('currency', type=str)
 
     def handle(self, *args, **options):
-        check_wallet(options['currency'])
+        for line in check_wallet(options['currency']):
+            self.stdout.write(line)
 
 
 def check_wallet(currency_name):
@@ -51,8 +52,7 @@ def check_wallet(currency_name):
         logger.critical(
             'balance mismatch on %s wallet (%s != %s)',
             currency_name, wallet_value, db_value)
+        yield 'balance mismatch, {0} != {1}'.format(wallet_value, db_value)
     else:
-        logger.info(
-            'balance OK on %s wallet (%s total)',
-            currency_name, wallet_value)
-    logger.info('address pool size %s', pool_size)
+        yield 'total balance {}'.format(wallet_value)
+    yield 'address pool size {}'.format(pool_size)

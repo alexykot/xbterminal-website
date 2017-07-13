@@ -192,6 +192,7 @@ class BalanceChangeAdmin(admin.ModelAdmin):
 
     list_display = [
         '__str__',
+        'change_type',
         'account_link',
         'address_link',
         'amount_colored',
@@ -201,6 +202,7 @@ class BalanceChangeAdmin(admin.ModelAdmin):
 
     readonly_fields = [
         'deposit',
+        'withdrawal',
         'account',
         'address',
         'amount',
