@@ -365,6 +365,22 @@ class BalanceChange(models.Model):
     def __str__(self):
         return str(self.pk)
 
+    @property
+    def change_type(self):
+        if self.deposit:
+            if self.amount > 0:
+                if self.account:
+                    return 'deposit'
+                else:
+                    return 'deposit fee'
+            else:
+                return 'deposit refund'
+        elif self.withdrawal:
+            if self.amount < 0:
+                return 'withdrawal'
+            else:
+                return 'withdrawal change'
+
     def is_confirmed(self):
         """
         If true, transaction will be included in calculation of
