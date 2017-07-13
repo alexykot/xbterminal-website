@@ -1,4 +1,5 @@
 from decimal import Decimal
+from StringIO import StringIO
 
 from django.test import TestCase
 from django.core.management import call_command
@@ -40,14 +41,17 @@ class CheckWalletTestCase(TestCase):
                 bch_3.amount + bch_4.amount + bch_5.amount,
             ],
         })
-        call_command('check_wallet', 'BTC')
+        buffer = StringIO()
+        call_command('check_wallet', 'BTC', stdout=buffer)
 
         self.assertEqual(bc_cls_mock.call_args[0][0], 'mainnet')
         self.assertEqual(bc_mock.get_address_balance.call_count, 3)
-        self.assertIs(logger_mock.info.call_count, 2)
-        self.assertEqual(logger_mock.info.call_args_list[0][0][1], 'BTC')
-        self.assertEqual(logger_mock.info.call_args_list[0][0][2], expected_balance)
-        self.assertEqual(logger_mock.info.call_args_list[1][0][1], 3)
+        self.assertIs(logger_mock.info.call_count, 0)
+        output = buffer.getvalue().splitlines()
+        self.assertEqual(
+            output[0],
+            'total balance {}'.format(expected_balance))
+        self.assertEqual(output[1], 'address pool size 3')
 
     @patch('transactions.management.commands.check_wallet.BlockChain')
     @patch('transactions.management.commands.check_wallet.logger')
@@ -57,9 +61,15 @@ class CheckWalletTestCase(TestCase):
         bc_cls_mock.return_value = bc_mock = Mock(**{
             'get_address_balance.return_value': wallet_balance,
         })
-        call_command('check_wallet', 'BTC')
+        buffer = StringIO()
+        call_command('check_wallet', 'BTC', stdout=buffer)
 
         self.assertEqual(bc_mock.get_address_balance.call_count, 1)
         self.assertIs(logger_mock.critical.called, True)
         self.assertEqual(logger_mock.critical.call_args[0][2], wallet_balance)
         self.assertEqual(logger_mock.critical.call_args[0][3], bch.amount)
+        output = buffer.getvalue().splitlines()
+        self.assertEqual(
+            output[0],
+            'balance mismatch, {0} != {1}'.format(wallet_balance, bch.amount))
+        self.assertEqual(output[1], 'address pool size 1')
