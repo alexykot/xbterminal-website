@@ -1,8 +1,9 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 from transactions import models
+from transactions.deposits import check_deposit_confirmation
 from operations.services import blockcypher
 from api.utils.urls import get_link_to_object
 
@@ -36,6 +37,10 @@ class DepositAdmin(admin.ModelAdmin):
         'merchant_link',
         'time_created',
         'status',
+    ]
+
+    actions = [
+        'check_confirmation',
     ]
 
     def has_add_permission(self, request):
@@ -112,6 +117,19 @@ class DepositAdmin(admin.ModelAdmin):
                            deposit.bitcoin_network)
 
     refund_tx_id_widget.short_description = 'refund tx ID'
+
+    def check_confirmation(self, request, queryset):
+        for deposit in queryset.filter(time_notified__isnull=False):
+            if check_deposit_confirmation(deposit):
+                self.message_user(
+                    request,
+                    'Deposit "{0}" is confirmed.'.format(deposit.pk),
+                    messages.SUCCESS)
+            else:
+                self.message_user(
+                    request,
+                    'Deposit "{0}" is not confirmed yet.'.format(deposit.pk),
+                    messages.WARNING)
 
 
 @admin.register(models.Withdrawal)

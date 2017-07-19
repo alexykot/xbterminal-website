@@ -15,7 +15,8 @@ from transactions.deposits import (
     wait_for_confidence,
     wait_for_confirmation,
     refund_deposit,
-    check_deposit_status)
+    check_deposit_status,
+    check_deposit_confirmation)
 from transactions.tests.factories import DepositFactory
 from transactions.utils.compat import get_account_balance, get_address_balance
 from operations.exceptions import (
@@ -853,3 +854,41 @@ class CheckDepositStatusTestCase(TestCase):
         self.assertIs(cancel_mock.called, True)
         self.assertIs(refund_mock.called, True)
         self.assertIs(logger_mock.error.called, False)
+
+
+class CheckDepositConfirmationTestCase(TestCase):
+
+    def test_already_confirmed(self):
+        deposit = DepositFactory(confirmed=True)
+        result = check_deposit_confirmation(deposit)
+        self.assertIs(result, True)
+
+    @patch('transactions.deposits.BlockChain')
+    def test_confirmed(self, bc_cls_mock):
+        deposit = DepositFactory(
+            incoming_tx_ids=['1' * 64, '2' * 64],
+            notified=True)
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'is_tx_confirmed.side_effect': [True, True],
+        })
+        result = check_deposit_confirmation(deposit)
+
+        self.assertIs(result, True)
+        self.assertEqual(bc_mock.is_tx_confirmed.call_count, 2)
+        deposit.refresh_from_db()
+        self.assertIsNotNone(deposit.time_confirmed)
+
+    @patch('transactions.deposits.BlockChain')
+    def test_not_confirmed(self, bc_cls_mock):
+        deposit = DepositFactory(
+            incoming_tx_ids=['1' * 64, '2' * 64],
+            notified=True)
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'is_tx_confirmed.side_effect': [False, True],
+        })
+        result = check_deposit_confirmation(deposit)
+
+        self.assertIs(result, False)
+        self.assertEqual(bc_mock.is_tx_confirmed.call_count, 1)
+        deposit.refresh_from_db()
+        self.assertIsNone(deposit.time_confirmed)
