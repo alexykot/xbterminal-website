@@ -6,7 +6,6 @@ from fsm_admin.mixins import FSMTransitionMixin
 
 from website import forms, models
 from website.utils.qr import generate_qr_code
-from website.widgets import BitcoinAddressWidget
 from api.utils.urls import get_link_to_object
 
 
@@ -130,26 +129,6 @@ class KYCDocumentInline(admin.TabularInline):
     extra = 0
 
 
-class AddressInline(admin.TabularInline):
-
-    model = models.Address
-    max_num = 0
-    extra = 0
-    can_delete = 0
-
-    def get_formset(self, request, obj, **kwargs):
-        formset = super(AddressInline, self).get_formset(
-            request, obj, **kwargs)
-        if not obj:
-            return formset
-        for field_name in formset.form.base_fields:
-            field = formset.form.base_fields[field_name]
-            if field_name == 'address':
-                field.widget = BitcoinAddressWidget(network=obj.bitcoin_network)
-                field.required = False
-        return formset
-
-
 class TransactionInline(admin.TabularInline):
 
     model = models.Transaction
@@ -208,7 +187,6 @@ class AccountAdmin(admin.ModelAdmin):
     ]
     list_filter = ['instantfiat']
     inlines = [
-        AddressInline,
         TransactionInline,
     ]
 
