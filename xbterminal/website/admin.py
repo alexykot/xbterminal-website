@@ -1,14 +1,12 @@
-from django.contrib import admin, messages
+from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.html import format_html
 
-from constance import config
 from fsm_admin.mixins import FSMTransitionMixin
 
 from website import forms, models
 from website.utils.qr import generate_qr_code
 from website.widgets import BitcoinAddressWidget
-from operations.instantfiat import cryptopay
 from api.utils.urls import get_link_to_object
 
 
@@ -301,37 +299,6 @@ class MerchantAccountAdmin(admin.ModelAdmin):
         return merchant.contact_phone
 
     contact_phone_.short_description = 'phone'
-
-    def reset_cryptopay_password(self, request, queryset):
-        for merchant in queryset:
-            if merchant.instantfiat_provider != \
-                    models.INSTANTFIAT_PROVIDERS.CRYPTOPAY or \
-                    not merchant.instantfiat_merchant_id:
-                self.message_user(
-                    request,
-                    'Merchant "{0}" doesn\'t have managed CryptoPay profile.'.format(
-                        merchant.company_name),
-                    messages.WARNING)
-                continue
-            password = models.User.objects.make_random_password(16)
-            try:
-                cryptopay.set_password(
-                    merchant.instantfiat_merchant_id,
-                    password,
-                    config.CRYPTOPAY_API_KEY)
-            except cryptopay.InstantFiatError:
-                self.message_user(
-                    request,
-                    'Merchant "{0}" - error.'.format(merchant.company_name),
-                    messages.ERROR)
-            else:
-                self.message_user(
-                    request,
-                    'Merchant "{0}" - new password "{1}".'.format(
-                        merchant.company_name, password),
-                    messages.SUCCESS)
-
-    reset_cryptopay_password.short_description = 'Reset CryptoPay password'
 
 
 @admin.register(models.DeviceBatch)
