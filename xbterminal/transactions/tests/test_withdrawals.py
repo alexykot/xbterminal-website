@@ -10,7 +10,8 @@ from transactions.withdrawals import (
     send_transaction,
     wait_for_confidence,
     wait_for_confirmation,
-    check_withdrawal_status)
+    check_withdrawal_status,
+    check_withdrawal_confirmation)
 from transactions.tests.factories import (
     WithdrawalFactory,
     BalanceChangeFactory,
@@ -549,3 +550,37 @@ class CheckWithdrawalStatusTestCase(TestCase):
         check_withdrawal_status(withdrawal.pk)
         self.assertEqual(withdrawal.balancechange_set.count(), 1)
         self.assertIs(cancel_mock.called, True)
+
+
+class CheckWithdrawalConfirmationTestCase(TestCase):
+
+    def test_already_confirmed(self):
+        withdrawal = WithdrawalFactory(confirmed=True)
+        result = check_withdrawal_confirmation(withdrawal)
+        self.assertIs(result, True)
+
+    @patch('transactions.withdrawals.BlockChain')
+    def test_confirmed(self, bc_cls_mock):
+        withdrawal = WithdrawalFactory(notified=True)
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'is_tx_confirmed.return_value': True,
+        })
+        result = check_withdrawal_confirmation(withdrawal)
+
+        self.assertIs(result, True)
+        self.assertEqual(bc_mock.is_tx_confirmed.call_count, 1)
+        withdrawal.refresh_from_db()
+        self.assertIsNotNone(withdrawal.time_confirmed)
+
+    @patch('transactions.withdrawals.BlockChain')
+    def test_not_confirmed(self, bc_cls_mock):
+        withdrawal = WithdrawalFactory(notified=True)
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'is_tx_confirmed.return_value': False,
+        })
+        result = check_withdrawal_confirmation(withdrawal)
+
+        self.assertIs(result, False)
+        self.assertEqual(bc_mock.is_tx_confirmed.call_count, 1)
+        withdrawal.refresh_from_db()
+        self.assertIsNone(withdrawal.time_confirmed)

@@ -4,6 +4,7 @@ from django.utils.safestring import mark_safe
 
 from transactions import models
 from transactions.deposits import check_deposit_confirmation
+from transactions.withdrawals import check_withdrawal_confirmation
 from operations.services import blockcypher
 from api.utils.urls import get_link_to_object
 
@@ -145,6 +146,10 @@ class WithdrawalAdmin(admin.ModelAdmin):
         'status',
     ]
 
+    actions = [
+        'check_confirmation',
+    ]
+
     def has_add_permission(self, request):
         return False
 
@@ -203,6 +208,19 @@ class WithdrawalAdmin(admin.ModelAdmin):
                            withdrawal.bitcoin_network)
 
     outgoing_tx_id_widget.short_description = 'outgoing tx ID'
+
+    def check_confirmation(self, request, queryset):
+        for withdrawal in queryset.filter(time_notified__isnull=False):
+            if check_withdrawal_confirmation(withdrawal):
+                self.message_user(
+                    request,
+                    'Withdrawal "{0}" is confirmed.'.format(withdrawal.pk),
+                    messages.SUCCESS)
+            else:
+                self.message_user(
+                    request,
+                    'Withdrawal "{0}" is not confirmed yet.'.format(withdrawal.pk),
+                    messages.WARNING)
 
 
 @admin.register(models.BalanceChange)
