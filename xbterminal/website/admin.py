@@ -7,6 +7,7 @@ from fsm_admin.mixins import FSMTransitionMixin
 from website import forms, models
 from website.utils.qr import generate_qr_code
 from api.utils.urls import get_link_to_object
+from transactions.models import BalanceChange
 
 
 @admin.register(models.Language)
@@ -129,21 +130,19 @@ class KYCDocumentInline(admin.TabularInline):
     extra = 0
 
 
-class TransactionInline(admin.TabularInline):
+class BalanceChangeInline(admin.TabularInline):
 
-    model = models.Transaction
+    model = BalanceChange
     exclude = [
-        'payment',
+        'deposit',
         'withdrawal',
-        # 'amount',
-        'instantfiat_tx_id',
+        'address',
+        'amount',
     ]
     readonly_fields = [
         'amount_colored',
-        'tx_hash',
         'is_confirmed',
-        'instantfiat_tx_id',
-        'order',
+        'operation',
         'created_at',
     ]
     max_num = 0
@@ -155,17 +154,19 @@ class TransactionInline(admin.TabularInline):
         return format_html(template,
                            'red' if obj.amount < 0 else 'green',
                            obj.amount)
+
     amount_colored.allow_tags = True
     amount_colored.short_description = 'amount'
 
-    def order(self, obj):
-        if obj.payment:
-            return get_link_to_object(obj.payment)
+    def operation(self, obj):
+        if obj.deposit:
+            return get_link_to_object(obj.deposit)
         elif obj.withdrawal:
             return get_link_to_object(obj.withdrawal)
         else:
             return '-'
-    order.allow_tags = True
+
+    operation.allow_tags = True
 
 
 @admin.register(models.Account)
@@ -187,7 +188,7 @@ class AccountAdmin(admin.ModelAdmin):
     ]
     list_filter = ['instantfiat']
     inlines = [
-        TransactionInline,
+        BalanceChangeInline,
     ]
 
     def payment_processor(self, obj):

@@ -2,12 +2,12 @@ from django.contrib import admin
 from django.utils.html import format_html
 
 from operations import models
+from website.models import Transaction
 from website.widgets import (
     BitcoinAddressWidget,
     BitcoinTransactionWidget,
     BitcoinTransactionArrayWidget,
     ReadOnlyAdminWidget)
-from website.admin import TransactionInline
 from website.utils.qr import generate_qr_code
 from api.utils.urls import construct_absolute_url, get_link_to_object
 from operations.blockchain import construct_bitcoin_uri
@@ -35,6 +35,45 @@ class OrderAdminFormMixin(object):
             # Field should not allow blank values
             assert not obj._meta.get_field(field_name).blank
         return form
+
+
+class TransactionInline(admin.TabularInline):
+
+    model = Transaction
+    exclude = [
+        'payment',
+        'withdrawal',
+        # 'amount',
+        'instantfiat_tx_id',
+    ]
+    readonly_fields = [
+        'amount_colored',
+        'tx_hash',
+        'is_confirmed',
+        'instantfiat_tx_id',
+        'order',
+        'created_at',
+    ]
+    max_num = 0
+    extra = 0
+    can_delete = False
+
+    def amount_colored(self, obj):
+        template = '<span style="color: {0}">{1}</span>'
+        return format_html(template,
+                           'red' if obj.amount < 0 else 'green',
+                           obj.amount)
+    amount_colored.allow_tags = True
+    amount_colored.short_description = 'amount'
+
+    def order(self, obj):
+        if obj.payment:
+            return get_link_to_object(obj.payment)
+        elif obj.withdrawal:
+            return get_link_to_object(obj.withdrawal)
+        else:
+            return '-'
+    order.allow_tags = True
 
 
 class PaymentOrderTransactionInline(TransactionInline):
