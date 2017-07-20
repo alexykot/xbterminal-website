@@ -27,7 +27,6 @@ from website.tests.factories import (
     AccountFactory,
     TransactionFactory,
     DeviceFactory)
-from operations.exceptions import CryptoPayUserAlreadyExists
 
 
 class LoginMethodFormTestCase(TestCase):
@@ -47,9 +46,7 @@ class LoginMethodFormTestCase(TestCase):
 
 class MerchantRegistrationFormTestCase(TestCase):
 
-    @patch('website.forms.cryptopay.create_merchant')
-    def test_valid_data(self, cp_create_mock):
-        cp_create_mock.return_value = 'merchant_id'
+    def test_valid_data(self):
         form_data = {
             'company_name': 'Test Company ',
             'business_address': 'Test Address',
@@ -73,10 +70,9 @@ class MerchantRegistrationFormTestCase(TestCase):
         self.assertEqual(merchant.user.email, form_data['contact_email'])
         self.assertEqual(merchant.language.code, 'en')
         self.assertEqual(merchant.currency.name, 'GBP')
-        self.assertEqual(merchant.instantfiat_provider,
-                         INSTANTFIAT_PROVIDERS.CRYPTOPAY)
-        self.assertEqual(merchant.instantfiat_merchant_id, 'merchant_id')
-        self.assertIsNotNone(merchant.instantfiat_email)
+        self.assertIsNone(merchant.instantfiat_provider)
+        self.assertIsNone(merchant.instantfiat_merchant_id)
+        self.assertIsNone(merchant.instantfiat_email)
         self.assertIsNone(merchant.instantfiat_api_key)
         # Oauth
         oauth_app = Application.objects.get(user=merchant.user)
@@ -91,27 +87,6 @@ class MerchantRegistrationFormTestCase(TestCase):
         # Email
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to[0], form_data['contact_email'])
-
-    @patch('website.forms.cryptopay.create_merchant')
-    def test_cryptopay_user_alredy_exists(self, cryptopay_mock):
-        cryptopay_mock.side_effect = CryptoPayUserAlreadyExists
-        form_data = {
-            'company_name': 'Test Company',
-            'business_address': 'Test Address',
-            'town': 'Test Town',
-            'country': 'GB',
-            'post_code': '123456',
-            'contact_first_name': 'Test',
-            'contact_last_name': 'Test',
-            'contact_email': 'test@example.net',
-            'contact_phone': '+123456789',
-            'terms': 'on',
-        }
-        form = MerchantRegistrationForm(data=form_data)
-        self.assertTrue(form.is_valid())
-        merchant = form.save()
-        self.assertEqual(merchant.account_set.count(), 1)
-        self.assertEqual(merchant.account_set.first().currency.name, 'BTC')
 
     def test_required(self):
         form = MerchantRegistrationForm(data={})
@@ -150,11 +125,9 @@ class MerchantRegistrationFormTestCase(TestCase):
             form.errors['contact_last_name'][0],
             'Enter a valid name. This value may contain only letters.')
 
-    @patch('website.forms.cryptopay.create_merchant')
     @patch('website.forms.send_registration_email')
-    def test_send_email_error(self, send_mock, cp_create_mock):
+    def test_send_email_error(self, send_mock):
         send_mock.side_effect = ValueError
-        cp_create_mock.return_value = 'merchant_id'
         form_data = {
             'company_name': 'Test Company',
             'business_address': 'Test Address',

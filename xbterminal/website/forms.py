@@ -13,7 +13,6 @@ from django.db.transaction import atomic
 from django.utils.translation import ugettext as _
 
 from captcha.fields import ReCaptchaField
-from constance import config
 from oauth2_provider.models import Application
 
 from website.models import (
@@ -25,7 +24,6 @@ from website.models import (
     KYCDocument,
     get_language,
     get_currency,
-    INSTANTFIAT_PROVIDERS,
     KYC_DOCUMENT_TYPES)
 from website.widgets import (
     FileWidget,
@@ -34,8 +32,6 @@ from website.validators import validate_bitcoin_address
 from website.utils.email import (
     send_registration_email,
     send_reset_password_email)
-from operations.exceptions import CryptoPayUserAlreadyExists
-from operations.instantfiat import cryptopay
 
 
 class UserCreationForm(DjangoUserCreationForm):
@@ -209,18 +205,6 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             merchant=merchant,
             currency=Currency.objects.get(name='BTC'),
             instantfiat=False)
-        # Perform registration on CryptoPay
-        merchant.instantfiat_provider = INSTANTFIAT_PROVIDERS.CRYPTOPAY
-        merchant.instantfiat_email = merchant.get_cryptopay_email()
-        try:
-            merchant.instantfiat_merchant_id = cryptopay.create_merchant(
-                merchant.contact_first_name,
-                merchant.contact_last_name,
-                merchant.instantfiat_email,
-                config.CRYPTOPAY_API_KEY)
-        except CryptoPayUserAlreadyExists:
-            pass
-        merchant.save()
         # Send email
         send_registration_email(merchant.contact_email, password)
         return merchant

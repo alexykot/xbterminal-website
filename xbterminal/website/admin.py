@@ -1,15 +1,13 @@
-from django.contrib import admin, messages
+from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.html import format_html
 
-from constance import config
 from fsm_admin.mixins import FSMTransitionMixin
 
 from website import forms, models
 from website.utils.qr import generate_qr_code
-from website.widgets import BitcoinAddressWidget
-from operations.instantfiat import cryptopay
 from api.utils.urls import get_link_to_object
+from transactions.models import BalanceChange
 
 
 @admin.register(models.Language)
@@ -132,41 +130,19 @@ class KYCDocumentInline(admin.TabularInline):
     extra = 0
 
 
-class AddressInline(admin.TabularInline):
+class BalanceChangeInline(admin.TabularInline):
 
-    model = models.Address
-    max_num = 0
-    extra = 0
-    can_delete = 0
-
-    def get_formset(self, request, obj, **kwargs):
-        formset = super(AddressInline, self).get_formset(
-            request, obj, **kwargs)
-        if not obj:
-            return formset
-        for field_name in formset.form.base_fields:
-            field = formset.form.base_fields[field_name]
-            if field_name == 'address':
-                field.widget = BitcoinAddressWidget(network=obj.bitcoin_network)
-                field.required = False
-        return formset
-
-
-class TransactionInline(admin.TabularInline):
-
-    model = models.Transaction
+    model = BalanceChange
     exclude = [
-        'payment',
+        'deposit',
         'withdrawal',
-        # 'amount',
-        'instantfiat_tx_id',
+        'address',
+        'amount',
     ]
     readonly_fields = [
         'amount_colored',
-        'tx_hash',
         'is_confirmed',
-        'instantfiat_tx_id',
-        'order',
+        'operation',
         'created_at',
     ]
     max_num = 0
@@ -178,17 +154,19 @@ class TransactionInline(admin.TabularInline):
         return format_html(template,
                            'red' if obj.amount < 0 else 'green',
                            obj.amount)
+
     amount_colored.allow_tags = True
     amount_colored.short_description = 'amount'
 
-    def order(self, obj):
-        if obj.payment:
-            return get_link_to_object(obj.payment)
+    def operation(self, obj):
+        if obj.deposit:
+            return get_link_to_object(obj.deposit)
         elif obj.withdrawal:
             return get_link_to_object(obj.withdrawal)
         else:
             return '-'
-    order.allow_tags = True
+
+    operation.allow_tags = True
 
 
 @admin.register(models.Account)
@@ -210,8 +188,7 @@ class AccountAdmin(admin.ModelAdmin):
     ]
     list_filter = ['instantfiat']
     inlines = [
-        AddressInline,
-        TransactionInline,
+        BalanceChangeInline,
     ]
 
     def payment_processor(self, obj):
@@ -301,37 +278,6 @@ class MerchantAccountAdmin(admin.ModelAdmin):
         return merchant.contact_phone
 
     contact_phone_.short_description = 'phone'
-
-    def reset_cryptopay_password(self, request, queryset):
-        for merchant in queryset:
-            if merchant.instantfiat_provider != \
-                    models.INSTANTFIAT_PROVIDERS.CRYPTOPAY or \
-                    not merchant.instantfiat_merchant_id:
-                self.message_user(
-                    request,
-                    'Merchant "{0}" doesn\'t have managed CryptoPay profile.'.format(
-                        merchant.company_name),
-                    messages.WARNING)
-                continue
-            password = models.User.objects.make_random_password(16)
-            try:
-                cryptopay.set_password(
-                    merchant.instantfiat_merchant_id,
-                    password,
-                    config.CRYPTOPAY_API_KEY)
-            except cryptopay.InstantFiatError:
-                self.message_user(
-                    request,
-                    'Merchant "{0}" - error.'.format(merchant.company_name),
-                    messages.ERROR)
-            else:
-                self.message_user(
-                    request,
-                    'Merchant "{0}" - new password "{1}".'.format(
-                        merchant.company_name, password),
-                    messages.SUCCESS)
-
-    reset_cryptopay_password.short_description = 'Reset CryptoPay password'
 
 
 @admin.register(models.DeviceBatch)

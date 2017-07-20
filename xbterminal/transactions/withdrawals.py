@@ -240,3 +240,21 @@ def check_withdrawal_status(withdrawal_id):
         elif withdrawal.status == 'confirmed':
             # Success
             cancel_current_task()
+
+
+def check_withdrawal_confirmation(withdrawal):
+    """
+    Accepts:
+        deposit: Withdrawal instance
+    Returns:
+        True if all outgoing transaction is confirmed, False otherwise
+    """
+    if withdrawal.time_confirmed is not None:
+        return True
+    bc = BlockChain(withdrawal.bitcoin_network)
+    if bc.is_tx_confirmed(withdrawal.outgoing_tx_id):
+        withdrawal.time_confirmed = timezone.now()
+        withdrawal.save()
+        return True
+    else:
+        return False

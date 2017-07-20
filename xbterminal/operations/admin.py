@@ -1,17 +1,16 @@
-from django.contrib import admin, messages
+from django.contrib import admin
 from django.utils.html import format_html
 
 from operations import models
+from website.models import Transaction
 from website.widgets import (
     BitcoinAddressWidget,
     BitcoinTransactionWidget,
     BitcoinTransactionArrayWidget,
     ReadOnlyAdminWidget)
-from website.admin import TransactionInline
 from website.utils.qr import generate_qr_code
 from api.utils.urls import construct_absolute_url, get_link_to_object
 from operations.blockchain import construct_bitcoin_uri
-from operations import payment, exceptions
 
 
 class OrderAdminFormMixin(object):
@@ -36,6 +35,45 @@ class OrderAdminFormMixin(object):
             # Field should not allow blank values
             assert not obj._meta.get_field(field_name).blank
         return form
+
+
+class TransactionInline(admin.TabularInline):
+
+    model = Transaction
+    exclude = [
+        'payment',
+        'withdrawal',
+        # 'amount',
+        'instantfiat_tx_id',
+    ]
+    readonly_fields = [
+        'amount_colored',
+        'tx_hash',
+        'is_confirmed',
+        'instantfiat_tx_id',
+        'order',
+        'created_at',
+    ]
+    max_num = 0
+    extra = 0
+    can_delete = False
+
+    def amount_colored(self, obj):
+        template = '<span style="color: {0}">{1}</span>'
+        return format_html(template,
+                           'red' if obj.amount < 0 else 'green',
+                           obj.amount)
+    amount_colored.allow_tags = True
+    amount_colored.short_description = 'amount'
+
+    def order(self, obj):
+        if obj.payment:
+            return get_link_to_object(obj.payment)
+        elif obj.withdrawal:
+            return get_link_to_object(obj.withdrawal)
+        else:
+            return '-'
+    order.allow_tags = True
 
 
 class PaymentOrderTransactionInline(TransactionInline):
@@ -73,10 +111,6 @@ class PaymentOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
     ]
     list_filter = [PaymentOrderStatusListFilter]
     readonly_fields = ['status', 'payment_request_qr_code']
-    actions = [
-        'refund',
-        'check_confirmation',
-    ]
     inlines = [PaymentOrderTransactionInline]
 
     def has_add_permission(self, request):
@@ -123,38 +157,6 @@ class PaymentOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
 
     payment_request_qr_code.allow_tags = True
 
-    def refund(self, request, queryset):
-        for order in queryset:
-            try:
-                payment.reverse_payment(order)
-            except exceptions.RefundError:
-                self.message_user(
-                    request,
-                    'Payment order "{0}" can not be refunded.'.format(order.pk),
-                    messages.WARNING)
-            else:
-                self.message_user(
-                    request,
-                    'Payment order "{0}" was refunded successfully.'.format(order.pk),
-                    messages.SUCCESS)
-
-    refund.short_description = 'Refund selected payment orders'
-
-    def check_confirmation(self, request, queryset):
-        for order in queryset.filter(time_forwarded__isnull=False):
-            if payment.check_confirmation(order):
-                self.message_user(
-                    request,
-                    'Payment order "{0}" is confirmed.'.format(order.pk),
-                    messages.SUCCESS)
-            else:
-                self.message_user(
-                    request,
-                    'Payment order "{0}" is not confirmed yet.'.format(order.pk),
-                    messages.WARNING)
-
-    check_confirmation.short_description = 'Check confirmation status'
-
 
 class WithdrawalOrderTransactionInline(TransactionInline):
 
@@ -175,7 +177,6 @@ class WithdrawalOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
     ]
     readonly_fields = ['status']
     inlines = [WithdrawalOrderTransactionInline]
-    actions = ['check_confirmation']
 
     def has_add_permission(self, request):
         return False
@@ -206,18 +207,3 @@ class WithdrawalOrderAdmin(OrderAdminFormMixin, admin.ModelAdmin):
 
     merchant_link.allow_tags = True
     merchant_link.short_description = 'merchant'
-
-    def check_confirmation(self, request, queryset):
-        for order in queryset.filter(time_notified__isnull=False):
-            if payment.check_confirmation(order):
-                self.message_user(
-                    request,
-                    'Withdrawal order "{0}" is confirmed.'.format(order.pk),
-                    messages.SUCCESS)
-            else:
-                self.message_user(
-                    request,
-                    'Withdrawal order "{0}" is not confirmed yet.'.format(order.pk),
-                    messages.WARNING)
-
-    check_confirmation.short_description = 'Check confirmation status'

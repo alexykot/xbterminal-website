@@ -1,15 +1,10 @@
-import datetime
-
-from mock import patch, Mock
+from mock import Mock
 from django.contrib.admin.sites import AdminSite
 from django.test import TestCase
-from django.utils import timezone
 
-from operations.tests.factories import (
-    PaymentOrderFactory,
-    WithdrawalOrderFactory)
-from operations.models import PaymentOrder, WithdrawalOrder
-from operations.admin import PaymentOrderAdmin, WithdrawalOrderAdmin
+from operations.tests.factories import PaymentOrderFactory
+from operations.models import PaymentOrder
+from operations.admin import PaymentOrderAdmin
 
 
 class PaymentOrderAdminTestCase(TestCase):
@@ -36,54 +31,3 @@ class PaymentOrderAdminTestCase(TestCase):
                          order.incoming_tx_ids)
         self.assertEqual(order_updated.outgoing_tx_id,
                          order.outgoing_tx_id)
-
-    @patch('operations.payment.blockchain.BlockChain')
-    def test_check_confirmation(self, bc_cls_mock):
-        bc_cls_mock.return_value = bc_mock = Mock(**{
-            'is_tx_confirmed.return_value': True,
-        })
-        order_1 = PaymentOrderFactory.create()
-        self.assertEqual(order_1.status, 'new')
-        order_2 = PaymentOrderFactory.create(
-            time_created=timezone.now() - datetime.timedelta(hours=5),
-            time_received=timezone.now() - datetime.timedelta(hours=5),
-            time_forwarded=timezone.now() - datetime.timedelta(hours=5),
-            time_notified=timezone.now() - datetime.timedelta(hours=5))
-        self.assertEqual(order_2.status, 'unconfirmed')
-        self.ma.check_confirmation(
-            Mock(),
-            PaymentOrder.objects.filter(pk__in=[order_1.pk, order_2.pk]))
-        self.assertEqual(self.ma.message_user.call_count, 1)
-        self.assertEqual(bc_mock.is_tx_confirmed.call_count, 1)
-        order_1.refresh_from_db()
-        self.assertEqual(order_1.status, 'new')
-        order_2.refresh_from_db()
-        self.assertEqual(order_2.status, 'confirmed')
-
-
-class WithdrawalOrderAdminTestCase(TestCase):
-
-    def setUp(self):
-        self.ma = WithdrawalOrderAdmin(WithdrawalOrder, AdminSite())
-        self.ma.message_user = Mock()
-
-    @patch('operations.payment.blockchain.BlockChain')
-    def test_check_confirmation(self, bc_cls_mock):
-        bc_cls_mock.return_value = bc_mock = Mock(**{
-            'is_tx_confirmed.return_value': True,
-        })
-        order_1 = WithdrawalOrderFactory.create()
-        self.assertEqual(order_1.status, 'new')
-        order_2 = WithdrawalOrderFactory.create(
-            time_created=timezone.now() - datetime.timedelta(hours=5),
-            time_sent=timezone.now() - datetime.timedelta(hours=5),
-            time_notified=timezone.now() - datetime.timedelta(hours=5))
-        self.assertEqual(order_2.status, 'unconfirmed')
-        self.ma.check_confirmation(
-            Mock(),
-            WithdrawalOrder.objects.filter(pk__in=[order_1.pk, order_2.pk]))
-        self.assertEqual(bc_mock.is_tx_confirmed.call_count, 1)
-        order_1.refresh_from_db()
-        self.assertEqual(order_1.status, 'new')
-        order_2.refresh_from_db()
-        self.assertEqual(order_2.status, 'confirmed')

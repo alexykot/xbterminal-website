@@ -13,7 +13,6 @@ from website.tests.factories import (
     AddressFactory)
 from website.management.commands.check_wallet_ import \
     check_wallet, check_wallet_strict
-from website.management.commands.withdraw_btc import withdraw_btc
 from website.management.commands.cryptopay_sync import cryptopay_sync
 from operations.exceptions import CryptoPayInvalidAPIKey
 from operations.tests.factories import outpoint_factory
@@ -66,37 +65,6 @@ class CheckWalletTestCase(TestCase):
         })
         check_wallet_strict('mainnet')
         self.assertIs(logger_mock.critical.called, True)
-
-
-class WithdrawBTCTestCase(TestCase):
-
-    @patch('website.management.commands.withdraw_btc.blockchain.BlockChain')
-    def test_command(self, bc_cls_mock):
-        account = AccountFactory.create(
-            currency__name='BTC',
-            balance_=Decimal('0.2'))
-        address = AddressFactory.create(account=account)
-        bc_cls_mock.return_value = bc_mock = Mock(**{
-            'get_unspent_outputs.return_value': [
-                {'amount': Decimal('0.2'), 'outpoint': outpoint_factory()},
-            ],
-            'create_raw_transaction.return_value': 'tx',
-            'sign_raw_transaction.return_value': 'tx_signed',
-            'send_raw_transaction.return_value': '0000',
-            'get_tx_fee.return_value': Decimal('0.0005'),
-        })
-        result = withdraw_btc(
-            account.pk,
-            '1Mavf5uXXUNiJbvi5vmD4CjvFghTm9pZvM')
-        self.assertEqual(
-            result,
-            'sent 0.19950000 BTC to 1Mavf5uXXUNiJbvi5vmD4CjvFghTm9pZvM, '
-            'tx id 0000')
-        self.assertEqual(bc_cls_mock.call_args[0][0], 'mainnet')
-        self.assertEqual(bc_mock.get_unspent_outputs.call_args[0][0],
-                         address.address)
-        self.assertTrue(bc_mock.send_raw_transaction.called)
-        self.assertEqual(bc_mock.get_tx_fee.call_args[0], (1, 1))
 
 
 class CryptoPaySyncTestCase(TestCase):

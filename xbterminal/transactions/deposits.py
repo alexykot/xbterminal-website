@@ -378,3 +378,24 @@ def check_deposit_status(deposit_id):
         cancel_current_task()
     elif deposit.status == 'confirmed':
         cancel_current_task()
+
+
+def check_deposit_confirmation(deposit):
+    """
+    Accepts:
+        deposit: Deposit instance
+    Returns:
+        True if all incoming transactions are confirmed, False otherwise
+    """
+    if deposit.time_confirmed is not None:
+        return True
+    bc = BlockChain(deposit.bitcoin_network)
+    for incoming_tx_id in deposit.incoming_tx_ids:
+        if not bc.is_tx_confirmed(incoming_tx_id):
+            # Do not check other txs
+            break
+    else:
+        deposit.time_confirmed = timezone.now()
+        deposit.save()
+        return True
+    return False
