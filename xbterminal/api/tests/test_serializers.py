@@ -165,6 +165,7 @@ class WithdrawalSerializerTestCase(TestCase):
                          str(withdrawal.tx_fee_coin_amount))
         self.assertEqual(data['exchange_rate'],
                          str(withdrawal.effective_exchange_rate))
+        self.assertEqual(data['address'], withdrawal.customer_address)
         self.assertEqual(data['status'], withdrawal.status)
 
 
