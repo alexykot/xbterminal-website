@@ -3,7 +3,7 @@ from django.test import TestCase, override_settings
 from mock import patch, Mock
 
 import bitcoin
-from bitcoin.core import COutPoint
+from bitcoin.core import COutPoint, lx
 from constance.test import override_config
 
 from operations import (
@@ -22,12 +22,12 @@ class BlockChainTestCase(TestCase):
 
     @patch('operations.blockchain.bitcoin.SelectParams')
     @patch('operations.blockchain.bitcoin.rpc.Proxy')
-    def test_init(self, proxy_mock, select_params_mock):
+    def test_init(self, proxy_cls_mock, select_params_mock):
         BlockChain('mainnet')
         self.assertTrue(select_params_mock.called)
         self.assertEqual(select_params_mock.call_args[0][0], 'mainnet')
-        self.assertTrue(proxy_mock.called)
-        service_url = proxy_mock.call_args[0][0]
+        self.assertTrue(proxy_cls_mock.called)
+        service_url = proxy_cls_mock.call_args[0][0]
         self.assertTrue(service_url.startswith('http'))
 
     @patch('operations.blockchain.bitcoin.rpc.Proxy')
@@ -43,8 +43,8 @@ class BlockChainTestCase(TestCase):
         self.assertIs(proxy_mock.importaddress.call_args[1]['rescan'], False)
 
     @patch('operations.blockchain.bitcoin.rpc.Proxy')
-    def test_get_balance(self, proxy_mock):
-        proxy_mock.return_value = Mock(**{
+    def test_get_balance(self, proxy_cls_mock):
+        proxy_cls_mock.return_value = Mock(**{
             'getbalance.return_value': 500000,
         })
         bc = BlockChain('mainnet')
@@ -52,8 +52,8 @@ class BlockChainTestCase(TestCase):
         self.assertEqual(balance, Decimal('0.005'))
 
     @patch('operations.blockchain.bitcoin.rpc.Proxy')
-    def test_get_address_balance(self, proxy_mock):
-        proxy_mock.return_value = Mock(**{
+    def test_get_address_balance(self, proxy_cls_mock):
+        proxy_cls_mock.return_value = Mock(**{
             'listunspent.return_value': [{'amount': 500000}],
         })
         bc = BlockChain('mainnet')
@@ -111,9 +111,61 @@ class BlockChainTestCase(TestCase):
             b'\x11' * 32)
 
     @patch('operations.blockchain.bitcoin.rpc.Proxy')
-    def test_is_tx_confirmed_true(self, proxy_mock):
+    def test_sign_raw_transaction(self, proxy_cls_mock):
+        proxy_cls_mock.return_value = Mock(**{
+            'signrawtransaction.return_value': {
+                'tx': 'tx',
+                'complete': True,
+            },
+        })
+        bc = BlockChain('mainnet')
+        tx = bc.sign_raw_transaction(Mock())
+        self.assertEqual(tx, 'tx')
+
+    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('operations.blockchain.get_txid')
+    def test_sign_raw_transaction_confirmed(self, get_txid_mock, proxy_cls_mock):
+        proxy_cls_mock.return_value = proxy_mock = Mock(**{
+            'signrawtransaction.return_value': {
+                'tx': 'tx',
+                'complete': False,
+            },
+            'gettransaction.return_value': {
+                'confirmations': 1,
+                'walletconflicts': [],
+            },
+        })
+        get_txid_mock.return_value = tx_id = '1' * 64
+        bc = BlockChain('mainnet')
+        tx = bc.sign_raw_transaction(Mock())
+        self.assertEqual(tx, 'tx')
+        self.assertIs(proxy_mock.gettransaction.called, True)
+        self.assertEqual(proxy_mock.gettransaction.call_args[0][0],
+                         lx(tx_id))
+
+    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('operations.blockchain.get_txid')
+    def test_sign_raw_transaction_invalid(self, get_txid_mock, proxy_cls_mock):
+        proxy_cls_mock.return_value = Mock(**{
+            'signrawtransaction.return_value': {
+                'tx': 'tx',
+                'complete': False,
+            },
+            'gettransaction.return_value': {
+                'confirmations': 0,
+                'walletconflicts': [],
+            },
+        })
+        get_txid_mock.return_value = tx_id = '1' * 64
+        bc = BlockChain('mainnet')
+        with self.assertRaises(exceptions.InvalidTransaction) as context:
+            bc.sign_raw_transaction(Mock())
+        self.assertIn(tx_id, context.exception.message)
+
+    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    def test_is_tx_confirmed_true(self, proxy_cls_mock):
         tx_id = '1' * 64
-        proxy_mock.return_value = Mock(**{
+        proxy_cls_mock.return_value = proxy_mock = Mock(**{
             'gettransaction.return_value': {
                 'confirmations': 6,
                 'walletconflicts': [],
@@ -121,11 +173,13 @@ class BlockChainTestCase(TestCase):
         })
         bc = BlockChain('mainnet')
         self.assertIs(bc.is_tx_confirmed(tx_id), True)
+        self.assertEqual(proxy_mock.gettransaction.call_args[0][0],
+                         lx(tx_id))
 
     @patch('operations.blockchain.bitcoin.rpc.Proxy')
-    def test_is_tx_confirmed_false(self, proxy_mock):
+    def test_is_tx_confirmed_false(self, proxy_cls_mock):
         tx_id = '1' * 64
-        proxy_mock.return_value = Mock(**{
+        proxy_cls_mock.return_value = Mock(**{
             'gettransaction.return_value': {
                 'confirmations': 1,
                 'walletconflicts': [],
@@ -135,10 +189,10 @@ class BlockChainTestCase(TestCase):
         self.assertIs(bc.is_tx_confirmed(tx_id), False)
 
     @patch('operations.blockchain.bitcoin.rpc.Proxy')
-    def test_is_tx_confirmed_modified(self, proxy_mock):
+    def test_is_tx_confirmed_modified(self, proxy_cls_mock):
         tx_id_1 = '1' * 64
         tx_id_2 = '2' * 64
-        proxy_mock.return_value = Mock(**{
+        proxy_cls_mock.return_value = Mock(**{
             'gettransaction.return_value': {
                 'confirmations': 0,
                 'walletconflicts': [tx_id_2],
@@ -154,10 +208,10 @@ class BlockChainTestCase(TestCase):
         self.assertEqual(context.exception.another_tx_id, tx_id_2)
 
     @patch('operations.blockchain.bitcoin.rpc.Proxy')
-    def test_is_tx_confirmed_double_spend(self, proxy_mock):
+    def test_is_tx_confirmed_double_spend(self, proxy_cls_mock):
         tx_id_1 = '1' * 64
         tx_id_2 = '2' * 64
-        proxy_mock.return_value = Mock(**{
+        proxy_cls_mock.return_value = Mock(**{
             'gettransaction.return_value': {
                 'confirmations': 0,
                 'walletconflicts': [tx_id_2],
