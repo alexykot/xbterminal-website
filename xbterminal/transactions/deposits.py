@@ -14,7 +14,7 @@ from transactions.constants import (
     DEPOSIT_CONFIDENCE_TIMEOUT,
     DEPOSIT_CONFIRMATION_TIMEOUT,
     PAYMENT_TYPES)
-from transactions.exceptions import DustOutput
+from transactions.exceptions import DustOutput, InvalidTransaction
 from transactions.models import Deposit
 from transactions.utils.compat import get_coin_type
 from transactions.utils.tx import create_tx_
@@ -24,7 +24,7 @@ from operations.exceptions import (
     DoubleSpend,
     TransactionModified,
     RefundError)
-from operations.blockchain import BlockChain
+from operations.blockchain import BlockChain, get_txid
 from operations.protocol import parse_payment
 from operations.services.wrappers import get_exchange_rate, is_tx_reliable
 from wallet.models import Address
@@ -92,8 +92,11 @@ def validate_payment(deposit, transactions, refund_addresses):
     received_amount = BTC_DEC_PLACES
     for incoming_tx in transactions:
         # Validate and broadcast TX
-        incoming_tx_signed = bc.sign_raw_transaction(incoming_tx)
-        incoming_tx_id = bc.send_raw_transaction(incoming_tx_signed)
+        incoming_tx_id = get_txid(incoming_tx)
+        if bc.is_tx_valid(incoming_tx):
+            bc.send_raw_transaction(incoming_tx)
+        else:
+            raise InvalidTransaction(incoming_tx_id)
         incoming_tx_ids.add(incoming_tx_id)
         # Get amount
         for output in bc.get_tx_outputs(incoming_tx):

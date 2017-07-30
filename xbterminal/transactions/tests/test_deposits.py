@@ -6,7 +6,7 @@ from django.utils import timezone
 from mock import patch, Mock
 
 from transactions.constants import PAYMENT_TYPES
-from transactions.exceptions import DustOutput
+from transactions.exceptions import DustOutput, InvalidTransaction
 from transactions.deposits import (
     prepare_deposit,
     validate_payment,
@@ -93,23 +93,26 @@ class PrepareDepositTestCase(TestCase):
 class ValidatePaymentTestCase(TestCase):
 
     @patch('transactions.deposits.BlockChain')
-    def test_validate(self, bc_cls_mock):
+    @patch('transactions.deposits.get_txid')
+    def test_validate(self, get_txid_mock, bc_cls_mock):
         deposit = DepositFactory()
         incoming_tx = Mock()
         incoming_tx_id = '1' * 64
         refund_address = 'a' * 32
         bc_cls_mock.return_value = bc_mock = Mock(**{
-            'sign_raw_transaction.return_value': Mock(),
-            'send_raw_transaction.return_value': incoming_tx_id,
+            'is_tx_valid.return_value': True,
             'get_tx_outputs.return_value': [{
                 'address': deposit.deposit_address.address,
                 'amount': deposit.coin_amount,
             }],
         })
-
+        get_txid_mock.return_value = incoming_tx_id
         validate_payment(deposit, [incoming_tx], [refund_address])
-        self.assertEqual(bc_mock.sign_raw_transaction.call_count, 1)
+
+        self.assertEqual(bc_mock.is_tx_valid.call_count, 1)
         self.assertEqual(bc_mock.send_raw_transaction.call_count, 1)
+        self.assertEqual(bc_mock.send_raw_transaction.call_args[0][0],
+                         incoming_tx)
         deposit.refresh_from_db()
         self.assertEqual(deposit.paid_coin_amount, deposit.coin_amount)
         self.assertEqual(deposit.refund_address, refund_address)
@@ -125,7 +128,8 @@ class ValidatePaymentTestCase(TestCase):
                                              include_unconfirmed=False), 0)
 
     @patch('transactions.deposits.BlockChain')
-    def test_validate_multiple_tx(self, bc_cls_mock):
+    @patch('transactions.deposits.get_txid')
+    def test_validate_multiple_tx(self, get_txid_mock, bc_cls_mock):
         deposit = DepositFactory(
             merchant_coin_amount=Decimal('0.1'),
             fee_coin_amount=Decimal('0.01'),
@@ -137,8 +141,7 @@ class ValidatePaymentTestCase(TestCase):
         incoming_tx_ids = ['2' * 64, '3' * 64]
         refund_address = 'b' * 32
         bc_cls_mock.return_value = bc_mock = Mock(**{
-            'sign_raw_transaction.return_value': Mock(),
-            'send_raw_transaction.side_effect': incoming_tx_ids,
+            'is_tx_valid.return_value': True,
             'get_tx_outputs.side_effect': [
                 [{
                     'address': deposit.deposit_address.address,
@@ -150,9 +153,10 @@ class ValidatePaymentTestCase(TestCase):
                 }],
             ],
         })
-
+        get_txid_mock.side_effect = incoming_tx_ids
         validate_payment(deposit, incoming_txs, [refund_address])
-        self.assertEqual(bc_mock.sign_raw_transaction.call_count, 2)
+
+        self.assertEqual(bc_mock.is_tx_valid.call_count, 2)
         self.assertEqual(bc_mock.send_raw_transaction.call_count, 2)
         deposit.refresh_from_db()
         self.assertEqual(deposit.paid_coin_amount, Decimal('0.15'))
@@ -165,22 +169,25 @@ class ValidatePaymentTestCase(TestCase):
                          deposit.paid_coin_amount)
 
     @patch('transactions.deposits.BlockChain')
-    def test_no_refund_address(self, bc_cls_mock):
+    @patch('transactions.deposits.get_txid')
+    def test_no_refund_address(self, get_txid_mock, bc_cls_mock):
         deposit = DepositFactory()
         bc_cls_mock.return_value = Mock(**{
-            'send_raw_transaction.return_value': '1' * 64,
+            'is_tx_valid.return_value': True,
             'get_tx_outputs.return_value': [{
                 'address': deposit.deposit_address.address,
                 'amount': deposit.coin_amount,
             }],
         })
-
+        get_txid_mock.return_value = '1' * 64
         validate_payment(deposit, [Mock()], [])
+
         deposit.refresh_from_db()
         self.assertIsNone(deposit.refund_address)
 
     @patch('transactions.deposits.BlockChain')
-    def test_insufficient_funds(self, bc_cls_mock):
+    @patch('transactions.deposits.get_txid')
+    def test_insufficient_funds(self, get_txid_mock, bc_cls_mock):
         deposit = DepositFactory(
             merchant_coin_amount=Decimal('0.1'),
             fee_coin_amount=Decimal('0.01'))
@@ -188,12 +195,13 @@ class ValidatePaymentTestCase(TestCase):
         incoming_tx_id = '1' * 64
         refund_address = 'b' * 32
         bc_cls_mock.return_value = bc_mock = Mock(**{
-            'send_raw_transaction.return_value': incoming_tx_id,
+            'is_tx_valid.return_value': True,
             'get_tx_outputs.return_value': [{
                 'address': deposit.deposit_address.address,
                 'amount': Decimal('0.05'),
             }],
         })
+        get_txid_mock.return_value = incoming_tx_id
         with self.assertRaises(InsufficientFunds):
             validate_payment(deposit, [incoming_tx], [refund_address])
 
@@ -206,6 +214,21 @@ class ValidatePaymentTestCase(TestCase):
                          deposit.paid_coin_amount - deposit.fee_coin_amount)
         self.assertEqual(get_address_balance(deposit.deposit_address),
                          deposit.paid_coin_amount)
+
+    @patch('transactions.deposits.BlockChain')
+    @patch('transactions.deposits.get_txid')
+    def test_invalid_incoming_tx(self, get_txid_mock, bc_cls_mock):
+        deposit = DepositFactory()
+        incoming_tx = Mock()
+        incoming_tx_id = '1' * 64
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'is_tx_valid.return_value': False,
+        })
+        get_txid_mock.return_value = incoming_tx_id
+        with self.assertRaises(InvalidTransaction) as context:
+            validate_payment(deposit, [incoming_tx], [])
+        self.assertEqual(context.exception.tx_id, incoming_tx_id)
+        self.assertIs(bc_mock.send_raw_transaction.called, False)
 
 
 class HandleBIP70PaymentTestCase(TestCase):

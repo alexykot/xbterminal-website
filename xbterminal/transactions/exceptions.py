@@ -14,3 +14,12 @@ class TransactionError(Exception):
 class DustOutput(TransactionError):
 
     message = 'Output is below dust threshold'
+
+
+class InvalidTransaction(TransactionError):
+
+    message = 'Invalid transaction'
+
+    def __init__(self, tx_id):
+        super(InvalidTransaction, self).__init__()
+        self.tx_id = tx_id
