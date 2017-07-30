@@ -4,6 +4,7 @@ import logging
 from django.db.transaction import atomic
 from django.utils import timezone
 
+from bitcoin.rpc import VerifyAlreadyInChainError
 from constance import config
 
 from api.utils.urls import get_admin_url
@@ -94,7 +95,12 @@ def validate_payment(deposit, transactions, refund_addresses):
         # Validate and broadcast TX
         incoming_tx_id = get_txid(incoming_tx)
         if bc.is_tx_valid(incoming_tx):
-            bc.send_raw_transaction(incoming_tx)
+            try:
+                bc.send_raw_transaction(incoming_tx)
+            except VerifyAlreadyInChainError:
+                logger.warning('transaction already in chain')
+                # Already in chain, skip broadcasting
+                pass
         else:
             raise InvalidTransaction(incoming_tx_id)
         incoming_tx_ids.add(incoming_tx_id)
