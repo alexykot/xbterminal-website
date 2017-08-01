@@ -126,6 +126,7 @@ class WithdrawalSerializer(serializers.ModelSerializer):
         max_digits=18,
         decimal_places=8,
         source='effective_exchange_rate')
+    address = serializers.CharField(source='customer_address')
 
     class Meta:
         model = Withdrawal
@@ -135,6 +136,7 @@ class WithdrawalSerializer(serializers.ModelSerializer):
             'btc_amount',
             'tx_fee_btc_amount',
             'exchange_rate',
+            'address',
             'status',
         ]
 

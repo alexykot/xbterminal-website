@@ -474,6 +474,8 @@ class WithdrawalViewSetTestCase(APITestCase):
         withdrawal.save()
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['address'],
+                         withdrawal.customer_address)
         self.assertEqual(response.data['status'], 'notified')
 
     @patch('api.utils.pdf.get_template')
