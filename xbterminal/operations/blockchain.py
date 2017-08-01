@@ -194,6 +194,21 @@ class BlockChain(object):
             raise exceptions.InvalidTransaction(get_txid(transaction))
         return result['tx']
 
+    def is_tx_valid(self, transaction):
+        """
+        Accepts:
+            transaction: CTransaction
+        Returns:
+            True of False
+        """
+        result = self._proxy.signrawtransaction(transaction)
+        if result.get('complete') != 1:
+            # Signing attempt for confirmed TX will return complete=False
+            tx_id = get_txid(transaction)
+            if not self.is_tx_confirmed(tx_id, minconf=1):
+                return False
+        return True
+
     def send_raw_transaction(self, transaction):
         """
         Accepts:
