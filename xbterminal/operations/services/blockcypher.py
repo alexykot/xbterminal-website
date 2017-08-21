@@ -27,7 +27,7 @@ def get_tx_confidence(tx_id, network):
     data = response.json()
     if data['confirmations'] >= 1:
         return 1.0
-    return data['confidence']
+    return data.get('confidence', 0)
 
 
 def get_tx_url(tx_id, network):
