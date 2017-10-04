@@ -775,19 +775,17 @@ class VerificationViewTestCase(TestCase):
         self.assertEqual(response.context['documents'][2].pk,
                          document_3.pk)
 
-    @patch('website.utils.kyc.cryptopay.upload_documents')
-    def test_post(self, upload_mock):
+    def test_post(self):
         merchant = MerchantAccountFactory.create(
             instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-            instantfiat_merchant_id='xxx')
-        upload_mock.return_value = 'x1z2b4'
-        document_1 = KYCDocumentFactory.create(
+            instantfiat_merchant_id='test')
+        document_1 = KYCDocumentFactory.create(  # noqa: F841
             merchant=merchant,
             document_type=KYC_DOCUMENT_TYPES.ID_FRONT)
-        document_2 = KYCDocumentFactory.create(
+        document_2 = KYCDocumentFactory.create(  # noqa: F841
             merchant=merchant,
             document_type=KYC_DOCUMENT_TYPES.ID_BACK)
-        document_3 = KYCDocumentFactory.create(
+        document_3 = KYCDocumentFactory.create(  # noqa: F841
             merchant=merchant,
             document_type=KYC_DOCUMENT_TYPES.ADDRESS)
         self.client.login(username=merchant.user.email,
@@ -801,15 +799,8 @@ class VerificationViewTestCase(TestCase):
         self.assertIn('next', data)
         merchant.refresh_from_db()
         self.assertEqual(merchant.verification_status, 'pending')
-        document_1.refresh_from_db()
-        document_2.refresh_from_db()
-        document_3.refresh_from_db()
-        self.assertEqual(document_1.status, 'unverified')
-        self.assertEqual(document_1.instantfiat_document_id, 'x1z2b4')
-        self.assertEqual(document_2.status, 'unverified')
-        self.assertEqual(document_2.instantfiat_document_id, 'x1z2b4')
-        self.assertEqual(document_3.status, 'unverified')
-        self.assertEqual(document_3.instantfiat_document_id, 'x1z2b4')
+        self.assertTrue(all(doc.status == 'unverified' for doc
+                            in merchant.kycdocument_set.all()))
 
     def test_post_not_uploaded(self):
         merchant = MerchantAccountFactory.create(
