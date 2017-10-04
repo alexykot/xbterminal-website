@@ -20,7 +20,7 @@ from transactions.utils.compat import (
     get_address_balance,
     get_account_balance)
 from transactions.utils.tx import create_tx_
-from operations.services.wrappers import get_exchange_rate, is_tx_reliable
+from transactions.services.wrappers import get_exchange_rate, is_tx_reliable
 from operations.blockchain import BlockChain, validate_bitcoin_address
 from operations.exceptions import (
     WithdrawalError,

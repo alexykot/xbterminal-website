@@ -5,9 +5,9 @@ from django.conf import settings
 from django.contrib.staticfiles import finders
 from django.utils.html import format_html
 
-from operations.services import blockcypher
 from website.utils.qr import generate_qr_code
 from api.utils.urls import get_admin_url, get_absolute_static_url
+from transactions.services import blockcypher
 
 register = template.Library()
 

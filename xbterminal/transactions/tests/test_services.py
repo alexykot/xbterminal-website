@@ -2,29 +2,29 @@ from decimal import Decimal
 from django.test import TestCase
 from mock import patch, Mock
 
-from operations.services import wrappers, blockcypher, sochain
+from transactions.services import wrappers, blockcypher, sochain
 
 
 class WrappersTestCase(TestCase):
 
-    @patch('operations.services.wrappers.coindesk.get_exchange_rate')
-    @patch('operations.services.wrappers.btcaverage.get_exchange_rate')
+    @patch('transactions.services.wrappers.coindesk.get_exchange_rate')
+    @patch('transactions.services.wrappers.btcaverage.get_exchange_rate')
     def test_get_exchage_rate(self, btcavg_mock, coindesk_mock):
         coindesk_mock.side_effect = ValueError
         btcavg_mock.return_value = Decimal('200')
         rate = wrappers.get_exchange_rate('USD')
         self.assertEqual(rate, Decimal('200'))
 
-    @patch('operations.services.wrappers.blockcypher.get_tx_confidence')
-    @patch('operations.services.wrappers.sochain.get_tx_confidence')
+    @patch('transactions.services.wrappers.blockcypher.get_tx_confidence')
+    @patch('transactions.services.wrappers.sochain.get_tx_confidence')
     def test_is_tx_reliable(self, so_mock, bc_mock):
         bc_mock.side_effect = ValueError
         so_mock.return_value = 0.95
         self.assertIs(
             wrappers.is_tx_reliable('tx_id', 0.9, 'mainnet'), True)
 
-    @patch('operations.services.wrappers.blockcypher.get_tx_confidence')
-    @patch('operations.services.wrappers.sochain.get_tx_confidence')
+    @patch('transactions.services.wrappers.blockcypher.get_tx_confidence')
+    @patch('transactions.services.wrappers.sochain.get_tx_confidence')
     def test_is_tx_reliable_error(self, so_mock, bc_mock):
         bc_mock.side_effect = ValueError
         so_mock.side_effect = ValueError
@@ -34,7 +34,7 @@ class WrappersTestCase(TestCase):
 
 class BlockcypherTestCase(TestCase):
 
-    @patch('operations.services.blockcypher.requests.get')
+    @patch('transactions.services.blockcypher.requests.get')
     def test_get_tx_confidence(self, get_mock):
         get_mock.return_value = Mock(**{
             'json.return_value': {
@@ -49,7 +49,7 @@ class BlockcypherTestCase(TestCase):
         self.assertIn('/btc/main/', args[0][0])
         self.assertEqual(args[1]['params']['includeConfidence'], 'true')
 
-    @patch('operations.services.blockcypher.requests.get')
+    @patch('transactions.services.blockcypher.requests.get')
     def test_get_tx_confidence_confirmed(self, get_mock):
         get_mock.return_value = Mock(**{
             'json.return_value': {
@@ -75,7 +75,7 @@ class BlockcypherTestCase(TestCase):
 
 class SoChainTestCase(TestCase):
 
-    @patch('operations.services.sochain.requests.get')
+    @patch('transactions.services.sochain.requests.get')
     def test_get_tx_confidence(self, get_mock):
         get_mock.return_value = Mock(**{
             'json.return_value': {
@@ -90,7 +90,7 @@ class SoChainTestCase(TestCase):
             sochain.get_tx_confidence(tx_id, 'mainnet'), 0.93)
         self.assertIn('/BTC/', get_mock.call_args[0][0])
 
-    @patch('operations.services.sochain.requests.get')
+    @patch('transactions.services.sochain.requests.get')
     def test_get_tx_confidence_confirmed(self, get_mock):
         get_mock.return_value = Mock(**{
             'json.return_value': {

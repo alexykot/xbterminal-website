@@ -1,6 +1,6 @@
 import logging
 
-from operations.services import coindesk, btcaverage, blockcypher, sochain
+from transactions.services import coindesk, btcaverage, blockcypher, sochain
 
 logger = logging.getLogger(__name__)
 

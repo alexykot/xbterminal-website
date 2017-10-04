@@ -7,7 +7,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 from website.utils.files import get_verification_file_name
-from operations.services import blockcypher
+from transactions.services import blockcypher
 
 
 class FileWidget(FileInput):

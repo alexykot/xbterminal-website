@@ -27,7 +27,7 @@ from operations.exceptions import (
     RefundError)
 from operations.blockchain import BlockChain, get_txid
 from operations.protocol import parse_payment
-from operations.services.wrappers import get_exchange_rate, is_tx_reliable
+from transactions.services.wrappers import get_exchange_rate, is_tx_reliable
 from wallet.models import Address
 from website.models import Account, Device
 
