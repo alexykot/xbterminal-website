@@ -31,12 +31,11 @@ from api.utils.crypto import verify_signature
 from api.utils.pdf import generate_pdf
 from api.utils.urls import construct_absolute_url
 
-from operations import (
-    blockchain,
-    exceptions)
+from operations import exceptions
 from transactions.models import Deposit, Withdrawal
 from transactions.deposits import prepare_deposit, handle_bip70_payment
 from transactions.withdrawals import prepare_withdrawal, send_transaction
+from transactions.services.bitcoind import construct_bitcoin_uri
 
 from common import rq_helpers
 
@@ -74,7 +73,7 @@ class DepositViewSet(viewsets.GenericViewSet):
             payment_bluetooth_request = deposit.create_payment_request(
                 payment_bluetooth_url)
             # Send payment request in response
-            data['payment_uri'] = blockchain.construct_bitcoin_uri(
+            data['payment_uri'] = construct_bitcoin_uri(
                 deposit.deposit_address.address,
                 deposit.coin_amount,
                 deposit.merchant.company_name,
@@ -82,7 +81,7 @@ class DepositViewSet(viewsets.GenericViewSet):
                 payment_request_url)
             data['payment_request'] = payment_bluetooth_request.encode('base64')
         else:
-            data['payment_uri'] = blockchain.construct_bitcoin_uri(
+            data['payment_uri'] = construct_bitcoin_uri(
                 deposit.deposit_address.address,
                 deposit.coin_amount,
                 deposit.merchant.company_name,

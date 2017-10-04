@@ -12,7 +12,7 @@ from bitcoin.wallet import CBitcoinAddress
 from django.conf import settings
 from constance import config
 
-from operations import BTC_DEC_PLACES, BTC_MIN_FEE
+from transactions.constants import BTC_DEC_PLACES, BTC_MIN_FEE
 from operations import exceptions
 
 

@@ -2,6 +2,7 @@ from decimal import Decimal
 import logging
 from django.core.management.base import BaseCommand
 
+from transactions.services.bitcoind import BlockChain
 from transactions.utils.compat import (
     get_bitcoin_network,
     get_coin_type,
@@ -9,7 +10,6 @@ from transactions.utils.compat import (
     get_fee_account_balance)
 from wallet.models import Address
 from website.models import Account
-from operations.blockchain import BlockChain
 
 logger = logging.getLogger(__name__)
 

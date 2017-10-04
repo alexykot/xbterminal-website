@@ -10,7 +10,7 @@ from website.widgets import (
     ReadOnlyAdminWidget)
 from website.utils.qr import generate_qr_code
 from api.utils.urls import construct_absolute_url, get_link_to_object
-from operations.blockchain import construct_bitcoin_uri
+from transactions.services.bitcoind import construct_bitcoin_uri
 
 
 class OrderAdminFormMixin(object):

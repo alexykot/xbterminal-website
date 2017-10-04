@@ -21,7 +21,7 @@ from transactions.utils.compat import (
     get_account_balance)
 from transactions.utils.tx import create_tx_
 from transactions.services.wrappers import get_exchange_rate, is_tx_reliable
-from operations.blockchain import BlockChain, validate_bitcoin_address
+from transactions.services.bitcoind import BlockChain, validate_bitcoin_address
 from operations.exceptions import (
     WithdrawalError,
     TransactionModified)

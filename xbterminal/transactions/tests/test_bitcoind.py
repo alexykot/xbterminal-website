@@ -6,10 +6,9 @@ import bitcoin
 from bitcoin.core import COutPoint, lx
 from constance.test import override_config
 
-from operations import (
-    exceptions,
-    BTC_MIN_FEE)
-from operations.blockchain import (
+from operations import exceptions
+from transactions.constants import BTC_MIN_FEE
+from transactions.services.bitcoind import (
     BlockChain,
     serialize_outputs,
     deserialize_outputs,
@@ -20,8 +19,8 @@ from operations.blockchain import (
 
 class BlockChainTestCase(TestCase):
 
-    @patch('operations.blockchain.bitcoin.SelectParams')
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('transactions.services.bitcoind.bitcoin.SelectParams')
+    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
     def test_init(self, proxy_cls_mock, select_params_mock):
         BlockChain('mainnet')
         self.assertTrue(select_params_mock.called)
@@ -30,7 +29,7 @@ class BlockChainTestCase(TestCase):
         service_url = proxy_cls_mock.call_args[0][0]
         self.assertTrue(service_url.startswith('http'))
 
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
     def test_import_address(self, proxy_cls_mock):
         proxy_cls_mock.return_value = proxy_mock = Mock(**{
             'importaddress.return_value': None,
@@ -42,7 +41,7 @@ class BlockChainTestCase(TestCase):
         self.assertEqual(proxy_mock.importaddress.call_args[0][0], address)
         self.assertIs(proxy_mock.importaddress.call_args[1]['rescan'], False)
 
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
     def test_get_balance(self, proxy_cls_mock):
         proxy_cls_mock.return_value = Mock(**{
             'getbalance.return_value': 500000,
@@ -51,7 +50,7 @@ class BlockChainTestCase(TestCase):
         balance = bc.get_balance()
         self.assertEqual(balance, Decimal('0.005'))
 
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
     def test_get_address_balance(self, proxy_cls_mock):
         proxy_cls_mock.return_value = Mock(**{
             'listunspent.return_value': [{'amount': 500000}],
@@ -60,7 +59,7 @@ class BlockChainTestCase(TestCase):
         balance = bc.get_address_balance('test')
         self.assertEqual(balance, Decimal('0.005'))
 
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
     def test_get_unspent_outputs(self, proxy_cls_mock):
         proxy_cls_mock.return_value = proxy_mock = Mock(**{
             'listunspent.return_value': [{
@@ -73,7 +72,7 @@ class BlockChainTestCase(TestCase):
         self.assertTrue(proxy_mock.listunspent.called)
         self.assertEqual(proxy_mock.listunspent.call_args[1]['minconf'], 1)
 
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
     def test_get_raw_unspent_outputs(self, proxy_cls_mock):
         proxy_cls_mock.return_value = proxy_mock = Mock(**{
             'call.return_value': [{'txid': '1' * 64}],
@@ -86,7 +85,7 @@ class BlockChainTestCase(TestCase):
         self.assertEqual(proxy_mock.call.call_args[0][2], 9999999)
         self.assertEqual(proxy_mock.call.call_args[0][3], ['test'])
 
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
     def test_get_unspent_transactions(self, proxy_cls_mock):
         address = '1JpY93MNoeHJ914CHLCQkdhS7TvBM68Xp6'
         transaction_mock = Mock()
@@ -110,7 +109,7 @@ class BlockChainTestCase(TestCase):
             proxy_mock.getrawtransaction.call_args[0][0],
             b'\x11' * 32)
 
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
     def test_is_tx_valid(self, proxy_cls_mock):
         proxy_cls_mock.return_value = Mock(**{
             'signrawtransaction.return_value': {
@@ -122,8 +121,8 @@ class BlockChainTestCase(TestCase):
         result = bc.is_tx_valid(Mock())
         self.assertIs(result, True)
 
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
-    @patch('operations.blockchain.get_txid')
+    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
+    @patch('transactions.services.bitcoind.get_txid')
     def test_is_tx_valid_confirmed(self, get_txid_mock, proxy_cls_mock):
         proxy_cls_mock.return_value = proxy_mock = Mock(**{
             'signrawtransaction.return_value': {
@@ -143,8 +142,8 @@ class BlockChainTestCase(TestCase):
         self.assertEqual(proxy_mock.gettransaction.call_args[0][0],
                          lx(tx_id))
 
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
-    @patch('operations.blockchain.get_txid')
+    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
+    @patch('transactions.services.bitcoind.get_txid')
     def test_is_tx_valid_invalid(self, get_txid_mock, proxy_cls_mock):
         proxy_cls_mock.return_value = Mock(**{
             'signrawtransaction.return_value': {
@@ -161,7 +160,7 @@ class BlockChainTestCase(TestCase):
         result = bc.is_tx_valid(Mock())
         self.assertIs(result, False)
 
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
     def test_is_tx_confirmed_true(self, proxy_cls_mock):
         tx_id = '1' * 64
         proxy_cls_mock.return_value = proxy_mock = Mock(**{
@@ -175,7 +174,7 @@ class BlockChainTestCase(TestCase):
         self.assertEqual(proxy_mock.gettransaction.call_args[0][0],
                          lx(tx_id))
 
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
     def test_is_tx_confirmed_false(self, proxy_cls_mock):
         tx_id = '1' * 64
         proxy_cls_mock.return_value = Mock(**{
@@ -187,7 +186,7 @@ class BlockChainTestCase(TestCase):
         bc = BlockChain('mainnet')
         self.assertIs(bc.is_tx_confirmed(tx_id), False)
 
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
     def test_is_tx_confirmed_modified(self, proxy_cls_mock):
         tx_id_1 = '1' * 64
         tx_id_2 = '2' * 64
@@ -206,7 +205,7 @@ class BlockChainTestCase(TestCase):
             bc.is_tx_confirmed(tx_id_1)
         self.assertEqual(context.exception.another_tx_id, tx_id_2)
 
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
     def test_is_tx_confirmed_double_spend(self, proxy_cls_mock):
         tx_id_1 = '1' * 64
         tx_id_2 = '2' * 64
@@ -225,7 +224,7 @@ class BlockChainTestCase(TestCase):
             bc.is_tx_confirmed(tx_id_1)
         self.assertEqual(context.exception.another_tx_id, tx_id_2)
 
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
     def test_get_tx_fee(self, proxy_cls_mock):
         proxy_cls_mock.return_value = proxy_mock = Mock(**{
             'call.return_value': Decimal('0.0002'),
@@ -237,7 +236,7 @@ class BlockChainTestCase(TestCase):
         self.assertEqual(proxy_mock.call.call_args[0][0], 'estimatefee')
         self.assertEqual(proxy_mock.call.call_args[0][1], 10)
 
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
     @override_config(TX_DEFAULT_FEE=Decimal('0.0005'))
     def test_get_tx_fee_error(self, proxy_cls_mock):
         proxy_cls_mock.return_value = Mock(**{
@@ -247,7 +246,7 @@ class BlockChainTestCase(TestCase):
         expected_fee = get_tx_fee(1, 1, Decimal('0.0005'))
         self.assertEqual(bc.get_tx_fee(1, 1), expected_fee)
 
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
     @override_config(TX_DEFAULT_FEE=Decimal('0.0015'))
     @override_settings(DEBUG=True)
     def test_get_tx_fee_debug(self, proxy_cls_mock):
@@ -258,7 +257,7 @@ class BlockChainTestCase(TestCase):
         expected_fee = get_tx_fee(1, 1, Decimal('0.0015'))
         self.assertEqual(bc.get_tx_fee(1, 1), expected_fee)
 
-    @patch('operations.blockchain.bitcoin.rpc.Proxy')
+    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
     def test_get_tx_fee_too_small(self, proxy_cls_mock):
         proxy_cls_mock.return_value = Mock(**{
             'call.return_value': Decimal('0.00000223'),

@@ -33,7 +33,7 @@ from website.tests.factories import (
     AddressFactory,
     DeviceBatchFactory,
     DeviceFactory)
-from operations.blockchain import validate_bitcoin_address
+from transactions.services.bitcoind import validate_bitcoin_address
 from transactions.tests.factories import (
     WithdrawalFactory,
     BalanceChangeFactory,

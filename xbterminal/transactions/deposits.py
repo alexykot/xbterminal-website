@@ -25,8 +25,8 @@ from operations.exceptions import (
     DoubleSpend,
     TransactionModified,
     RefundError)
-from operations.blockchain import BlockChain, get_txid
 from transactions.utils.bip70 import parse_payment
+from transactions.services.bitcoind import BlockChain, get_txid
 from transactions.services.wrappers import get_exchange_rate, is_tx_reliable
 from wallet.models import Address
 from website.models import Account, Device
