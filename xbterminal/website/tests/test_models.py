@@ -9,7 +9,6 @@ from django.db import IntegrityError
 from django.test import TestCase
 from django.utils import timezone
 
-from constance.test import override_config
 from oauth2_provider.models import Application
 from django_fsm import TransitionNotAllowed
 
@@ -180,29 +179,6 @@ class MerchantAccountTestCase(TestCase):
         merchant.save()
         self.assertTrue(merchant.is_profile_complete)
 
-    def test_has_managed_cryptopay_profile(self):
-        merchant = MerchantAccountFactory.create()
-        self.assertFalse(merchant.has_managed_cryptopay_profile)
-        merchant = MerchantAccountFactory.create(
-            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-            instantfiat_merchant_id='test')
-        self.assertTrue(merchant.has_managed_cryptopay_profile)
-
-    @override_config(CRYPTOPAY_USE_FAKE_EMAIL=True)
-    def test_get_cryptopay_email(self):
-        merchant = MerchantAccountFactory.create(
-            company_name='Test Co Ltd.')
-        expected_email = 'merchant-{}-test-co-ltd@xbterminal.io'.format(
-            merchant.pk)
-        self.assertEqual(merchant.get_cryptopay_email(), expected_email)
-
-    @override_config(CRYPTOPAY_USE_FAKE_EMAIL=False)
-    def test_get_cryptopay_email_real(self):
-        merchant = MerchantAccountFactory.create(
-            company_name='Test Co Ltd.')
-        self.assertEqual(merchant.get_cryptopay_email(),
-                         merchant.contact_email)
-
     def test_get_kyc_document(self):
         merchant = MerchantAccountFactory.create()
         document = merchant.get_kyc_document(
@@ -219,16 +195,15 @@ class MerchantAccountTestCase(TestCase):
         merchant = MerchantAccountFactory.create()
         info = merchant.info
         self.assertEqual(info['name'], merchant.company_name)
-        self.assertEqual(info['status'], None)
+        self.assertEqual(info['status'], 'unverified')
         self.assertEqual(info['active'], 0)
         self.assertEqual(info['total'], 0)
         self.assertEqual(info['tx_count'], 0)
         self.assertEqual(info['tx_sum'], 0)
 
-    def test_info_with_payments_and_managed_profile(self):
+    def test_info_with_transactions(self):
         merchant = MerchantAccountFactory.create(
-            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-            instantfiat_merchant_id='test')
+            verification_status='pending')
         account = AccountFactory.create(merchant=merchant)
         DeviceFactory.create(merchant=merchant,
                              account=account,
@@ -245,7 +220,7 @@ class MerchantAccountTestCase(TestCase):
             deposit__notified=True)
 
         info = merchant.info
-        self.assertEqual(info['status'], 'unverified')
+        self.assertEqual(info['status'], 'verification pending')
         self.assertEqual(info['active'], 1)
         self.assertEqual(info['total'], 2)
         self.assertEqual(info['tx_count'], len(transactions))

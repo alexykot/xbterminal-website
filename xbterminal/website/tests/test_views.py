@@ -12,7 +12,6 @@ from django.utils import timezone
 from website.models import (
     MerchantAccount,
     Device,
-    INSTANTFIAT_PROVIDERS,
     KYC_DOCUMENT_TYPES)
 from website.tests.factories import (
     create_image,
@@ -700,17 +699,8 @@ class VerificationViewTestCase(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 302)
 
-    def test_get_no_managed_cryptopay_profile(self):
-        merchant = MerchantAccountFactory.create()
-        self.client.login(username=merchant.user.email,
-                          password='password')
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 404)
-
     def test_get_unverified(self):
-        merchant = MerchantAccountFactory.create(
-            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-            instantfiat_merchant_id='test')
+        merchant = MerchantAccountFactory.create()
         self.client.login(username=merchant.user.email,
                           password='password')
         response = self.client.get(self.url)
@@ -727,9 +717,7 @@ class VerificationViewTestCase(TestCase):
         self.assertIsNone(form_3.instance.pk)
 
     def test_get_unverified_already_uploaded(self):
-        merchant = MerchantAccountFactory.create(
-            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-            instantfiat_merchant_id='test')
+        merchant = MerchantAccountFactory.create()
         doc_id = KYCDocumentFactory.create(
             merchant=merchant,
             document_type=KYC_DOCUMENT_TYPES.ID_FRONT,
@@ -744,8 +732,6 @@ class VerificationViewTestCase(TestCase):
 
     def test_get_verification_pending(self):
         merchant = MerchantAccountFactory.create(
-            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-            instantfiat_merchant_id='test',
             verification_status='pending')
         document_1 = KYCDocumentFactory.create(
             merchant=merchant,
@@ -775,9 +761,7 @@ class VerificationViewTestCase(TestCase):
                          document_3.pk)
 
     def test_post(self):
-        merchant = MerchantAccountFactory.create(
-            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-            instantfiat_merchant_id='test')
+        merchant = MerchantAccountFactory.create()
         document_1 = KYCDocumentFactory.create(  # noqa: F841
             merchant=merchant,
             document_type=KYC_DOCUMENT_TYPES.ID_FRONT)
@@ -802,9 +786,7 @@ class VerificationViewTestCase(TestCase):
                             in merchant.kycdocument_set.all()))
 
     def test_post_not_uploaded(self):
-        merchant = MerchantAccountFactory.create(
-            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-            instantfiat_merchant_id='test')
+        merchant = MerchantAccountFactory.create()
         doc_id = KYCDocumentFactory.create(
             merchant=merchant,
             document_type=KYC_DOCUMENT_TYPES.ID_FRONT)

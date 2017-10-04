@@ -23,7 +23,6 @@ from django_countries.fields import CountryField
 from django_fsm import FSMField, transition
 from extended_choices import Choices
 from localflavor.generic.models import BICField, IBANField
-from slugify import slugify
 
 from website.validators import (
     validate_phone,
@@ -229,6 +228,7 @@ class MerchantAccount(models.Model):
     currency = models.ForeignKey(Currency, default=1)  # by default, GBP, see fixtures
     ui_theme = models.ForeignKey(UITheme, default=1)  # 'default' theme, see fixtures
 
+    # TODO: remove fields
     instantfiat_provider = models.PositiveSmallIntegerField(
         _('InstantFiat provider'),
         choices=INSTANTFIAT_PROVIDERS,
@@ -294,23 +294,6 @@ class MerchantAccount(models.Model):
                 bool(self.post_code) and
                 bool(self.contact_phone))
 
-    @property
-    def has_managed_cryptopay_profile(self):
-        return (self.instantfiat_provider ==
-                INSTANTFIAT_PROVIDERS.CRYPTOPAY and
-                self.instantfiat_merchant_id)
-
-    def get_cryptopay_email(self):
-        """
-        Get email address for CryptoPay registration
-        """
-        if config.CRYPTOPAY_USE_FAKE_EMAIL:
-            return 'merchant-{0}-{1}@xbterminal.io'.format(
-                self.pk,
-                slugify(self.company_name))
-        else:
-            return self.user.email
-
     def get_kyc_document(self, document_type, status):
         """
         Get latest KYC document for given status
@@ -333,8 +316,7 @@ class MerchantAccount(models.Model):
 
     @property
     def info(self):
-        if not self.has_managed_cryptopay_profile or \
-                self.verification_status == 'verified':
+        if self.verification_status == 'verified':
             status = None
         else:
             status = self.get_verification_status_display()
@@ -374,6 +356,7 @@ def merchant_generate_activation_code(sender, instance, **kwargs):
                 break
 
 
+# TODO: remove choices
 BITCOIN_NETWORKS = [
     ('mainnet', 'Main'),
     ('testnet', 'Testnet'),
@@ -392,6 +375,7 @@ class Account(models.Model):
         blank=True,
         null=True)
     instantfiat = models.BooleanField()
+    # TODO: remove field
     instantfiat_account_id = models.CharField(
         _('InstantFiat account ID'),
         max_length=50,
