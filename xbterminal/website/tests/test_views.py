@@ -20,7 +20,6 @@ from website.tests.factories import (
     MerchantAccountFactory,
     KYCDocumentFactory,
     AccountFactory,
-    TransactionFactory,
     DeviceFactory)
 from transactions.tests.factories import BalanceChangeFactory
 
@@ -1181,7 +1180,10 @@ class WithdrawToBankAccountViewTestCase(TestCase):
         account = AccountFactory.create(merchant=self.merchant,
                                         instantfiat=True,
                                         currency__name='GBP')
-        TransactionFactory.create(account=account, amount=Decimal('1.0'))
+        # WARNING: fiat deposits are not implemented
+        BalanceChangeFactory(deposit__account=account,
+                             deposit__confirmed=True,
+                             amount=Decimal('1.0'))
         self.client.login(username=self.merchant.user.email,
                           password='password')
         url = reverse('website:account_withdrawal',

@@ -510,10 +510,10 @@ class WithdrawToBankAccountForm(forms.Form):
 
     def clean_amount(self):
         amount = self.cleaned_data['amount']
-        if self.account.balance_confirmed_ - amount < 0:
+        if self.account.balance_confirmed - amount < 0:
             raise forms.ValidationError(
                 'Insufficient balance on account.')
-        if self.account.balance_confirmed_ - amount < self.account.balance_min:
+        if self.account.balance_confirmed - amount < self.account.balance_min:
             raise forms.ValidationError(
                 'Account balance can not go below the minimum value.')
         return amount
