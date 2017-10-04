@@ -179,6 +179,7 @@ class UITheme(models.Model):
         return self.name
 
 
+# TODO: remove choices
 INSTANTFIAT_PROVIDERS = Choices(
     ('CRYPTOPAY', 1, 'CryptoPay'),
     ('GOCOIN', 2, 'GoCoin'),

@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 from django.db import migrations, models
 from website.models import INSTANTFIAT_PROVIDERS
-from operations.instantfiat.cryptopay import DEFAULT_CURRENCIES
 
 
 def create_accounts(apps, schema_editor):
@@ -14,7 +13,7 @@ def create_accounts(apps, schema_editor):
             instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
             instantfiat_merchant_id__isnull=False).first()
         if managed_account:
-            for currency in Currency.objects.filter(name__in=DEFAULT_CURRENCIES):
+            for currency in Currency.objects.filter(name__in=['GBP', 'USD', 'EUR']):
                 if merchant.account_set.filter(currency=currency).exists():
                     continue
                 merchant.account_set.create(
