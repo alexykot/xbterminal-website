@@ -505,6 +505,7 @@ class Address(models.Model):
         return self.address
 
 
+# TODO: remove model
 class Transaction(models.Model):
 
     payment = models.ForeignKey(

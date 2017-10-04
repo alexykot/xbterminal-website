@@ -32,12 +32,8 @@ from website.tests.factories import (
     KYCDocumentFactory,
     AccountFactory,
     AddressFactory,
-    TransactionFactory,
     DeviceBatchFactory,
     DeviceFactory)
-from operations.tests.factories import (
-    PaymentOrderFactory,
-    WithdrawalOrderFactory)
 from operations.blockchain import validate_bitcoin_address
 from transactions.tests.factories import (
     WithdrawalFactory,
@@ -480,37 +476,6 @@ class TransactionTestCase(TestCase):
         self.assertIsNone(transaction.instantfiat_tx_id)
         self.assertIsNotNone(transaction.created_at)
         self.assertEqual(str(transaction), str(transaction.pk))
-
-    def test_factory(self):
-        transaction = TransactionFactory.create()
-        self.assertIsNone(transaction.payment)
-        self.assertIsNone(transaction.withdrawal)
-        self.assertIsNotNone(transaction.account)
-        self.assertGreater(transaction.amount, 0)
-        self.assertIsNone(transaction.instantfiat_tx_id)
-
-    def test_unique_together(self):
-        account = AccountFactory.create()
-        TransactionFactory.create_batch(3, account=account)
-        TransactionFactory.create(account=account,
-                                  instantfiat_tx_id=1000)
-        with self.assertRaises(IntegrityError):
-            TransactionFactory.create(account=account,
-                                      instantfiat_tx_id=1000)
-
-    def test_tx_hash(self):
-        transaction_1 = TransactionFactory.create()
-        self.assertIsNone(transaction_1.tx_hash)
-        payment_order = PaymentOrderFactory.create(
-            outgoing_tx_id='1' * 64)
-        transaction_2 = TransactionFactory.create(payment=payment_order)
-        self.assertEqual(transaction_2.tx_hash,
-                         payment_order.outgoing_tx_id)
-        withdrawal_order = WithdrawalOrderFactory.create(
-            outgoing_tx_id='2' * 64)
-        transaction_3 = TransactionFactory.create(withdrawal=withdrawal_order)
-        self.assertEqual(transaction_3.tx_hash,
-                         withdrawal_order.outgoing_tx_id)
 
 
 class DeviceTestCase(TestCase):
