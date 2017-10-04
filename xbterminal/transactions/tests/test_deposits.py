@@ -6,7 +6,14 @@ from django.utils import timezone
 from mock import patch, Mock
 
 from transactions.constants import PAYMENT_TYPES
-from transactions.exceptions import DustOutput, InvalidTransaction
+from transactions.exceptions import (
+    DustOutput,
+    InvalidTransaction,
+    InsufficientFunds,
+    InvalidPaymentMessage,
+    DoubleSpend,
+    TransactionModified,
+    RefundError)
 from transactions.deposits import (
     prepare_deposit,
     validate_payment,
@@ -19,12 +26,6 @@ from transactions.deposits import (
     check_deposit_confirmation)
 from transactions.tests.factories import DepositFactory
 from transactions.utils.compat import get_account_balance, get_address_balance
-from operations.exceptions import (
-    InsufficientFunds,
-    InvalidPaymentMessage,
-    DoubleSpend,
-    TransactionModified,
-    RefundError)
 from wallet.constants import BIP44_COIN_TYPES
 from wallet.tests.factories import WalletKeyFactory
 from website.tests.factories import AccountFactory, DeviceFactory

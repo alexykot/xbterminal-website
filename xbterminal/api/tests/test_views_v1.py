@@ -7,7 +7,7 @@ from django.test import TestCase
 from mock import patch, Mock
 from rest_framework import status
 
-from operations import exceptions
+from transactions.exceptions import TransactionError
 from transactions.tests.factories import DepositFactory
 from website.models import Device
 from website.tests.factories import (
@@ -186,7 +186,7 @@ class PaymentInitViewTestCase(TestCase):
 
     @patch('api.views_v1.prepare_deposit')
     def test_payment_error(self, prepare_mock):
-        prepare_mock.side_effect = exceptions.PaymentError
+        prepare_mock.side_effect = TransactionError
         device = DeviceFactory.create(long_key=True)
         fiat_amount = 10
         bluetooth_mac = '12:34:56:78:9A:BC'
@@ -198,7 +198,7 @@ class PaymentInitViewTestCase(TestCase):
         response = self.client.post(self.url, form_data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         data = json.loads(response.content)
-        self.assertEqual(data['error'], 'Payment error')
+        self.assertEqual(data['error'], 'Transaction error')
 
 
 class PaymentRequestViewTestCase(TestCase):

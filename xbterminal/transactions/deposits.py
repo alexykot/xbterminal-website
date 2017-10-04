@@ -15,16 +15,17 @@ from transactions.constants import (
     DEPOSIT_CONFIDENCE_TIMEOUT,
     DEPOSIT_CONFIRMATION_TIMEOUT,
     PAYMENT_TYPES)
-from transactions.exceptions import DustOutput, InvalidTransaction
-from transactions.models import Deposit
-from transactions.utils.compat import get_coin_type
-from transactions.utils.tx import create_tx_
-from operations.exceptions import (
+from transactions.exceptions import (
+    DustOutput,
+    InvalidTransaction,
     InsufficientFunds,
     InvalidPaymentMessage,
     DoubleSpend,
     TransactionModified,
     RefundError)
+from transactions.models import Deposit
+from transactions.utils.compat import get_coin_type
+from transactions.utils.tx import create_tx_
 from transactions.utils.bip70 import parse_payment
 from transactions.services.bitcoind import BlockChain, get_txid
 from transactions.services.wrappers import get_exchange_rate, is_tx_reliable

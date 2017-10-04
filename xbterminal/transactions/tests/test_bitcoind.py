@@ -6,7 +6,7 @@ import bitcoin
 from bitcoin.core import COutPoint, lx
 from constance.test import override_config
 
-from operations import exceptions
+from transactions.exceptions import TransactionModified, DoubleSpend
 from transactions.constants import BTC_MIN_FEE
 from transactions.services.bitcoind import (
     BlockChain,
@@ -201,7 +201,7 @@ class BlockChainTestCase(TestCase):
             ],
         })
         bc = BlockChain('mainnet')
-        with self.assertRaises(exceptions.TransactionModified) as context:
+        with self.assertRaises(TransactionModified) as context:
             bc.is_tx_confirmed(tx_id_1)
         self.assertEqual(context.exception.another_tx_id, tx_id_2)
 
@@ -220,7 +220,7 @@ class BlockChainTestCase(TestCase):
             ],
         })
         bc = BlockChain('mainnet')
-        with self.assertRaises(exceptions.DoubleSpend) as context:
+        with self.assertRaises(DoubleSpend) as context:
             bc.is_tx_confirmed(tx_id_1)
         self.assertEqual(context.exception.another_tx_id, tx_id_2)
 

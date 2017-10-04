@@ -21,7 +21,7 @@ from api.forms import PaymentForm
 from api.utils.pdf import generate_pdf
 from api.utils.urls import construct_absolute_url
 
-from operations import exceptions
+from transactions.exceptions import TransactionError
 from transactions.models import Deposit
 from transactions.deposits import prepare_deposit, handle_bip70_payment
 from transactions.services.bitcoind import construct_bitcoin_uri
@@ -175,7 +175,7 @@ class PaymentInitView(View):
         try:
             deposit = prepare_deposit(
                 device, form.cleaned_data['amount'])
-        except exceptions.PaymentError as error:
+        except TransactionError as error:
             return HttpResponseBadRequest(
                 json.dumps({'error': error.message}),
                 content_type='application/json')
