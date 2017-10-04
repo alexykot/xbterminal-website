@@ -20,7 +20,7 @@ from operations import (
     WITHDRAWAL_TIMEOUT,
     WITHDRAWAL_BROADCAST_TIMEOUT,
     WITHDRAWAL_CONFIRMATION_TIMEOUT)
-from operations.protocol import create_payment_request
+from transactions.utils.bip70 import create_payment_request
 from api.utils.urls import construct_absolute_url
 
 

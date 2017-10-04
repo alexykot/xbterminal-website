@@ -26,7 +26,7 @@ from operations.exceptions import (
     TransactionModified,
     RefundError)
 from operations.blockchain import BlockChain, get_txid
-from operations.protocol import parse_payment
+from transactions.utils.bip70 import parse_payment
 from transactions.services.wrappers import get_exchange_rate, is_tx_reliable
 from wallet.models import Address
 from website.models import Account, Device
