@@ -8,7 +8,7 @@ from factory import fuzzy
 
 from website.tests.factories import DeviceFactory, AddressFactory
 from operations.models import PaymentOrder, WithdrawalOrder
-from operations import BTC_DEC_PLACES
+from transactions.constants import BTC_DEC_PLACES
 from transactions.services.bitcoind import serialize_outputs
 
 

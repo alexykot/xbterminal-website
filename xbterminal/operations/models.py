@@ -12,8 +12,8 @@ from website.validators import (
     validate_bitcoin_address,
     validate_transaction)
 
+from transactions.constants import BTC_DEC_PLACES
 from operations import (
-    BTC_DEC_PLACES,
     PAYMENT_TIMEOUT,
     PAYMENT_VALIDATION_TIMEOUT,
     PAYMENT_CONFIRMATION_TIMEOUT,
