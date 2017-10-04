@@ -364,16 +364,6 @@ class AccountTestCase(TestCase):
         self.assertEqual(account.balance,
                          sum(t.amount for t in transactions))
 
-    def test_balance_(self):
-        account_1 = AccountFactory.create()
-        self.assertEqual(account_1.balance_, 0)
-        transactions = TransactionFactory.create_batch(
-            3, account=account_1)
-        self.assertEqual(account_1.balance_,
-                         sum(t.amount for t in transactions))
-        account_2 = AccountFactory.create(balance_=Decimal('0.5'))
-        self.assertEqual(account_2.balance_, Decimal('0.5'))
-
     def test_balance_confirmed(self):
         account = AccountFactory()
         # Deposit - broadcasted
@@ -405,50 +395,6 @@ class AccountTestCase(TestCase):
                                      amount=Decimal('0.01'))
         self.assertEqual(account.balance, Decimal('0.30'))
         self.assertEqual(account.balance_confirmed, Decimal('0.07'))
-
-    def test_balance_confirmed_(self):
-        account = AccountFactory.create()
-        # Payment - forwarded
-        TransactionFactory.create(
-            payment=PaymentOrderFactory.create(
-                time_forwarded=timezone.now()),
-            account=account,
-            amount=Decimal('0.2'))
-        # Payment - confirmed
-        TransactionFactory.create(
-            payment=PaymentOrderFactory.create(
-                time_forwarded=timezone.now(),
-                time_confirmed=timezone.now()),
-            account=account,
-            amount=Decimal('0.3'))
-        # Withdrawal - sent
-        withdrawal_1 = WithdrawalOrderFactory.create(
-            time_sent=timezone.now())
-        TransactionFactory.create(
-            withdrawal=withdrawal_1,
-            account=account,
-            amount=Decimal('-0.18'))
-        TransactionFactory.create(
-            withdrawal=withdrawal_1,
-            account=account,
-            amount=Decimal('0.03'))
-        # Withdrawal - broadcasted
-        withdrawal_2 = WithdrawalOrderFactory.create(
-            time_sent=timezone.now(),
-            time_broadcasted=timezone.now())
-        TransactionFactory.create(
-            withdrawal=withdrawal_2,
-            account=account,
-            amount=Decimal('-0.06'))
-        TransactionFactory.create(
-            withdrawal=withdrawal_2,
-            account=account,
-            amount=Decimal('0.01'))
-        # Without order
-        TransactionFactory.create(
-            account=account, amount=Decimal('0.13'))
-        self.assertEqual(account.balance_, Decimal('0.43'))
-        self.assertEqual(account.balance_confirmed_, Decimal('0.20'))
 
     def test_balance_min_max(self):
         account_btc = AccountFactory.create(currency__name='BTC')
@@ -494,31 +440,6 @@ class AccountTestCase(TestCase):
         self.assertEqual(transactions.count(), 2)
         self.assertEqual(transactions[0].pk, tx_4.pk)
         self.assertEqual(transactions[1].pk, tx_5.pk)
-
-    def test_get_transactions_by_date_(self):
-        account = AccountFactory.create()
-        now = timezone.now()
-        range_beg = (now - datetime.timedelta(days=5)).date()
-        range_end = (now - datetime.timedelta(days=4)).date()
-        TransactionFactory.create(
-            account=account,
-            created_at=now - datetime.timedelta(days=6))
-        TransactionFactory.create(
-            account=account,
-            created_at=now - datetime.timedelta(days=3))
-        TransactionFactory.create(
-            created_at=now - datetime.timedelta(days=5))
-        tx_1 = TransactionFactory.create(
-            account=account,
-            created_at=now - datetime.timedelta(days=5))
-        tx_2 = TransactionFactory.create(
-            account=account,
-            created_at=now - datetime.timedelta(days=4))
-        transactions = account.get_transactions_by_date_(range_beg,
-                                                         range_end)
-        self.assertEqual(transactions.count(), 2)
-        self.assertEqual(transactions[0].pk, tx_1.pk)
-        self.assertEqual(transactions[1].pk, tx_2.pk)
 
 
 class AddressTestCase(TestCase):
@@ -736,26 +657,6 @@ class DeviceTestCase(TestCase):
         self.assertEqual(transactions[0].amount, Decimal('0.2'))
         self.assertEqual(transactions[1].amount, Decimal('-0.1'))
 
-    def test_get_transactions_(self):
-        device = DeviceFactory.create()
-        TransactionFactory.create(
-            payment=PaymentOrderFactory.create(device=device),
-            account=device.account,
-            amount=Decimal('0.2'))
-        TransactionFactory.create(
-            withdrawal=WithdrawalOrderFactory.create(device=device),
-            account=device.account,
-            amount=Decimal('-0.1'))
-        TransactionFactory.create(
-            payment=PaymentOrderFactory.create(
-                device=None,
-                account=device.account),
-            account=device.account,
-            amount=Decimal('0.5'))
-        transactions = device.get_transactions_()
-        self.assertEqual(transactions[0].amount, Decimal('0.2'))
-        self.assertEqual(transactions[1].amount, Decimal('-0.1'))
-
     def test_get_transactions_by_date(self):
         device = DeviceFactory.create()
         now = timezone.now()
@@ -786,32 +687,6 @@ class DeviceTestCase(TestCase):
         self.assertEqual(transactions[0].pk, tx_3.pk)
         self.assertEqual(transactions[1].pk, tx_4.pk)
         self.assertEqual(transactions[2].pk, tx_5.pk)
-
-    def test_get_transactions_by_date_(self):
-        device = DeviceFactory.create()
-        now = timezone.now()
-        date_1 = (now - datetime.timedelta(days=5)).date()
-        date_2 = (now - datetime.timedelta(days=4)).date()
-        TransactionFactory.create(
-            payment=PaymentOrderFactory.create(device=device),
-            account=device.account,
-            created_at=now - datetime.timedelta(days=6))
-        TransactionFactory.create(
-            payment=PaymentOrderFactory.create(device=device),
-            account=device.account,
-            created_at=now - datetime.timedelta(days=3))
-        tx_1 = TransactionFactory.create(
-            payment=PaymentOrderFactory.create(device=device),
-            account=device.account,
-            created_at=now - datetime.timedelta(days=5))
-        tx_2 = TransactionFactory.create(
-            payment=PaymentOrderFactory.create(device=device),
-            account=device.account,
-            created_at=now - datetime.timedelta(days=4))
-        transactions = device.get_transactions_by_date_(date_1, date_2)
-        self.assertEqual(transactions.count(), 2)
-        self.assertEqual(transactions[0].pk, tx_1.pk)
-        self.assertEqual(transactions[1].pk, tx_2.pk)
 
     def test_is_online(self):
         device = DeviceFactory.create()

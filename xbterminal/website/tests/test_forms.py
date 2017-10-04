@@ -82,7 +82,7 @@ class MerchantRegistrationFormTestCase(TestCase):
         self.assertEqual(merchant.account_set.count(), 1)
         account_btc_internal = merchant.account_set.get(
             currency__name='BTC', instantfiat=False)
-        self.assertEqual(account_btc_internal.balance_, 0)
+        self.assertEqual(account_btc_internal.balance, 0)
         self.assertEqual(account_btc_internal.balance_max, 0)
         self.assertIsNone(account_btc_internal.instantfiat_account_id)
         # Email
