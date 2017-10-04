@@ -343,10 +343,14 @@ class MerchantAccount(models.Model):
         total = self.device_set.count()
         today = timezone.localtime(timezone.now()).\
             replace(hour=0, minute=0, second=0, microsecond=0)
-        transactions = apps.get_model('operations', 'PaymentOrder').\
-            objects.filter(device__merchant=self, time_notified__gte=today)
+        # TODO: show withdrawals too
+        transactions = apps.get_model('transactions', 'BalanceChange').\
+            objects.\
+            filter(deposit__isnull=False,
+                   deposit__account__merchant=self,
+                   deposit__time_notified__gte=today)
         tx_count = transactions.count()
-        tx_sum = transactions.aggregate(s=models.Sum('fiat_amount'))['s']
+        tx_sum = transactions.aggregate(s=models.Sum('amount'))['s']
         return {'name': self.trading_name or self.company_name,
                 'status': status,
                 'active': active,

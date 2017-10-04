@@ -242,16 +242,19 @@ class MerchantAccountTestCase(TestCase):
             account=account,
             status='active',
             last_activity=timezone.now())
-        payments = PaymentOrderFactory.create_batch(
-            3, device=active_device, time_notified=timezone.now())
+        transactions = BalanceChangeFactory.create_batch(
+            3,
+            deposit__account=account,
+            deposit__device=active_device,
+            deposit__notified=True)
 
         info = merchant.info
         self.assertEqual(info['status'], 'unverified')
         self.assertEqual(info['active'], 1)
         self.assertEqual(info['total'], 2)
-        self.assertEqual(info['tx_count'], len(payments))
+        self.assertEqual(info['tx_count'], len(transactions))
         self.assertEqual(info['tx_sum'],
-                         sum(p.fiat_amount for p in payments))
+                         sum(t.amount for t in transactions))
 
     def test_get_tx_confidence_threshold(self):
         merchant = MerchantAccountFactory()
