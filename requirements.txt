@@ -17,6 +17,7 @@ django-redis==4.3.0
 django-rq==0.9.5
 django-storages==1.4.1
 djangorestframework==3.6.3
+enum34==1.1.6
 html5lib==1.0b10
 ndg-httpsclient==0.4.0  # requests[security]
 oauthlib==1.0.3
