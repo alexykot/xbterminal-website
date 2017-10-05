@@ -20,16 +20,16 @@ class WrappersTestCase(TestCase):
     def test_is_tx_reliable(self, so_mock, bc_mock):
         bc_mock.side_effect = ValueError
         so_mock.return_value = 0.95
-        self.assertIs(
-            wrappers.is_tx_reliable('tx_id', 0.9, 'mainnet'), True)
+        result = wrappers.is_tx_reliable('tx_id', 0.9, 'BTC')
+        self.assertIs(result, True)
 
     @patch('transactions.services.wrappers.blockcypher.get_tx_confidence')
     @patch('transactions.services.wrappers.sochain.get_tx_confidence')
     def test_is_tx_reliable_error(self, so_mock, bc_mock):
         bc_mock.side_effect = ValueError
         so_mock.side_effect = ValueError
-        self.assertIs(
-            wrappers.is_tx_reliable('tx_id', 0.9, 'mainnet'), False)
+        result = wrappers.is_tx_reliable('tx_id', 0.9, 'BTC')
+        self.assertIs(result, False)
 
 
 class BlockcypherTestCase(TestCase):
@@ -43,8 +43,9 @@ class BlockcypherTestCase(TestCase):
             },
         })
         tx_id = '0' * 64
-        self.assertEqual(
-            blockcypher.get_tx_confidence(tx_id, 'mainnet'), 0.93)
+        result = blockcypher.get_tx_confidence(tx_id, 'BTC')
+
+        self.assertEqual(result, 0.93)
         args = get_mock.call_args
         self.assertIn('/btc/main/', args[0][0])
         self.assertEqual(args[1]['params']['includeConfidence'], 'true')
@@ -58,18 +59,21 @@ class BlockcypherTestCase(TestCase):
             },
         })
         tx_id = '0' * 64
-        self.assertEqual(
-            blockcypher.get_tx_confidence(tx_id, 'mainnet'), 1.0)
+        result = blockcypher.get_tx_confidence(tx_id, 'BTC')
+
+        self.assertEqual(result, 1.0)
         self.assertIn('/btc/main/', get_mock.call_args[0][0])
 
     def test_get_tx_url(self):
         tx = 'test'
-        self.assertEqual(blockcypher.get_tx_url(tx, 'mainnet'),
+        result = blockcypher.get_tx_url(tx, 'BTC')
+        self.assertEqual(result,
                          'https://live.blockcypher.com/btc/tx/test/')
 
     def test_get_address_url(self):
         address = 'test'
-        self.assertEqual(blockcypher.get_address_url(address, 'mainnet'),
+        result = blockcypher.get_address_url(address, 'BTC')
+        self.assertEqual(result,
                          'https://live.blockcypher.com/btc/address/test/')
 
 
@@ -86,8 +90,9 @@ class SoChainTestCase(TestCase):
             },
         })
         tx_id = '0' * 64
-        self.assertEqual(
-            sochain.get_tx_confidence(tx_id, 'mainnet'), 0.93)
+        result = sochain.get_tx_confidence(tx_id, 'BTC')
+
+        self.assertEqual(result, 0.93)
         self.assertIn('/BTC/', get_mock.call_args[0][0])
 
     @patch('transactions.services.sochain.requests.get')
@@ -101,6 +106,7 @@ class SoChainTestCase(TestCase):
             },
         })
         tx_id = '0' * 64
-        self.assertEqual(
-            sochain.get_tx_confidence(tx_id, 'mainnet'), 1.0)
+        result = sochain.get_tx_confidence(tx_id, 'BTC')
+
+        self.assertEqual(result, 1.0)
         self.assertIn('/BTC/', get_mock.call_args[0][0])

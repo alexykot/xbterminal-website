@@ -245,7 +245,7 @@ def wait_for_confidence(deposit_id):
             continue
         if not is_tx_reliable(incoming_tx_id,
                               deposit.merchant.get_tx_confidence_threshold(),
-                              deposit.bitcoin_network):
+                              deposit.coin.name):
             # Break cycle, wait for confidence
             break
     else:

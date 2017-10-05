@@ -173,7 +173,7 @@ def wait_for_confidence(withdrawal_id):
     # If transaction is already confirmed, skip confidence check
     if tx_confirmed or is_tx_reliable(withdrawal.outgoing_tx_id,
                                       withdrawal.merchant.get_tx_confidence_threshold(),
-                                      withdrawal.bitcoin_network):
+                                      withdrawal.coin.name):
         cancel_current_task()
         if withdrawal.time_broadcasted is None:
             withdrawal.time_broadcasted = timezone.now()

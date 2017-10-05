@@ -376,6 +376,10 @@ class WaitForConfidenceTestCase(TestCase):
         self.assertEqual(withdrawal.status, 'broadcasted')
         self.assertIs(bc_mock.is_tx_confirmed.called, True)
         self.assertIs(is_reliable_mock.called, True)
+        self.assertEqual(is_reliable_mock.call_args[0][0],
+                         withdrawal.outgoing_tx_id)
+        self.assertEqual(is_reliable_mock.call_args[0][2],
+                         withdrawal.coin.name)
         self.assertIs(cancel_mock.called, True)
         self.assertIs(run_task_mock.called, True)
 

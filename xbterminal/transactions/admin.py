@@ -9,21 +9,21 @@ from transactions.services import blockcypher
 from api.utils.urls import get_link_to_object
 
 
-def get_address_link(address, bitcoin_network):
+def get_address_link(address, coin_name):
     if not address:
         return '-'
     return format_html(
         '<a target="_blank" href="{0}">{1}</a>',
-        blockcypher.get_address_url(address, bitcoin_network),
+        blockcypher.get_address_url(address, coin_name),
         address)
 
 
-def get_tx_link(tx_id, bitcoin_network):
+def get_tx_link(tx_id, coin_name):
     if not tx_id:
         return '-'
     return format_html(
         '<a target="_blank" href="{0}">{1}</a><br>',
-        blockcypher.get_tx_url(tx_id, bitcoin_network),
+        blockcypher.get_tx_url(tx_id, coin_name),
         tx_id)
 
 
@@ -94,18 +94,18 @@ class DepositAdmin(admin.ModelAdmin):
 
     def deposit_address_widget(self, deposit):
         return get_address_link(deposit.deposit_address.address,
-                                deposit.bitcoin_network)
+                                deposit.coin.name)
 
     deposit_address_widget.short_description = 'deposit address'
 
     def refund_address_widget(self, deposit):
         return get_address_link(deposit.refund_address,
-                                deposit.bitcoin_network)
+                                deposit.coin.name)
 
     refund_address_widget.short_description = 'refund address'
 
     def incoming_tx_ids_widget(self, deposit):
-        links = [get_tx_link(tx_id, deposit.bitcoin_network)
+        links = [get_tx_link(tx_id, deposit.coin.name)
                  for tx_id in deposit.incoming_tx_ids]
         if not links:
             return '-'
@@ -115,7 +115,7 @@ class DepositAdmin(admin.ModelAdmin):
 
     def refund_tx_id_widget(self, deposit):
         return get_tx_link(deposit.refund_tx_id,
-                           deposit.bitcoin_network)
+                           deposit.coin.name)
 
     refund_tx_id_widget.short_description = 'refund tx ID'
 
@@ -199,13 +199,13 @@ class WithdrawalAdmin(admin.ModelAdmin):
 
     def customer_address_widget(self, withdrawal):
         return get_address_link(withdrawal.customer_address,
-                                withdrawal.bitcoin_network)
+                                withdrawal.coin.name)
 
     customer_address_widget.short_description = 'customer address'
 
     def outgoing_tx_id_widget(self, withdrawal):
         return get_tx_link(withdrawal.outgoing_tx_id,
-                           withdrawal.bitcoin_network)
+                           withdrawal.coin.name)
 
     outgoing_tx_id_widget.short_description = 'outgoing tx ID'
 

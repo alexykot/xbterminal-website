@@ -24,7 +24,7 @@
     <tr>
         <td class="col1">{% trans 'Destination address' %}</td>
         <td class="col2">
-            <a class="external-link" href="{% btc_address_url deposit.deposit_address.address deposit.bitcoin_network %}">
+            <a class="external-link" href="{% btc_address_url deposit.deposit_address.address deposit.coin.name %}">
                 {{ deposit.deposit_address.address }}
             </a>
         </td>
@@ -33,7 +33,7 @@
         <td class="col1">{% trans 'Bitcoin transaction ID' %}</td>
         <td class="col2">
             {% for incoming_tx_id in deposit.incoming_tx_ids %}
-            <a class="external-link" href="{% btc_tx_url incoming_tx_id deposit.bitcoin_network %}">
+            <a class="external-link" href="{% btc_tx_url incoming_tx_id deposit.coin.name %}">
                 {{ incoming_tx_id }}
             </a>
             {% endfor %}
