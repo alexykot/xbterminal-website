@@ -1,0 +1,13 @@
+[Unit]
+Description=Dash Core daemon
+After=network.target
+ 
+[Service]
+Type=simple
+User=dash
+Group=dash
+ExecStart=/usr/bin/dashd -conf=/etc/dashd/dash.conf
+ExecStop=/usr/bin/dash-cli -conf=/etc/dashd/dash.conf stop
+
+[Install]
+WantedBy=multi-user.target

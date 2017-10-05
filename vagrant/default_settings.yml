@@ -6,6 +6,7 @@ vm:
     postgresql: 5432
     redis: 6379
     bitcoind: 18332
+    dashd: 19998
     sentry: 9000
     xbt-server: 8083
 
@@ -16,6 +17,9 @@ pillar:
     createdb: true
     database: xbt
   bitcoind:
+    user: xbt
+    password: xbt
+  dashd:
     user: xbt
     password: xbt
   sentry:
