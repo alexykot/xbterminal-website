@@ -1,7 +1,7 @@
 import factory
 
 from wallet import models
-from wallet.constants import BIP44_COIN_TYPES
+from wallet.constants import COINS, BIP44_COIN_TYPES
 from wallet.utils.keys import create_master_key, create_wallet_key
 
 
@@ -15,10 +15,14 @@ class WalletKeyFactory(factory.DjangoModelFactory):
 
     @factory.lazy_attribute_sequence
     def private_key(self, n):
-        netcode = BIP44_COIN_TYPES.for_value(self.coin_type).constant
         master_key = create_master_key(str(n))
+        pycoin_code = COINS.for_coin_type(self.coin_type).pycoin_code
         path = "0'/{}'".format(self.coin_type)
-        return create_wallet_key(master_key, netcode, path, as_private=True)
+        return create_wallet_key(
+            master_key,
+            pycoin_code,
+            path,
+            as_private=True)
 
 
 class WalletAccountFactory(factory.DjangoModelFactory):

@@ -9,7 +9,7 @@ def get_bitcoin_network(coin_type):
     # TODO: use coin types instead in BlokcChain class
     if coin_type == BIP44_COIN_TYPES.BTC:
         network = 'mainnet'
-    elif coin_type == BIP44_COIN_TYPES.XTN:
+    elif coin_type == BIP44_COIN_TYPES.TBTC:
         network = 'testnet'
     else:
         raise ValueError('Invalid coin type')

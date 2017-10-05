@@ -19,11 +19,17 @@ class WalletKeyTestCase(TestCase):
         self.assertEqual(key.path, "0'/0'")
         self.assertEqual(str(key), key.path)
 
-    def test_factory(self):
+    def test_factory_btc(self):
         key = WalletKeyFactory()
         self.assertEqual(key.coin_type, BIP44_COIN_TYPES.BTC)
         self.assertGreater(len(key.private_key), 100)
         self.assertEqual(key.path, "0'/0'")
+        self.assertIs(key.private_key.startswith('xprv'), True)
+
+    def test_factory_tbtc(self):
+        key = WalletKeyFactory(coin_type=BIP44_COIN_TYPES.TBTC)
+        self.assertEqual(key.path, "0'/1'")
+        self.assertIs(key.private_key.startswith('tprv'), True)
 
     def test_factory_already_created(self):
         key_1 = WalletKeyFactory()
@@ -41,7 +47,7 @@ class WalletKeyTestCase(TestCase):
         WalletKey.objects.create(coin_type=BIP44_COIN_TYPES.BTC,
                                  private_key='a' * 100)
         with self.assertRaises(IntegrityError):
-            WalletKey.objects.create(coin_type=BIP44_COIN_TYPES.XTN,
+            WalletKey.objects.create(coin_type=BIP44_COIN_TYPES.TBTC,
                                      private_key='a' * 100)
 
 
@@ -78,9 +84,9 @@ class AddressTestCase(TestCase):
         self.assertIs(address.address.startswith('1'), True)
         self.assertEqual(address.relative_path, '0/0/0')
 
-    def test_factory_xtn(self):
+    def test_factory_tbtc(self):
         address = AddressFactory(
-            wallet_account__parent_key__coin_type=BIP44_COIN_TYPES.XTN)
+            wallet_account__parent_key__coin_type=BIP44_COIN_TYPES.TBTC)
         self.assertIn(address.address[0], ['m', 'n'])
 
     def test_unique_index(self):
