@@ -415,8 +415,7 @@ class Account(models.Model):
         elif self.currency.name == 'TBTC':
             return 'testnet'
         else:
-            # Instantfiat services work only with mainnet
-            return 'mainnet'
+            raise ValueError
 
     @property
     def balance(self):

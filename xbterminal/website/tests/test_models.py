@@ -323,7 +323,8 @@ class AccountTestCase(TestCase):
         account_2 = AccountFactory.create(currency__name='TBTC')
         self.assertEqual(account_2.bitcoin_network, 'testnet')
         account_3 = AccountFactory.create(currency__name='GBP')
-        self.assertEqual(account_3.bitcoin_network, 'mainnet')
+        with self.assertRaises(ValueError):
+            account_3.bitcoin_network
 
     def test_balance(self):
         account = AccountFactory()
