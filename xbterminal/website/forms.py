@@ -421,7 +421,7 @@ class DeviceAdminForm(forms.ModelForm):
                     if cleaned_data[address]:
                         validate_bitcoin_address(
                             cleaned_data[address],
-                            network=account.bitcoin_network)
+                            coin_name=account.currency.name)
                 except forms.ValidationError as error:
                     for error_message in error.messages:
                         self.add_error(address, error_message)
@@ -460,7 +460,7 @@ class AccountForm(forms.ModelForm):
             try:
                 validate_bitcoin_address(
                     forward_address,
-                    network=self.instance.bitcoin_network)
+                    coin_name=self.instance.currency.name)
             except forms.ValidationError as error:
                 for error_message in error.messages:
                     self.add_error('forward_address', error_message)

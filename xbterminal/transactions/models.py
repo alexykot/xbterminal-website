@@ -16,7 +16,6 @@ from transactions.constants import (
     WITHDRAWAL_CONFIDENCE_TIMEOUT,
     WITHDRAWAL_CONFIRMATION_TIMEOUT,
     PAYMENT_TYPES)
-from transactions.utils.compat import get_bitcoin_network
 from transactions.utils.bip70 import create_payment_request
 from transactions.utils.compat import get_coin_type
 
@@ -64,10 +63,6 @@ class Transaction(models.Model):
     @property
     def merchant(self):
         return self.account.merchant
-
-    @property
-    def bitcoin_network(self):
-        return get_bitcoin_network(self.coin_type)
 
     @property
     def coin_type(self):
@@ -187,7 +182,7 @@ class Deposit(Transaction):
 
     def create_payment_request(self, response_url):
         return create_payment_request(
-            self.bitcoin_network,
+            self.coin.name,
             [(self.deposit_address.address, self.coin_amount)],
             self.time_created,
             self.time_created + DEPOSIT_TIMEOUT,

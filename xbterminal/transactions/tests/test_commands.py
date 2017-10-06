@@ -44,7 +44,7 @@ class CheckWalletTestCase(TestCase):
         buffer = StringIO()
         call_command('check_wallet', 'BTC', stdout=buffer)
 
-        self.assertEqual(bc_cls_mock.call_args[0][0], 'mainnet')
+        self.assertEqual(bc_cls_mock.call_args[0][0], 'BTC')
         self.assertEqual(bc_mock.get_address_balance.call_count, 3)
         self.assertIs(logger_mock.info.call_count, 0)
         output = buffer.getvalue().splitlines()

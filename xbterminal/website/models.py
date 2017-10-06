@@ -35,6 +35,7 @@ from website.utils.files import (
     verification_file_path_gen)
 from common.uids import generate_alphanumeric_code, generate_b58_uid
 from transactions.utils.compat import (
+    get_bitcoin_network,
     get_account_balance,
     get_account_transactions,
     get_device_transactions)
@@ -410,15 +411,6 @@ class Account(models.Model):
             balance=balance_str)
 
     @property
-    def bitcoin_network(self):
-        if self.currency.name == 'BTC':
-            return 'mainnet'
-        elif self.currency.name == 'TBTC':
-            return 'testnet'
-        else:
-            raise ValueError
-
-    @property
     def balance(self):
         """
         Total balance on account, including unconfirmed deposits
@@ -750,7 +742,7 @@ class Device(models.Model):
     @property
     def bitcoin_network(self):
         if self.account:
-            return self.account.bitcoin_network
+            return get_bitcoin_network(self.account.currency.name)
         else:
             return 'mainnet'
 

@@ -68,7 +68,7 @@ def prepare_withdrawal(device_or_account, amount):
             filter(wallet_account__parent_key__coin_type=withdrawal.coin_type).\
             annotate(balance=Sum('balancechange__amount')).\
             filter(balance__gt=0)
-        bc = BlockChain(withdrawal.bitcoin_network)
+        bc = BlockChain(withdrawal.coin.name)
         for address in addresses:
             address_balance = get_address_balance(address, include_unconfirmed=False)
             if address_balance == 0:
@@ -112,7 +112,7 @@ def send_transaction(withdrawal, customer_address):
     """
     # Validate customer address
     error_message = validate_bitcoin_address(customer_address,
-                                             withdrawal.bitcoin_network)
+                                             withdrawal.coin.name)
     if error_message:
         raise TransactionError(error_message)
     else:
@@ -120,7 +120,7 @@ def send_transaction(withdrawal, customer_address):
     # Create transaction
     tx_inputs = []
     tx_outputs = {withdrawal.customer_address: withdrawal.customer_coin_amount}
-    bc = BlockChain(withdrawal.bitcoin_network)
+    bc = BlockChain(withdrawal.coin.name)
     for bch in withdrawal.balancechange_set.all():
         if bch.amount < 0:
             # From wallet to customer
@@ -158,7 +158,7 @@ def wait_for_confidence(withdrawal_id):
         # Confidence threshold reached, cancel job
         cancel_current_task()
         return
-    bc = BlockChain(withdrawal.bitcoin_network)
+    bc = BlockChain(withdrawal.coin.name)
     try:
         tx_confirmed = bc.is_tx_confirmed(withdrawal.outgoing_tx_id, minconf=1)
     except TransactionModified as error:
@@ -193,7 +193,7 @@ def wait_for_confirmation(withdrawal_id):
     if withdrawal.time_created + WITHDRAWAL_CONFIRMATION_TIMEOUT < timezone.now():
         # Timeout, cancel job
         cancel_current_task()
-    bc = BlockChain(withdrawal.bitcoin_network)
+    bc = BlockChain(withdrawal.coin.name)
     try:
         tx_confirmed = bc.is_tx_confirmed(withdrawal.outgoing_tx_id)
     except TransactionModified as error:
@@ -247,7 +247,7 @@ def check_withdrawal_confirmation(withdrawal):
     """
     if withdrawal.time_confirmed is not None:
         return True
-    bc = BlockChain(withdrawal.bitcoin_network)
+    bc = BlockChain(withdrawal.coin.name)
     if bc.is_tx_confirmed(withdrawal.outgoing_tx_id):
         withdrawal.time_confirmed = timezone.now()
         withdrawal.save()

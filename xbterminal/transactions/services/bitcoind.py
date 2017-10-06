@@ -17,20 +17,21 @@ from transactions.exceptions import (
     InvalidTransaction,
     DoubleSpend,
     TransactionModified)
+from transactions.utils.compat import get_bitcoin_network
 
 
 class BlockChain(object):
 
-    def __init__(self, network):
-        self.network = network
+    def __init__(self, coin_name):
+        network = get_bitcoin_network(coin_name)
         # TODO: don't set global params
-        bitcoin.SelectParams(self.network)
-        config = settings.BITCOIND_SERVERS[self.network]
+        bitcoin.SelectParams(network)
+        config = settings.BITCOIND_SERVERS[network]
         service_url = "http://{user}:{password}@{host}:{port}".format(
             user=config['USER'],
             password=config['PASSWORD'],
             host=config['HOST'],
-            port=config.get('PORT', bitcoin.params.RPC_PORT))
+            port=config['PORT'])
         self._proxy = bitcoin.rpc.Proxy(service_url)
 
     def get_new_address(self):
@@ -318,22 +319,23 @@ def get_txid(transaction):
     return b2lx(h)
 
 
-def validate_bitcoin_address(address, network):
+def validate_bitcoin_address(address, coin_name):
     """
     Validate address
     Accepts:
         address: string
-        network: mainnet, testnet or None
+        coin_name: coin name or None
     Returns:
         error message or None
     """
-    if network:
+    if coin_name is not None:
+        network = get_bitcoin_network(coin_name)
         # TODO: don't set global params
         bitcoin.SelectParams(network)
         try:
             address = CBitcoinAddress(address)
         except:
-            return 'Invalid address for network {0}.'.format(network)
+            return 'Invalid address for coin {0}.'.format(coin_name)
     else:
         try:
             address = CBase58Data(address)

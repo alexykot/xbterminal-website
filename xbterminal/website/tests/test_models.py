@@ -322,15 +322,6 @@ class AccountTestCase(TestCase):
                                   instantfiat=True,
                                   currency__name='BTC')
 
-    def test_bitcoin_network(self):
-        account_1 = AccountFactory.create(currency__name='BTC')
-        self.assertEqual(account_1.bitcoin_network, 'mainnet')
-        account_2 = AccountFactory.create(currency__name='TBTC')
-        self.assertEqual(account_2.bitcoin_network, 'testnet')
-        account_3 = AccountFactory.create(currency__name='GBP')
-        with self.assertRaises(ValueError):
-            account_3.bitcoin_network
-
     def test_balance(self):
         account = AccountFactory()
         self.assertEqual(account.balance, 0)
