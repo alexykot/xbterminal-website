@@ -30,10 +30,8 @@ from website.tests.factories import (
     MerchantAccountFactory,
     KYCDocumentFactory,
     AccountFactory,
-    AddressFactory,
     DeviceBatchFactory,
     DeviceFactory)
-from transactions.services.bitcoind import validate_bitcoin_address
 from transactions.tests.factories import (
     WithdrawalFactory,
     BalanceChangeFactory,
@@ -423,20 +421,6 @@ class AddressTestCase(TestCase):
             address=address_str)
         self.assertIsNotNone(address.account)
         self.assertEqual(str(address), address_str)
-
-    def test_factory(self):
-        address_main = AddressFactory.create()
-        self.assertIsNone(
-            validate_bitcoin_address(address_main.address, 'mainnet'))
-        address_test = AddressFactory.create(
-            account__currency__name='TBTC')
-        self.assertIsNone(
-            validate_bitcoin_address(address_test.address, 'testnet'))
-
-    def test_unique(self):
-        address = AddressFactory.create()
-        with self.assertRaises(IntegrityError):
-            AddressFactory.create(address=address.address)
 
 
 class TransactionTestCase(TestCase):

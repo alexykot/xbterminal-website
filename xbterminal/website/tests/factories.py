@@ -19,11 +19,9 @@ from website.models import (
     MerchantAccount,
     KYCDocument,
     Account,
-    Address,
     DeviceBatch,
     Device,
     KYC_DOCUMENT_TYPES)
-from website.tests.utils import generate_bitcoin_address
 
 fake = Faker()
 
@@ -182,16 +180,6 @@ class AccountFactory(factory.DjangoModelFactory):
     def balance_(self, create, extracted, **kwargs):
         if create and extracted:
             self.transaction_set.create(amount=extracted)
-
-
-class AddressFactory(factory.DjangoModelFactory):
-
-    class Meta:
-        model = Address
-
-    account = factory.SubFactory(AccountFactory)
-    address = factory.LazyAttribute(
-        lambda a: generate_bitcoin_address(a.account.bitcoin_network))
 
 
 class DeviceBatchFactory(factory.DjangoModelFactory):

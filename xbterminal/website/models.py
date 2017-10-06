@@ -473,6 +473,7 @@ class Account(models.Model):
                     'forward_address': 'This field is required.'})
 
 
+# TODO: remove model
 class Address(models.Model):
 
     account = models.ForeignKey(Account)
