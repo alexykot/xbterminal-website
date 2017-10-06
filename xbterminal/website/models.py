@@ -125,6 +125,7 @@ class Currency(models.Model):
     name = models.CharField(max_length=50, unique=True)
     postfix = models.CharField(max_length=50, default="")
     prefix = models.CharField(max_length=50, default="")
+    is_fiat = models.BooleanField()
     amount_1 = models.DecimalField(
         max_digits=12,
         decimal_places=2,
