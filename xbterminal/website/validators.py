@@ -4,7 +4,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 
 from api.utils.crypto import load_public_key
-from operations import blockchain
+from transactions.services.bitcoind import \
+    validate_bitcoin_address as validate_bitcoin_address_
 
 
 def validate_percent(value):
@@ -34,7 +35,7 @@ validate_name = RegexValidator(
 
 
 def validate_bitcoin_address(address, network=None):
-    error_message = blockchain.validate_bitcoin_address(address, network)
+    error_message = validate_bitcoin_address_(address, network)
     if error_message is not None:
         raise ValidationError(error_message)
 

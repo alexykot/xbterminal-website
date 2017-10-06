@@ -23,3 +23,36 @@ class InvalidTransaction(TransactionError):
     def __init__(self, tx_id):
         super(InvalidTransaction, self).__init__()
         self.tx_id = tx_id
+
+
+class InsufficientFunds(TransactionError):
+
+    message = 'Insufficient funds'
+
+
+class InvalidPaymentMessage(TransactionError):
+
+    message = 'Invalid BIP0070 Payment message'
+
+
+class RefundError(TransactionError):
+
+    message = 'Refund error'
+
+
+class DoubleSpend(TransactionError):
+
+    message = 'Double spend detected'
+
+    def __init__(self, another_tx_id):
+        super(DoubleSpend, self).__init__()
+        self.another_tx_id = another_tx_id
+
+
+class TransactionModified(TransactionError):
+
+    message = 'Transaction modified'
+
+    def __init__(self, another_tx_id):
+        super(TransactionModified, self).__init__()
+        self.another_tx_id = another_tx_id

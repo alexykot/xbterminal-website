@@ -484,8 +484,6 @@ class VerificationView(TemplateResponseMixin, MerchantCabinetView):
     template_name = 'cabinet/merchant/verification.html'
 
     def get(self, *args, **kwargs):
-        if not self.merchant.has_managed_cryptopay_profile:
-            raise Http404
         context = self.get_context_data(**kwargs)
         if self.merchant.verification_status == 'unverified':
             # Prepare upload forms
@@ -506,8 +504,6 @@ class VerificationView(TemplateResponseMixin, MerchantCabinetView):
 
     @atomic
     def post(self, *args, **kwargs):
-        if not self.merchant.has_managed_cryptopay_profile:
-            raise Http404
         if self.merchant.verification_status != 'unverified':
             raise Http404
         uploaded = []

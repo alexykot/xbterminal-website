@@ -14,17 +14,15 @@ from transactions.constants import (
     BTC_MIN_OUTPUT,
     WITHDRAWAL_CONFIDENCE_TIMEOUT,
     WITHDRAWAL_CONFIRMATION_TIMEOUT)
+from transactions.exceptions import TransactionError, TransactionModified
 from transactions.models import Withdrawal, BalanceChange
 from transactions.utils.compat import (
     get_coin_type,
     get_address_balance,
     get_account_balance)
 from transactions.utils.tx import create_tx_
-from operations.services.wrappers import get_exchange_rate, is_tx_reliable
-from operations.blockchain import BlockChain, validate_bitcoin_address
-from operations.exceptions import (
-    WithdrawalError,
-    TransactionModified)
+from transactions.services.wrappers import get_exchange_rate, is_tx_reliable
+from transactions.services.bitcoind import BlockChain, validate_bitcoin_address
 from wallet.models import Address
 from website.models import Device, Account
 
@@ -47,7 +45,7 @@ def prepare_withdrawal(device_or_account, amount):
         device = None
         account = device_or_account
     if device is not None and amount > device.max_payout:
-        raise WithdrawalError(
+        raise TransactionError(
             'Amount exceeds max payout for current device')
     # Create model instance
     coin_type = get_coin_type(account.currency.name)
@@ -62,7 +60,7 @@ def prepare_withdrawal(device_or_account, amount):
     withdrawal.customer_coin_amount = (withdrawal.amount / exchange_rate).\
         quantize(BTC_DEC_PLACES)
     if withdrawal.customer_coin_amount < BTC_MIN_OUTPUT:
-        raise WithdrawalError('Customer coin amount is below dust threshold')
+        raise TransactionError('Customer coin amount is below dust threshold')
     with atomic():
         # Find unspent outputs which are not reserved by other withdrawals
         # and check balance
@@ -83,9 +81,9 @@ def prepare_withdrawal(device_or_account, amount):
             if reserved_sum >= withdrawal.coin_amount:
                 break
         else:
-            raise WithdrawalError('Insufficient balance in wallet')
+            raise TransactionError('Insufficient balance in wallet')
         if get_account_balance(withdrawal.account, include_unconfirmed=False) < withdrawal.coin_amount:
-            raise WithdrawalError('Insufficient balance on merchant account')
+            raise TransactionError('Insufficient balance on merchant account')
         logger.info('reserved funds on %s addresses', len(balance_changes))
         # Calculate change amount
         change_coin_amount = reserved_sum - withdrawal.coin_amount
@@ -118,7 +116,7 @@ def send_transaction(withdrawal, customer_address):
     error_message = validate_bitcoin_address(customer_address,
                                              withdrawal.bitcoin_network)
     if error_message:
-        raise WithdrawalError(error_message)
+        raise TransactionError(error_message)
     else:
         withdrawal.customer_address = customer_address
     # Create transaction
@@ -133,7 +131,7 @@ def send_transaction(withdrawal, customer_address):
                 bch.address.address,
                 minconf=config.TX_REQUIRED_CONFIRMATIONS)
             if sum(output['amount'] for output in unspent_outputs) != abs(bch.amount):
-                raise WithdrawalError('Error in address balance')
+                raise TransactionError('Error in address balance')
             for output in unspent_outputs:
                 tx_inputs.append(dict(output, private_key=private_key))
         else:

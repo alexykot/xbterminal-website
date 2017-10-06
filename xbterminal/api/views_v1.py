@@ -7,7 +7,6 @@ from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.utils import timezone
 from django.views.generic import View
 from django.views.decorators.csrf import csrf_exempt
-from django.utils.translation import ugettext as _
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -22,10 +21,10 @@ from api.forms import PaymentForm
 from api.utils.pdf import generate_pdf
 from api.utils.urls import construct_absolute_url
 
-from operations import blockchain, exceptions
-from operations.instantfiat import gocoin
+from transactions.exceptions import TransactionError
 from transactions.models import Deposit
 from transactions.deposits import prepare_deposit, handle_bip70_payment
+from transactions.services.bitcoind import construct_bitcoin_uri
 
 logger = logging.getLogger(__name__)
 
@@ -47,15 +46,9 @@ class MerchantView(CSRFExemptMixin, View):
         """
         form = SimpleMerchantRegistrationForm(self.request.POST)
         if form.is_valid():
-            try:
-                merchant = form.save()
-            except gocoin.GoCoinNameAlreadyTaken:
-                data = {
-                    'errors': {'company_name': [_('This company is already registered.')]},
-                }
-            else:
-                send_registration_info(merchant)
-                data = {'merchant_id': merchant.pk}
+            merchant = form.save()
+            send_registration_info(merchant)
+            data = {'merchant_id': merchant.pk}
         else:
             data = {'errors': form.errors}
         response = HttpResponse(json.dumps(data),
@@ -182,7 +175,7 @@ class PaymentInitView(View):
         try:
             deposit = prepare_deposit(
                 device, form.cleaned_data['amount'])
-        except exceptions.PaymentError as error:
+        except TransactionError as error:
             return HttpResponseBadRequest(
                 json.dumps({'error': error.message}),
                 content_type='application/json')
@@ -212,7 +205,7 @@ class PaymentInitView(View):
             payment_bluetooth_request = deposit.create_payment_request(
                 payment_bluetooth_url)
             # Send payment request in response
-            data['payment_uri'] = blockchain.construct_bitcoin_uri(
+            data['payment_uri'] = construct_bitcoin_uri(
                 deposit.deposit_address.address,
                 deposit.coin_amount,
                 device.merchant.company_name,
@@ -220,7 +213,7 @@ class PaymentInitView(View):
                 payment_request_url)
             data['payment_request'] = payment_bluetooth_request.encode('base64')
         else:
-            data['payment_uri'] = blockchain.construct_bitcoin_uri(
+            data['payment_uri'] = construct_bitcoin_uri(
                 deposit.deposit_address.address,
                 deposit.coin_amount,
                 device.merchant.company_name,

@@ -9,7 +9,6 @@ from django.db import IntegrityError
 from django.test import TestCase
 from django.utils import timezone
 
-from constance.test import override_config
 from oauth2_provider.models import Application
 from django_fsm import TransitionNotAllowed
 
@@ -31,14 +30,8 @@ from website.tests.factories import (
     MerchantAccountFactory,
     KYCDocumentFactory,
     AccountFactory,
-    AddressFactory,
-    TransactionFactory,
     DeviceBatchFactory,
     DeviceFactory)
-from operations.tests.factories import (
-    PaymentOrderFactory,
-    WithdrawalOrderFactory)
-from operations.blockchain import validate_bitcoin_address
 from transactions.tests.factories import (
     WithdrawalFactory,
     BalanceChangeFactory,
@@ -184,29 +177,6 @@ class MerchantAccountTestCase(TestCase):
         merchant.save()
         self.assertTrue(merchant.is_profile_complete)
 
-    def test_has_managed_cryptopay_profile(self):
-        merchant = MerchantAccountFactory.create()
-        self.assertFalse(merchant.has_managed_cryptopay_profile)
-        merchant = MerchantAccountFactory.create(
-            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-            instantfiat_merchant_id='test')
-        self.assertTrue(merchant.has_managed_cryptopay_profile)
-
-    @override_config(CRYPTOPAY_USE_FAKE_EMAIL=True)
-    def test_get_cryptopay_email(self):
-        merchant = MerchantAccountFactory.create(
-            company_name='Test Co Ltd.')
-        expected_email = 'merchant-{}-test-co-ltd@xbterminal.io'.format(
-            merchant.pk)
-        self.assertEqual(merchant.get_cryptopay_email(), expected_email)
-
-    @override_config(CRYPTOPAY_USE_FAKE_EMAIL=False)
-    def test_get_cryptopay_email_real(self):
-        merchant = MerchantAccountFactory.create(
-            company_name='Test Co Ltd.')
-        self.assertEqual(merchant.get_cryptopay_email(),
-                         merchant.contact_email)
-
     def test_get_kyc_document(self):
         merchant = MerchantAccountFactory.create()
         document = merchant.get_kyc_document(
@@ -223,16 +193,15 @@ class MerchantAccountTestCase(TestCase):
         merchant = MerchantAccountFactory.create()
         info = merchant.info
         self.assertEqual(info['name'], merchant.company_name)
-        self.assertEqual(info['status'], None)
+        self.assertEqual(info['status'], 'unverified')
         self.assertEqual(info['active'], 0)
         self.assertEqual(info['total'], 0)
         self.assertEqual(info['tx_count'], 0)
         self.assertEqual(info['tx_sum'], 0)
 
-    def test_info_with_payments_and_managed_profile(self):
+    def test_info_with_transactions(self):
         merchant = MerchantAccountFactory.create(
-            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-            instantfiat_merchant_id='test')
+            verification_status='pending')
         account = AccountFactory.create(merchant=merchant)
         DeviceFactory.create(merchant=merchant,
                              account=account,
@@ -242,16 +211,19 @@ class MerchantAccountTestCase(TestCase):
             account=account,
             status='active',
             last_activity=timezone.now())
-        payments = PaymentOrderFactory.create_batch(
-            3, device=active_device, time_notified=timezone.now())
+        transactions = BalanceChangeFactory.create_batch(
+            3,
+            deposit__account=account,
+            deposit__device=active_device,
+            deposit__notified=True)
 
         info = merchant.info
-        self.assertEqual(info['status'], 'unverified')
+        self.assertEqual(info['status'], 'verification pending')
         self.assertEqual(info['active'], 1)
         self.assertEqual(info['total'], 2)
-        self.assertEqual(info['tx_count'], len(payments))
+        self.assertEqual(info['tx_count'], len(transactions))
         self.assertEqual(info['tx_sum'],
-                         sum(p.fiat_amount for p in payments))
+                         sum(t.amount for t in transactions))
 
     def test_get_tx_confidence_threshold(self):
         merchant = MerchantAccountFactory()
@@ -351,7 +323,8 @@ class AccountTestCase(TestCase):
         account_2 = AccountFactory.create(currency__name='TBTC')
         self.assertEqual(account_2.bitcoin_network, 'testnet')
         account_3 = AccountFactory.create(currency__name='GBP')
-        self.assertEqual(account_3.bitcoin_network, 'mainnet')
+        with self.assertRaises(ValueError):
+            account_3.bitcoin_network
 
     def test_balance(self):
         account = AccountFactory()
@@ -360,16 +333,6 @@ class AccountTestCase(TestCase):
             3, deposit__account=account)
         self.assertEqual(account.balance,
                          sum(t.amount for t in transactions))
-
-    def test_balance_(self):
-        account_1 = AccountFactory.create()
-        self.assertEqual(account_1.balance_, 0)
-        transactions = TransactionFactory.create_batch(
-            3, account=account_1)
-        self.assertEqual(account_1.balance_,
-                         sum(t.amount for t in transactions))
-        account_2 = AccountFactory.create(balance_=Decimal('0.5'))
-        self.assertEqual(account_2.balance_, Decimal('0.5'))
 
     def test_balance_confirmed(self):
         account = AccountFactory()
@@ -402,50 +365,6 @@ class AccountTestCase(TestCase):
                                      amount=Decimal('0.01'))
         self.assertEqual(account.balance, Decimal('0.30'))
         self.assertEqual(account.balance_confirmed, Decimal('0.07'))
-
-    def test_balance_confirmed_(self):
-        account = AccountFactory.create()
-        # Payment - forwarded
-        TransactionFactory.create(
-            payment=PaymentOrderFactory.create(
-                time_forwarded=timezone.now()),
-            account=account,
-            amount=Decimal('0.2'))
-        # Payment - confirmed
-        TransactionFactory.create(
-            payment=PaymentOrderFactory.create(
-                time_forwarded=timezone.now(),
-                time_confirmed=timezone.now()),
-            account=account,
-            amount=Decimal('0.3'))
-        # Withdrawal - sent
-        withdrawal_1 = WithdrawalOrderFactory.create(
-            time_sent=timezone.now())
-        TransactionFactory.create(
-            withdrawal=withdrawal_1,
-            account=account,
-            amount=Decimal('-0.18'))
-        TransactionFactory.create(
-            withdrawal=withdrawal_1,
-            account=account,
-            amount=Decimal('0.03'))
-        # Withdrawal - broadcasted
-        withdrawal_2 = WithdrawalOrderFactory.create(
-            time_sent=timezone.now(),
-            time_broadcasted=timezone.now())
-        TransactionFactory.create(
-            withdrawal=withdrawal_2,
-            account=account,
-            amount=Decimal('-0.06'))
-        TransactionFactory.create(
-            withdrawal=withdrawal_2,
-            account=account,
-            amount=Decimal('0.01'))
-        # Without order
-        TransactionFactory.create(
-            account=account, amount=Decimal('0.13'))
-        self.assertEqual(account.balance_, Decimal('0.43'))
-        self.assertEqual(account.balance_confirmed_, Decimal('0.20'))
 
     def test_balance_min_max(self):
         account_btc = AccountFactory.create(currency__name='BTC')
@@ -492,31 +411,6 @@ class AccountTestCase(TestCase):
         self.assertEqual(transactions[0].pk, tx_4.pk)
         self.assertEqual(transactions[1].pk, tx_5.pk)
 
-    def test_get_transactions_by_date_(self):
-        account = AccountFactory.create()
-        now = timezone.now()
-        range_beg = (now - datetime.timedelta(days=5)).date()
-        range_end = (now - datetime.timedelta(days=4)).date()
-        TransactionFactory.create(
-            account=account,
-            created_at=now - datetime.timedelta(days=6))
-        TransactionFactory.create(
-            account=account,
-            created_at=now - datetime.timedelta(days=3))
-        TransactionFactory.create(
-            created_at=now - datetime.timedelta(days=5))
-        tx_1 = TransactionFactory.create(
-            account=account,
-            created_at=now - datetime.timedelta(days=5))
-        tx_2 = TransactionFactory.create(
-            account=account,
-            created_at=now - datetime.timedelta(days=4))
-        transactions = account.get_transactions_by_date_(range_beg,
-                                                         range_end)
-        self.assertEqual(transactions.count(), 2)
-        self.assertEqual(transactions[0].pk, tx_1.pk)
-        self.assertEqual(transactions[1].pk, tx_2.pk)
-
 
 class AddressTestCase(TestCase):
 
@@ -528,20 +422,6 @@ class AddressTestCase(TestCase):
             address=address_str)
         self.assertIsNotNone(address.account)
         self.assertEqual(str(address), address_str)
-
-    def test_factory(self):
-        address_main = AddressFactory.create()
-        self.assertIsNone(
-            validate_bitcoin_address(address_main.address, 'mainnet'))
-        address_test = AddressFactory.create(
-            account__currency__name='TBTC')
-        self.assertIsNone(
-            validate_bitcoin_address(address_test.address, 'testnet'))
-
-    def test_unique(self):
-        address = AddressFactory.create()
-        with self.assertRaises(IntegrityError):
-            AddressFactory.create(address=address.address)
 
 
 class TransactionTestCase(TestCase):
@@ -556,37 +436,6 @@ class TransactionTestCase(TestCase):
         self.assertIsNone(transaction.instantfiat_tx_id)
         self.assertIsNotNone(transaction.created_at)
         self.assertEqual(str(transaction), str(transaction.pk))
-
-    def test_factory(self):
-        transaction = TransactionFactory.create()
-        self.assertIsNone(transaction.payment)
-        self.assertIsNone(transaction.withdrawal)
-        self.assertIsNotNone(transaction.account)
-        self.assertGreater(transaction.amount, 0)
-        self.assertIsNone(transaction.instantfiat_tx_id)
-
-    def test_unique_together(self):
-        account = AccountFactory.create()
-        TransactionFactory.create_batch(3, account=account)
-        TransactionFactory.create(account=account,
-                                  instantfiat_tx_id=1000)
-        with self.assertRaises(IntegrityError):
-            TransactionFactory.create(account=account,
-                                      instantfiat_tx_id=1000)
-
-    def test_tx_hash(self):
-        transaction_1 = TransactionFactory.create()
-        self.assertIsNone(transaction_1.tx_hash)
-        payment_order = PaymentOrderFactory.create(
-            outgoing_tx_id='1' * 64)
-        transaction_2 = TransactionFactory.create(payment=payment_order)
-        self.assertEqual(transaction_2.tx_hash,
-                         payment_order.outgoing_tx_id)
-        withdrawal_order = WithdrawalOrderFactory.create(
-            outgoing_tx_id='2' * 64)
-        transaction_3 = TransactionFactory.create(withdrawal=withdrawal_order)
-        self.assertEqual(transaction_3.tx_hash,
-                         withdrawal_order.outgoing_tx_id)
 
 
 class DeviceTestCase(TestCase):
@@ -733,26 +582,6 @@ class DeviceTestCase(TestCase):
         self.assertEqual(transactions[0].amount, Decimal('0.2'))
         self.assertEqual(transactions[1].amount, Decimal('-0.1'))
 
-    def test_get_transactions_(self):
-        device = DeviceFactory.create()
-        TransactionFactory.create(
-            payment=PaymentOrderFactory.create(device=device),
-            account=device.account,
-            amount=Decimal('0.2'))
-        TransactionFactory.create(
-            withdrawal=WithdrawalOrderFactory.create(device=device),
-            account=device.account,
-            amount=Decimal('-0.1'))
-        TransactionFactory.create(
-            payment=PaymentOrderFactory.create(
-                device=None,
-                account=device.account),
-            account=device.account,
-            amount=Decimal('0.5'))
-        transactions = device.get_transactions_()
-        self.assertEqual(transactions[0].amount, Decimal('0.2'))
-        self.assertEqual(transactions[1].amount, Decimal('-0.1'))
-
     def test_get_transactions_by_date(self):
         device = DeviceFactory.create()
         now = timezone.now()
@@ -783,32 +612,6 @@ class DeviceTestCase(TestCase):
         self.assertEqual(transactions[0].pk, tx_3.pk)
         self.assertEqual(transactions[1].pk, tx_4.pk)
         self.assertEqual(transactions[2].pk, tx_5.pk)
-
-    def test_get_transactions_by_date_(self):
-        device = DeviceFactory.create()
-        now = timezone.now()
-        date_1 = (now - datetime.timedelta(days=5)).date()
-        date_2 = (now - datetime.timedelta(days=4)).date()
-        TransactionFactory.create(
-            payment=PaymentOrderFactory.create(device=device),
-            account=device.account,
-            created_at=now - datetime.timedelta(days=6))
-        TransactionFactory.create(
-            payment=PaymentOrderFactory.create(device=device),
-            account=device.account,
-            created_at=now - datetime.timedelta(days=3))
-        tx_1 = TransactionFactory.create(
-            payment=PaymentOrderFactory.create(device=device),
-            account=device.account,
-            created_at=now - datetime.timedelta(days=5))
-        tx_2 = TransactionFactory.create(
-            payment=PaymentOrderFactory.create(device=device),
-            account=device.account,
-            created_at=now - datetime.timedelta(days=4))
-        transactions = device.get_transactions_by_date_(date_1, date_2)
-        self.assertEqual(transactions.count(), 2)
-        self.assertEqual(transactions[0].pk, tx_1.pk)
-        self.assertEqual(transactions[1].pk, tx_2.pk)
 
     def test_is_online(self):
         device = DeviceFactory.create()

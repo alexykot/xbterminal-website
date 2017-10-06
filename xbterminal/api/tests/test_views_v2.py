@@ -12,7 +12,7 @@ from constance.test import override_config
 
 from api.views_v2 import WithdrawalViewSet
 from api.utils.crypto import create_test_signature, create_test_public_key
-from operations import exceptions
+from transactions.exceptions import TransactionError
 from transactions.tests.factories import DepositFactory, WithdrawalFactory
 from website.models import Device
 from website.tests.factories import (
@@ -143,7 +143,7 @@ class DepositViewSetTestCase(APITestCase):
 
     @patch('api.views_v2.prepare_deposit')
     def test_create_payment_error(self, prepare_mock):
-        prepare_mock.side_effect = exceptions.PaymentError
+        prepare_mock.side_effect = TransactionError
         device = DeviceFactory(long_key=True)
         amount = 10
         bluetooth_mac = '12:34:56:78:9A:BC'
@@ -155,7 +155,7 @@ class DepositViewSetTestCase(APITestCase):
         }
         response = self.client.post(url, form_data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['device'][0], 'Payment error')
+        self.assertEqual(response.data['device'][0], 'Transaction error')
 
     def test_retrieve_not_notified(self):
         deposit = DepositFactory()
@@ -364,7 +364,7 @@ class WithdrawalViewSetTestCase(APITestCase):
     @patch('api.views_v2.prepare_withdrawal')
     def test_create_withdrawal_error(self, prepare_mock):
         device = DeviceFactory.create()
-        prepare_mock.side_effect = exceptions.WithdrawalError(
+        prepare_mock.side_effect = TransactionError(
             'Amount exceeds max payout for current device')
         view = WithdrawalViewSet.as_view(actions={'post': 'create'})
         data = {

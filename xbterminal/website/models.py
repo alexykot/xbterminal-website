@@ -23,7 +23,6 @@ from django_countries.fields import CountryField
 from django_fsm import FSMField, transition
 from extended_choices import Choices
 from localflavor.generic.models import BICField, IBANField
-from slugify import slugify
 
 from website.validators import (
     validate_phone,
@@ -180,6 +179,7 @@ class UITheme(models.Model):
         return self.name
 
 
+# TODO: remove choices
 INSTANTFIAT_PROVIDERS = Choices(
     ('CRYPTOPAY', 1, 'CryptoPay'),
     ('GOCOIN', 2, 'GoCoin'),
@@ -229,6 +229,7 @@ class MerchantAccount(models.Model):
     currency = models.ForeignKey(Currency, default=1)  # by default, GBP, see fixtures
     ui_theme = models.ForeignKey(UITheme, default=1)  # 'default' theme, see fixtures
 
+    # TODO: remove fields
     instantfiat_provider = models.PositiveSmallIntegerField(
         _('InstantFiat provider'),
         choices=INSTANTFIAT_PROVIDERS,
@@ -294,23 +295,6 @@ class MerchantAccount(models.Model):
                 bool(self.post_code) and
                 bool(self.contact_phone))
 
-    @property
-    def has_managed_cryptopay_profile(self):
-        return (self.instantfiat_provider ==
-                INSTANTFIAT_PROVIDERS.CRYPTOPAY and
-                self.instantfiat_merchant_id)
-
-    def get_cryptopay_email(self):
-        """
-        Get email address for CryptoPay registration
-        """
-        if config.CRYPTOPAY_USE_FAKE_EMAIL:
-            return 'merchant-{0}-{1}@xbterminal.io'.format(
-                self.pk,
-                slugify(self.company_name))
-        else:
-            return self.user.email
-
     def get_kyc_document(self, document_type, status):
         """
         Get latest KYC document for given status
@@ -333,8 +317,7 @@ class MerchantAccount(models.Model):
 
     @property
     def info(self):
-        if not self.has_managed_cryptopay_profile or \
-                self.verification_status == 'verified':
+        if self.verification_status == 'verified':
             status = None
         else:
             status = self.get_verification_status_display()
@@ -343,10 +326,14 @@ class MerchantAccount(models.Model):
         total = self.device_set.count()
         today = timezone.localtime(timezone.now()).\
             replace(hour=0, minute=0, second=0, microsecond=0)
-        transactions = apps.get_model('operations', 'PaymentOrder').\
-            objects.filter(device__merchant=self, time_notified__gte=today)
+        # TODO: show withdrawals too
+        transactions = apps.get_model('transactions', 'BalanceChange').\
+            objects.\
+            filter(deposit__isnull=False,
+                   deposit__account__merchant=self,
+                   deposit__time_notified__gte=today)
         tx_count = transactions.count()
-        tx_sum = transactions.aggregate(s=models.Sum('fiat_amount'))['s']
+        tx_sum = transactions.aggregate(s=models.Sum('amount'))['s']
         return {'name': self.trading_name or self.company_name,
                 'status': status,
                 'active': active,
@@ -370,6 +357,7 @@ def merchant_generate_activation_code(sender, instance, **kwargs):
                 break
 
 
+# TODO: remove choices
 BITCOIN_NETWORKS = [
     ('mainnet', 'Main'),
     ('testnet', 'Testnet'),
@@ -388,6 +376,7 @@ class Account(models.Model):
         blank=True,
         null=True)
     instantfiat = models.BooleanField()
+    # TODO: remove field
     instantfiat_account_id = models.CharField(
         _('InstantFiat account ID'),
         max_length=50,
@@ -426,8 +415,7 @@ class Account(models.Model):
         elif self.currency.name == 'TBTC':
             return 'testnet'
         else:
-            # Instantfiat services work only with mainnet
-            return 'mainnet'
+            raise ValueError
 
     @property
     def balance(self):
@@ -437,30 +425,11 @@ class Account(models.Model):
         return get_account_balance(self)
 
     @property
-    def balance_(self):
-        """
-        Total balance on account, including unconfirmed deposits
-        """
-        result = self.transaction_set.aggregate(models.Sum('amount'))
-        return result['amount__sum'] or Decimal('0.00000000')
-
-    @property
     def balance_confirmed(self):
         """
         Amount available for withdrawal
         """
         return get_account_balance(self, include_unconfirmed=False)
-
-    @property
-    def balance_confirmed_(self):
-        """
-        Amount available for withdrawal (inaccurate)
-        """
-        balance = Decimal('0.00000000')
-        for transaction in self.transaction_set.all():
-            if transaction.is_confirmed():
-                balance += transaction.amount
-        return balance
 
     @property
     def balance_min(self):
@@ -490,23 +459,6 @@ class Account(models.Model):
             filter(created_at__range=(beg, end)).\
             order_by('created_at')
 
-    def get_transactions_by_date_(self, range_beg, range_end):
-        """
-        Returns list of account transactions for date range
-        Accepts:
-            range_beg: beginning of range, datetime.date instance
-            range_end: end of range, datetime.date instance
-        """
-        beg = timezone.make_aware(
-            datetime.datetime.combine(range_beg, datetime.time.min),
-            timezone.get_current_timezone())
-        end = timezone.make_aware(
-            datetime.datetime.combine(range_end, datetime.time.max),
-            timezone.get_current_timezone())
-        return self.transaction_set.\
-            filter(created_at__range=(beg, end)).\
-            order_by('created_at')
-
     def clean(self):
         if not hasattr(self, 'instantfiat'):
             return
@@ -520,6 +472,7 @@ class Account(models.Model):
                     'forward_address': 'This field is required.'})
 
 
+# TODO: remove model
 class Address(models.Model):
 
     account = models.ForeignKey(Account)
@@ -537,6 +490,7 @@ class Address(models.Model):
         return self.address
 
 
+# TODO: remove model
 class Transaction(models.Model):
 
     payment = models.ForeignKey(
@@ -805,14 +759,6 @@ class Device(models.Model):
         """
         return get_device_transactions(self)
 
-    def get_transactions_(self):
-        """
-        Returns list of device transactions
-        """
-        return Transaction.objects.filter(
-            models.Q(payment__device=self) |
-            models.Q(withdrawal__device=self)).order_by('created_at')
-
     def get_transactions_by_date(self, range_beg, range_end):
         """
         Returns list of device transactions for date range
@@ -827,23 +773,6 @@ class Device(models.Model):
             datetime.datetime.combine(range_end, datetime.time.max),
             timezone.get_current_timezone())
         return self.get_transactions().\
-            filter(created_at__range=(beg, end)).\
-            order_by('created_at')
-
-    def get_transactions_by_date_(self, range_beg, range_end):
-        """
-        Returns list of device transactions for date range
-        Accepts:
-            range_beg: beginning of range, datetime.date instance
-            range_end: end of range, datetime.date instance
-        """
-        beg = timezone.make_aware(
-            datetime.datetime.combine(range_beg, datetime.time.min),
-            timezone.get_current_timezone())
-        end = timezone.make_aware(
-            datetime.datetime.combine(range_end, datetime.time.max),
-            timezone.get_current_timezone())
-        return self.get_transactions_().\
             filter(created_at__range=(beg, end)).\
             order_by('created_at')
 

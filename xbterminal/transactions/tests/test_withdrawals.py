@@ -4,6 +4,7 @@ from django.test import TestCase
 
 from mock import patch, Mock
 
+from transactions.exceptions import TransactionError, TransactionModified
 from transactions.utils.compat import get_account_balance, get_address_balance
 from transactions.withdrawals import (
     prepare_withdrawal,
@@ -16,7 +17,6 @@ from transactions.tests.factories import (
     WithdrawalFactory,
     BalanceChangeFactory,
     NegativeBalanceChangeFactory)
-from operations.exceptions import WithdrawalError, TransactionModified
 from wallet.constants import BIP44_COIN_TYPES
 from website.tests.factories import DeviceFactory
 
@@ -117,7 +117,7 @@ class PrepareWithdrawalTestCase(TestCase):
         device = DeviceFactory.create(max_payout=Decimal('10.0'))
         get_rate_mock.return_value = Decimal('2000.00')
         amount = Decimal('100.00')
-        with self.assertRaises(WithdrawalError) as context:
+        with self.assertRaises(TransactionError) as context:
             prepare_withdrawal(device, amount)
         self.assertEqual(context.exception.message,
                          'Amount exceeds max payout for current device')
@@ -128,7 +128,7 @@ class PrepareWithdrawalTestCase(TestCase):
         device = DeviceFactory(max_payout=Decimal('10.0'))
         get_rate_mock.return_value = Decimal('2000.0')
         amount = Decimal('0.05')
-        with self.assertRaises(WithdrawalError) as context:
+        with self.assertRaises(TransactionError) as context:
             prepare_withdrawal(device, amount)
         self.assertEqual(context.exception.message,
                          'Customer coin amount is below dust threshold')
@@ -139,7 +139,7 @@ class PrepareWithdrawalTestCase(TestCase):
         device = DeviceFactory.create(max_payout=Decimal('10.0'))
         get_rate_mock.return_value = Decimal('2000.00')
         amount = Decimal('1.00')
-        with self.assertRaises(WithdrawalError) as context:
+        with self.assertRaises(TransactionError) as context:
             prepare_withdrawal(device, amount)
         self.assertEqual(context.exception.message,
                          'Insufficient balance in wallet')
@@ -156,7 +156,7 @@ class PrepareWithdrawalTestCase(TestCase):
             'get_tx_fee.return_value': Decimal('0.001'),
         })
         amount = Decimal('10.0')
-        with self.assertRaises(WithdrawalError) as context:
+        with self.assertRaises(TransactionError) as context:
             prepare_withdrawal(device, amount)
         self.assertEqual(context.exception.message,
                          'Insufficient balance on merchant account')
@@ -182,7 +182,7 @@ class PrepareWithdrawalTestCase(TestCase):
             'get_tx_fee.return_value': Decimal('0.001'),
         })
         amount = Decimal('20.0')
-        with self.assertRaises(WithdrawalError) as context:
+        with self.assertRaises(TransactionError) as context:
             prepare_withdrawal(device, amount)
         self.assertEqual(context.exception.message,
                          'Insufficient balance in wallet')
@@ -308,7 +308,7 @@ class SendTransactionTestCase(TestCase):
     def test_invalid_customer_address(self):
         withdrawal = WithdrawalFactory()
         customer_address = 'mhXPmYBSUsjEKmyi568cEoZYR3QHHkhMyG'
-        with self.assertRaises(WithdrawalError):
+        with self.assertRaises(TransactionError):
             send_transaction(withdrawal, customer_address)
 
     @patch('transactions.withdrawals.BlockChain')
@@ -323,7 +323,7 @@ class SendTransactionTestCase(TestCase):
                 'amount': Decimal('0.015'),
             }],
         })
-        with self.assertRaises(WithdrawalError) as context:
+        with self.assertRaises(TransactionError) as context:
             send_transaction(withdrawal, customer_address)
         self.assertEqual(context.exception.message,
                          'Error in address balance')

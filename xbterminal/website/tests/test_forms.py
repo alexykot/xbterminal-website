@@ -4,12 +4,12 @@ from decimal import Decimal
 from django.test import TestCase
 from django.core import mail
 from django.utils.datastructures import MultiValueDict
-from mock import patch
 
+from mock import patch
 from oauth2_provider.models import Application
-from website.models import (
-    MerchantAccount,
-    INSTANTFIAT_PROVIDERS)
+
+from transactions.tests.factories import BalanceChangeFactory
+from website.models import MerchantAccount
 from website.forms import (
     LoginMethodForm,
     MerchantRegistrationForm,
@@ -25,7 +25,6 @@ from website.tests.factories import (
     create_uploaded_image,
     MerchantAccountFactory,
     AccountFactory,
-    TransactionFactory,
     DeviceFactory)
 
 
@@ -81,7 +80,7 @@ class MerchantRegistrationFormTestCase(TestCase):
         self.assertEqual(merchant.account_set.count(), 1)
         account_btc_internal = merchant.account_set.get(
             currency__name='BTC', instantfiat=False)
-        self.assertEqual(account_btc_internal.balance_, 0)
+        self.assertEqual(account_btc_internal.balance, 0)
         self.assertEqual(account_btc_internal.balance_max, 0)
         self.assertIsNone(account_btc_internal.instantfiat_account_id)
         # Email
@@ -189,24 +188,6 @@ class ProfileFormTestCase(TestCase):
         self.assertEqual(merchant_updated.pk, merchant.pk)
         self.assertEqual(merchant_updated.company_name,
                          form_data['company_name'])
-
-    def test_no_instantfiat_api_key(self):
-        merchant = MerchantAccountFactory.create(
-            instantfiat_provider=INSTANTFIAT_PROVIDERS.CRYPTOPAY,
-            instantfiat_api_key=None)
-        form_data = {
-            'company_name': 'Test Company',
-            'business_address': 'Test Address',
-            'town': 'Test Town',
-            'country': 'GB',
-            'post_code': '123456',
-            'contact_first_name': 'Test',
-            'contact_last_name': 'Test',
-            'contact_email': 'test@example.net',
-            'contact_phone': '+123456789',
-        }
-        form = ProfileForm(data=form_data, instance=merchant)
-        self.assertTrue(form.is_valid())
 
 
 class KYCDocumentUploadFormTestCase(TestCase):
@@ -490,11 +471,17 @@ class WithdrawToBankAccountFormTestCase(TestCase):
 
     def test_valid_data(self):
         account = AccountFactory.create(instantfiat=True)
-        DeviceFactory.create(merchant=account.merchant, account=account,
-                             max_payout=Decimal('0.2'))
-        TransactionFactory.create(account=account, amount=Decimal('1.0'))
+        device = DeviceFactory.create(merchant=account.merchant,
+                                      account=account,
+                                      max_payout=Decimal('0.2'))
+        # WARNING: fiat deposits are not implemented
+        BalanceChangeFactory(
+            deposit__account=account,
+            deposit__device=device,
+            deposit__confirmed=True,
+            amount=Decimal('1.0'))
         DeviceFactory.create(merchant=account.merchant, account=account)
-        self.assertEqual(account.balance_confirmed_, Decimal('1.0'))
+        self.assertEqual(account.balance_confirmed, Decimal('1.0'))
         self.assertEqual(account.balance_min, Decimal('0.2'))
         data = {'amount': '0.5'}
         form = WithdrawToBankAccountForm(data=data, account=account)
@@ -510,7 +497,10 @@ class WithdrawToBankAccountFormTestCase(TestCase):
 
     def test_insufficient_balance(self):
         account = AccountFactory.create(instantfiat=True)
-        TransactionFactory.create(account=account, amount=Decimal('0.1'))
+        BalanceChangeFactory(
+            deposit__account=account,
+            deposit__confirmed=True,
+            deposit__merchant_coin_amount=Decimal('0.1'))
         data = {'amount': '0.2'}
         form = WithdrawToBankAccountForm(data=data, account=account)
         self.assertFalse(form.is_valid())
@@ -519,7 +509,10 @@ class WithdrawToBankAccountFormTestCase(TestCase):
 
     def test_min_balance(self):
         account = AccountFactory.create(instantfiat=True)
-        TransactionFactory.create(account=account, amount=Decimal('0.5'))
+        BalanceChangeFactory(
+            deposit__account=account,
+            deposit__confirmed=True,
+            deposit__merchant_coin_amount=Decimal('0.5'))
         DeviceFactory.create(merchant=account.merchant,
                              account=account,
                              max_payout=Decimal('0.2'))

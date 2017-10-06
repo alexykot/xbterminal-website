@@ -12,15 +12,15 @@ from website.validators import (
     validate_bitcoin_address,
     validate_transaction)
 
+from transactions.constants import BTC_DEC_PLACES
 from operations import (
-    BTC_DEC_PLACES,
     PAYMENT_TIMEOUT,
     PAYMENT_VALIDATION_TIMEOUT,
     PAYMENT_CONFIRMATION_TIMEOUT,
     WITHDRAWAL_TIMEOUT,
     WITHDRAWAL_BROADCAST_TIMEOUT,
     WITHDRAWAL_CONFIRMATION_TIMEOUT)
-from operations.protocol import create_payment_request
+from transactions.utils.bip70 import create_payment_request
 from api.utils.urls import construct_absolute_url
 
 

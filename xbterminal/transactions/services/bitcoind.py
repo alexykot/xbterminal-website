@@ -12,8 +12,11 @@ from bitcoin.wallet import CBitcoinAddress
 from django.conf import settings
 from constance import config
 
-from operations import BTC_DEC_PLACES, BTC_MIN_FEE
-from operations import exceptions
+from transactions.constants import BTC_DEC_PLACES, BTC_MIN_FEE
+from transactions.exceptions import (
+    InvalidTransaction,
+    DoubleSpend,
+    TransactionModified)
 
 
 class BlockChain(object):
@@ -191,7 +194,7 @@ class BlockChain(object):
         """
         result = self._proxy.signrawtransaction(transaction)
         if result.get('complete') != 1:
-            raise exceptions.InvalidTransaction(get_txid(transaction))
+            raise InvalidTransaction(get_txid(transaction))
         return result['tx']
 
     def is_tx_valid(self, transaction):
@@ -250,8 +253,8 @@ class BlockChain(object):
                     pass
                 else:
                     if conflicting_tx_info['tx'].vout != tx.vout:
-                        raise exceptions.DoubleSpend(conflicting_tx_id)
-                raise exceptions.TransactionModified(conflicting_tx_id)
+                        raise DoubleSpend(conflicting_tx_id)
+                raise TransactionModified(conflicting_tx_id)
         return False
 
     def get_tx_fee(self, n_inputs, n_outputs,

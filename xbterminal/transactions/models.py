@@ -18,7 +18,7 @@ from transactions.constants import (
     WITHDRAWAL_CONFIRMATION_TIMEOUT,
     PAYMENT_TYPES)
 from transactions.utils.compat import get_bitcoin_network
-from operations.protocol import create_payment_request
+from transactions.utils.bip70 import create_payment_request
 
 
 class Transaction(models.Model):

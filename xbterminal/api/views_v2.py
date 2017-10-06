@@ -31,12 +31,11 @@ from api.utils.crypto import verify_signature
 from api.utils.pdf import generate_pdf
 from api.utils.urls import construct_absolute_url
 
-from operations import (
-    blockchain,
-    exceptions)
+from transactions.exceptions import TransactionError
 from transactions.models import Deposit, Withdrawal
 from transactions.deposits import prepare_deposit, handle_bip70_payment
 from transactions.withdrawals import prepare_withdrawal, send_transaction
+from transactions.services.bitcoind import construct_bitcoin_uri
 
 from common import rq_helpers
 
@@ -58,7 +57,7 @@ class DepositViewSet(viewsets.GenericViewSet):
                 (serializer.validated_data.get('device') or
                  serializer.validated_data.get('account')),
                 serializer.validated_data['amount'])
-        except exceptions.PaymentError as error:
+        except TransactionError as error:
             return Response({'device': [error.message]},
                             status=status.HTTP_400_BAD_REQUEST)
         # Urls
@@ -74,7 +73,7 @@ class DepositViewSet(viewsets.GenericViewSet):
             payment_bluetooth_request = deposit.create_payment_request(
                 payment_bluetooth_url)
             # Send payment request in response
-            data['payment_uri'] = blockchain.construct_bitcoin_uri(
+            data['payment_uri'] = construct_bitcoin_uri(
                 deposit.deposit_address.address,
                 deposit.coin_amount,
                 deposit.merchant.company_name,
@@ -82,7 +81,7 @@ class DepositViewSet(viewsets.GenericViewSet):
                 payment_request_url)
             data['payment_request'] = payment_bluetooth_request.encode('base64')
         else:
-            data['payment_uri'] = blockchain.construct_bitcoin_uri(
+            data['payment_uri'] = construct_bitcoin_uri(
                 deposit.deposit_address.address,
                 deposit.coin_amount,
                 deposit.merchant.company_name,
@@ -198,7 +197,7 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
             withdrawal = prepare_withdrawal(
                 serializer.validated_data['device'],
                 serializer.validated_data['amount'])
-        except exceptions.WithdrawalError as error:
+        except TransactionError as error:
             return Response({'device': [error.message]},
                             status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(withdrawal)
@@ -214,7 +213,7 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
         customer_address = self.request.data.get('address')
         try:
             send_transaction(withdrawal, customer_address)
-        except exceptions.WithdrawalError as error:
+        except TransactionError as error:
             return Response({'error': error.message},
                             status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(withdrawal)

@@ -7,8 +7,8 @@ from contextlib import contextmanager
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import InMemoryUploadedFile
+
 import factory
-from factory import fuzzy
 from faker import Faker
 from PIL import Image
 
@@ -19,12 +19,9 @@ from website.models import (
     MerchantAccount,
     KYCDocument,
     Account,
-    Address,
-    Transaction,
     DeviceBatch,
     Device,
     KYC_DOCUMENT_TYPES)
-from website.tests.utils import generate_bitcoin_address
 
 fake = Faker()
 
@@ -183,31 +180,6 @@ class AccountFactory(factory.DjangoModelFactory):
     def balance_(self, create, extracted, **kwargs):
         if create and extracted:
             self.transaction_set.create(amount=extracted)
-
-
-class AddressFactory(factory.DjangoModelFactory):
-
-    class Meta:
-        model = Address
-
-    account = factory.SubFactory(AccountFactory)
-    address = factory.LazyAttribute(
-        lambda a: generate_bitcoin_address(a.account.bitcoin_network))
-
-
-class TransactionFactory(factory.DjangoModelFactory):
-
-    class Meta:
-        model = Transaction
-
-    account = factory.SubFactory(AccountFactory)
-    amount = fuzzy.FuzzyDecimal(0.01, 0.95)
-
-    @factory.post_generation
-    def created_at(self, create, extracted, **kwargs):
-        if create and extracted:
-            self.created_at = extracted
-            self.save()
 
 
 class DeviceBatchFactory(factory.DjangoModelFactory):

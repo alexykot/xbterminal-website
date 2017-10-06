@@ -5,7 +5,7 @@ from django.utils.safestring import mark_safe
 from transactions import models
 from transactions.deposits import check_deposit_confirmation
 from transactions.withdrawals import check_withdrawal_confirmation
-from operations.services import blockcypher
+from transactions.services import blockcypher
 from api.utils.urls import get_link_to_object
 
 
