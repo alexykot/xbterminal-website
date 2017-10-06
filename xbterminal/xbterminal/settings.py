@@ -234,16 +234,16 @@ EMAIL_USE_SSL = True
 DEFAULT_FROM_EMAIL = "no-reply@xbterminal.io"
 CONTACT_EMAIL_RECIPIENTS = ["info@xbterminal.io"]
 
-# Bitcoind
+# Blockchains
 
-BITCOIND_SERVERS = {
-    'mainnet': {
+BLOCKCHAINS = {
+    'BTC': {
         'HOST': 'localhost',
         'PORT': 8332,
         'USER': 'xbt',
         'PASSWORD': 'xbt',
     },
-    'testnet': {
+    'TBTC': {
         'HOST': 'localhost',
         'PORT': 18332,
         'USER': 'xbt',

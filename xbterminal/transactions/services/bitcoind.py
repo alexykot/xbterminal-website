@@ -26,7 +26,10 @@ class BlockChain(object):
         network = get_bitcoin_network(coin_name)
         # TODO: don't set global params
         bitcoin.SelectParams(network)
-        config = settings.BITCOIND_SERVERS[network]
+        if hasattr(settings, 'BITCOIND_SERVERS'):
+            config = settings.BITCOIND_SERVERS[network]
+        else:
+            config = settings.BLOCKCHAINS[coin_name]
         service_url = "http://{user}:{password}@{host}:{port}".format(
             user=config['USER'],
             password=config['PASSWORD'],
