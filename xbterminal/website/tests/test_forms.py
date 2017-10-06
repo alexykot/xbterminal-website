@@ -305,9 +305,9 @@ class DeviceFormTestCase(TestCase):
         self.assertNotIn('max_payout', form.errors)
 
     def test_invalid_account_currency(self):
-        merchant = MerchantAccountFactory.create(currency__name='USD')
+        merchant = MerchantAccountFactory.create()
         account = AccountFactory.create(merchant=merchant,
-                                        currency__name='EUR')
+                                        currency__name='USD')
         form_data = {
             'device_type': 'hardware',
             'name': 'Terminal',

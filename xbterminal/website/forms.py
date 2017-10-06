@@ -8,7 +8,6 @@ from django.contrib.auth.forms import (
     AuthenticationForm as DjangoAuthenticationForm,
     UserCreationForm as DjangoUserCreationForm,
     UserChangeForm as DjangoUserChangeForm)
-from django.db.models import Q
 from django.db.transaction import atomic
 from django.utils.translation import ugettext as _
 
@@ -344,9 +343,7 @@ class DeviceForm(forms.ModelForm):
         self.merchant = kwargs.pop('merchant')
         super(DeviceForm, self).__init__(*args, **kwargs)
         self.fields['account'].queryset = self.merchant.account_set.\
-            filter(
-                Q(instantfiat=True, currency=self.merchant.currency) |
-                Q(instantfiat=False))
+            filter(currency__is_fiat=False)
         self.fields['account'].required = True
         # Configure fields for hardware terminal
         terminal_settings_fields = [
