@@ -30,7 +30,7 @@ class DepositTestCase(TestCase):
             device=device,
             currency=device.merchant.currency,
             amount=Decimal('10.0'),
-            coin_type=BIP44_COIN_TYPES.BTC,
+            coin=device.account.currency,
             merchant_coin_amount=Decimal('0.005'),
             fee_coin_amount=Decimal('0.0001'),
             deposit_address=address)
@@ -255,7 +255,7 @@ class WithdrawalTestCase(TestCase):
             device=device,
             currency=device.merchant.currency,
             amount=Decimal('10.0'),
-            coin_type=BIP44_COIN_TYPES.BTC,
+            coin=device.account.currency,
             customer_coin_amount=Decimal('0.005'),
             tx_fee_coin_amount=Decimal('0.0002'))
         self.assertEqual(len(withdrawal.uid), 6)
@@ -275,6 +275,8 @@ class WithdrawalTestCase(TestCase):
         self.assertEqual(withdrawal.currency,
                          withdrawal.account.merchant.currency)
         self.assertGreater(withdrawal.amount, 0)
+        self.assertEqual(withdrawal.coin,
+                         withdrawal.account.currency)
         self.assertEqual(withdrawal.coin_type, BIP44_COIN_TYPES.BTC)
         self.assertGreater(withdrawal.customer_coin_amount, 0)
         self.assertEqual(withdrawal.tx_fee_coin_amount, Decimal('0.0005'))

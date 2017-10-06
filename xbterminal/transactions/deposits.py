@@ -24,7 +24,6 @@ from transactions.exceptions import (
     TransactionModified,
     RefundError)
 from transactions.models import Deposit
-from transactions.utils.compat import get_coin_type
 from transactions.utils.tx import create_tx_
 from transactions.utils.bip70 import parse_payment
 from transactions.services.bitcoind import BlockChain, get_txid
@@ -50,15 +49,15 @@ def prepare_deposit(device_or_account, amount):
         device = None
         account = device_or_account
     # Create new address
-    coin_type = get_coin_type(account.currency.name)
-    deposit_address = Address.create(coin_type, is_change=False)
+    deposit_address = Address.create(account.currency.name,
+                                     is_change=False)
     # Create model instance
     deposit = Deposit(
         account=account,
         device=device,
         currency=account.merchant.currency,
         amount=amount,
-        coin_type=coin_type,
+        coin=account.currency,
         deposit_address=deposit_address)
     # Register address
     bc = BlockChain(deposit.bitcoin_network)

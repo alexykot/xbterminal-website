@@ -17,7 +17,6 @@ from transactions.constants import (
 from transactions.exceptions import TransactionError, TransactionModified
 from transactions.models import Withdrawal, BalanceChange
 from transactions.utils.compat import (
-    get_coin_type,
     get_address_balance,
     get_account_balance)
 from transactions.utils.tx import create_tx_
@@ -48,13 +47,12 @@ def prepare_withdrawal(device_or_account, amount):
         raise TransactionError(
             'Amount exceeds max payout for current device')
     # Create model instance
-    coin_type = get_coin_type(account.currency.name)
     withdrawal = Withdrawal(
         account=account,
         device=device,
         currency=account.merchant.currency,
         amount=amount,
-        coin_type=coin_type)
+        coin=account.currency)
     # Get exchange rate and calculate customer amount
     exchange_rate = get_exchange_rate(withdrawal.currency.name)
     withdrawal.customer_coin_amount = (withdrawal.amount / exchange_rate).\
@@ -90,7 +88,7 @@ def prepare_withdrawal(device_or_account, amount):
         if change_coin_amount < BTC_MIN_OUTPUT:
             withdrawal.customer_coin_amount += change_coin_amount
         else:
-            change_address = Address.create(withdrawal.coin_type, is_change=True)
+            change_address = Address.create(withdrawal.coin.name, is_change=True)
             bc.import_address(change_address.address, rescan=False)
             balance_changes.append((change_address, change_coin_amount))
         # Save withdrawal object and balance changes

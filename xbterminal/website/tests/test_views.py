@@ -1164,6 +1164,7 @@ class WithdrawToBankAccountViewTestCase(TestCase):
                                         currency__name='GBP')
         # WARNING: fiat deposits are not implemented
         BalanceChangeFactory(deposit__account=account,
+                             deposit__coin_type=0,
                              deposit__confirmed=True,
                              amount=Decimal('1.0'))
         self.client.login(username=self.merchant.user.email,
