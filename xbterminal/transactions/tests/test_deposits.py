@@ -243,6 +243,8 @@ class HandleBIP70PaymentTestCase(TestCase):
         payment_ack = handle_bip70_payment(deposit, 'test_message')
 
         self.assertIs(parse_mock.called, True)
+        self.assertEqual(parse_mock.call_args[0][0], deposit.coin.name)
+        self.assertEqual(parse_mock.call_args[0][1], 'test_message')
         self.assertIs(validate_mock.called, True)
         self.assertEqual(validate_mock.call_args[0][1], ['test_tx'])
         self.assertEqual(validate_mock.call_args[0][2], ['test_address'])

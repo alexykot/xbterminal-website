@@ -107,9 +107,10 @@ def parse_output(output):
     return str(address)
 
 
-def parse_payment(message):
+def parse_payment(coin_name, message):
     """
     Aceepts:
+        coin_name: coin name
         message: pb2-encoded message
     Returns:
         transations: list of CTransaction
@@ -118,6 +119,8 @@ def parse_payment(message):
     """
     payment = paymentrequest_pb2.Payment()
     payment.ParseFromString(message)
+    network = get_bitcoin_network(coin_name)
+    bitcoin.SelectParams(network)
     transactions = []
     for tx in payment.transactions:
         transactions.append(CTransaction.deserialize(tx))
