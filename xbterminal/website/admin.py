@@ -27,6 +27,7 @@ class CurrencyAdmin(admin.ModelAdmin):
         'name',
         'prefix',
         'postfix',
+        'is_fiat',
     ]
 
     def has_add_permission(self, request):
