@@ -4,7 +4,7 @@ import urllib
 import bitcoin
 import bitcoin.rpc
 from bitcoin.base58 import CBase58Data
-from bitcoin.core import COIN, x, lx, b2lx, CTransaction
+from bitcoin.core import COIN, lx, b2lx
 from bitcoin.core.serialize import Hash
 from bitcoin.wallet import CBitcoinAddress
 
@@ -13,7 +13,6 @@ from constance import config
 
 from transactions.constants import BTC_DEC_PLACES, BTC_MIN_FEE
 from transactions.exceptions import (
-    InvalidTransaction,
     DoubleSpend,
     TransactionModified)
 from transactions.utils.compat import get_bitcoin_network
@@ -36,14 +35,6 @@ class BlockChain(object):
             port=config['PORT'])
         self._proxy = bitcoin.rpc.Proxy(service_url)
 
-    def get_new_address(self):
-        """
-        Returns:
-            address: CBitcoinAddress
-        """
-        address = self._proxy.getnewaddress()
-        return address
-
     def import_address(self, address, rescan=False):
         """
         Accepts:
@@ -53,16 +44,6 @@ class BlockChain(object):
         result = self._proxy.importaddress(address, rescan=rescan)
         if result is not None:
             raise ValueError
-
-    def get_balance(self, minconf=1):
-        """
-        Accepts:
-            minconf: only include transactions confirmed at least this many times.
-        Returns:
-            balance: BTC amount (Decimal)
-        """
-        balance = self._proxy.getbalance(minconf=minconf)
-        return Decimal(balance).quantize(BTC_DEC_PLACES) / COIN
 
     def get_address_balance(self, address):
         """
@@ -76,19 +57,6 @@ class BlockChain(object):
         for out in txouts:
             balance += Decimal(out['amount']) / COIN
         return balance.quantize(BTC_DEC_PLACES)
-
-    def get_unspent_outputs(self, address, minconf=0):
-        """
-        Accepts:
-            address: CBitcoinAddress
-            minconf: only include transactions confirmed at least this many times
-        Returns:
-            txouts: list of dicts
-        """
-        txouts = self._proxy.listunspent(minconf=minconf, addrs=[address])
-        for out in txouts:
-            out['amount'] = Decimal(out['amount']) / COIN
-        return txouts
 
     def get_raw_unspent_outputs(self, address, minconf=0):
         """
@@ -160,45 +128,6 @@ class BlockChain(object):
             address = CBitcoinAddress.from_scriptPubKey(txout.scriptPubKey)
             outputs.append({'amount': amount, 'address': address})
         return outputs
-
-    def create_raw_transaction(self, inputs, outputs):
-        """
-        Accepts:
-            inputs: list of COutPoint
-            outputs: {address: amount, ...}
-        Returns:
-            transaction: CTransaction
-        """
-        # Parse inputs
-        inputs_ = []
-        for outpoint in inputs:
-            inputs_.append({
-                'txid': b2lx(outpoint.hash),  # b2lx, not b2x
-                'vout': outpoint.n,
-            })
-        # Convert decimal to float, filter outputs
-        outputs_ = {}
-        for address, amount in outputs.items():
-            if amount > 0:
-                outputs_[address] = float(amount)
-        assert len(outputs_) > 0
-        # Create transaction
-        transaction_hex = self._proxy._call(
-            'createrawtransaction', inputs_, outputs_)
-        transaction = CTransaction.deserialize(x(transaction_hex))
-        return transaction
-
-    def sign_raw_transaction(self, transaction):
-        """
-        Accepts:
-            transaction: CTransaction
-        Returns:
-            transaction_signed: CTransaction
-        """
-        result = self._proxy.signrawtransaction(transaction)
-        if result.get('complete') != 1:
-            raise InvalidTransaction(get_txid(transaction))
-        return result['tx']
 
     def is_tx_valid(self, transaction):
         """

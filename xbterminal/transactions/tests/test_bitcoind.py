@@ -40,15 +40,6 @@ class BlockChainTestCase(TestCase):
         self.assertIs(proxy_mock.importaddress.call_args[1]['rescan'], False)
 
     @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
-    def test_get_balance(self, proxy_cls_mock):
-        proxy_cls_mock.return_value = Mock(**{
-            'getbalance.return_value': 500000,
-        })
-        bc = BlockChain('BTC')
-        balance = bc.get_balance()
-        self.assertEqual(balance, Decimal('0.005'))
-
-    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
     def test_get_address_balance(self, proxy_cls_mock):
         proxy_cls_mock.return_value = Mock(**{
             'listunspent.return_value': [{'amount': 500000}],
@@ -56,19 +47,6 @@ class BlockChainTestCase(TestCase):
         bc = BlockChain('BTC')
         balance = bc.get_address_balance('test')
         self.assertEqual(balance, Decimal('0.005'))
-
-    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
-    def test_get_unspent_outputs(self, proxy_cls_mock):
-        proxy_cls_mock.return_value = proxy_mock = Mock(**{
-            'listunspent.return_value': [{
-                'amount': 500000, 'outpoint': Mock(),
-            }],
-        })
-        bc = BlockChain('BTC')
-        outputs = bc.get_unspent_outputs('test', minconf=1)
-        self.assertEqual(outputs[0]['amount'], Decimal('0.005'))
-        self.assertTrue(proxy_mock.listunspent.called)
-        self.assertEqual(proxy_mock.listunspent.call_args[1]['minconf'], 1)
 
     @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
     def test_get_raw_unspent_outputs(self, proxy_cls_mock):
