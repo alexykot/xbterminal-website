@@ -3,15 +3,13 @@ from django.test import TestCase, override_settings
 from mock import patch, Mock
 
 import bitcoin
-from bitcoin.core import COutPoint, lx
+from bitcoin.core import lx
 from constance.test import override_config
 
 from transactions.exceptions import TransactionModified, DoubleSpend
 from transactions.constants import BTC_MIN_FEE
 from transactions.services.bitcoind import (
     BlockChain,
-    serialize_outputs,
-    deserialize_outputs,
     validate_bitcoin_address,
     split_amount,
     get_tx_fee)
@@ -268,12 +266,6 @@ class BlockChainTestCase(TestCase):
 
 
 class UtilsTestCase(TestCase):
-
-    def test_output_serialization(self):
-        outputs = [COutPoint(n=1), COutPoint(n=2)]
-        serialized = serialize_outputs(outputs)
-        deserialized = deserialize_outputs(serialized)
-        self.assertEqual(len(deserialized), 2)
 
     def test_address_validation(self):
         self.assertEqual(bitcoin.params.__class__.__name__, 'MainParams')

@@ -1,11 +1,10 @@
 from decimal import Decimal
 import urllib
-from cStringIO import StringIO
 
 import bitcoin
 import bitcoin.rpc
 from bitcoin.base58 import CBase58Data
-from bitcoin.core import COIN, x, lx, b2lx, CTransaction, COutPoint
+from bitcoin.core import COIN, x, lx, b2lx, CTransaction
 from bitcoin.core.serialize import Hash
 from bitcoin.wallet import CBitcoinAddress
 
@@ -357,34 +356,6 @@ def get_tx_fee(n_inputs, n_outputs, fee_per_kb):
     tx_size = n_inputs * 148 + n_outputs * 34 + 10 + n_inputs
     fee = (fee_per_kb / 1024) * tx_size
     return fee.quantize(BTC_DEC_PLACES)
-
-
-def serialize_outputs(outputs):
-    """
-    Accepts:
-        outputs: list of COutPoint instances
-    Returns:
-        byte string
-    """
-    buffer = StringIO()
-    for outpoint in outputs:
-        outpoint.stream_serialize(buffer)
-    return buffer.getvalue()
-
-
-def deserialize_outputs(string):
-    """
-    Accepts:
-        string: serialized outputs
-    Returns:
-        list of COutPoint instances
-    """
-    buffer = StringIO(string)
-    outputs = []
-    while buffer.tell() < len(string):
-        outpoint = COutPoint.stream_deserialize(buffer)
-        outputs.append(outpoint)
-    return outputs
 
 
 def split_amount(amount, max_size):
