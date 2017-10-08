@@ -1,10 +1,11 @@
+import binascii
 from decimal import Decimal
 import urllib
 
 import bitcoin
 import bitcoin.rpc
 from bitcoin.base58 import CBase58Data
-from bitcoin.core import COIN, lx, b2lx
+from bitcoin.core import COIN, b2lx, CTransaction
 from bitcoin.core.serialize import Hash
 from bitcoin.wallet import CBitcoinAddress
 
@@ -20,6 +21,8 @@ from transactions.utils.compat import get_bitcoin_network
 
 class BlockChain(object):
 
+    MAXCONF = 9999999
+
     def __init__(self, coin_name):
         network = get_bitcoin_network(coin_name)
         # TODO: don't set global params
@@ -33,7 +36,7 @@ class BlockChain(object):
             password=config['PASSWORD'],
             host=config['HOST'],
             port=config['PORT'])
-        self._proxy = bitcoin.rpc.Proxy(service_url)
+        self._proxy = bitcoin.rpc.RawProxy(service_url)
 
     def import_address(self, address, rescan=False):
         """
@@ -41,18 +44,20 @@ class BlockChain(object):
             address: bitcoin address
             rescan: do blockchain rescan after import or not
         """
-        result = self._proxy.importaddress(address, rescan=rescan)
+        label = ''
+        result = self._proxy.importaddress(address, label, rescan)
         if result is not None:
             raise ValueError
 
     def get_address_balance(self, address):
         """
         Accepts:
-            address: CBitcoinAddress or string
+            address: string
         Returns:
             balance: BTC amount (Decimal)
         """
-        txouts = self._proxy.listunspent(minconf=0, addrs=[str(address)])
+        minconf = 0
+        txouts = self._proxy.listunspent(minconf, self.MAXCONF, [address])
         balance = Decimal(0)
         for out in txouts:
             balance += Decimal(out['amount']) / COIN
@@ -65,10 +70,9 @@ class BlockChain(object):
         Returns:
             list of dicts
         """
-        results = self._proxy.call(
-            'listunspent',
+        results = self._proxy.listunspent(
             minconf,
-            9999999,
+            self.MAXCONF,
             [address])
         return results
 
@@ -79,12 +83,11 @@ class BlockChain(object):
         Returns:
             transactions: list of CTransaction
         """
-        address = CBitcoinAddress(address)
-        txouts = self._proxy.listunspent(minconf=0, addrs=[address])
+        minconf = 0
+        txouts = self._proxy.listunspent(minconf, self.MAXCONF, [address])
         transactions = []
         for out in txouts:
-            txid = b2lx(out['outpoint'].hash)
-            transactions.append(self.get_raw_transaction(txid))
+            transactions.append(self.get_raw_transaction(out['txid']))
         return transactions
 
     def get_raw_transaction(self, transaction_id):
@@ -94,8 +97,9 @@ class BlockChain(object):
         Returns:
             transaction: CTransaction
         """
-        transaction = self._proxy.getrawtransaction(lx(transaction_id))
-        return transaction
+        tx_hex = self._proxy.getrawtransaction(transaction_id)
+        tx = CTransaction.deserialize(binascii.unhexlify(tx_hex))
+        return tx
 
     def get_tx_inputs(self, transaction):
         """
@@ -107,7 +111,8 @@ class BlockChain(object):
         """
         inputs = []
         for txin in transaction.vin:
-            input_tx = self._proxy.getrawtransaction(txin.prevout.hash)
+            input_tx_hex = self._proxy.getrawtransaction(b2lx(txin.prevout.hash))
+            input_tx = CTransaction.deserialize(binascii.unhexlify(input_tx_hex))
             input_tx_out = input_tx.vout[txin.prevout.n]
             amount = Decimal(input_tx_out.nValue) / COIN
             address = CBitcoinAddress.from_scriptPubKey(input_tx_out.scriptPubKey)
@@ -136,7 +141,8 @@ class BlockChain(object):
         Returns:
             True of False
         """
-        result = self._proxy.signrawtransaction(transaction)
+        tx_hex = binascii.hexlify(transaction.serialize())
+        result = self._proxy.signrawtransaction(tx_hex)
         if result.get('complete') != 1:
             # Signing attempt for confirmed TX will return complete=False
             tx_id = get_txid(transaction)
@@ -151,8 +157,9 @@ class BlockChain(object):
         Returns:
             transaction_id: hex string
         """
-        transaction_id = self._proxy.sendrawtransaction(transaction)
-        return b2lx(transaction_id)
+        tx_hex = binascii.hexlify(transaction.serialize())
+        transaction_id = self._proxy.sendrawtransaction(tx_hex)
+        return transaction_id
 
     def is_tx_confirmed(self, tx_id, minconf=None):
         """
@@ -164,28 +171,22 @@ class BlockChain(object):
         Returns:
             True or False
         """
-        tx_info = self._proxy.gettransaction(lx(tx_id))
+        tx_info = self._proxy.gettransaction(tx_id)
         minconf = minconf or config.TX_REQUIRED_CONFIRMATIONS
         if tx_info['confirmations'] >= minconf:
             return True
         # Check conflicting transactions
         for conflicting_tx_id in tx_info['walletconflicts']:
             try:
-                conflicting_tx_info = self._proxy.getrawtransaction(
-                    lx(conflicting_tx_id), verbose=True)
-            except IndexError:
+                conflicting_tx_info = self._proxy.gettransaction(
+                    conflicting_tx_id)
+            except bitcoin.rpc.InvalidAddressOrKeyError:
                 # Transaction already removed from mempool, skip
                 continue
             if conflicting_tx_info['confirmations'] >= minconf:
                 # Check for double spend
-                try:
-                    tx = self._proxy.getrawtransaction(lx(tx_id))
-                except IndexError:
-                    # Original transaction already removed from mempool
-                    pass
-                else:
-                    if conflicting_tx_info['tx'].vout != tx.vout:
-                        raise DoubleSpend(conflicting_tx_id)
+                if conflicting_tx_info['vout'] != tx_info['vout']:
+                    raise DoubleSpend(conflicting_tx_id)
                 raise TransactionModified(conflicting_tx_id)
         return False
 
@@ -201,8 +202,7 @@ class BlockChain(object):
         Returns:
             fee
         """
-        fee_per_kb = self._proxy.call(
-            'estimatefee',
+        fee_per_kb = self._proxy.estimatefee(
             n_blocks or config.TX_EXPECTED_CONFIRM)
         if fee_per_kb == -1:
             fee_per_kb = config.TX_DEFAULT_FEE
