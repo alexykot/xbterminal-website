@@ -86,6 +86,52 @@ class BlockChainTestCase(TestCase):
             b'\x11' * 32)
 
     @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
+    def test_get_raw_transaction(self, proxy_cls_mock):
+        tx_id = '1' * 64
+        tx = Mock()
+        proxy_cls_mock.return_value = proxy_mock = Mock(**{
+            'getrawtransaction.return_value': tx,
+        })
+        bc = BlockChain('BTC')
+        result = bc.get_raw_transaction(tx_id)
+
+        self.assertEqual(result, tx)
+        self.assertIs(proxy_mock.getrawtransaction.called, True)
+
+    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
+    @patch('transactions.services.bitcoind.CBitcoinAddress.from_scriptPubKey')
+    def test_get_tx_inputs(self, get_addr_mock, proxy_cls_mock):
+        tx = Mock(vin=[Mock(prevout=Mock(n=0, hash='0' * 64))])
+        proxy_cls_mock.return_value = proxy_mock = Mock(**{
+            'getrawtransaction.return_value': Mock(
+                vout=[Mock(nValue=10000, scriptPubKey='test')],
+            ),
+        })
+        get_addr_mock.return_value = 'test_addr'
+        bc = BlockChain('BTC')
+        result = bc.get_tx_inputs(tx)
+
+        self.assertEqual(result, [{
+            'amount': Decimal('0.0001'),
+            'address': 'test_addr',
+        }])
+        self.assertIs(proxy_mock.getrawtransaction.called, True)
+        self.assertEqual(get_addr_mock.call_args[0][0], 'test')
+
+    @patch('transactions.services.bitcoind.CBitcoinAddress.from_scriptPubKey')
+    def test_get_tx_outputs(self, get_addr_mock):
+        tx = Mock(vout=[Mock(nValue=10000, scriptPubKey='test')])
+        get_addr_mock.return_value = 'test_addr'
+        bc = BlockChain('BTC')
+        result = bc.get_tx_outputs(tx)
+
+        self.assertEqual(result, [{
+            'amount': Decimal('0.0001'),
+            'address': 'test_addr',
+        }])
+        self.assertEqual(get_addr_mock.call_args[0][0], 'test')
+
+    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
     def test_is_tx_valid(self, proxy_cls_mock):
         proxy_cls_mock.return_value = Mock(**{
             'signrawtransaction.return_value': {
@@ -135,6 +181,18 @@ class BlockChainTestCase(TestCase):
         bc = BlockChain('BTC')
         result = bc.is_tx_valid(Mock())
         self.assertIs(result, False)
+
+    @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
+    def test_send_raw_transaction(self, proxy_cls_mock):
+        proxy_cls_mock.return_value = proxy_mock = Mock(**{
+            'sendrawtransaction.return_value': lx('0' * 64),
+        })
+        bc = BlockChain('BTC')
+        tx = Mock()
+        tx_id = bc.send_raw_transaction(tx)
+
+        self.assertEqual(tx_id, '0' * 64)
+        self.assertIs(proxy_mock.sendrawtransaction.called, True)
 
     @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
     def test_is_tx_confirmed_true(self, proxy_cls_mock):
