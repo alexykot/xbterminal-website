@@ -18,12 +18,13 @@ class BlockChainTestCase(TestCase):
     @patch('transactions.services.bitcoind.bitcoin.SelectParams')
     @patch('transactions.services.bitcoind.bitcoin.rpc.RawProxy')
     def test_init(self, proxy_cls_mock, select_params_mock):
-        BlockChain('BTC')
+        bc = BlockChain('BTC')
         self.assertTrue(select_params_mock.called)
         self.assertEqual(select_params_mock.call_args[0][0], 'mainnet')
         self.assertTrue(proxy_cls_mock.called)
         service_url = proxy_cls_mock.call_args[0][0]
         self.assertTrue(service_url.startswith('http'))
+        self.assertEqual(bc.pycoin_code, 'BTC')
 
     @patch('transactions.services.bitcoind.bitcoin.rpc.RawProxy')
     def test_import_address(self, proxy_cls_mock):
@@ -99,41 +100,45 @@ class BlockChainTestCase(TestCase):
         self.assertEqual(get_tx_mock.call_args[0][0], '\xab\xcd')
 
     @patch('transactions.services.bitcoind.bitcoin.rpc.RawProxy')
-    @patch('transactions.services.bitcoind.CTransaction.deserialize')
-    @patch('transactions.services.bitcoind.CBitcoinAddress.from_scriptPubKey')
-    def test_get_tx_inputs(self, get_addr_mock, get_tx_mock, proxy_cls_mock):
-        tx = Mock(vin=[Mock(prevout=Mock(n=0, hash='\x11' * 32))])
+    @patch('transactions.services.bitcoind.bitcoinlib_to_pycoin')
+    def test_get_tx_inputs(self, convert_tx_mock, proxy_cls_mock):
+        convert_tx_mock.return_value = Mock(
+            txs_in=[Mock(previous_hash='\x11' * 32)])
         proxy_cls_mock.return_value = proxy_mock = Mock(**{
-            'getrawtransaction.return_value': 'abcd',
+            'getrawtransaction.return_value': {
+                'vout': [{
+                    'value': '0.0001',
+                    'scriptPubKey': {
+                        'addresses': ['1A6Ei5cRfDJ8jjhwxfzLJph8B9ZEthR9Z'],
+                    },
+                }],
+            },
         })
-        get_tx_mock.return_value = Mock(
-            vout=[Mock(nValue=10000, scriptPubKey='test')])
-        get_addr_mock.return_value = 'test_addr'
         bc = BlockChain('BTC')
-        result = bc.get_tx_inputs(tx)
+        result = bc.get_tx_inputs(Mock())
 
         self.assertEqual(result, [{
             'amount': Decimal('0.0001'),
-            'address': 'test_addr',
+            'address': '1A6Ei5cRfDJ8jjhwxfzLJph8B9ZEthR9Z',
         }])
         self.assertIs(proxy_mock.getrawtransaction.called, True)
         self.assertEqual(proxy_mock.getrawtransaction.call_args[0][0],
                          '1' * 64)
-        self.assertEqual(get_tx_mock.call_args[0][0], '\xab\xcd')
-        self.assertEqual(get_addr_mock.call_args[0][0], 'test')
+        self.assertIs(proxy_mock.getrawtransaction.call_args[0][1], True)
 
-    @patch('transactions.services.bitcoind.CBitcoinAddress.from_scriptPubKey')
-    def test_get_tx_outputs(self, get_addr_mock):
-        tx = Mock(vout=[Mock(nValue=10000, scriptPubKey='test')])
-        get_addr_mock.return_value = 'test_addr'
+    @patch('transactions.services.bitcoind.bitcoinlib_to_pycoin')
+    def test_get_tx_outputs(self, convert_tx_mock):
+        convert_tx_mock.return_value = Mock(txs_out=[Mock(**{
+            'coin_value': 10000,
+            'address.return_value': '1A6Ei5cRfDJ8jjhwxfzLJph8B9ZEthR9Z',
+        })])
         bc = BlockChain('BTC')
-        result = bc.get_tx_outputs(tx)
+        result = bc.get_tx_outputs(Mock())
 
         self.assertEqual(result, [{
             'amount': Decimal('0.0001'),
-            'address': 'test_addr',
+            'address': '1A6Ei5cRfDJ8jjhwxfzLJph8B9ZEthR9Z',
         }])
-        self.assertEqual(get_addr_mock.call_args[0][0], 'test')
 
     @patch('transactions.services.bitcoind.bitcoin.rpc.RawProxy')
     def test_is_tx_valid(self, proxy_cls_mock):

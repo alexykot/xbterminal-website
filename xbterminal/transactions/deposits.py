@@ -106,7 +106,7 @@ def validate_payment(deposit, transactions, refund_addresses):
         incoming_tx_ids.add(incoming_tx_id)
         # Get amount
         for output in bc.get_tx_outputs(incoming_tx):
-            if str(output['address']) == deposit.deposit_address.address:
+            if output['address'] == deposit.deposit_address.address:
                 received_amount += output['amount']
     # Save deposit details
     with atomic():
@@ -177,7 +177,7 @@ def wait_for_payment(deposit_id):
         tx_inputs = bc.get_tx_inputs(transactions[0])
         if len(tx_inputs) > 1:
             logger.warning('incoming tx contains more than one input')
-        refund_addresses = [str(inp['address']) for inp in tx_inputs]
+        refund_addresses = [inp['address'] for inp in tx_inputs]
         # Validate payment
         try:
             validate_payment(deposit, transactions, refund_addresses)

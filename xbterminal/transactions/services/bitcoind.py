@@ -6,17 +6,18 @@ import bitcoin
 import bitcoin.rpc
 from bitcoin.core import COIN, b2lx, CTransaction
 from bitcoin.core.serialize import Hash
-from bitcoin.wallet import CBitcoinAddress
 
 from django.conf import settings
 from constance import config
 from pycoin.key.validate import is_address_valid as is_address_valid_
+from pycoin.serialize import b2h_rev
 
 from transactions.constants import BTC_DEC_PLACES, BTC_MIN_FEE
 from transactions.exceptions import (
     DoubleSpend,
     TransactionModified)
 from transactions.utils.compat import get_bitcoin_network
+from transactions.utils.tx import bitcoinlib_to_pycoin
 from wallet.constants import COINS
 
 
@@ -25,6 +26,7 @@ class BlockChain(object):
     MAXCONF = 9999999
 
     def __init__(self, coin_name):
+        self.pycoin_code = getattr(COINS, coin_name).pycoin_code
         network = get_bitcoin_network(coin_name)
         # TODO: don't set global params
         bitcoin.SelectParams(network)
@@ -110,13 +112,14 @@ class BlockChain(object):
         Returns:
             list of inputs (Decimal amount, CBitcoinAddress)
         """
+        transaction = bitcoinlib_to_pycoin(transaction)
         inputs = []
-        for txin in transaction.vin:
-            input_tx_hex = self._proxy.getrawtransaction(b2lx(txin.prevout.hash))
-            input_tx = CTransaction.deserialize(binascii.unhexlify(input_tx_hex))
-            input_tx_out = input_tx.vout[txin.prevout.n]
-            amount = Decimal(input_tx_out.nValue) / COIN
-            address = CBitcoinAddress.from_scriptPubKey(input_tx_out.scriptPubKey)
+        for idx, txin in enumerate(transaction.txs_in):
+            input_tx_id = b2h_rev(txin.previous_hash)
+            input_tx_info = self._proxy.getrawtransaction(input_tx_id, True)
+            input_tx_out = input_tx_info['vout'][idx]
+            amount = Decimal(input_tx_out['value'])
+            address = input_tx_out['scriptPubKey']['addresses'][0]
             inputs.append({'amount': amount, 'address': address})
         return inputs
 
@@ -128,10 +131,11 @@ class BlockChain(object):
         Returns:
             outputs: list of outputs
         """
+        transaction = bitcoinlib_to_pycoin(transaction)
         outputs = []
-        for txout in transaction.vout:
-            amount = Decimal(txout.nValue) / COIN
-            address = CBitcoinAddress.from_scriptPubKey(txout.scriptPubKey)
+        for txout in transaction.txs_out:
+            amount = Decimal(txout.coin_value) / COIN
+            address = txout.address(netcode=self.pycoin_code)
             outputs.append({'amount': amount, 'address': address})
         return outputs
 
