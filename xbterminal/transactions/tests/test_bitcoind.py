@@ -2,7 +2,6 @@ from decimal import Decimal
 from django.test import TestCase, override_settings
 from mock import patch, Mock
 
-import bitcoin
 from constance.test import override_config
 
 from transactions.exceptions import TransactionModified, DoubleSpend
@@ -314,19 +313,19 @@ class BlockChainTestCase(TestCase):
 class UtilsTestCase(TestCase):
 
     def test_address_validation(self):
-        self.assertEqual(bitcoin.params.__class__.__name__, 'MainParams')
         main_addr = '1JpY93MNoeHJ914CHLCQkdhS7TvBM68Xp6'
         self.assertIsNone(
             validate_bitcoin_address(main_addr, 'BTC'))
         test_addr = 'mxqpfcxzKnPfgZw8JKs7DU6m7DTysxBBWn'
         self.assertIsNone(
             validate_bitcoin_address(test_addr, 'TBTC'))
-        self.assertIsNotNone(
-            validate_bitcoin_address(test_addr, 'BTC'))
+        self.assertEqual(
+            validate_bitcoin_address(test_addr, 'BTC'),
+            'Invalid address for coin BTC.')
         invalid_addr = '1wFSdAv9rGpA4CvX3UtxZpUwaumsWM68pC'
-        self.assertIsNotNone(
-            validate_bitcoin_address(invalid_addr, None))
-        self.assertEqual(bitcoin.params.__class__.__name__, 'MainParams')
+        self.assertEqual(
+            validate_bitcoin_address(invalid_addr, None),
+            'Invalid address.')
 
     def test_split_amount(self):
         max_size = Decimal('0.05')

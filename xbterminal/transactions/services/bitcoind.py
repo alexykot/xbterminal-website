@@ -4,19 +4,20 @@ import urllib
 
 import bitcoin
 import bitcoin.rpc
-from bitcoin.base58 import CBase58Data
 from bitcoin.core import COIN, b2lx, CTransaction
 from bitcoin.core.serialize import Hash
 from bitcoin.wallet import CBitcoinAddress
 
 from django.conf import settings
 from constance import config
+from pycoin.key.validate import is_address_valid as is_address_valid_
 
 from transactions.constants import BTC_DEC_PLACES, BTC_MIN_FEE
 from transactions.exceptions import (
     DoubleSpend,
     TransactionModified)
 from transactions.utils.compat import get_bitcoin_network
+from wallet.constants import COINS
 
 
 class BlockChain(object):
@@ -260,18 +261,13 @@ def validate_bitcoin_address(address, coin_name):
         error message or None
     """
     if coin_name is not None:
-        network = get_bitcoin_network(coin_name)
-        # TODO: don't set global params
-        bitcoin.SelectParams(network)
-        try:
-            address = CBitcoinAddress(address)
-        except:
+        pycoin_code = getattr(COINS, coin_name).pycoin_code
+        if not is_address_valid_(address,
+                                 allowable_netcodes=[pycoin_code]):
             return 'Invalid address for coin {0}.'.format(coin_name)
     else:
-        try:
-            address = CBase58Data(address)
-        except:
-            return 'Invalid bitcoin address.'
+        if not is_address_valid_(address):
+            return 'Invalid address.'
 
 
 def get_tx_fee(n_inputs, n_outputs, fee_per_kb):
