@@ -47,12 +47,18 @@ def create_tx(tx_inputs, tx_outputs):
     return tx
 
 
-def convert_tx(tx):
+def pycoin_to_bitcoinlib(tx):
     """
     Convert pycoin Tx object to bitcoinlib CTransaction
     """
-    return CTransaction.deserialize(binascii.unhexlify(tx.as_hex()))
+    tx_hex = tx.as_hex()
+    return CTransaction.deserialize(binascii.unhexlify(tx_hex))
+
+
+def bitcoinlib_to_pycoin(tx):
+    tx_hex = binascii.hexlify(tx.serialize())
+    return Tx.from_hex(tx_hex)
 
 
 def create_tx_(tx_inputs, tx_outputs):
-    return convert_tx(create_tx(tx_inputs, tx_outputs))
+    return pycoin_to_bitcoinlib(create_tx(tx_inputs, tx_outputs))
