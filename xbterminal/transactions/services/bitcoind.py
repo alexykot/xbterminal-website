@@ -1,8 +1,7 @@
 from decimal import Decimal
 import urllib
 
-import bitcoin
-import bitcoin.rpc
+from bitcoin.rpc import RawProxy, InvalidAddressOrKeyError
 
 from django.conf import settings
 from constance import config
@@ -26,8 +25,6 @@ class BlockChain(object):
     def __init__(self, coin_name):
         self.pycoin_code = getattr(COINS, coin_name).pycoin_code
         network = get_bitcoin_network(coin_name)
-        # TODO: don't set global params
-        bitcoin.SelectParams(network)
         if hasattr(settings, 'BITCOIND_SERVERS'):
             config = settings.BITCOIND_SERVERS[network]
         else:
@@ -37,7 +34,7 @@ class BlockChain(object):
             password=config['PASSWORD'],
             host=config['HOST'],
             port=config['PORT'])
-        self._proxy = bitcoin.rpc.RawProxy(service_url)
+        self._proxy = RawProxy(service_url)
 
     def import_address(self, address, rescan=False):
         """
@@ -178,7 +175,7 @@ class BlockChain(object):
             try:
                 conflicting_tx_info = self._proxy.gettransaction(
                     conflicting_tx_id)
-            except bitcoin.rpc.InvalidAddressOrKeyError:
+            except InvalidAddressOrKeyError:
                 # Transaction already removed from mempool, skip
                 continue
             if conflicting_tx_info['confirmations'] >= minconf:
