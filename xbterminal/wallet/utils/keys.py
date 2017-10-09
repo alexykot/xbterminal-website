@@ -5,6 +5,10 @@ from pycoin.key.BIP32Node import BIP32Node
 from pycoin.tx.pay_to import script_obj_from_script
 
 
+def deserialize_key(key_wif):
+    return BIP32Node.from_hwif(key_wif)
+
+
 def create_master_key(secret):
     if isinstance(secret, int):
         secret = str(secret)
