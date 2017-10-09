@@ -13,6 +13,7 @@ from bitcoin.wallet import CBitcoinAddress
 from django.conf import settings
 
 from transactions.utils import paymentrequest_pb2, x509
+from transactions.utils.compat import get_bitcoin_network
 
 logger = logging.getLogger(__name__)
 
@@ -31,11 +32,11 @@ def create_output(address, amount):
     return output
 
 
-def create_payment_details(network, outputs, created, expires,
+def create_payment_details(coin_name, outputs, created, expires,
                            payment_url, memo):
     """
     Accepts:
-        network: "mainnet" or "testnet"
+        coin_name: coin name (currency name)
         outputs: list of (address, amount) pairs
         created: datetime
         expires: datetime
@@ -43,6 +44,7 @@ def create_payment_details(network, outputs, created, expires,
         memo: note that should be displayed to the customer
     """
     details = paymentrequest_pb2.PaymentDetails()
+    network = get_bitcoin_network(coin_name)
     bitcoin.SelectParams(network)
     if network == "mainnet":
         details.network = "main"

@@ -22,7 +22,7 @@ class BlockChainTestCase(TestCase):
     @patch('transactions.services.bitcoind.bitcoin.SelectParams')
     @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
     def test_init(self, proxy_cls_mock, select_params_mock):
-        BlockChain('mainnet')
+        BlockChain('BTC')
         self.assertTrue(select_params_mock.called)
         self.assertEqual(select_params_mock.call_args[0][0], 'mainnet')
         self.assertTrue(proxy_cls_mock.called)
@@ -35,7 +35,7 @@ class BlockChainTestCase(TestCase):
             'importaddress.return_value': None,
         })
         address = '1JpY93MNoeHJ914CHLCQkdhS7TvBM68Xp6'
-        bc = BlockChain('mainnet')
+        bc = BlockChain('BTC')
         bc.import_address('1JpY93MNoeHJ914CHLCQkdhS7TvBM68Xp6')
         self.assertEqual(proxy_mock.importaddress.call_count, 1)
         self.assertEqual(proxy_mock.importaddress.call_args[0][0], address)
@@ -46,7 +46,7 @@ class BlockChainTestCase(TestCase):
         proxy_cls_mock.return_value = Mock(**{
             'getbalance.return_value': 500000,
         })
-        bc = BlockChain('mainnet')
+        bc = BlockChain('BTC')
         balance = bc.get_balance()
         self.assertEqual(balance, Decimal('0.005'))
 
@@ -55,7 +55,7 @@ class BlockChainTestCase(TestCase):
         proxy_cls_mock.return_value = Mock(**{
             'listunspent.return_value': [{'amount': 500000}],
         })
-        bc = BlockChain('mainnet')
+        bc = BlockChain('BTC')
         balance = bc.get_address_balance('test')
         self.assertEqual(balance, Decimal('0.005'))
 
@@ -66,7 +66,7 @@ class BlockChainTestCase(TestCase):
                 'amount': 500000, 'outpoint': Mock(),
             }],
         })
-        bc = BlockChain('mainnet')
+        bc = BlockChain('BTC')
         outputs = bc.get_unspent_outputs('test', minconf=1)
         self.assertEqual(outputs[0]['amount'], Decimal('0.005'))
         self.assertTrue(proxy_mock.listunspent.called)
@@ -77,7 +77,7 @@ class BlockChainTestCase(TestCase):
         proxy_cls_mock.return_value = proxy_mock = Mock(**{
             'call.return_value': [{'txid': '1' * 64}],
         })
-        bc = BlockChain('mainnet')
+        bc = BlockChain('BTC')
         outputs = bc.get_raw_unspent_outputs('test', minconf=1)
         self.assertEqual(outputs[0]['txid'], '1' * 64)
         self.assertTrue(proxy_mock.call.call_args[0][0], 'listunspent')
@@ -95,7 +95,7 @@ class BlockChainTestCase(TestCase):
             }],
             'getrawtransaction.return_value': transaction_mock,
         })
-        bc = BlockChain('mainnet')
+        bc = BlockChain('BTC')
         transactions = bc.get_unspent_transactions(address)
         self.assertEqual(len(transactions), 1)
         self.assertEqual(transactions[0], transaction_mock)
@@ -117,7 +117,7 @@ class BlockChainTestCase(TestCase):
                 'complete': True,
             },
         })
-        bc = BlockChain('mainnet')
+        bc = BlockChain('BTC')
         result = bc.is_tx_valid(Mock())
         self.assertIs(result, True)
 
@@ -135,7 +135,7 @@ class BlockChainTestCase(TestCase):
             },
         })
         get_txid_mock.return_value = tx_id = '1' * 64
-        bc = BlockChain('mainnet')
+        bc = BlockChain('BTC')
         result = bc.is_tx_valid(Mock())
         self.assertIs(result, True)
         self.assertIs(proxy_mock.gettransaction.called, True)
@@ -156,7 +156,7 @@ class BlockChainTestCase(TestCase):
             },
         })
         get_txid_mock.return_value = '1' * 64
-        bc = BlockChain('mainnet')
+        bc = BlockChain('BTC')
         result = bc.is_tx_valid(Mock())
         self.assertIs(result, False)
 
@@ -169,7 +169,7 @@ class BlockChainTestCase(TestCase):
                 'walletconflicts': [],
             },
         })
-        bc = BlockChain('mainnet')
+        bc = BlockChain('BTC')
         self.assertIs(bc.is_tx_confirmed(tx_id), True)
         self.assertEqual(proxy_mock.gettransaction.call_args[0][0],
                          lx(tx_id))
@@ -183,7 +183,7 @@ class BlockChainTestCase(TestCase):
                 'walletconflicts': [],
             },
         })
-        bc = BlockChain('mainnet')
+        bc = BlockChain('BTC')
         self.assertIs(bc.is_tx_confirmed(tx_id), False)
 
     @patch('transactions.services.bitcoind.bitcoin.rpc.Proxy')
@@ -200,7 +200,7 @@ class BlockChainTestCase(TestCase):
                 Mock(vout='test'),
             ],
         })
-        bc = BlockChain('mainnet')
+        bc = BlockChain('BTC')
         with self.assertRaises(TransactionModified) as context:
             bc.is_tx_confirmed(tx_id_1)
         self.assertEqual(context.exception.another_tx_id, tx_id_2)
@@ -219,7 +219,7 @@ class BlockChainTestCase(TestCase):
                 Mock(vout='two'),
             ],
         })
-        bc = BlockChain('mainnet')
+        bc = BlockChain('BTC')
         with self.assertRaises(DoubleSpend) as context:
             bc.is_tx_confirmed(tx_id_1)
         self.assertEqual(context.exception.another_tx_id, tx_id_2)
@@ -229,7 +229,7 @@ class BlockChainTestCase(TestCase):
         proxy_cls_mock.return_value = proxy_mock = Mock(**{
             'call.return_value': Decimal('0.0002'),
         })
-        bc = BlockChain('mainnet')
+        bc = BlockChain('BTC')
         expected_fee = get_tx_fee(1, 1, Decimal('0.0002'))
         self.assertEqual(bc.get_tx_fee(1, 1), expected_fee)
         self.assertEqual(proxy_mock.call.call_count, 1)
@@ -242,7 +242,7 @@ class BlockChainTestCase(TestCase):
         proxy_cls_mock.return_value = Mock(**{
             'call.return_value': Decimal(-1),
         })
-        bc = BlockChain('mainnet')
+        bc = BlockChain('BTC')
         expected_fee = get_tx_fee(1, 1, Decimal('0.0005'))
         self.assertEqual(bc.get_tx_fee(1, 1), expected_fee)
 
@@ -253,7 +253,7 @@ class BlockChainTestCase(TestCase):
         proxy_cls_mock.return_value = Mock(**{
             'call.return_value': Decimal('0.0009'),
         })
-        bc = BlockChain('mainnet')
+        bc = BlockChain('BTC')
         expected_fee = get_tx_fee(1, 1, Decimal('0.0015'))
         self.assertEqual(bc.get_tx_fee(1, 1), expected_fee)
 
@@ -262,7 +262,7 @@ class BlockChainTestCase(TestCase):
         proxy_cls_mock.return_value = Mock(**{
             'call.return_value': Decimal('0.00000223'),
         })
-        bc = BlockChain('mainnet')
+        bc = BlockChain('BTC')
         expected_fee = get_tx_fee(1, 1, BTC_MIN_FEE)
         self.assertEqual(bc.get_tx_fee(1, 1), expected_fee)
 
@@ -279,12 +279,12 @@ class UtilsTestCase(TestCase):
         self.assertEqual(bitcoin.params.__class__.__name__, 'MainParams')
         main_addr = '1JpY93MNoeHJ914CHLCQkdhS7TvBM68Xp6'
         self.assertIsNone(
-            validate_bitcoin_address(main_addr, 'mainnet'))
+            validate_bitcoin_address(main_addr, 'BTC'))
         test_addr = 'mxqpfcxzKnPfgZw8JKs7DU6m7DTysxBBWn'
         self.assertIsNone(
-            validate_bitcoin_address(test_addr, 'testnet'))
+            validate_bitcoin_address(test_addr, 'TBTC'))
         self.assertIsNotNone(
-            validate_bitcoin_address(test_addr, 'mainnet'))
+            validate_bitcoin_address(test_addr, 'BTC'))
         invalid_addr = '1wFSdAv9rGpA4CvX3UtxZpUwaumsWM68pC'
         self.assertIsNotNone(
             validate_bitcoin_address(invalid_addr, None))

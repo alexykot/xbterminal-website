@@ -34,8 +34,8 @@ validate_name = RegexValidator(
     code='invalid_name')
 
 
-def validate_bitcoin_address(address, network=None):
-    error_message = validate_bitcoin_address_(address, network)
+def validate_bitcoin_address(address, coin_name=None):
+    error_message = validate_bitcoin_address_(address, coin_name)
     if error_message is not None:
         raise ValidationError(error_message)
 

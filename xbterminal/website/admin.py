@@ -27,6 +27,7 @@ class CurrencyAdmin(admin.ModelAdmin):
         'name',
         'prefix',
         'postfix',
+        'is_fiat',
     ]
 
     def has_add_permission(self, request):
@@ -53,7 +54,9 @@ class DeviceAdmin(FSMTransitionMixin, admin.ModelAdmin):
         'key',
         'device_key_qr_code',
         'activation_code',
+        'last_activity',
         'is_online',
+        'system_info',
     ]
     fsm_field = ['status']
     form = forms.DeviceAdminForm

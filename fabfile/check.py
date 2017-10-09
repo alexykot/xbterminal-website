@@ -18,10 +18,10 @@ def security():
 
 
 @task
-def unit(apps='website operations api transactions wallet'):
+def unit(target='website operations api transactions wallet'):
     with prefix('. venv/bin/activate'):
         local('coverage run '
-              'xbterminal/manage.py test {}'.format(apps))
+              'xbterminal/manage.py test {}'.format(target))
         local('coverage report -i')
 
 

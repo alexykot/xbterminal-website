@@ -1,31 +1,29 @@
 from django.apps import apps
 from django.db.models import Sum, Q
 
-from wallet.constants import BIP44_COIN_TYPES
+from wallet.constants import COINS
 from transactions.constants import BTC_DEC_PLACES
 
 
-def get_bitcoin_network(coin_type):
-    # TODO: use coin types instead in BlokcChain class
-    if coin_type == BIP44_COIN_TYPES.BTC:
+def get_bitcoin_network(coin_name):
+    """
+    For compatibility with python-bitcoinlib
+    """
+    if coin_name == 'BTC':
         network = 'mainnet'
-    elif coin_type == BIP44_COIN_TYPES.XTN:
+    elif coin_name == 'TBTC':
         network = 'testnet'
     else:
-        raise ValueError('Invalid coin type')
+        raise ValueError('Unsupported coin')
     return network
 
 
-def get_coin_type(currency_name):
+def get_coin_type(coin_name):
     """
     Determine coin type from currency name
     """
-    if currency_name == 'BTC':
-        return BIP44_COIN_TYPES.BTC
-    elif currency_name == 'TBTC':
-        return BIP44_COIN_TYPES.XTN
-    else:
-        raise ValueError('Fiat currencies are not supported')
+    coin = getattr(COINS, coin_name)
+    return coin.bip44_type
 
 
 def get_account_balance(account,

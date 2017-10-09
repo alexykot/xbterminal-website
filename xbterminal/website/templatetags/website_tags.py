@@ -58,10 +58,10 @@ def email_static(path):
 
 
 @register.simple_tag
-def btc_address_url(address, network):
-    return blockcypher.get_address_url(address, network)
+def btc_address_url(address, coin_name):
+    return blockcypher.get_address_url(address, coin_name)
 
 
 @register.simple_tag
-def btc_tx_url(tx_id, network):
-    return blockcypher.get_tx_url(tx_id, network)
+def btc_tx_url(tx_id, coin_name):
+    return blockcypher.get_tx_url(tx_id, coin_name)

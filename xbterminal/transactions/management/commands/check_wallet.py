@@ -4,7 +4,6 @@ from django.core.management.base import BaseCommand
 
 from transactions.services.bitcoind import BlockChain
 from transactions.utils.compat import (
-    get_bitcoin_network,
     get_coin_type,
     get_account_balance,
     get_fee_account_balance)
@@ -33,14 +32,13 @@ def check_wallet(currency_name):
     elif currency_name == 'testnet':
         currency_name = 'TBTC'
 
-    coin_type = get_coin_type(currency_name)
-    bitcoin_network = get_bitcoin_network(coin_type)
-    bc = BlockChain(bitcoin_network)
+    bc = BlockChain(currency_name)
     wallet_value = Decimal(0)
     db_value = Decimal(0)
     pool_size = 0
     for account in Account.objects.filter(currency__name=currency_name):
         db_value += get_account_balance(account, include_offchain=False)
+    coin_type = get_coin_type(currency_name)
     db_value += get_fee_account_balance(coin_type, include_offchain=False)
     for address in Address.objects.filter(
             wallet_account__parent_key__coin_type=coin_type):

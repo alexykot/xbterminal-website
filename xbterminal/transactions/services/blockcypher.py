@@ -2,22 +2,22 @@ import requests
 from constance import config
 
 BLOCKCYPHER_CHAINS = {
-    'mainnet': 'main',
-    'testnet': 'test3',
+    'BTC': 'main',
+    'TBTC': 'test3',
 }
 
 BLOCKCYPHER_CHAINS_LIVE = {
-    'mainnet': 'btc',
-    'testnet': 'btc-testnet',
+    'BTC': 'btc',
+    'TBTC': 'btc-testnet',
 }
 
 
-def get_tx_confidence(tx_id, network):
+def get_tx_confidence(tx_id, coin_name):
     """
     http://dev.blockcypher.com/#transaction-confidence-endpoint
     """
     api_url = 'https://api.blockcypher.com/v1/btc/{chain}/txs/{tx_id}'.format(
-        chain=BLOCKCYPHER_CHAINS[network],
+        chain=BLOCKCYPHER_CHAINS[coin_name],
         tx_id=tx_id)
     payload = {'includeConfidence': 'true'}
     if config.BLOCKCYPHER_API_TOKEN:
@@ -30,13 +30,13 @@ def get_tx_confidence(tx_id, network):
     return data.get('confidence', 0)
 
 
-def get_tx_url(tx_id, network):
+def get_tx_url(tx_id, coin_name):
     url = 'https://live.blockcypher.com/{0}/tx/{1}/'.format(
-        BLOCKCYPHER_CHAINS_LIVE[network], tx_id)
+        BLOCKCYPHER_CHAINS_LIVE[coin_name], tx_id)
     return url
 
 
-def get_address_url(address, network):
+def get_address_url(address, coin_name):
     url = 'https://live.blockcypher.com/{0}/address/{1}/'.format(
-        BLOCKCYPHER_CHAINS_LIVE[network], address)
+        BLOCKCYPHER_CHAINS_LIVE[coin_name], address)
     return url

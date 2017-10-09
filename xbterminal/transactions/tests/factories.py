@@ -19,6 +19,7 @@ from transactions.constants import (
     WITHDRAWAL_TIMEOUT,
     WITHDRAWAL_CONFIDENCE_TIMEOUT,
     WITHDRAWAL_CONFIRMATION_TIMEOUT)
+from transactions.utils.compat import get_coin_type
 from website.tests.factories import AccountFactory, DeviceFactory
 from wallet.constants import BIP44_COIN_TYPES
 from wallet.tests.factories import AddressFactory
@@ -42,6 +43,7 @@ class DepositFactory(factory.DjangoModelFactory):
 
     class Meta:
         model = models.Deposit
+        exclude = ['coin_type']
 
     class Params:
         exchange_rate = factory.Faker(
@@ -105,10 +107,14 @@ class DepositFactory(factory.DjangoModelFactory):
         left_digits=2,
         right_digits=2,
         positive=True)
-    coin_type = BIP44_COIN_TYPES.BTC
+    coin = factory.SelfAttribute('account.currency')
     deposit_address = factory.SubFactory(
         AddressFactory,
         wallet_account__parent_key__coin_type=factory.SelfAttribute('....coin_type'))
+
+    @factory.lazy_attribute
+    def coin_type(self):
+        return get_coin_type(self.coin.name)
 
     @factory.lazy_attribute
     def merchant_coin_amount(self):
@@ -131,6 +137,7 @@ class WithdrawalFactory(factory.DjangoModelFactory):
 
     class Meta:
         model = models.Withdrawal
+        exclude = ['coin_type']
 
     class Params:
         exchange_rate = factory.Faker(
@@ -186,8 +193,12 @@ class WithdrawalFactory(factory.DjangoModelFactory):
         left_digits=2,
         right_digits=2,
         positive=True)
-    coin_type = BIP44_COIN_TYPES.BTC
+    coin = factory.SelfAttribute('account.currency')
     tx_fee_coin_amount = Decimal('0.0005')
+
+    @factory.lazy_attribute
+    def coin_type(self):
+        return get_coin_type(self.coin.name)
 
     @factory.lazy_attribute
     def customer_coin_amount(self):

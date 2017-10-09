@@ -7,7 +7,6 @@ from django.utils import timezone
 
 from api.utils.urls import construct_absolute_url
 from common.uids import generate_b58_uid
-from wallet.constants import BIP44_COIN_TYPES
 from transactions.constants import (
     BTC_DEC_PLACES,
     DEPOSIT_TIMEOUT,
@@ -17,8 +16,8 @@ from transactions.constants import (
     WITHDRAWAL_CONFIDENCE_TIMEOUT,
     WITHDRAWAL_CONFIRMATION_TIMEOUT,
     PAYMENT_TYPES)
-from transactions.utils.compat import get_bitcoin_network
 from transactions.utils.bip70 import create_payment_request
+from transactions.utils.compat import get_coin_type
 
 
 class Transaction(models.Model):
@@ -40,13 +39,20 @@ class Transaction(models.Model):
 
     currency = models.ForeignKey(
         'website.Currency',
-        on_delete=models.PROTECT)
+        verbose_name='Display currency',
+        on_delete=models.PROTECT,
+        related_name='+')
     amount = models.DecimalField(
+        verbose_name='Display amount',
         max_digits=12,
         decimal_places=2)
 
-    coin_type = models.PositiveSmallIntegerField(
-        choices=BIP44_COIN_TYPES)
+    coin = models.ForeignKey(
+        'website.Currency',
+        on_delete=models.PROTECT,
+        limit_choices_to={'is_fiat': False},
+        related_name='+',
+        help_text='Crypto currency used for transaction processing.')
 
     class Meta:
         abstract = True
@@ -59,8 +65,8 @@ class Transaction(models.Model):
         return self.account.merchant
 
     @property
-    def bitcoin_network(self):
-        return get_bitcoin_network(self.coin_type)
+    def coin_type(self):
+        return get_coin_type(self.coin.name)
 
 
 class Deposit(Transaction):
@@ -176,7 +182,7 @@ class Deposit(Transaction):
 
     def create_payment_request(self, response_url):
         return create_payment_request(
-            self.bitcoin_network,
+            self.coin.name,
             [(self.deposit_address.address, self.coin_amount)],
             self.time_created,
             self.time_created + DEPOSIT_TIMEOUT,

@@ -2,7 +2,7 @@ import random
 
 from django.core.management.base import BaseCommand
 
-from wallet.constants import BIP44_PURPOSE, BIP44_COIN_TYPES
+from wallet.constants import COINS, BIP44_PURPOSE
 from wallet.models import WalletKey
 from wallet.utils.keys import create_master_key, create_wallet_key
 
@@ -20,13 +20,15 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         secret = options['secret'] or str(random.getrandbits(100))
         master_key = create_master_key(secret)
-        for netcode, coin_type, _ in BIP44_COIN_TYPES.entries:
+        for coin in COINS:
             path = "{purpose}'/{coin}'".format(
                 purpose=BIP44_PURPOSE,
-                coin=coin_type)
-            private_key = create_wallet_key(master_key, netcode, path, as_private=True)
-            wallet_key = WalletKey.objects.create(coin_type=coin_type,
-                                                  private_key=private_key)
+                coin=coin.bip44_type)
+            private_key = create_wallet_key(
+                master_key, coin.pycoin_code, path, as_private=True)
+            wallet_key = WalletKey.objects.create(
+                coin_type=coin.bip44_type,
+                private_key=private_key)
             wallet_key.walletaccount_set.create()
         self.stdout.write(
             'Master private key: ' + master_key.hwif(as_private=True))

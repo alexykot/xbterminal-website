@@ -488,6 +488,10 @@ class WaitForConfidenceTestCase(TestCase):
         self.assertIs(cancel_mock.called, False)
         self.assertEqual(bc_mock.is_tx_confirmed.call_count, 1)
         self.assertEqual(is_reliable_mock.call_count, 1)
+        self.assertEqual(is_reliable_mock.call_args[0][0],
+                         deposit.incoming_tx_ids[0])
+        self.assertEqual(is_reliable_mock.call_args[0][2],
+                         deposit.coin.name)
 
     @patch('transactions.deposits.cancel_current_task')
     @patch('transactions.deposits.BlockChain')

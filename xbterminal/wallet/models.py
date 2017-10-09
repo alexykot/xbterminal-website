@@ -112,14 +112,15 @@ class Address(models.Model):
 
     @classmethod
     @atomic
-    def create(cls, coin_type, is_change=False):
+    def create(cls, coin_name, is_change=False):
         """
         Accepts:
-            coin_type: value from BIP44_COIN_TYPES enum
+            coin_name: coin name (currency name)
             is_change: boolean
         Returns:
             address: Address instance
         """
+        coin_type = BIP44_COIN_TYPES.for_constant(coin_name).value
         try:
             wallet_key = WalletKey.objects.get(coin_type=coin_type)
         except WalletKey.DoesNotExist:

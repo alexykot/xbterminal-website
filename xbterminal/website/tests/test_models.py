@@ -84,6 +84,7 @@ class CurrencyTestCase(TestCase):
         gbp = Currency.objects.get(name='GBP')
         self.assertEqual(gbp.pk, 1)
         self.assertEqual(gbp.prefix, u'£')
+        self.assertIs(gbp.is_fiat, True)
         self.assertEqual(gbp.amount_1, Decimal('1.00'))
         self.assertEqual(gbp.amount_2, Decimal('2.50'))
         self.assertEqual(gbp.amount_3, Decimal('10.00'))
@@ -94,21 +95,25 @@ class CurrencyTestCase(TestCase):
         usd = Currency.objects.get(name='USD')
         self.assertEqual(usd.prefix, u'$')
         self.assertEqual(usd.postfix, '')
+        self.assertIs(usd.is_fiat, True)
 
     def test_fixture_eur(self):
         eur = Currency.objects.get(name='EUR')
         self.assertEqual(eur.prefix, u'€')
         self.assertEqual(eur.postfix, '')
+        self.assertIs(eur.is_fiat, True)
 
     def test_fixture_btc(self):
         btc = Currency.objects.get(name='BTC')
         self.assertEqual(btc.prefix, '')
         self.assertEqual(btc.postfix, 'BTC')
+        self.assertIs(btc.is_fiat, False)
 
     def test_fixture_tbtc(self):
         tbtc = Currency.objects.get(name='TBTC')
         self.assertEqual(tbtc.prefix, '')
         self.assertEqual(tbtc.postfix, 'tBTC')
+        self.assertIs(tbtc.is_fiat, False)
 
     def test_factory(self):
         gbp = CurrencyFactory.create()
@@ -316,15 +321,6 @@ class AccountTestCase(TestCase):
             AccountFactory.create(merchant=merchant,
                                   instantfiat=True,
                                   currency__name='BTC')
-
-    def test_bitcoin_network(self):
-        account_1 = AccountFactory.create(currency__name='BTC')
-        self.assertEqual(account_1.bitcoin_network, 'mainnet')
-        account_2 = AccountFactory.create(currency__name='TBTC')
-        self.assertEqual(account_2.bitcoin_network, 'testnet')
-        account_3 = AccountFactory.create(currency__name='GBP')
-        with self.assertRaises(ValueError):
-            account_3.bitcoin_network
 
     def test_balance(self):
         account = AccountFactory()

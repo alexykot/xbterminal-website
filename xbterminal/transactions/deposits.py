@@ -24,7 +24,6 @@ from transactions.exceptions import (
     TransactionModified,
     RefundError)
 from transactions.models import Deposit
-from transactions.utils.compat import get_coin_type
 from transactions.utils.tx import create_tx_
 from transactions.utils.bip70 import parse_payment
 from transactions.services.bitcoind import BlockChain, get_txid
@@ -50,18 +49,18 @@ def prepare_deposit(device_or_account, amount):
         device = None
         account = device_or_account
     # Create new address
-    coin_type = get_coin_type(account.currency.name)
-    deposit_address = Address.create(coin_type, is_change=False)
+    deposit_address = Address.create(account.currency.name,
+                                     is_change=False)
     # Create model instance
     deposit = Deposit(
         account=account,
         device=device,
         currency=account.merchant.currency,
         amount=amount,
-        coin_type=coin_type,
+        coin=account.currency,
         deposit_address=deposit_address)
     # Register address
-    bc = BlockChain(deposit.bitcoin_network)
+    bc = BlockChain(deposit.coin.name)
     bc.import_address(deposit_address.address, rescan=False)
     # Get exchange rate
     exchange_rate = get_exchange_rate(deposit.currency.name)
@@ -89,7 +88,7 @@ def validate_payment(deposit, transactions, refund_addresses):
         transactions: list of CTransaction
         refund_addresses: list of addresses
     """
-    bc = BlockChain(deposit.bitcoin_network)
+    bc = BlockChain(deposit.coin.name)
     incoming_tx_ids = set()
     received_amount = BTC_DEC_PLACES
     for incoming_tx in transactions:
@@ -169,7 +168,7 @@ def wait_for_payment(deposit_id):
         cancel_current_task()
         return
     # Connect to bitcoind
-    bc = BlockChain(deposit.bitcoin_network)
+    bc = BlockChain(deposit.coin.name)
     transactions = bc.get_unspent_transactions(deposit.deposit_address.address)
     if transactions:
         if len(transactions) > 1:
@@ -216,7 +215,7 @@ def wait_for_confidence(deposit_id):
     if deposit.time_cancelled is not None:
         cancel_current_task()
         return
-    bc = BlockChain(deposit.bitcoin_network)
+    bc = BlockChain(deposit.coin.name)
     for incoming_tx_id in deposit.incoming_tx_ids:
         try:
             tx_confirmed = bc.is_tx_confirmed(incoming_tx_id, minconf=1)
@@ -246,7 +245,7 @@ def wait_for_confidence(deposit_id):
             continue
         if not is_tx_reliable(incoming_tx_id,
                               deposit.merchant.get_tx_confidence_threshold(),
-                              deposit.bitcoin_network):
+                              deposit.coin.name):
             # Break cycle, wait for confidence
             break
     else:
@@ -279,7 +278,7 @@ def wait_for_confirmation(deposit_id):
     if deposit.time_created + DEPOSIT_CONFIRMATION_TIMEOUT < timezone.now():
         # Timeout, cancel job
         cancel_current_task()
-    bc = BlockChain(deposit.bitcoin_network)
+    bc = BlockChain(deposit.coin.name)
     for incoming_tx_id in deposit.incoming_tx_ids:
         try:
             tx_confirmed = bc.is_tx_confirmed(incoming_tx_id)
@@ -319,7 +318,7 @@ def refund_deposit(deposit, only_extra=False):
         raise RefundError('Deposit already refunded')
     if not deposit.refund_address:
         raise RefundError('No refund address')
-    bc = BlockChain(deposit.bitcoin_network)
+    bc = BlockChain(deposit.coin.name)
     private_key = deposit.deposit_address.get_private_key()
     tx_inputs = []
     tx_amount = BTC_DEC_PLACES
@@ -399,7 +398,7 @@ def check_deposit_confirmation(deposit):
     """
     if deposit.time_confirmed is not None:
         return True
-    bc = BlockChain(deposit.bitcoin_network)
+    bc = BlockChain(deposit.coin.name)
     for incoming_tx_id in deposit.incoming_tx_ids:
         if not bc.is_tx_confirmed(incoming_tx_id):
             # Do not check other txs

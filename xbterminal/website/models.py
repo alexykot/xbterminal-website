@@ -35,6 +35,7 @@ from website.utils.files import (
     verification_file_path_gen)
 from common.uids import generate_alphanumeric_code, generate_b58_uid
 from transactions.utils.compat import (
+    get_bitcoin_network,
     get_account_balance,
     get_account_transactions,
     get_device_transactions)
@@ -125,6 +126,7 @@ class Currency(models.Model):
     name = models.CharField(max_length=50, unique=True)
     postfix = models.CharField(max_length=50, default="")
     prefix = models.CharField(max_length=50, default="")
+    is_fiat = models.BooleanField()
     amount_1 = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -407,15 +409,6 @@ class Account(models.Model):
         return u'{name} - {balance}'.format(
             name=self.currency.name,
             balance=balance_str)
-
-    @property
-    def bitcoin_network(self):
-        if self.currency.name == 'BTC':
-            return 'mainnet'
-        elif self.currency.name == 'TBTC':
-            return 'testnet'
-        else:
-            raise ValueError
 
     @property
     def balance(self):
@@ -749,7 +742,7 @@ class Device(models.Model):
     @property
     def bitcoin_network(self):
         if self.account:
-            return self.account.bitcoin_network
+            return get_bitcoin_network(self.account.currency.name)
         else:
             return 'mainnet'
 
