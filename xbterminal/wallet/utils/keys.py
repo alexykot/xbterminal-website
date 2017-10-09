@@ -1,10 +1,13 @@
 import binascii
 
+from pycoin.encoding import EncodingError
 from pycoin.key.BIP32Node import BIP32Node
 from pycoin.tx.pay_to import script_obj_from_script
 
 
 def create_master_key(secret):
+    if isinstance(secret, int):
+        secret = str(secret)
     return BIP32Node.from_master_secret(secret)
 
 
@@ -12,6 +15,26 @@ def create_wallet_key(master_key, netcode, path, as_private=False):
     key = master_key.subkey_for_path(path)
     key._netcode = netcode
     return key.hwif(as_private=as_private)
+
+
+def is_valid_master_key(master_key_wif):
+    """
+    Accepts:
+        master_key_wif: master key in WIF
+    Returns:
+        True of False
+    """
+    try:
+        master_key = BIP32Node.from_hwif(master_key_wif)
+    except EncodingError:
+        return False
+    if not master_key.is_private():
+        return False
+    if master_key.tree_depth() != 0:
+        return False
+    if master_key.child_index() != 0:
+        return False
+    return True
 
 
 def derive_key(parent_key, path):

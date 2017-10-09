@@ -15,7 +15,7 @@ class WalletKeyFactory(factory.DjangoModelFactory):
 
     @factory.lazy_attribute_sequence
     def private_key(self, n):
-        master_key = create_master_key(str(n))
+        master_key = create_master_key(n)
         pycoin_code = COINS.for_coin_type(self.coin_type).pycoin_code
         path = "0'/{}'".format(self.coin_type)
         return create_wallet_key(
