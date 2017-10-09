@@ -21,11 +21,10 @@ class Command(BaseCommand):
         secret = options['secret'] or str(random.getrandbits(100))
         master_key = create_master_key(secret)
         for coin in COINS:
-            path = "{purpose}'/{coin}'".format(
-                purpose=BIP44_PURPOSE,
-                coin=coin.bip44_type)
-            private_key = create_wallet_key(
-                master_key, coin.pycoin_code, path, as_private=True)
+            private_key = create_wallet_key(master_key,
+                                            BIP44_PURPOSE,
+                                            coin.pycoin_code,
+                                            coin.bip44_type)
             wallet_key = WalletKey.objects.create(
                 coin_type=coin.bip44_type,
                 private_key=private_key)

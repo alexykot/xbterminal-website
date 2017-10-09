@@ -11,10 +11,12 @@ def create_master_key(secret):
     return BIP32Node.from_master_secret(secret)
 
 
-def create_wallet_key(master_key, netcode, path, as_private=False):
-    key = master_key.subkey_for_path(path)
+def create_wallet_key(master_key, purpose, netcode, bip44_type):
+    key = master_key.\
+        subkey(purpose, is_hardened=True).\
+        subkey(bip44_type, is_hardened=True)
     key._netcode = netcode
-    return key.hwif(as_private=as_private)
+    return key.hwif(as_private=True)
 
 
 def is_valid_master_key(master_key_wif):
