@@ -134,7 +134,7 @@ def handle_bip70_payment(deposit, payment_message):
     """
     try:
         transactions, refund_addresses, payment_ack = \
-            parse_payment(payment_message)
+            parse_payment(deposit.coin.name, payment_message)
     except Exception as error:
         logger.exception(error)
         raise InvalidPaymentMessage
