@@ -24,7 +24,8 @@ class CreateKeysTestCase(TestCase):
 
         self.assertEqual(input_mock.call_count, 1)
         self.assertEqual(input_mock.call_args[0][0], 'Secret: ')
-        self.assertEqual(WalletKey.objects.count(), 2)
+        self.assertEqual(WalletKey.objects.count(), 4)
+
         btc_key = WalletKey.objects.get(coin_type=BIP44_COIN_TYPES.BTC)
         self.assertEqual(btc_key.private_key, self.btc_private_key)
         self.assertEqual(btc_key.walletaccount_set.count(), 1)
@@ -45,7 +46,7 @@ class CreateKeysTestCase(TestCase):
         buffer = StringIO.StringIO()
         call_command('create_keys', from_secret=True, stdout=buffer)
 
-        self.assertEqual(WalletKey.objects.count(), 2)
+        self.assertEqual(WalletKey.objects.count(), 4)
         self.assertIn('Wallet key for coin BTC already exists.',
                       buffer.getvalue())
 

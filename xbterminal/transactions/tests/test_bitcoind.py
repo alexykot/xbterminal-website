@@ -14,13 +14,35 @@ from transactions.services.bitcoind import (
 
 class BlockChainTestCase(TestCase):
 
+    @override_settings(BLOCKCHAINS={
+        'BTC': {
+            'HOST': 'localhost',
+            'PORT': 8332,
+            'USER': 'test',
+            'PASSWORD': 'test',
+        },
+    })
     @patch('transactions.services.bitcoind.RawProxy')
-    def test_init(self, proxy_cls_mock):
+    def test_init_btc(self, proxy_cls_mock):
         bc = BlockChain('BTC')
-        self.assertTrue(proxy_cls_mock.called)
         service_url = proxy_cls_mock.call_args[0][0]
-        self.assertTrue(service_url.startswith('http'))
+        self.assertEqual(service_url, 'http://test:test@localhost:8332')
         self.assertEqual(bc.pycoin_code, 'BTC')
+
+    @override_settings(BLOCKCHAINS={
+        'DASH': {
+            'HOST': 'localhost',
+            'PORT': 9998,
+            'USER': 'test',
+            'PASSWORD': 'test',
+        },
+    })
+    @patch('transactions.services.bitcoind.RawProxy')
+    def test_init_dash(self, proxy_cls_mock):
+        bc = BlockChain('DASH')
+        service_url = proxy_cls_mock.call_args[0][0]
+        self.assertEqual(service_url, 'http://test:test@localhost:9998')
+        self.assertEqual(bc.pycoin_code, 'DASH')
 
     @patch('transactions.services.bitcoind.RawProxy')
     def test_import_address(self, proxy_cls_mock):

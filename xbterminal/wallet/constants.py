@@ -7,6 +7,8 @@ from extended_choices import Choices
 class COINS(Enum):
     BTC = ('BTC', 0, _('Bitcoin'))
     TBTC = ('XTN', 1, _('Bitcoin Testnet'))
+    DASH = ('DASH', 5, _('Dash'))
+    TDASH = ('tDASH', 1005, _('Dash Testnet'))
 
     def __init__(self, pycoin_code, bip44_type, display_name):
         self.pycoin_code = pycoin_code

@@ -24,8 +24,8 @@ class BlockChain(object):
 
     def __init__(self, coin_name):
         self.pycoin_code = getattr(COINS, coin_name).pycoin_code
-        network = get_bitcoin_network(coin_name)
         if hasattr(settings, 'BITCOIND_SERVERS'):
+            network = get_bitcoin_network(coin_name)
             config = settings.BITCOIND_SERVERS[network]
         else:
             config = settings.BLOCKCHAINS[coin_name]
