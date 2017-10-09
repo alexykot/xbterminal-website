@@ -368,7 +368,7 @@ BITCOIN_NETWORKS = [
 
 class Account(models.Model):
     """
-    Represents internal BTC account or external instantfiat account
+    Represents internal crypto account or external instantfiat account
     """
     merchant = models.ForeignKey(MerchantAccount)
     currency = models.ForeignKey(Currency)
@@ -402,10 +402,10 @@ class Account(models.Model):
         unique_together = ('merchant', 'currency')
 
     def __unicode__(self):
-        if self.currency.name in ['BTC', 'TBTC']:
-            balance_str = '{0:.8f}'.format(self.balance)
-        else:
+        if self.currency.is_fiat:
             balance_str = '{0:.2f}'.format(self.balance)
+        else:
+            balance_str = '{0:.8f}'.format(self.balance)
         return u'{name} - {balance}'.format(
             name=self.currency.name,
             balance=balance_str)

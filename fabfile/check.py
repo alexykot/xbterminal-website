@@ -7,7 +7,7 @@ def style():
         local('flake8 fabfile')
         local('flake8 '
               '--exclude=migrations,paymentrequest_pb2.py '
-              '--max-line-length=140 '
+              '--max-line-length=125 '
               'xbterminal')
 
 

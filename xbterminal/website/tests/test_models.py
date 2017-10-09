@@ -115,6 +115,18 @@ class CurrencyTestCase(TestCase):
         self.assertEqual(tbtc.postfix, 'tBTC')
         self.assertIs(tbtc.is_fiat, False)
 
+    def test_fixture_dash(self):
+        dash = Currency.objects.get(name='DASH')
+        self.assertEqual(dash.prefix, '')
+        self.assertEqual(dash.postfix, 'DASH')
+        self.assertIs(dash.is_fiat, False)
+
+    def test_fixture_tdash(self):
+        tdash = Currency.objects.get(name='TDASH')
+        self.assertEqual(tdash.prefix, '')
+        self.assertEqual(tdash.postfix, 'tDASH')
+        self.assertIs(tdash.is_fiat, False)
+
     def test_factory(self):
         gbp = CurrencyFactory.create()
         self.assertEqual(gbp.name, 'GBP')
