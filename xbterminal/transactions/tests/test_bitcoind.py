@@ -150,8 +150,7 @@ class BlockChainTestCase(TestCase):
                          'abcd')
 
     @patch('transactions.services.bitcoind.RawProxy')
-    @patch('transactions.services.bitcoind.get_txid')
-    def test_is_tx_valid_confirmed(self, get_txid_mock, proxy_cls_mock):
+    def test_is_tx_valid_confirmed(self, proxy_cls_mock):
         proxy_cls_mock.return_value = proxy_mock = Mock(**{
             'signrawtransaction.return_value': {
                 'complete': False,
@@ -161,8 +160,11 @@ class BlockChainTestCase(TestCase):
                 'walletconflicts': [],
             },
         })
-        get_txid_mock.return_value = tx_id = '1' * 64
-        tx = Mock(**{'as_hex.return_value': 'abcd'})
+        tx_id = '1' * 64
+        tx = Mock(**{
+            'id.return_value': tx_id,
+            'as_hex.return_value': 'abcd',
+        })
         bc = BlockChain('BTC')
         result = bc.is_tx_valid(tx)
 
@@ -171,8 +173,7 @@ class BlockChainTestCase(TestCase):
         self.assertEqual(proxy_mock.gettransaction.call_args[0][0], tx_id)
 
     @patch('transactions.services.bitcoind.RawProxy')
-    @patch('transactions.services.bitcoind.get_txid')
-    def test_is_tx_valid_invalid(self, get_txid_mock, proxy_cls_mock):
+    def test_is_tx_valid_invalid(self, proxy_cls_mock):
         proxy_cls_mock.return_value = Mock(**{
             'signrawtransaction.return_value': {
                 'complete': False,
@@ -182,8 +183,10 @@ class BlockChainTestCase(TestCase):
                 'walletconflicts': [],
             },
         })
-        get_txid_mock.return_value = '1' * 64
-        tx = Mock(**{'as_hex.return_value': 'abcd'})
+        tx = Mock(**{
+            'id.return_value': '1' * 64,
+            'as_hex.return_value': 'abcd',
+        })
         bc = BlockChain('BTC')
         result = bc.is_tx_valid(tx)
 

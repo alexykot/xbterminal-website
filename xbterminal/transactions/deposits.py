@@ -26,7 +26,7 @@ from transactions.exceptions import (
 from transactions.models import Deposit
 from transactions.utils.tx import create_tx
 from transactions.utils.bip70 import parse_payment
-from transactions.services.bitcoind import BlockChain, get_txid
+from transactions.services.bitcoind import BlockChain
 from transactions.services.wrappers import get_exchange_rate, is_tx_reliable
 from wallet.models import Address
 from website.models import Account, Device
@@ -93,7 +93,7 @@ def validate_payment(deposit, transactions, refund_addresses):
     received_amount = BTC_DEC_PLACES
     for incoming_tx in transactions:
         # Validate and broadcast TX
-        incoming_tx_id = get_txid(incoming_tx)
+        incoming_tx_id = incoming_tx.id()
         if bc.is_tx_valid(incoming_tx):
             try:
                 bc.send_raw_transaction(incoming_tx)

@@ -140,7 +140,7 @@ class BlockChain(object):
         result = self._proxy.signrawtransaction(tx_hex)
         if result.get('complete') != 1:
             # Signing attempt for confirmed TX will return complete=False
-            tx_id = get_txid(transaction)
+            tx_id = transaction.id()
             if not self.is_tx_confirmed(tx_id, minconf=1):
                 return False
         return True
@@ -230,17 +230,6 @@ def construct_bitcoin_uri(address, amount_btc, name, *request_urls):
         param_name = "r" if idx == 0 else "r{0}".format(idx)
         uri += "&{0}={1}".format(param_name, request_url)
     return uri
-
-
-def get_txid(transaction):
-    """
-    Calculate transaction id
-    Accepts:
-        transaction: pycoin Tx object
-    Returns:
-        transaction id (hex)
-    """
-    return transaction.id()
 
 
 def validate_bitcoin_address(address, coin_name):
