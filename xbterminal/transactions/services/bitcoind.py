@@ -57,7 +57,7 @@ class BlockChain(object):
         minconf = 0
         txouts = self._proxy.listunspent(minconf, self.MAXCONF, [address])
         balance = sum(out['amount'] for out in txouts)
-        return from_units(balance)
+        return balance
 
     def get_raw_unspent_outputs(self, address, minconf=0):
         """
