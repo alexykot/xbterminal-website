@@ -3,7 +3,6 @@ import urllib
 
 import bitcoin
 import bitcoin.rpc
-from bitcoin.core import COIN
 
 from django.conf import settings
 from constance import config
@@ -16,6 +15,7 @@ from transactions.exceptions import (
     DoubleSpend,
     TransactionModified)
 from transactions.utils.compat import get_bitcoin_network
+from transactions.utils.tx import from_units
 from wallet.constants import COINS
 
 
@@ -59,10 +59,8 @@ class BlockChain(object):
         """
         minconf = 0
         txouts = self._proxy.listunspent(minconf, self.MAXCONF, [address])
-        balance = Decimal(0)
-        for out in txouts:
-            balance += Decimal(out['amount']) / COIN
-        return balance.quantize(BTC_DEC_PLACES)
+        balance = sum(out['amount'] for out in txouts)
+        return from_units(balance)
 
     def get_raw_unspent_outputs(self, address, minconf=0):
         """
@@ -129,7 +127,7 @@ class BlockChain(object):
         """
         outputs = []
         for txout in transaction.txs_out:
-            amount = Decimal(txout.coin_value) / COIN
+            amount = from_units(txout.coin_value)
             address = txout.address(netcode=self.pycoin_code)
             outputs.append({'amount': amount, 'address': address})
         return outputs

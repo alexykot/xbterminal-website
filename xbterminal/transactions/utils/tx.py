@@ -1,12 +1,22 @@
-from bitcoin.core import COIN
+from decimal import Decimal
+
 from pycoin.tx.Spendable import Spendable
 from pycoin.tx.Tx import Tx
 from pycoin.tx.TxOut import TxOut
 from pycoin.tx.pay_to import build_hash160_lookup
 from pycoin.ui import standard_tx_out_script
 
-from transactions.constants import BTC_MIN_OUTPUT
+from transactions.constants import BTC_MIN_OUTPUT, BTC_DEC_PLACES
 from transactions.exceptions import DustOutput
+
+
+def to_units(amount):
+    return int(amount * 10 ** 8)
+
+
+def from_units(amount):
+    amount = Decimal(amount) / 10 ** 8
+    return amount.quantize(BTC_DEC_PLACES)
 
 
 def create_tx(tx_inputs, tx_outputs):
@@ -23,7 +33,7 @@ def create_tx(tx_inputs, tx_outputs):
         spendables.append(Spendable.from_dict({
             'tx_hash_hex': tx_input['txid'],
             'tx_out_index': tx_input['vout'],
-            'coin_value': int(tx_input['amount'] * COIN),
+            'coin_value': to_units(tx_input['amount']),
             'script_hex': tx_input['scriptPubKey'],
         }))
         private_keys.append(tx_input['private_key'])
@@ -33,7 +43,7 @@ def create_tx(tx_inputs, tx_outputs):
         if amount < BTC_MIN_OUTPUT:
             raise DustOutput
         script = standard_tx_out_script(address)
-        out = TxOut(int(amount * COIN), script)
+        out = TxOut(to_units(amount), script)
         txs_out.append(out)
     tx = Tx(version=1, txs_in=txs_in, txs_out=txs_out, lock_time=0)
     tx.set_unspents(spendables)

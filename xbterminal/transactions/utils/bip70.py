@@ -1,7 +1,6 @@
 """
 https://github.com/bitcoin/bips/blob/master/bip-0070.mediawiki
 """
-from decimal import Decimal
 import logging
 import time
 import os
@@ -13,6 +12,7 @@ from pycoin.tx.pay_to import script_obj_from_script
 from pycoin.ui import standard_tx_out_script
 
 from transactions.utils import paymentrequest_pb2, x509
+from transactions.utils.tx import to_units
 from wallet.constants import COINS
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ def create_output(address, amount):
     """
     output = paymentrequest_pb2.Output()
     # Convert to satoshis
-    output.amount = int(amount / Decimal('0.00000001'))
+    output.amount = to_units(amount)
     # Convert address to script
     output.script = standard_tx_out_script(address)
     return output
