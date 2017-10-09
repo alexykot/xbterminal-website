@@ -24,7 +24,7 @@ from transactions.exceptions import (
     TransactionModified,
     RefundError)
 from transactions.models import Deposit
-from transactions.utils.tx import create_tx_
+from transactions.utils.tx import create_tx
 from transactions.utils.bip70 import parse_payment
 from transactions.services.bitcoind import BlockChain, get_txid
 from transactions.services.wrappers import get_exchange_rate, is_tx_reliable
@@ -337,7 +337,7 @@ def refund_deposit(deposit, only_extra=False):
         # Send change to deposit address
         tx_outputs[deposit.deposit_address.address] = deposit.coin_amount
     try:
-        refund_tx = create_tx_(tx_inputs, tx_outputs)
+        refund_tx = create_tx(tx_inputs, tx_outputs)
     except DustOutput:
         raise RefundError('Output is below dust threshold')
     deposit.refund_tx_id = bc.send_raw_transaction(refund_tx)

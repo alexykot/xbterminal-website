@@ -693,7 +693,7 @@ class WaitForConfirmationTestCase(TestCase):
 class RefundDepositTestCase(TestCase):
 
     @patch('transactions.deposits.BlockChain')
-    @patch('transactions.deposits.create_tx_')
+    @patch('transactions.deposits.create_tx')
     def test_refund(self, create_tx_mock, bc_cls_mock):
         deposit = DepositFactory(
             failed=True,
@@ -734,7 +734,7 @@ class RefundDepositTestCase(TestCase):
                          tx_mock)
 
     @patch('transactions.deposits.BlockChain')
-    @patch('transactions.deposits.create_tx_')
+    @patch('transactions.deposits.create_tx')
     def test_refund_only_extra(self, create_tx_mock, bc_cls_mock):
         deposit = DepositFactory(
             received=True,
@@ -804,7 +804,7 @@ class RefundDepositTestCase(TestCase):
                          'Nothing to refund')
 
     @patch('transactions.deposits.BlockChain')
-    @patch('transactions.deposits.create_tx_')
+    @patch('transactions.deposits.create_tx')
     def test_dust_output(self, create_tx_mock, bc_cls_mock):
         deposit = DepositFactory(
             failed=True,

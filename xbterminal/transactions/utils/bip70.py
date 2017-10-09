@@ -6,15 +6,13 @@ import logging
 import time
 import os
 
-import bitcoin
-from bitcoin.core import CTransaction
+from django.conf import settings
+
+from pycoin.tx import Tx
 from pycoin.tx.pay_to import script_obj_from_script
 from pycoin.ui import standard_tx_out_script
 
-from django.conf import settings
-
 from transactions.utils import paymentrequest_pb2, x509
-from transactions.utils.compat import get_bitcoin_network
 from wallet.constants import COINS
 
 logger = logging.getLogger(__name__)
@@ -107,12 +105,11 @@ def parse_payment(coin_name, message):
     """
     payment = paymentrequest_pb2.Payment()
     payment.ParseFromString(message)
-    network = get_bitcoin_network(coin_name)
-    bitcoin.SelectParams(network)
     pycoin_code = getattr(COINS, coin_name).pycoin_code
     transactions = []
-    for tx in payment.transactions:
-        transactions.append(CTransaction.deserialize(tx))
+    for tx_bin in payment.transactions:
+        tx = Tx.from_bin(tx_bin)
+        transactions.append(tx)
     refund_addresses = []
     for output in payment.refund_to:
         refund_address = script_obj_from_script(output.script).\

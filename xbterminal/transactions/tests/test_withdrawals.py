@@ -233,7 +233,7 @@ class PrepareWithdrawalTestCase(TestCase):
 class SendTransactionTestCase(TestCase):
 
     @patch('transactions.withdrawals.BlockChain')
-    @patch('transactions.withdrawals.create_tx_')
+    @patch('transactions.withdrawals.create_tx')
     @patch('transactions.withdrawals.run_periodic_task')
     def test_send(self, run_task_mock, create_tx_mock, bc_cls_mock):
         withdrawal = WithdrawalFactory(
@@ -282,7 +282,7 @@ class SendTransactionTestCase(TestCase):
         self.assertEqual(run_task_mock.call_args[0][1], [withdrawal.pk])
 
     @patch('transactions.withdrawals.BlockChain')
-    @patch('transactions.withdrawals.create_tx_')
+    @patch('transactions.withdrawals.create_tx')
     @patch('transactions.withdrawals.run_periodic_task')
     def test_send_without_change(self, run_task_mock, create_tx_mock, bc_cls_mock):
         withdrawal = WithdrawalFactory()

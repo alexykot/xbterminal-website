@@ -1,6 +1,4 @@
-import binascii
-
-from bitcoin.core import COIN, CTransaction
+from bitcoin.core import COIN
 from pycoin.tx.Spendable import Spendable
 from pycoin.tx.Tx import Tx
 from pycoin.tx.TxOut import TxOut
@@ -45,20 +43,3 @@ def create_tx(tx_inputs, tx_outputs):
     if tx.bad_signature_count() != 0:
         raise ValueError('Invalid signature')
     return tx
-
-
-def pycoin_to_bitcoinlib(tx):
-    """
-    Convert pycoin Tx object to bitcoinlib CTransaction
-    """
-    tx_hex = tx.as_hex()
-    return CTransaction.deserialize(binascii.unhexlify(tx_hex))
-
-
-def bitcoinlib_to_pycoin(tx):
-    tx_hex = binascii.hexlify(tx.serialize())
-    return Tx.from_hex(tx_hex)
-
-
-def create_tx_(tx_inputs, tx_outputs):
-    return pycoin_to_bitcoinlib(create_tx(tx_inputs, tx_outputs))

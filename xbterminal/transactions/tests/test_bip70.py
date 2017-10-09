@@ -5,8 +5,6 @@ from decimal import Decimal
 from django.test import TestCase
 from django.utils import timezone
 
-from bitcoin.core import b2lx
-
 from transactions.utils.paymentrequest_pb2 import PaymentRequest
 from transactions.utils.bip70 import (
     create_payment_request,
@@ -76,7 +74,7 @@ class BIP70UtilsTestCase(TestCase):
             parse_payment(coin_name, payment_message)
 
         self.assertEqual(len(transactions), 1)
-        self.assertEqual(b2lx(transactions[0].GetHash()),
+        self.assertEqual(transactions[0].id(),
                          expected_transaction_id)
         self.assertEqual(len(refund_addresses), 1)
         self.assertEqual(refund_addresses[0], expected_refund_address)

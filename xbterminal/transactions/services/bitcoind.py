@@ -1,22 +1,21 @@
-import binascii
 from decimal import Decimal
 import urllib
 
 import bitcoin
 import bitcoin.rpc
-from bitcoin.core import COIN, CTransaction
+from bitcoin.core import COIN
 
 from django.conf import settings
 from constance import config
 from pycoin.key.validate import is_address_valid as is_address_valid_
 from pycoin.serialize import b2h_rev
+from pycoin.tx import Tx
 
 from transactions.constants import BTC_DEC_PLACES, BTC_MIN_FEE
 from transactions.exceptions import (
     DoubleSpend,
     TransactionModified)
 from transactions.utils.compat import get_bitcoin_network
-from transactions.utils.tx import bitcoinlib_to_pycoin
 from wallet.constants import COINS
 
 
@@ -97,21 +96,19 @@ class BlockChain(object):
         Accepts:
             transaction_id: hex string
         Returns:
-            transaction: CTransaction
+            transaction: pycoin Tx object
         """
         tx_hex = self._proxy.getrawtransaction(transaction_id)
-        tx = CTransaction.deserialize(binascii.unhexlify(tx_hex))
-        return tx
+        return Tx.from_hex(tx_hex)
 
     def get_tx_inputs(self, transaction):
         """
         Return transaction inputs
         Accepts:
-            transaction: CTransaction
+            transaction: pycoin Tx object
         Returns:
-            list of inputs (Decimal amount, CBitcoinAddress)
+            list of inputs (Decimal amount, address)
         """
-        transaction = bitcoinlib_to_pycoin(transaction)
         inputs = []
         for idx, txin in enumerate(transaction.txs_in):
             input_tx_id = b2h_rev(txin.previous_hash)
@@ -126,11 +123,10 @@ class BlockChain(object):
         """
         Return transaction outputs
         Accepts:
-            transaction: CTransaction
+            transaction: pycoin Tx object
         Returns:
             outputs: list of outputs
         """
-        transaction = bitcoinlib_to_pycoin(transaction)
         outputs = []
         for txout in transaction.txs_out:
             amount = Decimal(txout.coin_value) / COIN
@@ -141,11 +137,11 @@ class BlockChain(object):
     def is_tx_valid(self, transaction):
         """
         Accepts:
-            transaction: CTransaction
+            transaction: pycoin Tx object
         Returns:
             True of False
         """
-        tx_hex = binascii.hexlify(transaction.serialize())
+        tx_hex = transaction.as_hex()
         result = self._proxy.signrawtransaction(tx_hex)
         if result.get('complete') != 1:
             # Signing attempt for confirmed TX will return complete=False
@@ -157,11 +153,11 @@ class BlockChain(object):
     def send_raw_transaction(self, transaction):
         """
         Accepts:
-            transaction: CTransaction
+            transaction: pycoin Tx object
         Returns:
             transaction_id: hex string
         """
-        tx_hex = binascii.hexlify(transaction.serialize())
+        tx_hex = transaction.as_hex()
         transaction_id = self._proxy.sendrawtransaction(tx_hex)
         return transaction_id
 
@@ -245,12 +241,11 @@ def get_txid(transaction):
     """
     Calculate transaction id
     Accepts:
-        transaction: CTransaction
+        transaction: pycoin Tx object
     Returns:
         transaction id (hex)
     """
-    tx = bitcoinlib_to_pycoin(transaction)
-    return tx.id()
+    return transaction.id()
 
 
 def validate_bitcoin_address(address, coin_name):

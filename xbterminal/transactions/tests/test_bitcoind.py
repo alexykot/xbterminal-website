@@ -61,7 +61,7 @@ class BlockChainTestCase(TestCase):
         self.assertEqual(proxy_mock.listunspent.call_args[0][2], ['test'])
 
     @patch('transactions.services.bitcoind.bitcoin.rpc.RawProxy')
-    @patch('transactions.services.bitcoind.CTransaction.deserialize')
+    @patch('transactions.services.bitcoind.Tx.from_hex')
     def test_get_unspent_transactions(self, get_tx_mock, proxy_cls_mock):
         address = '1JpY93MNoeHJ914CHLCQkdhS7TvBM68Xp6'
         transaction_id = '1' * 64
@@ -85,7 +85,7 @@ class BlockChainTestCase(TestCase):
             transaction_id)
 
     @patch('transactions.services.bitcoind.bitcoin.rpc.RawProxy')
-    @patch('transactions.services.bitcoind.CTransaction.deserialize')
+    @patch('transactions.services.bitcoind.Tx.from_hex')
     def test_get_raw_transaction(self, get_tx_mock, proxy_cls_mock):
         tx_id = '1' * 64
         get_tx_mock.return_value = tx = Mock()
@@ -97,13 +97,10 @@ class BlockChainTestCase(TestCase):
 
         self.assertEqual(result, tx)
         self.assertIs(proxy_mock.getrawtransaction.called, True)
-        self.assertEqual(get_tx_mock.call_args[0][0], '\xab\xcd')
+        self.assertEqual(get_tx_mock.call_args[0][0], 'abcd')
 
     @patch('transactions.services.bitcoind.bitcoin.rpc.RawProxy')
-    @patch('transactions.services.bitcoind.bitcoinlib_to_pycoin')
-    def test_get_tx_inputs(self, convert_tx_mock, proxy_cls_mock):
-        convert_tx_mock.return_value = Mock(
-            txs_in=[Mock(previous_hash='\x11' * 32)])
+    def test_get_tx_inputs(self, proxy_cls_mock):
         proxy_cls_mock.return_value = proxy_mock = Mock(**{
             'getrawtransaction.return_value': {
                 'vout': [{
@@ -115,7 +112,8 @@ class BlockChainTestCase(TestCase):
             },
         })
         bc = BlockChain('BTC')
-        result = bc.get_tx_inputs(Mock())
+        tx = Mock(txs_in=[Mock(previous_hash='\x11' * 32)])
+        result = bc.get_tx_inputs(tx)
 
         self.assertEqual(result, [{
             'amount': Decimal('0.0001'),
@@ -126,14 +124,13 @@ class BlockChainTestCase(TestCase):
                          '1' * 64)
         self.assertIs(proxy_mock.getrawtransaction.call_args[0][1], True)
 
-    @patch('transactions.services.bitcoind.bitcoinlib_to_pycoin')
-    def test_get_tx_outputs(self, convert_tx_mock):
-        convert_tx_mock.return_value = Mock(txs_out=[Mock(**{
+    def test_get_tx_outputs(self):
+        bc = BlockChain('BTC')
+        tx = Mock(txs_out=[Mock(**{
             'coin_value': 10000,
             'address.return_value': '1A6Ei5cRfDJ8jjhwxfzLJph8B9ZEthR9Z',
         })])
-        bc = BlockChain('BTC')
-        result = bc.get_tx_outputs(Mock())
+        result = bc.get_tx_outputs(tx)
 
         self.assertEqual(result, [{
             'amount': Decimal('0.0001'),
@@ -147,7 +144,7 @@ class BlockChainTestCase(TestCase):
                 'complete': True,
             },
         })
-        tx = Mock(**{'serialize.return_value': '\xab\xcd'})
+        tx = Mock(**{'as_hex.return_value': 'abcd'})
         bc = BlockChain('BTC')
         result = bc.is_tx_valid(tx)
 
@@ -168,7 +165,7 @@ class BlockChainTestCase(TestCase):
             },
         })
         get_txid_mock.return_value = tx_id = '1' * 64
-        tx = Mock(**{'serialize.return_value': '\xab\xcd'})
+        tx = Mock(**{'as_hex.return_value': 'abcd'})
         bc = BlockChain('BTC')
         result = bc.is_tx_valid(tx)
 
@@ -189,7 +186,7 @@ class BlockChainTestCase(TestCase):
             },
         })
         get_txid_mock.return_value = '1' * 64
-        tx = Mock(**{'serialize.return_value': '\xab\xcd'})
+        tx = Mock(**{'as_hex.return_value': 'abcd'})
         bc = BlockChain('BTC')
         result = bc.is_tx_valid(tx)
 
@@ -201,7 +198,7 @@ class BlockChainTestCase(TestCase):
             'sendrawtransaction.return_value': '0' * 64,
         })
         bc = BlockChain('BTC')
-        tx = Mock(**{'serialize.return_value': '\xab\xcd'})
+        tx = Mock(**{'as_hex.return_value': 'abcd'})
         tx_id = bc.send_raw_transaction(tx)
 
         self.assertEqual(tx_id, '0' * 64)
