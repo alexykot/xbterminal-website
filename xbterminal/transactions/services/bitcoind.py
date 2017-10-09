@@ -4,8 +4,7 @@ import urllib
 
 import bitcoin
 import bitcoin.rpc
-from bitcoin.core import COIN, b2lx, CTransaction
-from bitcoin.core.serialize import Hash
+from bitcoin.core import COIN, CTransaction
 
 from django.conf import settings
 from constance import config
@@ -250,9 +249,8 @@ def get_txid(transaction):
     Returns:
         transaction id (hex)
     """
-    serialized = transaction.serialize()
-    h = Hash(serialized)
-    return b2lx(h)
+    tx = bitcoinlib_to_pycoin(transaction)
+    return tx.id()
 
 
 def validate_bitcoin_address(address, coin_name):
