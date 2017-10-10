@@ -1,6 +1,11 @@
 import logging
 
-from transactions.services import coindesk, btcaverage, blockcypher, sochain
+from transactions.services import (
+    coindesk,
+    btcaverage,
+    blockcypher,
+    dashorg,
+    sochain)
 
 logger = logging.getLogger(__name__)
 
@@ -43,3 +48,17 @@ def is_tx_reliable(tx_id, threshold, coin_name):
         return True
     else:
         return False
+
+
+def get_tx_url(tx_id, coin_name):
+    if coin_name in blockcypher.BLOCKCYPHER_CHAINS_LIVE:
+        return blockcypher.get_tx_url(tx_id, coin_name)
+    elif coin_name in dashorg.DASHORG_DOMAINS:
+        return dashorg.get_tx_url(tx_id, coin_name)
+
+
+def get_address_url(address, coin_name):
+    if coin_name in blockcypher.BLOCKCYPHER_CHAINS_LIVE:
+        return blockcypher.get_address_url(address, coin_name)
+    elif coin_name in dashorg.DASHORG_DOMAINS:
+        return dashorg.get_address_url(address, coin_name)

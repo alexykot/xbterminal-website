@@ -2,7 +2,11 @@ from decimal import Decimal
 from django.test import TestCase
 from mock import patch, Mock
 
-from transactions.services import wrappers, blockcypher, sochain
+from transactions.services import (
+    wrappers,
+    blockcypher,
+    dashorg,
+    sochain)
 
 
 class WrappersTestCase(TestCase):
@@ -30,6 +34,18 @@ class WrappersTestCase(TestCase):
         so_mock.side_effect = ValueError
         result = wrappers.is_tx_reliable('tx_id', 0.9, 'BTC')
         self.assertIs(result, False)
+
+    def test_get_tx_url(self):
+        btc_url = wrappers.get_tx_url('test', 'BTC')
+        self.assertIn('blockcypher.com', btc_url)
+        dash_url = wrappers.get_tx_url('test', 'DASH')
+        self.assertIn('dash.org', dash_url)
+
+    def test_get_address_url(self):
+        btc_url = wrappers.get_address_url('test', 'BTC')
+        self.assertIn('blockcypher.com', btc_url)
+        dash_url = wrappers.get_address_url('test', 'DASH')
+        self.assertIn('dash.org', dash_url)
 
 
 class BlockcypherTestCase(TestCase):
@@ -75,6 +91,21 @@ class BlockcypherTestCase(TestCase):
         result = blockcypher.get_address_url(address, 'BTC')
         self.assertEqual(result,
                          'https://live.blockcypher.com/btc/address/test/')
+
+
+class DashOrgTestCase(TestCase):
+
+    def test_get_tx_url(self):
+        tx = 'test'
+        result = dashorg.get_tx_url(tx, 'DASH')
+        self.assertEqual(result,
+                         'https://explorer.dash.org/tx/test')
+
+    def test_get_address_url(self):
+        address = 'test'
+        result = dashorg.get_address_url(address, 'DASH')
+        self.assertEqual(result,
+                         'https://explorer.dash.org/address/test')
 
 
 class SoChainTestCase(TestCase):
