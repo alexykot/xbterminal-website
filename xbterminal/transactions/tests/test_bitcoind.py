@@ -9,7 +9,6 @@ from transactions.constants import BTC_MIN_FEE
 from transactions.services.bitcoind import (
     BlockChain,
     validate_bitcoin_address,
-    split_amount,
     get_tx_fee)
 
 
@@ -328,14 +327,3 @@ class UtilsTestCase(TestCase):
         self.assertEqual(
             validate_bitcoin_address(invalid_addr, None),
             'Invalid address.')
-
-    def test_split_amount(self):
-        max_size = Decimal('0.05')
-        splitted_1 = split_amount(Decimal('0.01'), max_size)
-        self.assertEqual(splitted_1, [Decimal('0.01')])
-        splitted_2 = split_amount(Decimal('0.05'), max_size)
-        self.assertEqual(splitted_2, [Decimal('0.05')])
-        splitted_3 = split_amount(Decimal('0.13'), max_size)
-        self.assertEqual(
-            splitted_3,
-            [Decimal('0.05'), Decimal('0.05'), Decimal('0.03')])

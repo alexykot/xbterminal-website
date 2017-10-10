@@ -262,23 +262,3 @@ def get_tx_fee(n_inputs, n_outputs, fee_per_kb):
     tx_size = n_inputs * 148 + n_outputs * 34 + 10 + n_inputs
     fee = (fee_per_kb / 1024) * tx_size
     return fee.quantize(BTC_DEC_PLACES)
-
-
-def split_amount(amount, max_size):
-    """
-    Split bitcoin amount
-    Accepts:
-        amount: total amount, Decimal
-        max_size: split size, Decimal
-    Returns:
-        list
-    """
-    splitted = []
-    while amount > 0:
-        if amount >= max_size:
-            chunk = max_size
-        else:
-            chunk = amount
-        amount -= chunk
-        splitted.append(chunk)
-    return splitted
