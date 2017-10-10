@@ -195,7 +195,7 @@ class DepositViewSetTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     @patch('transactions.models.create_payment_request')
-    def test_payment_request(self, create_mock):
+    def test_payment_request_btc(self, create_mock):
         deposit = DepositFactory()
         create_mock.return_value = payment_request = '009A8B'.decode('hex')
         url = reverse('api:v2:deposit-payment-request',
@@ -205,6 +205,16 @@ class DepositViewSetTestCase(APITestCase):
         self.assertEqual(response['Content-Type'],
                          'application/bitcoin-paymentrequest')
         self.assertEqual(response.content, payment_request)
+
+    @patch('transactions.models.create_payment_request')
+    def test_payment_request_dash(self, create_mock):
+        deposit = DepositFactory(account__currency__name='DASH')
+        create_mock.return_value = '009A8B'.decode('hex')
+        url = reverse('api:v2:deposit-payment-request',
+                      kwargs={'uid': deposit.uid})
+        response = self.client.get(url)
+        self.assertEqual(response['Content-Type'],
+                         'application/dash-paymentrequest')
 
     def test_payment_request_timeout(self):
         deposit = DepositFactory(timeout=True)

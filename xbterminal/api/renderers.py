@@ -44,7 +44,7 @@ class YAMLRenderer(BaseRenderer):
 
 class PaymentRequestRenderer(BaseRenderer):
 
-    media_type = 'application/bitcoin-paymentrequest'
+    media_type = 'application/*'
     format = 'pp-req'
     charset = None
     render_style = 'binary'
@@ -55,7 +55,7 @@ class PaymentRequestRenderer(BaseRenderer):
 
 class PaymentACKRenderer(BaseRenderer):
 
-    media_type = 'application/bitcoin-paymentack'
+    media_type = 'application/*'
     format = 'pp-ack'
     charset = None
     render_style = 'binary'

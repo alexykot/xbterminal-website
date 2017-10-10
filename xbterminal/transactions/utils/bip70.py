@@ -44,9 +44,9 @@ def create_payment_details(coin_name, outputs, created, expires,
         memo: note that should be displayed to the customer
     """
     details = paymentrequest_pb2.PaymentDetails()
-    if coin_name == 'BTC':
+    if coin_name in ['BTC', 'DASH']:
         details.network = 'main'
-    elif coin_name == 'TBTC':
+    elif coin_name in ['TBTC', 'TDASH']:
         details.network = 'test'
     details.outputs.extend([create_output(ad, am) for ad, am in outputs])
     details.time = int(time.mktime(created.timetuple()))
@@ -124,3 +124,10 @@ def create_payment_ack(payment):
     payment_ack.payment.CopyFrom(payment)
     payment_ack.memo = "ack"
     return payment_ack.SerializeToString()
+
+
+def get_bip70_content_type(coin_name, message_type):
+    assert message_type in ['paymentrequest', 'payment', 'paymentack']
+    return 'application/{0}-{1}'.format(
+        getattr(COINS, coin_name).uri_prefix,
+        message_type)

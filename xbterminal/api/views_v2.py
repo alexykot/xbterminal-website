@@ -36,6 +36,7 @@ from transactions.models import Deposit, Withdrawal
 from transactions.deposits import prepare_deposit, handle_bip70_payment
 from transactions.withdrawals import prepare_withdrawal, send_transaction
 from transactions.utils.payments import construct_payment_uri
+from transactions.utils.bip70 import get_bip70_content_type
 
 from common import rq_helpers
 
@@ -130,7 +131,10 @@ class DepositViewSet(viewsets.GenericViewSet):
             kwargs={'uid': deposit.uid})
         payment_request = deposit.create_payment_request(
             payment_response_url)
-        response = Response(payment_request)
+        response = Response(
+            payment_request,
+            content_type=get_bip70_content_type(
+                deposit.coin.name, 'paymentrequest'))
         response['Content-Transfer-Encoding'] = 'binary'
         return response
 
@@ -146,7 +150,7 @@ class DepositViewSet(viewsets.GenericViewSet):
             raise Http404
         # Check and parse message
         content_type = self.request.META.get('CONTENT_TYPE')
-        if content_type != 'application/bitcoin-payment':
+        if content_type != get_bip70_content_type(deposit.coin.name, 'payment'):
             return Response(status=status.HTTP_400_BAD_REQUEST)
         if len(self.request.body) > 50000:
             # Payment messages larger than 50,000 bytes should be rejected by server
@@ -156,7 +160,10 @@ class DepositViewSet(viewsets.GenericViewSet):
         except Exception as error:
             logger.exception(error)
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        response = Response(payment_ack)
+        response = Response(
+            payment_ack,
+            content_type=get_bip70_content_type(
+                deposit.coin.name, 'paymentack'))
         response['Content-Transfer-Encoding'] = 'binary'
         return response
 
