@@ -11,8 +11,8 @@ from api.utils.urls import get_admin_url
 from common.db import lock_table
 from common.rq_helpers import run_periodic_task, cancel_current_task
 from transactions.constants import (
-    BTC_DEC_PLACES,
-    BTC_MIN_OUTPUT,
+    COIN_DEC_PLACES,
+    COIN_MIN_OUTPUT,
     WITHDRAWAL_CONFIDENCE_TIMEOUT,
     WITHDRAWAL_CONFIRMATION_TIMEOUT)
 from transactions.exceptions import TransactionError, TransactionModified
@@ -58,8 +58,8 @@ def prepare_withdrawal(device_or_account, amount):
     # Get exchange rate and calculate customer amount
     exchange_rate = get_exchange_rate(withdrawal.currency.name)
     withdrawal.customer_coin_amount = (withdrawal.amount / exchange_rate).\
-        quantize(BTC_DEC_PLACES)
-    if withdrawal.customer_coin_amount < BTC_MIN_OUTPUT:
+        quantize(COIN_DEC_PLACES)
+    if withdrawal.customer_coin_amount < COIN_MIN_OUTPUT:
         raise TransactionError('Customer coin amount is below dust threshold')
     with atomic():
         # Find unspent outputs which are not reserved by other withdrawals
@@ -89,7 +89,7 @@ def prepare_withdrawal(device_or_account, amount):
         logger.info('reserved funds on %s addresses', len(balance_changes))
         # Calculate change amount
         change_coin_amount = reserved_sum - withdrawal.coin_amount
-        if change_coin_amount < BTC_MIN_OUTPUT:
+        if change_coin_amount < COIN_MIN_OUTPUT:
             withdrawal.customer_coin_amount += change_coin_amount
         else:
             change_address = Address.create(withdrawal.coin.name, is_change=True)

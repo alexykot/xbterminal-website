@@ -5,7 +5,7 @@ from mock import patch, Mock
 from constance.test import override_config
 
 from transactions.exceptions import TransactionModified, DoubleSpend
-from transactions.constants import BTC_MIN_FEE
+from transactions.constants import COIN_MIN_FEE
 from transactions.services.bitcoind import BlockChain, get_tx_fee
 
 
@@ -326,5 +326,5 @@ class BlockChainTestCase(TestCase):
             'estimatefee.return_value': Decimal('0.00000223'),
         })
         bc = BlockChain('BTC')
-        expected_fee = get_tx_fee(1, 1, BTC_MIN_FEE)
+        expected_fee = get_tx_fee(1, 1, COIN_MIN_FEE)
         self.assertEqual(bc.get_tx_fee(1, 1), expected_fee)

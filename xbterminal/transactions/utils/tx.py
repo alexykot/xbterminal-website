@@ -6,7 +6,7 @@ from pycoin.tx.TxOut import TxOut
 from pycoin.tx.pay_to import build_hash160_lookup
 from pycoin.ui import standard_tx_out_script
 
-from transactions.constants import BTC_MIN_OUTPUT, BTC_DEC_PLACES
+from transactions.constants import COIN_MIN_OUTPUT, COIN_DEC_PLACES
 from transactions.exceptions import DustOutput
 
 
@@ -16,7 +16,7 @@ def to_units(amount):
 
 def from_units(amount):
     amount = Decimal(amount) / 10 ** 8
-    return amount.quantize(BTC_DEC_PLACES)
+    return amount.quantize(COIN_DEC_PLACES)
 
 
 def create_tx(tx_inputs, tx_outputs):
@@ -40,7 +40,7 @@ def create_tx(tx_inputs, tx_outputs):
     txs_in = [spendable.tx_in() for spendable in spendables]
     txs_out = []
     for address, amount in tx_outputs.items():
-        if amount < BTC_MIN_OUTPUT:
+        if amount < COIN_MIN_OUTPUT:
             raise DustOutput
         script = standard_tx_out_script(address)
         out = TxOut(to_units(amount), script)

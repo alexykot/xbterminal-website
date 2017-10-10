@@ -34,6 +34,7 @@ from website.utils.files import (
     get_verification_file_name,
     verification_file_path_gen)
 from common.uids import generate_alphanumeric_code, generate_b58_uid
+from transactions.constants import COIN_DEC_PLACES
 from transactions.utils.compat import (
     get_bitcoin_network,
     get_account_balance,
@@ -427,7 +428,7 @@ class Account(models.Model):
     @property
     def balance_min(self):
         result = self.device_set.aggregate(models.Sum('max_payout'))
-        return result['max_payout__sum'] or Decimal('0.00000000')
+        return result['max_payout__sum'] or COIN_DEC_PLACES
 
     @property
     def balance_max(self):

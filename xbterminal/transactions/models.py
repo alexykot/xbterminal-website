@@ -9,7 +9,7 @@ from api.utils.urls import construct_absolute_url
 from common.db import lock_table
 from common.uids import generate_b58_uid
 from transactions.constants import (
-    BTC_DEC_PLACES,
+    COIN_DEC_PLACES,
     DEPOSIT_TIMEOUT,
     DEPOSIT_CONFIDENCE_TIMEOUT,
     DEPOSIT_CONFIRMATION_TIMEOUT,
@@ -114,21 +114,21 @@ class Deposit(Transaction):
     @property
     def coin_amount(self):
         """
-        Total BTC amount (for payment)
+        Total coin amount (for payment)
         """
         return self.merchant_coin_amount + self.fee_coin_amount
 
     @property
     def exchange_rate(self):
         return (self.amount /
-                self.merchant_coin_amount).quantize(BTC_DEC_PLACES)
+                self.merchant_coin_amount).quantize(COIN_DEC_PLACES)
 
     @property
     def effective_exchange_rate(self):
         """
         For receipts
         """
-        return (self.amount / self.coin_amount).quantize(BTC_DEC_PLACES)
+        return (self.amount / self.coin_amount).quantize(COIN_DEC_PLACES)
 
     @property
     def status(self):
@@ -261,21 +261,21 @@ class Withdrawal(Transaction):
     @property
     def coin_amount(self):
         """
-        Total BTC amount (for receipts)
+        Total coin amount (for receipts)
         """
         return self.customer_coin_amount + self.tx_fee_coin_amount
 
     @property
     def exchange_rate(self):
         return (self.amount /
-                self.customer_coin_amount).quantize(BTC_DEC_PLACES)
+                self.customer_coin_amount).quantize(COIN_DEC_PLACES)
 
     @property
     def effective_exchange_rate(self):
         """
         For receipts
         """
-        return (self.amount / self.coin_amount).quantize(BTC_DEC_PLACES)
+        return (self.amount / self.coin_amount).quantize(COIN_DEC_PLACES)
 
     @property
     def status(self):

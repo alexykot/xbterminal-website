@@ -7,7 +7,7 @@ from constance import config
 from pycoin.serialize import b2h_rev
 from pycoin.tx import Tx
 
-from transactions.constants import BTC_DEC_PLACES, BTC_MIN_FEE
+from transactions.constants import COIN_DEC_PLACES, COIN_MIN_FEE
 from transactions.exceptions import (
     DoubleSpend,
     TransactionModified)
@@ -50,7 +50,7 @@ class BlockChain(object):
         Accepts:
             address: string
         Returns:
-            balance: BTC amount (Decimal)
+            balance: coin amount (Decimal)
         """
         minconf = 0
         txouts = self._proxy.listunspent(minconf, self.MAXCONF, [address])
@@ -202,8 +202,8 @@ class BlockChain(object):
         elif settings.DEBUG and fee_per_kb < config.TX_DEFAULT_FEE:
             # Always use TX_DEFAULT_FEE in stage and dev environments
             fee_per_kb = config.TX_DEFAULT_FEE
-        elif fee_per_kb <= BTC_MIN_FEE:
-            fee_per_kb = BTC_MIN_FEE
+        elif fee_per_kb <= COIN_MIN_FEE:
+            fee_per_kb = COIN_MIN_FEE
         return get_tx_fee(n_inputs, n_outputs, fee_per_kb)
 
 
@@ -217,4 +217,4 @@ def get_tx_fee(n_inputs, n_outputs, fee_per_kb):
     """
     tx_size = n_inputs * 148 + n_outputs * 34 + 10 + n_inputs
     fee = (fee_per_kb / 1024) * tx_size
-    return fee.quantize(BTC_DEC_PLACES)
+    return fee.quantize(COIN_DEC_PLACES)

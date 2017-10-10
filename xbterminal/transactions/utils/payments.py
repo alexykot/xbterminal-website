@@ -2,7 +2,7 @@ import urllib
 
 from pycoin.key.validate import is_address_valid
 
-from transactions.constants import BTC_DEC_PLACES
+from transactions.constants import COIN_DEC_PLACES
 from wallet.constants import COINS
 
 
@@ -23,7 +23,7 @@ def construct_payment_uri(coin_name, address, amount, merchant_name,
     uri = '{0}:{1}?amount={2}&label={3}&message={4}'.format(
         coin.uri_prefix,
         address,
-        str(amount.quantize(BTC_DEC_PLACES)),
+        str(amount.quantize(COIN_DEC_PLACES)),
         urllib.quote(merchant_name),
         urllib.quote(merchant_name))
     for idx, request_url in enumerate(request_urls):
