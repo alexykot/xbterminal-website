@@ -1,8 +1,7 @@
 import logging
 
 from transactions.services import (
-    coindesk,
-    btcaverage,
+    coinmarketcap,
     blockcypher,
     dashorg,
     sochain)
@@ -10,18 +9,15 @@ from transactions.services import (
 logger = logging.getLogger(__name__)
 
 
-def get_exchange_rate(currency_name):
+def get_exchange_rate(currency_name, coin_name):
     """
     Accepts:
-        currency_code: 3-letter code
+        currency_code: currency name (fiat)
+        coin_name: coin name (crypto)
     Returns:
         exchange_rate: Decimal
     """
-    try:
-        return coindesk.get_exchange_rate(currency_name)
-    except Exception as error:
-        logger.exception(error)
-        return btcaverage.get_exchange_rate(currency_name)
+    return coinmarketcap.get_exchange_rate(currency_name, coin_name)
 
 
 def is_tx_reliable(tx_id, threshold, coin_name):

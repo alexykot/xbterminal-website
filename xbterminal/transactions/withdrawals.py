@@ -56,7 +56,8 @@ def prepare_withdrawal(device_or_account, amount):
         amount=amount,
         coin=account.currency)
     # Get exchange rate and calculate customer amount
-    exchange_rate = get_exchange_rate(withdrawal.currency.name)
+    exchange_rate = get_exchange_rate(withdrawal.currency.name,
+                                      withdrawal.coin.name)
     withdrawal.customer_coin_amount = (withdrawal.amount / exchange_rate).\
         quantize(COIN_DEC_PLACES)
     if withdrawal.customer_coin_amount < COIN_MIN_OUTPUT:

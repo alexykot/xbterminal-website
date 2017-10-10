@@ -65,7 +65,8 @@ def prepare_deposit(device_or_account, amount):
     bc = BlockChain(deposit.coin.name)
     bc.import_address(deposit_address.address, rescan=False)
     # Get exchange rate
-    exchange_rate = get_exchange_rate(deposit.currency.name)
+    exchange_rate = get_exchange_rate(deposit.currency.name,
+                                      deposit.coin.name)
     # Merchant amount
     deposit.merchant_coin_amount = (deposit.amount /
                                     exchange_rate).quantize(COIN_DEC_PLACES)

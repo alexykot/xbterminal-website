@@ -41,6 +41,8 @@ class PrepareWithdrawalTestCase(TestCase):
 
         self.assertEqual(get_rate_mock.call_args[0][0],
                          withdrawal.currency.name)
+        self.assertEqual(get_rate_mock.call_args[0][1],
+                         withdrawal.coin.name)
         self.assertEqual(bc_mock.get_tx_fee.call_count, 1)
         self.assertEqual(bc_mock.import_address.call_count, 1)
         self.assertEqual(run_task_mock.call_args[0][0].__name__,

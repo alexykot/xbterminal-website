@@ -63,6 +63,8 @@ class PrepareDepositTestCase(TestCase):
                          deposit.deposit_address.address)
         self.assertEqual(get_rate_mock.call_args[0][0],
                          deposit.currency.name)
+        self.assertEqual(get_rate_mock.call_args[0][1],
+                         deposit.coin.name)
         self.assertEqual(run_task_mock.call_count, 2)
         self.assertEqual(run_task_mock.call_args_list[0][0][0].__name__,
                          'wait_for_payment')

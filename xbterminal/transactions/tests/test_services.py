@@ -6,18 +6,18 @@ from transactions.services import (
     wrappers,
     blockcypher,
     dashorg,
-    sochain)
+    sochain,
+    coinmarketcap)
 
 
 class WrappersTestCase(TestCase):
 
-    @patch('transactions.services.wrappers.coindesk.get_exchange_rate')
-    @patch('transactions.services.wrappers.btcaverage.get_exchange_rate')
-    def test_get_exchage_rate(self, btcavg_mock, coindesk_mock):
-        coindesk_mock.side_effect = ValueError
-        btcavg_mock.return_value = Decimal('200')
-        rate = wrappers.get_exchange_rate('USD')
-        self.assertEqual(rate, Decimal('200'))
+    @patch('transactions.services.wrappers.coinmarketcap.get_exchange_rate')
+    def test_get_exchage_rate(self, cmc_mock):
+        cmc_mock.return_value = Decimal('3000.0')
+        rate = wrappers.get_exchange_rate('USD', 'BTC')
+        self.assertEqual(rate, Decimal('3000.0'))
+        self.assertIs(cmc_mock.called, True)
 
     @patch('transactions.services.wrappers.blockcypher.get_tx_confidence')
     @patch('transactions.services.wrappers.sochain.get_tx_confidence')
@@ -147,3 +147,19 @@ class SoChainTestCase(TestCase):
 
         self.assertEqual(result, 1.0)
         self.assertIn('/BTC/', get_mock.call_args[0][0])
+
+
+class CoinMarketCapTestCase(TestCase):
+
+    @patch('transactions.services.coinmarketcap.requests.get')
+    def test_get_exchange_rate(self, get_mock):
+        get_mock.return_value = Mock(**{
+            'json.return_value': [{
+                'id': 'bitcoin',
+                'price_gbp': '3641.2160576',
+            }],
+        })
+        result = coinmarketcap.get_exchange_rate('GBP', 'BTC')
+
+        self.assertEqual(result, Decimal('3641.2160576'))
+        self.assertIn('/bitcoin/?convert=GBP', get_mock.call_args[0][0])
