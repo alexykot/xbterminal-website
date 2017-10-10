@@ -26,12 +26,6 @@ class Command(BaseCommand):
 
 
 def check_wallet(currency_name):
-    # For compatibility with old setups
-    if currency_name == 'mainnet':
-        currency_name = 'BTC'
-    elif currency_name == 'testnet':
-        currency_name = 'TBTC'
-
     bc = BlockChain(currency_name)
     wallet_value = Decimal(0)
     db_value = Decimal(0)
