@@ -27,10 +27,10 @@ class TemplateTagsTestCase(TestCase):
 
     def test_btc_tx_url(self):
         tx_id = '1' * 64
-        result = website_tags.btc_tx_url(tx_id, 'BTC')
+        result = website_tags.coin_tx_url(tx_id, 'BTC')
         self.assertIn(tx_id, result)
 
     def test_btc_address_url(self):
         address = 'a' * 32
-        result = website_tags.btc_address_url(address, 'BTC')
+        result = website_tags.coin_address_url(address, 'BTC')
         self.assertIn(address, result)

@@ -7,7 +7,7 @@ from django.utils.html import format_html
 
 from website.utils.qr import generate_qr_code
 from api.utils.urls import get_admin_url, get_absolute_static_url
-from transactions.services import blockcypher
+from transactions.services.wrappers import get_tx_url, get_address_url
 from wallet.constants import COINS
 
 register = template.Library()
@@ -59,10 +59,10 @@ def email_static(path):
 
 
 @register.simple_tag
-def btc_address_url(address, coin_name):
-    return blockcypher.get_address_url(address, coin_name)
+def coin_address_url(address, coin_name):
+    return get_address_url(address, coin_name)
 
 
 @register.simple_tag
-def btc_tx_url(tx_id, coin_name):
-    return blockcypher.get_tx_url(tx_id, coin_name)
+def coin_tx_url(tx_id, coin_name):
+    return get_tx_url(tx_id, coin_name)
