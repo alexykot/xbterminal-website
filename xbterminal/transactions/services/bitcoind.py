@@ -4,7 +4,6 @@ from bitcoin.rpc import RawProxy, InvalidAddressOrKeyError
 
 from django.conf import settings
 from constance import config
-from pycoin.key.validate import is_address_valid as is_address_valid_
 from pycoin.serialize import b2h_rev
 from pycoin.tx import Tx
 
@@ -206,25 +205,6 @@ class BlockChain(object):
         elif fee_per_kb <= BTC_MIN_FEE:
             fee_per_kb = BTC_MIN_FEE
         return get_tx_fee(n_inputs, n_outputs, fee_per_kb)
-
-
-def validate_bitcoin_address(address, coin_name):
-    """
-    Validate address
-    Accepts:
-        address: string
-        coin_name: coin name or None
-    Returns:
-        error message or None
-    """
-    if coin_name is not None:
-        pycoin_code = getattr(COINS, coin_name).pycoin_code
-        if not is_address_valid_(address,
-                                 allowable_netcodes=[pycoin_code]):
-            return 'Invalid address for coin {0}.'.format(coin_name)
-    else:
-        if not is_address_valid_(address):
-            return 'Invalid address.'
 
 
 def get_tx_fee(n_inputs, n_outputs, fee_per_kb):

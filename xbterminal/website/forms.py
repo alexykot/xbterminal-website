@@ -27,7 +27,7 @@ from website.models import (
 from website.widgets import (
     FileWidget,
     ForeignKeyWidget)
-from website.validators import validate_bitcoin_address
+from website.validators import validate_coin_address
 from website.utils.email import (
     send_registration_email,
     send_reset_password_email)
@@ -416,7 +416,7 @@ class DeviceAdminForm(forms.ModelForm):
             for address in addresses:
                 try:
                     if cleaned_data[address]:
-                        validate_bitcoin_address(
+                        validate_coin_address(
                             cleaned_data[address],
                             coin_name=account.currency.name)
                 except forms.ValidationError as error:
@@ -455,7 +455,7 @@ class AccountForm(forms.ModelForm):
         forward_address = cleaned_data.get('forward_address')
         if forward_address:
             try:
-                validate_bitcoin_address(
+                validate_coin_address(
                     forward_address,
                     coin_name=self.instance.currency.name)
             except forms.ValidationError as error:

@@ -28,7 +28,7 @@ from website.validators import (
     validate_phone,
     validate_post_code,
     validate_name,
-    validate_bitcoin_address,
+    validate_coin_address,
     validate_public_key)
 from website.utils.files import (
     get_verification_file_name,
@@ -374,7 +374,7 @@ class Account(models.Model):
     currency = models.ForeignKey(Currency)
     forward_address = models.CharField(
         max_length=35,
-        validators=[validate_bitcoin_address],
+        validators=[validate_coin_address],
         blank=True,
         null=True)
     instantfiat = models.BooleanField()
@@ -472,7 +472,7 @@ class Address(models.Model):
     address = models.CharField(
         max_length=35,
         unique=True,
-        validators=[validate_bitcoin_address])
+        validators=[validate_coin_address])
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

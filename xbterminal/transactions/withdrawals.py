@@ -21,8 +21,9 @@ from transactions.utils.compat import (
     get_address_balance,
     get_account_balance)
 from transactions.utils.tx import create_tx
+from transactions.utils.payments import validate_address
 from transactions.services.wrappers import get_exchange_rate, is_tx_reliable
-from transactions.services.bitcoind import BlockChain, validate_bitcoin_address
+from transactions.services.bitcoind import BlockChain
 from wallet.models import Address
 from website.models import Device, Account
 
@@ -114,8 +115,8 @@ def send_transaction(withdrawal, customer_address):
         customer_address: bitcoin address, string
     """
     # Validate customer address
-    error_message = validate_bitcoin_address(customer_address,
-                                             withdrawal.coin.name)
+    error_message = validate_address(customer_address,
+                                     withdrawal.coin.name)
     if error_message:
         raise TransactionError(error_message)
     else:
