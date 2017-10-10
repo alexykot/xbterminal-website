@@ -9,6 +9,8 @@ class TemplateTagsTestCase(TestCase):
     def test_amount(self):
         self.assertEqual(website_tags.amount(0.125, 'BTC'),
                          '0.12500000')
+        self.assertEqual(website_tags.amount(0.175, 'DASH'),
+                         '0.17500000')
         self.assertEqual(website_tags.amount(15, 'mBTC'),
                          '15.00000')
         self.assertEqual(website_tags.amount(15.2, 'USD'),

@@ -8,6 +8,7 @@ from django.utils.html import format_html
 from website.utils.qr import generate_qr_code
 from api.utils.urls import get_admin_url, get_absolute_static_url
 from transactions.services import blockcypher
+from wallet.constants import COINS
 
 register = template.Library()
 
@@ -24,7 +25,7 @@ def unscale(value):
 
 @register.filter
 def amount(value, currency_name):
-    if currency_name in ['BTC', 'TBTC']:
+    if currency_name in COINS.__members__.keys():
         return '{0:.8f}'.format(float(value))
     elif currency_name == 'mBTC':
         return '{0:.5f}'.format(float(value))

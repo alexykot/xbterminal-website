@@ -439,7 +439,7 @@ class AccountForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(AccountForm, self).__init__(*args, **kwargs)
         assert self.instance and self.instance.pk
-        if self.instance.currency.name in ['BTC', 'TBTC']:
+        if not self.instance.currency.is_fiat:
             del self.fields['bank_account_name']
             del self.fields['bank_account_bic']
             del self.fields['bank_account_iban']
