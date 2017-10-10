@@ -33,6 +33,9 @@ def is_tx_reliable(tx_id, threshold, coin_name):
     Returns:
         boolean
     """
+    if coin_name not in blockcypher.BLOCKCYPHER_CHAINS:
+        # TODO: find confidence service for DASH
+        return True
     try:
         confidence = blockcypher.get_tx_confidence(tx_id, coin_name)
     except Exception as error:
