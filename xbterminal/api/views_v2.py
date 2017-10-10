@@ -35,7 +35,7 @@ from transactions.exceptions import TransactionError
 from transactions.models import Deposit, Withdrawal
 from transactions.deposits import prepare_deposit, handle_bip70_payment
 from transactions.withdrawals import prepare_withdrawal, send_transaction
-from transactions.services.bitcoind import construct_bitcoin_uri
+from transactions.utils.payments import construct_payment_uri
 
 from common import rq_helpers
 
@@ -80,7 +80,8 @@ class DepositViewSet(viewsets.GenericViewSet):
             payment_bluetooth_request = deposit.create_payment_request(
                 payment_bluetooth_url)
             # Send payment request in response
-            data['payment_uri'] = construct_bitcoin_uri(
+            data['payment_uri'] = construct_payment_uri(
+                deposit.coin.name,
                 deposit.deposit_address.address,
                 deposit.coin_amount,
                 deposit.merchant.company_name,
@@ -88,7 +89,8 @@ class DepositViewSet(viewsets.GenericViewSet):
                 payment_request_url)
             data['payment_request'] = payment_bluetooth_request.encode('base64')
         else:
-            data['payment_uri'] = construct_bitcoin_uri(
+            data['payment_uri'] = construct_payment_uri(
+                deposit.coin.name,
                 deposit.deposit_address.address,
                 deposit.coin_amount,
                 deposit.merchant.company_name,

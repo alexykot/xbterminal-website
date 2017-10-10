@@ -1,5 +1,4 @@
 from decimal import Decimal
-import urllib
 
 from bitcoin.rpc import RawProxy, InvalidAddressOrKeyError
 
@@ -207,29 +206,6 @@ class BlockChain(object):
         elif fee_per_kb <= BTC_MIN_FEE:
             fee_per_kb = BTC_MIN_FEE
         return get_tx_fee(n_inputs, n_outputs, fee_per_kb)
-
-
-def construct_bitcoin_uri(address, amount_btc, name, *request_urls):
-    """
-    https://github.com/bitcoin/bips/blob/master/bip-0021.mediawiki
-    Accepts:
-        address: CBitcoinAddress
-        amount_btc: Decimal
-        name: merchant name
-        request_urls: urls, strings
-    Returns:
-        bitcoin uri: string
-    """
-    amount_btc = amount_btc.quantize(Decimal('0.00000000'))
-    uri = "bitcoin:{0}?amount={1}&label={2}&message={3}".format(
-        str(address),
-        str(amount_btc),
-        urllib.quote(name),
-        urllib.quote(name))
-    for idx, request_url in enumerate(request_urls):
-        param_name = "r" if idx == 0 else "r{0}".format(idx)
-        uri += "&{0}={1}".format(param_name, request_url)
-    return uri
 
 
 def validate_bitcoin_address(address, coin_name):
