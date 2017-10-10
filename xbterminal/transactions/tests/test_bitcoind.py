@@ -118,7 +118,7 @@ class BlockChainTestCase(TestCase):
         self.assertIs(proxy_mock.getrawtransaction.called, True)
         self.assertEqual(proxy_mock.getrawtransaction.call_args[0][0],
                          '1' * 64)
-        self.assertIs(proxy_mock.getrawtransaction.call_args[0][1], True)
+        self.assertIs(proxy_mock.getrawtransaction.call_args[0][1], 1)
 
     def test_get_tx_outputs(self):
         bc = BlockChain('BTC')
