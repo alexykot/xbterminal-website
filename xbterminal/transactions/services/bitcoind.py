@@ -1,31 +1,30 @@
 from decimal import Decimal
 import urllib
-from cStringIO import StringIO
 
-import bitcoin
-import bitcoin.rpc
-from bitcoin.base58 import CBase58Data
-from bitcoin.core import COIN, x, lx, b2lx, CTransaction, COutPoint
-from bitcoin.core.serialize import Hash
-from bitcoin.wallet import CBitcoinAddress
+from bitcoin.rpc import RawProxy, InvalidAddressOrKeyError
 
 from django.conf import settings
 from constance import config
+from pycoin.key.validate import is_address_valid as is_address_valid_
+from pycoin.serialize import b2h_rev
+from pycoin.tx import Tx
 
 from transactions.constants import BTC_DEC_PLACES, BTC_MIN_FEE
 from transactions.exceptions import (
-    InvalidTransaction,
     DoubleSpend,
     TransactionModified)
 from transactions.utils.compat import get_bitcoin_network
+from transactions.utils.tx import from_units
+from wallet.constants import COINS
 
 
 class BlockChain(object):
 
+    MAXCONF = 9999999
+
     def __init__(self, coin_name):
+        self.pycoin_code = getattr(COINS, coin_name).pycoin_code
         network = get_bitcoin_network(coin_name)
-        # TODO: don't set global params
-        bitcoin.SelectParams(network)
         if hasattr(settings, 'BITCOIND_SERVERS'):
             config = settings.BITCOIND_SERVERS[network]
         else:
@@ -35,15 +34,7 @@ class BlockChain(object):
             password=config['PASSWORD'],
             host=config['HOST'],
             port=config['PORT'])
-        self._proxy = bitcoin.rpc.Proxy(service_url)
-
-    def get_new_address(self):
-        """
-        Returns:
-            address: CBitcoinAddress
-        """
-        address = self._proxy.getnewaddress()
-        return address
+        self._proxy = RawProxy(service_url)
 
     def import_address(self, address, rescan=False):
         """
@@ -51,45 +42,22 @@ class BlockChain(object):
             address: bitcoin address
             rescan: do blockchain rescan after import or not
         """
-        result = self._proxy.importaddress(address, rescan=rescan)
+        label = ''
+        result = self._proxy.importaddress(address, label, rescan)
         if result is not None:
             raise ValueError
-
-    def get_balance(self, minconf=1):
-        """
-        Accepts:
-            minconf: only include transactions confirmed at least this many times.
-        Returns:
-            balance: BTC amount (Decimal)
-        """
-        balance = self._proxy.getbalance(minconf=minconf)
-        return Decimal(balance).quantize(BTC_DEC_PLACES) / COIN
 
     def get_address_balance(self, address):
         """
         Accepts:
-            address: CBitcoinAddress or string
+            address: string
         Returns:
             balance: BTC amount (Decimal)
         """
-        txouts = self._proxy.listunspent(minconf=0, addrs=[str(address)])
-        balance = Decimal(0)
-        for out in txouts:
-            balance += Decimal(out['amount']) / COIN
-        return balance.quantize(BTC_DEC_PLACES)
-
-    def get_unspent_outputs(self, address, minconf=0):
-        """
-        Accepts:
-            address: CBitcoinAddress
-            minconf: only include transactions confirmed at least this many times
-        Returns:
-            txouts: list of dicts
-        """
-        txouts = self._proxy.listunspent(minconf=minconf, addrs=[address])
-        for out in txouts:
-            out['amount'] = Decimal(out['amount']) / COIN
-        return txouts
+        minconf = 0
+        txouts = self._proxy.listunspent(minconf, self.MAXCONF, [address])
+        balance = sum(out['amount'] for out in txouts)
+        return balance
 
     def get_raw_unspent_outputs(self, address, minconf=0):
         """
@@ -98,10 +66,9 @@ class BlockChain(object):
         Returns:
             list of dicts
         """
-        results = self._proxy.call(
-            'listunspent',
+        results = self._proxy.listunspent(
             minconf,
-            9999999,
+            self.MAXCONF,
             [address])
         return results
 
@@ -112,12 +79,11 @@ class BlockChain(object):
         Returns:
             transactions: list of CTransaction
         """
-        address = CBitcoinAddress(address)
-        txouts = self._proxy.listunspent(minconf=0, addrs=[address])
+        minconf = 0
+        txouts = self._proxy.listunspent(minconf, self.MAXCONF, [address])
         transactions = []
         for out in txouts:
-            txid = b2lx(out['outpoint'].hash)
-            transactions.append(self.get_raw_transaction(txid))
+            transactions.append(self.get_raw_transaction(out['txid']))
         return transactions
 
     def get_raw_transaction(self, transaction_id):
@@ -125,25 +91,26 @@ class BlockChain(object):
         Accepts:
             transaction_id: hex string
         Returns:
-            transaction: CTransaction
+            transaction: pycoin Tx object
         """
-        transaction = self._proxy.getrawtransaction(lx(transaction_id))
-        return transaction
+        tx_hex = self._proxy.getrawtransaction(transaction_id)
+        return Tx.from_hex(tx_hex)
 
     def get_tx_inputs(self, transaction):
         """
         Return transaction inputs
         Accepts:
-            transaction: CTransaction
+            transaction: pycoin Tx object
         Returns:
-            list of inputs (Decimal amount, CBitcoinAddress)
+            list of inputs (Decimal amount, address)
         """
         inputs = []
-        for txin in transaction.vin:
-            input_tx = self._proxy.getrawtransaction(txin.prevout.hash)
-            input_tx_out = input_tx.vout[txin.prevout.n]
-            amount = Decimal(input_tx_out.nValue) / COIN
-            address = CBitcoinAddress.from_scriptPubKey(input_tx_out.scriptPubKey)
+        for idx, txin in enumerate(transaction.txs_in):
+            input_tx_id = b2h_rev(txin.previous_hash)
+            input_tx_info = self._proxy.getrawtransaction(input_tx_id, True)
+            input_tx_out = input_tx_info['vout'][idx]
+            amount = Decimal(input_tx_out['value'])
+            address = input_tx_out['scriptPubKey']['addresses'][0]
             inputs.append({'amount': amount, 'address': address})
         return inputs
 
@@ -151,67 +118,29 @@ class BlockChain(object):
         """
         Return transaction outputs
         Accepts:
-            transaction: CTransaction
+            transaction: pycoin Tx object
         Returns:
             outputs: list of outputs
         """
         outputs = []
-        for txout in transaction.vout:
-            amount = Decimal(txout.nValue) / COIN
-            address = CBitcoinAddress.from_scriptPubKey(txout.scriptPubKey)
+        for txout in transaction.txs_out:
+            amount = from_units(txout.coin_value)
+            address = txout.address(netcode=self.pycoin_code)
             outputs.append({'amount': amount, 'address': address})
         return outputs
-
-    def create_raw_transaction(self, inputs, outputs):
-        """
-        Accepts:
-            inputs: list of COutPoint
-            outputs: {address: amount, ...}
-        Returns:
-            transaction: CTransaction
-        """
-        # Parse inputs
-        inputs_ = []
-        for outpoint in inputs:
-            inputs_.append({
-                'txid': b2lx(outpoint.hash),  # b2lx, not b2x
-                'vout': outpoint.n,
-            })
-        # Convert decimal to float, filter outputs
-        outputs_ = {}
-        for address, amount in outputs.items():
-            if amount > 0:
-                outputs_[address] = float(amount)
-        assert len(outputs_) > 0
-        # Create transaction
-        transaction_hex = self._proxy._call(
-            'createrawtransaction', inputs_, outputs_)
-        transaction = CTransaction.deserialize(x(transaction_hex))
-        return transaction
-
-    def sign_raw_transaction(self, transaction):
-        """
-        Accepts:
-            transaction: CTransaction
-        Returns:
-            transaction_signed: CTransaction
-        """
-        result = self._proxy.signrawtransaction(transaction)
-        if result.get('complete') != 1:
-            raise InvalidTransaction(get_txid(transaction))
-        return result['tx']
 
     def is_tx_valid(self, transaction):
         """
         Accepts:
-            transaction: CTransaction
+            transaction: pycoin Tx object
         Returns:
             True of False
         """
-        result = self._proxy.signrawtransaction(transaction)
+        tx_hex = transaction.as_hex()
+        result = self._proxy.signrawtransaction(tx_hex)
         if result.get('complete') != 1:
             # Signing attempt for confirmed TX will return complete=False
-            tx_id = get_txid(transaction)
+            tx_id = transaction.id()
             if not self.is_tx_confirmed(tx_id, minconf=1):
                 return False
         return True
@@ -219,12 +148,13 @@ class BlockChain(object):
     def send_raw_transaction(self, transaction):
         """
         Accepts:
-            transaction: CTransaction
+            transaction: pycoin Tx object
         Returns:
             transaction_id: hex string
         """
-        transaction_id = self._proxy.sendrawtransaction(transaction)
-        return b2lx(transaction_id)
+        tx_hex = transaction.as_hex()
+        transaction_id = self._proxy.sendrawtransaction(tx_hex)
+        return transaction_id
 
     def is_tx_confirmed(self, tx_id, minconf=None):
         """
@@ -236,28 +166,22 @@ class BlockChain(object):
         Returns:
             True or False
         """
-        tx_info = self._proxy.gettransaction(lx(tx_id))
+        tx_info = self._proxy.gettransaction(tx_id)
         minconf = minconf or config.TX_REQUIRED_CONFIRMATIONS
         if tx_info['confirmations'] >= minconf:
             return True
         # Check conflicting transactions
         for conflicting_tx_id in tx_info['walletconflicts']:
             try:
-                conflicting_tx_info = self._proxy.getrawtransaction(
-                    lx(conflicting_tx_id), verbose=True)
-            except IndexError:
+                conflicting_tx_info = self._proxy.gettransaction(
+                    conflicting_tx_id)
+            except InvalidAddressOrKeyError:
                 # Transaction already removed from mempool, skip
                 continue
             if conflicting_tx_info['confirmations'] >= minconf:
                 # Check for double spend
-                try:
-                    tx = self._proxy.getrawtransaction(lx(tx_id))
-                except IndexError:
-                    # Original transaction already removed from mempool
-                    pass
-                else:
-                    if conflicting_tx_info['tx'].vout != tx.vout:
-                        raise DoubleSpend(conflicting_tx_id)
+                if conflicting_tx_info['vout'] != tx_info['vout']:
+                    raise DoubleSpend(conflicting_tx_id)
                 raise TransactionModified(conflicting_tx_id)
         return False
 
@@ -273,8 +197,7 @@ class BlockChain(object):
         Returns:
             fee
         """
-        fee_per_kb = self._proxy.call(
-            'estimatefee',
+        fee_per_kb = self._proxy.estimatefee(
             n_blocks or config.TX_EXPECTED_CONFIRM)
         if fee_per_kb == -1:
             fee_per_kb = config.TX_DEFAULT_FEE
@@ -309,19 +232,6 @@ def construct_bitcoin_uri(address, amount_btc, name, *request_urls):
     return uri
 
 
-def get_txid(transaction):
-    """
-    Calculate transaction id
-    Accepts:
-        transaction: CTransaction
-    Returns:
-        transaction id (hex)
-    """
-    serialized = transaction.serialize()
-    h = Hash(serialized)
-    return b2lx(h)
-
-
 def validate_bitcoin_address(address, coin_name):
     """
     Validate address
@@ -332,18 +242,13 @@ def validate_bitcoin_address(address, coin_name):
         error message or None
     """
     if coin_name is not None:
-        network = get_bitcoin_network(coin_name)
-        # TODO: don't set global params
-        bitcoin.SelectParams(network)
-        try:
-            address = CBitcoinAddress(address)
-        except:
+        pycoin_code = getattr(COINS, coin_name).pycoin_code
+        if not is_address_valid_(address,
+                                 allowable_netcodes=[pycoin_code]):
             return 'Invalid address for coin {0}.'.format(coin_name)
     else:
-        try:
-            address = CBase58Data(address)
-        except:
-            return 'Invalid bitcoin address.'
+        if not is_address_valid_(address):
+            return 'Invalid address.'
 
 
 def get_tx_fee(n_inputs, n_outputs, fee_per_kb):
@@ -357,51 +262,3 @@ def get_tx_fee(n_inputs, n_outputs, fee_per_kb):
     tx_size = n_inputs * 148 + n_outputs * 34 + 10 + n_inputs
     fee = (fee_per_kb / 1024) * tx_size
     return fee.quantize(BTC_DEC_PLACES)
-
-
-def serialize_outputs(outputs):
-    """
-    Accepts:
-        outputs: list of COutPoint instances
-    Returns:
-        byte string
-    """
-    buffer = StringIO()
-    for outpoint in outputs:
-        outpoint.stream_serialize(buffer)
-    return buffer.getvalue()
-
-
-def deserialize_outputs(string):
-    """
-    Accepts:
-        string: serialized outputs
-    Returns:
-        list of COutPoint instances
-    """
-    buffer = StringIO(string)
-    outputs = []
-    while buffer.tell() < len(string):
-        outpoint = COutPoint.stream_deserialize(buffer)
-        outputs.append(outpoint)
-    return outputs
-
-
-def split_amount(amount, max_size):
-    """
-    Split bitcoin amount
-    Accepts:
-        amount: total amount, Decimal
-        max_size: split size, Decimal
-    Returns:
-        list
-    """
-    splitted = []
-    while amount > 0:
-        if amount >= max_size:
-            chunk = max_size
-        else:
-            chunk = amount
-        amount -= chunk
-        splitted.append(chunk)
-    return splitted

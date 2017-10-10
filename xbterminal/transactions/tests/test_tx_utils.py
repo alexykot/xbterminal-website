@@ -5,7 +5,7 @@ from django.test import TestCase
 from pycoin.key.BIP32Node import BIP32Node
 
 from transactions.exceptions import DustOutput
-from transactions.utils.tx import create_tx, convert_tx
+from transactions.utils.tx import create_tx
 
 
 class TxUtilsTestCase(TestCase):
@@ -33,10 +33,6 @@ class TxUtilsTestCase(TestCase):
         self.assertEqual(tx.bad_signature_count(), 0)
         self.assertEqual(len(tx.id()), 64)
         self.assertEqual(tx.fee(), 100000)
-
-        tx_ = convert_tx(tx)
-        self.assertTrue(tx_.vin)
-        self.assertTrue(tx_.vout)
 
     def test_create_tx_dust_output(self):
         tx_inputs = [self.get_tx_input()]

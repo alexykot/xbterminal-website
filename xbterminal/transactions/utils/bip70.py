@@ -1,19 +1,19 @@
 """
 https://github.com/bitcoin/bips/blob/master/bip-0070.mediawiki
 """
-from decimal import Decimal
 import logging
 import time
 import os
 
-import bitcoin
-from bitcoin.core import CTransaction, CScript
-from bitcoin.wallet import CBitcoinAddress
-
 from django.conf import settings
 
+from pycoin.tx import Tx
+from pycoin.tx.pay_to import script_obj_from_script
+from pycoin.ui import standard_tx_out_script
+
 from transactions.utils import paymentrequest_pb2, x509
-from transactions.utils.compat import get_bitcoin_network
+from transactions.utils.tx import to_units
+from wallet.constants import COINS
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +26,9 @@ def create_output(address, amount):
     """
     output = paymentrequest_pb2.Output()
     # Convert to satoshis
-    output.amount = int(amount / Decimal('0.00000001'))
+    output.amount = to_units(amount)
     # Convert address to script
-    output.script = CBitcoinAddress(address).to_scriptPubKey()
+    output.script = standard_tx_out_script(address)
     return output
 
 
@@ -44,12 +44,10 @@ def create_payment_details(coin_name, outputs, created, expires,
         memo: note that should be displayed to the customer
     """
     details = paymentrequest_pb2.PaymentDetails()
-    network = get_bitcoin_network(coin_name)
-    bitcoin.SelectParams(network)
-    if network == "mainnet":
-        details.network = "main"
-    elif network == "testnet":
-        details.network = "test"
+    if coin_name == 'BTC':
+        details.network = 'main'
+    elif coin_name == 'TBTC':
+        details.network = 'test'
     details.outputs.extend([create_output(ad, am) for ad, am in outputs])
     details.time = int(time.mktime(created.timetuple()))
     details.expires = int(time.mktime(expires.timetuple()))
@@ -95,18 +93,6 @@ def create_payment_request(*args):
     return request.SerializeToString()
 
 
-def parse_output(output):
-    """
-    Accepts:
-        output: Output object
-    Returns:
-        address: string
-    """
-    script = CScript(output.script)
-    address = CBitcoinAddress.from_scriptPubKey(script)
-    return str(address)
-
-
 def parse_payment(coin_name, message):
     """
     Aceepts:
@@ -119,14 +105,16 @@ def parse_payment(coin_name, message):
     """
     payment = paymentrequest_pb2.Payment()
     payment.ParseFromString(message)
-    network = get_bitcoin_network(coin_name)
-    bitcoin.SelectParams(network)
+    pycoin_code = getattr(COINS, coin_name).pycoin_code
     transactions = []
-    for tx in payment.transactions:
-        transactions.append(CTransaction.deserialize(tx))
+    for tx_bin in payment.transactions:
+        tx = Tx.from_bin(tx_bin)
+        transactions.append(tx)
     refund_addresses = []
     for output in payment.refund_to:
-        refund_addresses.append(parse_output(output))
+        refund_address = script_obj_from_script(output.script).\
+            address(netcode=pycoin_code)
+        refund_addresses.append(refund_address)
     payment_ack = create_payment_ack(payment)
     return transactions, refund_addresses, payment_ack
 

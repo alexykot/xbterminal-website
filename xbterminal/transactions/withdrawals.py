@@ -19,7 +19,7 @@ from transactions.models import Withdrawal, BalanceChange
 from transactions.utils.compat import (
     get_address_balance,
     get_account_balance)
-from transactions.utils.tx import create_tx_
+from transactions.utils.tx import create_tx
 from transactions.services.wrappers import get_exchange_rate, is_tx_reliable
 from transactions.services.bitcoind import BlockChain, validate_bitcoin_address
 from wallet.models import Address
@@ -135,7 +135,7 @@ def send_transaction(withdrawal, customer_address):
         else:
             # Remains in wallet
             tx_outputs[bch.address.address] = bch.amount
-    outgoing_tx = create_tx_(tx_inputs, tx_outputs)
+    outgoing_tx = create_tx(tx_inputs, tx_outputs)
     # Send transaction, update withdrawal status
     withdrawal.outgoing_tx_id = bc.send_raw_transaction(outgoing_tx)
     withdrawal.time_sent = timezone.now()

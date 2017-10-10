@@ -24,9 +24,9 @@ from transactions.exceptions import (
     TransactionModified,
     RefundError)
 from transactions.models import Deposit
-from transactions.utils.tx import create_tx_
+from transactions.utils.tx import create_tx
 from transactions.utils.bip70 import parse_payment
-from transactions.services.bitcoind import BlockChain, get_txid
+from transactions.services.bitcoind import BlockChain
 from transactions.services.wrappers import get_exchange_rate, is_tx_reliable
 from wallet.models import Address
 from website.models import Account, Device
@@ -93,7 +93,7 @@ def validate_payment(deposit, transactions, refund_addresses):
     received_amount = BTC_DEC_PLACES
     for incoming_tx in transactions:
         # Validate and broadcast TX
-        incoming_tx_id = get_txid(incoming_tx)
+        incoming_tx_id = incoming_tx.id()
         if bc.is_tx_valid(incoming_tx):
             try:
                 bc.send_raw_transaction(incoming_tx)
@@ -106,7 +106,7 @@ def validate_payment(deposit, transactions, refund_addresses):
         incoming_tx_ids.add(incoming_tx_id)
         # Get amount
         for output in bc.get_tx_outputs(incoming_tx):
-            if str(output['address']) == deposit.deposit_address.address:
+            if output['address'] == deposit.deposit_address.address:
                 received_amount += output['amount']
     # Save deposit details
     with atomic():
@@ -177,7 +177,7 @@ def wait_for_payment(deposit_id):
         tx_inputs = bc.get_tx_inputs(transactions[0])
         if len(tx_inputs) > 1:
             logger.warning('incoming tx contains more than one input')
-        refund_addresses = [str(inp['address']) for inp in tx_inputs]
+        refund_addresses = [inp['address'] for inp in tx_inputs]
         # Validate payment
         try:
             validate_payment(deposit, transactions, refund_addresses)
@@ -337,7 +337,7 @@ def refund_deposit(deposit, only_extra=False):
         # Send change to deposit address
         tx_outputs[deposit.deposit_address.address] = deposit.coin_amount
     try:
-        refund_tx = create_tx_(tx_inputs, tx_outputs)
+        refund_tx = create_tx(tx_inputs, tx_outputs)
     except DustOutput:
         raise RefundError('Output is below dust threshold')
     deposit.refund_tx_id = bc.send_raw_transaction(refund_tx)
