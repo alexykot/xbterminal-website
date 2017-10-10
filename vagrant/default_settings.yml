@@ -6,7 +6,7 @@ vm:
     postgresql: 5432
     redis: 6379
     bitcoind: 18332
-    dashd: 19998
+    dashd: 9998
     sentry: 9000
     xbt-server: 8083
 
