@@ -741,6 +741,7 @@ class Device(models.Model):
 
     @property
     def bitcoin_network(self):
+        # WARNING: deprecated, must be used only for API v1
         if self.account:
             return get_bitcoin_network(self.account.currency.name)
         else:

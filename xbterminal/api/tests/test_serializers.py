@@ -175,6 +175,7 @@ class DeviceSerializerTestCase(TestCase):
         device = DeviceFactory.create(status='registered')
         data = DeviceSerializer(device).data
         self.assertEqual(data['status'], 'registered')
+        self.assertIsNone(data['coin'])
         self.assertEqual(data['bitcoin_network'], 'mainnet')
         self.assertEqual(data['language']['code'], 'en')
         self.assertEqual(data['currency']['name'], 'GBP')
@@ -192,12 +193,13 @@ class DeviceSerializerTestCase(TestCase):
         data = DeviceSerializer(device).data
         self.assertEqual(data['status'], 'activation_error')
 
-    def test_operational(self):
+    def test_operational_btc(self):
         device = DeviceFactory.create(
             merchant__language=Language.objects.get(code='de'),
             merchant__currency=Currency.objects.get(name='EUR'))
         data = DeviceSerializer(device).data
         self.assertEqual(data['status'], 'active')
+        self.assertEqual(data['coin'], 'BTC')
         self.assertEqual(data['bitcoin_network'], 'mainnet')
         self.assertEqual(data['language']['code'], 'de')
         self.assertEqual(data['language']['fractional_split'], '.')
@@ -212,6 +214,12 @@ class DeviceSerializerTestCase(TestCase):
                          str(device.amount_3))
         self.assertEqual(data['settings']['amount_shift'],
                          str(device.amount_shift))
+
+    def test_operational_dash(self):
+        device = DeviceFactory(account__currency__name='DASH')
+        data = DeviceSerializer(device).data
+        self.assertEqual(data['coin'], 'DASH')
+        self.assertEqual(data['bitcoin_network'], 'mainnet')
 
 
 class DeviceRegistrationSerializerTestCase(TestCase):
