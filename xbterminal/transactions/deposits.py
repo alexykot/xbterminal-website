@@ -251,13 +251,9 @@ def wait_for_confidence(deposit_id):
     else:
         # Update deposit status
         cancel_current_task()
-        with atomic():
-            deposit.refresh_from_db()
-            if deposit.time_cancelled is not None:
-                # Do not set broadcasted status for cancelled deposits
-                return
-            deposit.time_broadcasted = timezone.now()
-            deposit.save()
+        deposit.time_broadcasted = timezone.now()
+        deposit.save()
+        # TODO: prevent partial refund of cancelled deposits
         if deposit.paid_coin_amount > deposit.coin_amount:
             # Return extra coins to customer
             try:

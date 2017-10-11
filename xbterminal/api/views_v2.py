@@ -97,7 +97,6 @@ class DepositViewSet(viewsets.GenericViewSet):
         return Response(serializer.data)
 
     @detail_route(methods=['POST'])
-    @atomic
     def cancel(self, *args, **kwargs):
         deposit = self.get_object()
         if deposit.status not in ['new', 'underpaid', 'received']:
