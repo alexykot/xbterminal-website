@@ -9,6 +9,7 @@ from constance import config
 
 from api.utils.urls import get_admin_url
 from common.rq_helpers import run_periodic_task, cancel_current_task
+from common.db import refresh_for_update
 from transactions.constants import (
     BTC_DEC_PLACES,
     BTC_MIN_OUTPUT,
@@ -110,7 +111,8 @@ def validate_payment(deposit, transactions, refund_addresses):
                 received_amount += output['amount']
     # Save deposit details
     with atomic():
-        deposit.refresh_from_db()
+        # Ensure that there is no race condition when saving TX IDs
+        deposit = refresh_for_update(deposit)
         deposit.paid_coin_amount = received_amount
         if refund_addresses:
             deposit.refund_address = refund_addresses[0]
