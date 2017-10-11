@@ -55,8 +55,10 @@ class WalletAccount(models.Model):
 
     @atomic
     def save(self, *args, **kwargs):
-        if not self.pk and not self.index:
-            self.index = self.parent_key.walletaccount_set.count()
+        if not self.pk and self.index is None:
+            max_index = self.parent_key.walletaccount_set.\
+                aggregate(Max('index'))['index__max']
+            self.index = max_index + 1 if max_index is not None else 0
         super(WalletAccount, self).save(*args, **kwargs)
 
 
@@ -104,9 +106,11 @@ class Address(models.Model):
 
     @atomic
     def save(self, *args, **kwargs):
-        if not self.pk:
-            self.index = self.wallet_account.address_set.\
-                filter(is_change=self.is_change).count()
+        if not self.pk and self.index is None:
+            max_index = self.wallet_account.address_set.\
+                filter(is_change=self.is_change).\
+                aggregate(Max('index'))['index__max']
+            self.index = max_index + 1 if max_index is not None else 0
             self.address = self.get_script(as_address=True)
         super(Address, self).save(*args, **kwargs)
 
