@@ -6,6 +6,7 @@ from django.db.transaction import atomic
 from django.utils import timezone
 
 from api.utils.urls import construct_absolute_url
+from common.db import lock_table
 from common.uids import generate_b58_uid
 from transactions.constants import (
     BTC_DEC_PLACES,
@@ -191,6 +192,8 @@ class Deposit(Transaction):
 
     @atomic
     def create_balance_changes(self):
+        # Ensure that BCs are created only once
+        lock_table('transactions.BalanceChange')
         if self.refund_coin_amount == self.paid_coin_amount:
             # Full refund, delete balance changes
             self.balancechange_set.all().delete()

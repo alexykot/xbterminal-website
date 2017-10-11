@@ -8,6 +8,7 @@ from django.utils import timezone
 from constance import config
 
 from api.utils.urls import get_admin_url
+from common.db import lock_table
 from common.rq_helpers import run_periodic_task, cancel_current_task
 from transactions.constants import (
     BTC_DEC_PLACES,
@@ -64,6 +65,8 @@ def prepare_withdrawal(device_or_account, amount):
         # and check balance
         reserved_sum = Decimal(0)
         balance_changes = []
+        # Ensure that balances are not changed during address selection
+        lock_table(BalanceChange)
         addresses = Address.objects.\
             filter(wallet_account__parent_key__coin_type=withdrawal.coin_type).\
             annotate(balance=Sum('balancechange__amount')).\
