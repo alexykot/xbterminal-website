@@ -222,7 +222,6 @@ class Deposit(Transaction):
                     'amount': -self.refund_coin_amount,
                 })
 
-    @atomic
     def save(self, *args, **kwargs):
         if not self.pk:
             while True:
@@ -315,7 +314,6 @@ class Withdrawal(Transaction):
             else:
                 return 'new'
 
-    @atomic
     def save(self, *args, **kwargs):
         if not self.pk:
             while True:
