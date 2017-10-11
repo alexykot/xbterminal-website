@@ -219,23 +219,22 @@ def check_withdrawal_status(withdrawal_id):
     Accepts:
         withdrawal_id: withdrawal ID, integer
     """
-    with atomic():
-        withdrawal = Withdrawal.objects.get(pk=withdrawal_id)
-        if withdrawal.status in ['timeout', 'cancelled']:
-            # Unlock reserved addresses
-            withdrawal.balancechange_set.all().delete()
-            cancel_current_task()
-        elif withdrawal.status in ['failed', 'unconfirmed']:
-            logger.error(
-                'withdrawal failed (%s)',
-                withdrawal.pk,
-                extra={'data': {
-                    'withdrawal_admin_url': get_admin_url(withdrawal),
-                }})
-            cancel_current_task()
-        elif withdrawal.status == 'confirmed':
-            # Success
-            cancel_current_task()
+    withdrawal = Withdrawal.objects.get(pk=withdrawal_id)
+    if withdrawal.status in ['timeout', 'cancelled']:
+        # Unlock reserved addresses
+        withdrawal.balancechange_set.all().delete()
+        cancel_current_task()
+    elif withdrawal.status in ['failed', 'unconfirmed']:
+        logger.error(
+            'withdrawal failed (%s)',
+            withdrawal.pk,
+            extra={'data': {
+                'withdrawal_admin_url': get_admin_url(withdrawal),
+            }})
+        cancel_current_task()
+    elif withdrawal.status == 'confirmed':
+        # Success
+        cancel_current_task()
 
 
 def check_withdrawal_confirmation(withdrawal):
