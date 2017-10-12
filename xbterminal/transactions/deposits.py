@@ -133,6 +133,10 @@ def handle_bip70_payment(deposit, payment_message):
         payment_message: pb2-encoded message
     Returns:
         payment_ack: pb2-encoded message
+    Raises:
+        InvalidPaymentMessage
+        InvalidTransaction
+        InsufficientFunds
     """
     try:
         transactions, refund_addresses, payment_ack = \
