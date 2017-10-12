@@ -824,13 +824,11 @@ class CheckDepositStatusTestCase(TestCase):
 
     @patch('transactions.deposits.cancel_current_task')
     @patch('transactions.deposits.refund_deposit')
-    @patch('transactions.deposits.logger')
-    def test_timeout(self, logger_mock, refund_mock, cancel_mock):
+    def test_timeout(self, refund_mock, cancel_mock):
         deposit = DepositFactory(timeout=True)
         check_deposit_status(deposit.pk)
         self.assertIs(cancel_mock.called, True)
-        self.assertIs(refund_mock.called, True)
-        self.assertIs(logger_mock.error.called, False)
+        self.assertIs(refund_mock.called, False)
 
     @patch('transactions.deposits.cancel_current_task')
     @patch('transactions.deposits.refund_deposit')

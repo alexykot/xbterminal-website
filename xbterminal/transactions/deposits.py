@@ -361,7 +361,10 @@ def check_deposit_status(deposit_id):
         deposit_id: deposit ID, integer
     """
     deposit = Deposit.objects.get(pk=deposit_id)
-    if deposit.status in ['timeout', 'cancelled']:
+    if deposit.status == 'timeout':
+        logger.info('deposit timeout (%s)', deposit.pk)
+        cancel_current_task()
+    elif deposit.status == 'cancelled':
         try:
             refund_deposit(deposit)
         except RefundError:
