@@ -169,8 +169,9 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
 
     def get_queryset(self):
         queryset = Withdrawal.objects.all()
-        if self.action == 'confirm':
+        if self.action in ['confirm', 'cancel']:
             # Ensure that withdrawal is sent only once
+            # Ensure that withdrawal will not be cancelled during sending
             queryset = queryset.select_for_update()
         return queryset
 
@@ -226,6 +227,7 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
         return Response(serializer.data)
 
     @detail_route(methods=['POST'])
+    @atomic
     def cancel(self, *args, **kwargs):
         withdrawal = self.get_object()
         if not self._verify_signature(withdrawal.device):
