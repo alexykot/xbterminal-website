@@ -44,9 +44,16 @@ logger = logging.getLogger(__name__)
 
 class DepositViewSet(viewsets.GenericViewSet):
 
-    queryset = Deposit.objects.all()
     lookup_field = 'uid'
     serializer_class = DepositSerializer
+
+    def get_queryset(self):
+        queryset = Deposit.objects.all()
+        if self.action in ['cancel', 'payment_response']:
+            # Ensure that deposit will not be cancelled
+            # while BIP70 payment is processed
+            queryset = queryset.select_for_update()
+        return queryset
 
     def create(self, *args, **kwargs):
         serializer = PaymentInitSerializer(data=self.request.data)
@@ -97,6 +104,7 @@ class DepositViewSet(viewsets.GenericViewSet):
         return Response(serializer.data)
 
     @detail_route(methods=['POST'])
+    @atomic
     def cancel(self, *args, **kwargs):
         deposit = self.get_object()
         if deposit.status not in ['new', 'underpaid', 'received']:
@@ -129,6 +137,7 @@ class DepositViewSet(viewsets.GenericViewSet):
         url_name='payment-response',
         url_path='response',
         renderer_classes=[PaymentACKRenderer])
+    @atomic
     def payment_response(self, *args, **kwargs):
         deposit = self.get_object()
         if deposit.status not in ['new', 'underpaid']:
