@@ -255,7 +255,6 @@ def wait_for_confidence(deposit_id):
         cancel_current_task()
         deposit.time_broadcasted = timezone.now()
         deposit.save()
-        # TODO: prevent partial refund of cancelled deposits
         if deposit.paid_coin_amount > deposit.coin_amount:
             # Return extra coins to customer
             try:
@@ -315,6 +314,8 @@ def refund_deposit(deposit, only_extra=False):
     deposit = refresh_for_update(deposit)
     if not only_extra and deposit.time_notified is not None:
         raise RefundError('User already notified')
+    if only_extra and deposit.time_cancelled is not None:
+        raise RefundError('Partial refund is not possible for cancelled deposits')
     if deposit.refund_tx_id is not None:
         raise RefundError('Deposit already refunded')
     if not deposit.refund_address:

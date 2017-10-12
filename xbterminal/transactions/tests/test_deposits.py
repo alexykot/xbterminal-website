@@ -742,6 +742,14 @@ class RefundDepositTestCase(TestCase):
         self.assertEqual(context.exception.message,
                          'User already notified')
 
+    def test_cancelled_only_extra(self):
+        deposit = DepositFactory(cancelled=True)
+        with self.assertRaises(RefundError) as context:
+            refund_deposit(deposit, only_extra=True)
+        self.assertEqual(
+            context.exception.message,
+            'Partial refund is not possible for cancelled deposits')
+
     def test_already_refunded(self):
         deposit = DepositFactory(refunded=True)
         with self.assertRaises(RefundError) as context:
