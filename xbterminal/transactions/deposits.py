@@ -302,6 +302,7 @@ def wait_for_confirmation(deposit_id):
         logger.info('payment confirmed (%s)', deposit.pk)
 
 
+@atomic
 def refund_deposit(deposit, only_extra=False):
     """
     Send all money back to customer
@@ -310,6 +311,8 @@ def refund_deposit(deposit, only_extra=False):
         only_extra: return only extra coins to customer, boolean
             return full amount by default
     """
+    # Ensure that refund TX is sent only once
+    deposit = refresh_for_update(deposit)
     if not only_extra and deposit.time_notified is not None:
         raise RefundError('User already notified')
     if deposit.refund_tx_id is not None:
