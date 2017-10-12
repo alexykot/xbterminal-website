@@ -18,4 +18,7 @@ def lock_table(model):
 
 def refresh_for_update(obj):
     model = obj._meta.model
-    return model.objects.select_for_update().get(pk=obj.pk)
+    new_obj = model.objects.select_for_update().get(pk=obj.pk)
+    # Make original object immutable
+    obj.save = None
+    return new_obj

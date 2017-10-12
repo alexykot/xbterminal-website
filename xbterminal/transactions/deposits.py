@@ -81,13 +81,18 @@ def prepare_deposit(device_or_account, amount):
     return deposit
 
 
-def validate_payment(deposit, transactions, refund_addresses):
+def validate_payment(deposit, transactions, refund_addresses,
+                     payment_type):
     """
     Validates payment and saves details to database
     Accepts:
         deposit: Deposit instance
         transactions: list of CTransaction
         refund_addresses: list of addresses
+        payment_type: one of PAYMENT_TYPES, integer
+    Returns:
+        True if deposit status changed to 'received'
+        False otherwise
     """
     bc = BlockChain(deposit.coin.name)
     incoming_tx_ids = set()
@@ -109,6 +114,12 @@ def validate_payment(deposit, transactions, refund_addresses):
         for output in bc.get_tx_outputs(incoming_tx):
             if output['address'] == deposit.deposit_address.address:
                 received_amount += output['amount']
+    if payment_type == PAYMENT_TYPES.BIP70 and \
+            received_amount < deposit.coin_amount:
+        # Throw error for underpaid BIP70 payments
+        raise InsufficientFunds
+
+    is_received = False
     # Save deposit details
     with atomic():
         # Ensure that there is no race condition when saving TX IDs
@@ -119,10 +130,15 @@ def validate_payment(deposit, transactions, refund_addresses):
         for incoming_tx_id in incoming_tx_ids:
             if incoming_tx_id not in deposit.incoming_tx_ids:
                 deposit.incoming_tx_ids.append(incoming_tx_id)
+        if deposit.paid_coin_amount >= deposit.coin_amount and \
+                not deposit.time_received:
+            # Change status
+            deposit.payment_type = payment_type
+            deposit.time_received = timezone.now()
+            is_received = True
         deposit.save()
         deposit.create_balance_changes()
-    if deposit.status == 'underpaid':
-        raise InsufficientFunds
+    return is_received
 
 
 def handle_bip70_payment(deposit, payment_message):
@@ -145,12 +161,9 @@ def handle_bip70_payment(deposit, payment_message):
         logger.exception(error)
         raise InvalidPaymentMessage
     # Validate payment
-    validate_payment(deposit, transactions, refund_addresses)
-    # Update status
-    if deposit.time_received is None:
-        deposit.payment_type = PAYMENT_TYPES.BIP70
-        deposit.time_received = timezone.now()
-        deposit.save()
+    is_received = validate_payment(deposit, transactions, refund_addresses,
+                                   PAYMENT_TYPES.BIP70)
+    if is_received:
         run_periodic_task(wait_for_confidence, [deposit.pk], interval=5)
         logger.info('payment received (%s)', deposit.pk)
     return payment_ack
@@ -186,20 +199,15 @@ def wait_for_payment(deposit_id):
         refund_addresses = [inp['address'] for inp in tx_inputs]
         # Validate payment
         try:
-            validate_payment(deposit, transactions, refund_addresses)
-        except InsufficientFunds:
-            # Don't cancel task, wait for next transaction
-            pass
+            is_received = validate_payment(
+                deposit, transactions, refund_addresses,
+                PAYMENT_TYPES.BIP21)
         except Exception as error:
             cancel_current_task()
             logger.exception(error)
         else:
-            cancel_current_task()
-            # Update status and wait for confidence
-            if deposit.time_received is None:
-                deposit.payment_type = PAYMENT_TYPES.BIP21
-                deposit.time_received = timezone.now()
-                deposit.save()
+            if is_received:
+                cancel_current_task()
                 run_periodic_task(wait_for_confidence, [deposit.pk], interval=5)
                 logger.info('payment received (%s)', deposit.pk)
 
