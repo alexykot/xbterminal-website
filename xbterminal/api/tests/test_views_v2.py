@@ -192,14 +192,6 @@ class DepositViewSetTestCase(APITestCase):
         deposit = DepositFactory(received=True)
         url = reverse('api:v2:deposit-cancel', kwargs={'uid': deposit.uid})
         response = self.client.post(url, {})
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        deposit.refresh_from_db()
-        self.assertEqual(deposit.status, 'cancelled')
-
-    def test_cancel_broadcasted(self):
-        deposit = DepositFactory(broadcasted=True)
-        url = reverse('api:v2:deposit-cancel', kwargs={'uid': deposit.uid})
-        response = self.client.post(url, {})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     @patch('transactions.models.create_payment_request')

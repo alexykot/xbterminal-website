@@ -107,7 +107,7 @@ class DepositViewSet(viewsets.GenericViewSet):
     @atomic
     def cancel(self, *args, **kwargs):
         deposit = self.get_object()
-        if deposit.status not in ['new', 'underpaid', 'received']:
+        if deposit.status not in ['new', 'underpaid']:
             raise Http404
         deposit.time_cancelled = timezone.now()
         deposit.save()
