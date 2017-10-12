@@ -103,6 +103,7 @@ class DepositViewSet(viewsets.GenericViewSet):
             raise Http404
         deposit.time_cancelled = timezone.now()
         deposit.save()
+        logger.info('deposit cancelled (%s)', deposit.pk)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @detail_route(
