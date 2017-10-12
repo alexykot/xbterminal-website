@@ -124,6 +124,7 @@ def validate_payment(deposit, transactions, refund_addresses,
     # Save deposit details
     with atomic():
         # Ensure that there is no race condition when saving TX IDs
+        # and that cancelled deposit will not get received status
         deposit = refresh_for_update(deposit)
         deposit.paid_coin_amount = received_amount
         if refund_addresses:
@@ -132,7 +133,8 @@ def validate_payment(deposit, transactions, refund_addresses,
             if incoming_tx_id not in deposit.incoming_tx_ids:
                 deposit.incoming_tx_ids.append(incoming_tx_id)
         if deposit.paid_coin_amount >= deposit.coin_amount and \
-                not deposit.time_received:
+                not deposit.time_received and \
+                not deposit.time_cancelled:
             # Change status
             deposit.payment_type = payment_type
             deposit.time_received = timezone.now()
@@ -185,8 +187,8 @@ def wait_for_payment(deposit_id):
         cancel_current_task()
         return
     if deposit.time_cancelled is not None:
+        # Cancel job, but check deposit address for the last time
         cancel_current_task()
-        return
     # Connect to bitcoind
     bc = BlockChain(deposit.coin.name)
     transactions = bc.get_unspent_transactions(deposit.deposit_address.address)
@@ -228,8 +230,8 @@ def wait_for_confidence(deposit_id):
         cancel_current_task()
         return
     if deposit.time_cancelled is not None:
-        cancel_current_task()
-        return
+        # This task could not be started for cancelled deposits
+        raise AssertionError
     bc = BlockChain(deposit.coin.name)
     for incoming_tx_id in deposit.incoming_tx_ids:
         try:

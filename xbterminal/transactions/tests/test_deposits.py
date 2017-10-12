@@ -243,6 +243,30 @@ class ValidatePaymentTestCase(TestCase):
         self.assertEqual(context.exception.tx_id, incoming_tx_id)
         self.assertIs(bc_mock.send_raw_transaction.called, False)
 
+    @patch('transactions.deposits.BlockChain')
+    def test_cancelled(self, bc_cls_mock):
+        deposit = DepositFactory(cancelled=True)
+        incoming_tx_id = '1' * 64
+        incoming_tx = Mock(**{'id.return_value': incoming_tx_id})
+        refund_address = 'a' * 32
+        bc_cls_mock.return_value = Mock(**{
+            'is_tx_valid.return_value': True,
+            'get_tx_outputs.return_value': [{
+                'address': deposit.deposit_address.address,
+                'amount': deposit.coin_amount,
+            }],
+        })
+        result = validate_payment(
+            deposit, [incoming_tx], [refund_address],
+            PAYMENT_TYPES.BIP70)
+
+        self.assertIs(result, False)
+        deposit.refresh_from_db()
+        self.assertEqual(deposit.paid_coin_amount, deposit.coin_amount)
+        self.assertEqual(deposit.refund_address, refund_address)
+        self.assertEqual(deposit.incoming_tx_ids, [incoming_tx_id])
+        self.assertIsNone(deposit.time_received)
+
 
 class HandleBIP70PaymentTestCase(TestCase):
 
@@ -317,11 +341,14 @@ class WaitForPaymentTestCase(TestCase):
 
     @patch('transactions.deposits.cancel_current_task')
     @patch('transactions.deposits.BlockChain')
-    def test_payment_cancelled(self, bc_cls_mock, cancel_mock):
+    @patch('transactions.deposits.validate_payment')
+    def test_cancelled(self, validate_mock, bc_cls_mock, cancel_mock):
+        bc_cls_mock.return_value = Mock(**{
+            'get_unspent_transactions.return_value': [],
+        })
         deposit = DepositFactory(cancelled=True)
         wait_for_payment(deposit.pk)
         self.assertIs(cancel_mock.called, True)
-        self.assertIs(bc_cls_mock.called, False)
 
     @patch('transactions.deposits.cancel_current_task')
     @patch('transactions.deposits.BlockChain')
@@ -449,9 +476,8 @@ class WaitForConfidenceTestCase(TestCase):
     @patch('transactions.deposits.BlockChain')
     def test_cancelled(self, bc_cls_mock, cancel_mock):
         deposit = DepositFactory(cancelled=True)
-        wait_for_confidence(deposit.pk)
-        self.assertIs(cancel_mock.called, True)
-        self.assertIs(bc_cls_mock.called, False)
+        with self.assertRaises(AssertionError):
+            wait_for_confidence(deposit.pk)
 
     @patch('transactions.deposits.cancel_current_task')
     @patch('transactions.deposits.BlockChain')
