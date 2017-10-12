@@ -13,6 +13,7 @@ from common.db import refresh_for_update
 from transactions.constants import (
     BTC_DEC_PLACES,
     BTC_MIN_OUTPUT,
+    DEPOSIT_TIMEOUT,
     DEPOSIT_CONFIDENCE_TIMEOUT,
     DEPOSIT_CONFIRMATION_TIMEOUT,
     PAYMENT_TYPES)
@@ -176,7 +177,7 @@ def wait_for_payment(deposit_id):
         deposit_id: integer
     """
     deposit = Deposit.objects.get(pk=deposit_id)
-    if deposit.status == 'timeout':
+    if deposit.time_created + DEPOSIT_TIMEOUT < timezone.now():
         # Timeout, cancel job
         cancel_current_task()
     if deposit.time_received is not None:
@@ -376,17 +377,20 @@ def check_deposit_status(deposit_id):
     if deposit.status == 'timeout':
         logger.info('deposit timeout (%s)', deposit.pk)
         cancel_current_task()
-    elif deposit.status == 'cancelled':
+    elif deposit.status == 'cancelled' and \
+            deposit.time_created + DEPOSIT_TIMEOUT < timezone.now():
+        # Stop monitoring of cancelled deposits only after timeout
         try:
             refund_deposit(deposit)
-        except RefundError:
-            pass
-        cancel_current_task()
+        except RefundError as error:
+            if error.message != 'Nothing to refund':
+                logger.exception(error)
+            cancel_current_task()
     elif deposit.status == 'failed':
         try:
             refund_deposit(deposit)
-        except RefundError:
-            pass
+        except RefundError as error:
+            logger.exception(error)
         logger.error(
             'payment failed (%s)',
             deposit.pk,

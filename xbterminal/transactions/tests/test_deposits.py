@@ -861,13 +861,22 @@ class CheckDepositStatusTestCase(TestCase):
 
     @patch('transactions.deposits.cancel_current_task')
     @patch('transactions.deposits.refund_deposit')
-    @patch('transactions.deposits.logger')
-    def test_cancelled(self, logger_mock, refund_mock, cancel_mock):
+    def test_cancelled(self, refund_mock, cancel_mock):
         deposit = DepositFactory(cancelled=True)
+        check_deposit_status(deposit.pk)
+        self.assertIs(cancel_mock.called, False)
+        self.assertIs(refund_mock.called, False)
+
+    @patch('transactions.deposits.cancel_current_task')
+    @patch('transactions.deposits.refund_deposit')
+    @patch('transactions.deposits.logger')
+    def test_cancelled_timeout(self, logger_mock, refund_mock, cancel_mock):
+        deposit = DepositFactory(cancelled=True, timeout=True)
+        refund_mock.side_effect = RefundError('Nothing to refund')
         check_deposit_status(deposit.pk)
         self.assertIs(cancel_mock.called, True)
         self.assertIs(refund_mock.called, True)
-        self.assertIs(logger_mock.error.called, False)
+        self.assertIs(logger_mock.exception.called, False)
 
 
 class CheckDepositConfirmationTestCase(TestCase):
