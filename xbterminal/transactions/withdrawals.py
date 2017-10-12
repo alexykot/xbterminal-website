@@ -8,6 +8,7 @@ from django.utils import timezone
 from constance import config
 
 from api.utils.urls import get_admin_url
+from common.db import lock_table
 from common.rq_helpers import run_periodic_task, cancel_current_task
 from transactions.constants import (
     BTC_DEC_PLACES,
@@ -64,6 +65,8 @@ def prepare_withdrawal(device_or_account, amount):
         # and check balance
         reserved_sum = Decimal(0)
         balance_changes = []
+        # Ensure that balances are not changed during address selection
+        lock_table(BalanceChange)
         addresses = Address.objects.\
             filter(wallet_account__parent_key__coin_type=withdrawal.coin_type).\
             annotate(balance=Sum('balancechange__amount')).\
@@ -219,23 +222,22 @@ def check_withdrawal_status(withdrawal_id):
     Accepts:
         withdrawal_id: withdrawal ID, integer
     """
-    with atomic():
-        withdrawal = Withdrawal.objects.get(pk=withdrawal_id)
-        if withdrawal.status in ['timeout', 'cancelled']:
-            # Unlock reserved addresses
-            withdrawal.balancechange_set.all().delete()
-            cancel_current_task()
-        elif withdrawal.status in ['failed', 'unconfirmed']:
-            logger.error(
-                'withdrawal failed (%s)',
-                withdrawal.pk,
-                extra={'data': {
-                    'withdrawal_admin_url': get_admin_url(withdrawal),
-                }})
-            cancel_current_task()
-        elif withdrawal.status == 'confirmed':
-            # Success
-            cancel_current_task()
+    withdrawal = Withdrawal.objects.get(pk=withdrawal_id)
+    if withdrawal.status in ['timeout', 'cancelled']:
+        # Unlock reserved addresses
+        withdrawal.balancechange_set.all().delete()
+        cancel_current_task()
+    elif withdrawal.status in ['failed', 'unconfirmed']:
+        logger.error(
+            'withdrawal failed (%s)',
+            withdrawal.pk,
+            extra={'data': {
+                'withdrawal_admin_url': get_admin_url(withdrawal),
+            }})
+        cancel_current_task()
+    elif withdrawal.status == 'confirmed':
+        # Success
+        cancel_current_task()
 
 
 def check_withdrawal_confirmation(withdrawal):

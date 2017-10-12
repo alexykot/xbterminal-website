@@ -9,6 +9,7 @@ from constance import config
 
 from api.utils.urls import get_admin_url
 from common.rq_helpers import run_periodic_task, cancel_current_task
+from common.db import refresh_for_update
 from transactions.constants import (
     BTC_DEC_PLACES,
     BTC_MIN_OUTPUT,
@@ -110,7 +111,8 @@ def validate_payment(deposit, transactions, refund_addresses):
                 received_amount += output['amount']
     # Save deposit details
     with atomic():
-        deposit.refresh_from_db()
+        # Ensure that there is no race condition when saving TX IDs
+        deposit = refresh_for_update(deposit)
         deposit.paid_coin_amount = received_amount
         if refund_addresses:
             deposit.refund_address = refund_addresses[0]
@@ -251,13 +253,9 @@ def wait_for_confidence(deposit_id):
     else:
         # Update deposit status
         cancel_current_task()
-        with atomic():
-            deposit.refresh_from_db()
-            if deposit.time_cancelled is not None:
-                # Do not set broadcasted status for cancelled deposits
-                return
-            deposit.time_broadcasted = timezone.now()
-            deposit.save()
+        deposit.time_broadcasted = timezone.now()
+        deposit.save()
+        # TODO: prevent partial refund of cancelled deposits
         if deposit.paid_coin_amount > deposit.coin_amount:
             # Return extra coins to customer
             try:
@@ -304,6 +302,7 @@ def wait_for_confirmation(deposit_id):
         logger.info('payment confirmed (%s)', deposit.pk)
 
 
+@atomic
 def refund_deposit(deposit, only_extra=False):
     """
     Send all money back to customer
@@ -312,6 +311,8 @@ def refund_deposit(deposit, only_extra=False):
         only_extra: return only extra coins to customer, boolean
             return full amount by default
     """
+    # Ensure that refund TX is sent only once
+    deposit = refresh_for_update(deposit)
     if not only_extra and deposit.time_notified is not None:
         raise RefundError('User already notified')
     if deposit.refund_tx_id is not None:

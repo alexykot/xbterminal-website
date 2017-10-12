@@ -55,11 +55,12 @@ class WalletAccountTestCase(TestCase):
 
     def test_create(self):
         key = WalletKeyFactory()
-        account = WalletAccount.objects.create(
-            parent_key=key)
+        account = WalletAccount.objects.create(parent_key=key)
         self.assertEqual(account.index, 0)
         self.assertEqual(account.path, "0'/0'/0")
         self.assertEqual(str(account), account.path)
+        account_next = WalletAccount.objects.create(parent_key=key)
+        self.assertEqual(account_next.index, 1)
 
     def test_factory(self):
         account = WalletAccountFactory()
@@ -78,6 +79,10 @@ class AddressTestCase(TestCase):
         self.assertIs(address.address.startswith('1'), True)
         self.assertEqual(address.relative_path, '0/0/0')
         self.assertEqual(str(address), address.address)
+        address_next = account.address_set.create(is_change=False)
+        self.assertEqual(address_next.index, 1)
+        address_change = account.address_set.create(is_change=True)
+        self.assertEqual(address_change.index, 0)
 
     def test_factory_btc(self):
         address = AddressFactory()

@@ -97,7 +97,6 @@ class DepositViewSet(viewsets.GenericViewSet):
         return Response(serializer.data)
 
     @detail_route(methods=['POST'])
-    @atomic
     def cancel(self, *args, **kwargs):
         deposit = self.get_object()
         if deposit.status not in ['new', 'underpaid', 'received']:
@@ -165,9 +164,16 @@ class DepositViewSet(viewsets.GenericViewSet):
 
 class WithdrawalViewSet(viewsets.GenericViewSet):
 
-    queryset = Withdrawal.objects.all()
     lookup_field = 'uid'
     serializer_class = WithdrawalSerializer
+
+    def get_queryset(self):
+        queryset = Withdrawal.objects.all()
+        if self.action in ['confirm', 'cancel']:
+            # Ensure that withdrawal is sent only once
+            # Ensure that withdrawal will not be cancelled during sending
+            queryset = queryset.select_for_update()
+        return queryset
 
     def initialize_request(self, request, *args, **kwargs):
         """
@@ -204,6 +210,7 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
         return Response(serializer.data)
 
     @detail_route(methods=['POST'])
+    @atomic
     def confirm(self, request, uid=None):
         withdrawal = self.get_object()
         if not self._verify_signature(withdrawal.device):
@@ -220,6 +227,7 @@ class WithdrawalViewSet(viewsets.GenericViewSet):
         return Response(serializer.data)
 
     @detail_route(methods=['POST'])
+    @atomic
     def cancel(self, *args, **kwargs):
         withdrawal = self.get_object()
         if not self._verify_signature(withdrawal.device):

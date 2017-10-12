@@ -5,6 +5,7 @@ from django.db import models
 from django.db.models import Max
 from django.db.transaction import atomic
 
+from common.db import lock_table
 from wallet.constants import BIP44_PURPOSE, BIP44_COIN_TYPES, MAX_INDEX
 from wallet.utils.keys import derive_key, generate_p2pkh_script
 
@@ -55,8 +56,13 @@ class WalletAccount(models.Model):
 
     @atomic
     def save(self, *args, **kwargs):
-        if not self.pk and not self.index:
-            self.index = self.parent_key.walletaccount_set.count()
+        if not self.pk and self.index is None:
+            # Ensure that there is no race condition
+            # when index is determined
+            lock_table('wallet.WalletAccount')
+            max_index = self.parent_key.walletaccount_set.\
+                aggregate(Max('index'))['index__max']
+            self.index = max_index + 1 if max_index is not None else 0
         super(WalletAccount, self).save(*args, **kwargs)
 
 
@@ -104,9 +110,14 @@ class Address(models.Model):
 
     @atomic
     def save(self, *args, **kwargs):
-        if not self.pk:
-            self.index = self.wallet_account.address_set.\
-                filter(is_change=self.is_change).count()
+        if not self.pk and self.index is None:
+            # Ensure that there is no race condition
+            # when index is determined
+            lock_table('wallet.Address')
+            max_index = self.wallet_account.address_set.\
+                filter(is_change=self.is_change).\
+                aggregate(Max('index'))['index__max']
+            self.index = max_index + 1 if max_index is not None else 0
             self.address = self.get_script(as_address=True)
         super(Address, self).save(*args, **kwargs)
 
