@@ -196,6 +196,7 @@ def wait_for_payment(deposit_id):
         if len(transactions) > 1:
             logger.warning('multiple incoming tx')
         # Get refund addresses
+        # WARNING: input addresses may be not controlled by the sender
         tx_inputs = bc.get_tx_inputs(transactions[0])
         if len(tx_inputs) > 1:
             logger.warning('incoming tx contains more than one input')
@@ -333,8 +334,6 @@ def refund_deposit(deposit, only_extra=False):
         raise RefundError('Partial refund is not possible for cancelled deposits')
     if deposit.refund_tx_id is not None:
         raise RefundError('Deposit already refunded')
-    if not deposit.refund_address:
-        raise RefundError('No refund address')
     bc = BlockChain(deposit.coin.name)
     private_key = deposit.deposit_address.get_private_key()
     tx_inputs = []
@@ -342,6 +341,10 @@ def refund_deposit(deposit, only_extra=False):
     for output in bc.get_raw_unspent_outputs(deposit.deposit_address.address):
         tx_inputs.append(dict(output, private_key=private_key))
         tx_amount += output['amount']
+        if deposit.refund_address is None:
+            incoming_tx = bc.get_raw_transaction(output['txid'])
+            # WARNING: input addresses may be not controlled by the sender
+            deposit.refund_address = bc.get_tx_inputs(incoming_tx)[0]['address']
     if tx_amount == 0:
         raise RefundError('Nothing to refund')
     if only_extra:
@@ -359,6 +362,9 @@ def refund_deposit(deposit, only_extra=False):
         raise RefundError('Output is below dust threshold')
     deposit.refund_tx_id = bc.send_raw_transaction(refund_tx)
     deposit.refund_coin_amount = tx_amount
+    if not only_extra and deposit.paid_coin_amount != deposit.refund_coin_amount:
+        logger.warning('refunding unprocessed payments')
+        deposit.paid_coin_amount = deposit.refund_coin_amount
     deposit.save()
     deposit.create_balance_changes()
     logger.warning(
