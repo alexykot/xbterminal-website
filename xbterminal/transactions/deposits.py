@@ -13,6 +13,7 @@ from common.db import refresh_for_update
 from transactions.constants import (
     BTC_DEC_PLACES,
     BTC_MIN_OUTPUT,
+    DEPOSIT_TIMEOUT,
     DEPOSIT_CONFIDENCE_TIMEOUT,
     DEPOSIT_CONFIRMATION_TIMEOUT,
     PAYMENT_TYPES)
@@ -81,13 +82,18 @@ def prepare_deposit(device_or_account, amount):
     return deposit
 
 
-def validate_payment(deposit, transactions, refund_addresses):
+def validate_payment(deposit, transactions, refund_addresses,
+                     payment_type):
     """
     Validates payment and saves details to database
     Accepts:
         deposit: Deposit instance
         transactions: list of CTransaction
         refund_addresses: list of addresses
+        payment_type: one of PAYMENT_TYPES, integer
+    Returns:
+        True if deposit status changed to 'received'
+        False otherwise
     """
     bc = BlockChain(deposit.coin.name)
     incoming_tx_ids = set()
@@ -109,9 +115,16 @@ def validate_payment(deposit, transactions, refund_addresses):
         for output in bc.get_tx_outputs(incoming_tx):
             if output['address'] == deposit.deposit_address.address:
                 received_amount += output['amount']
+    if payment_type == PAYMENT_TYPES.BIP70 and \
+            received_amount < deposit.coin_amount:
+        # Throw error for underpaid BIP70 payments
+        raise InsufficientFunds
+
+    is_received = False
     # Save deposit details
     with atomic():
         # Ensure that there is no race condition when saving TX IDs
+        # and that cancelled deposit will not get received status
         deposit = refresh_for_update(deposit)
         deposit.paid_coin_amount = received_amount
         if refund_addresses:
@@ -119,10 +132,16 @@ def validate_payment(deposit, transactions, refund_addresses):
         for incoming_tx_id in incoming_tx_ids:
             if incoming_tx_id not in deposit.incoming_tx_ids:
                 deposit.incoming_tx_ids.append(incoming_tx_id)
+        if deposit.paid_coin_amount >= deposit.coin_amount and \
+                not deposit.time_received and \
+                not deposit.time_cancelled:
+            # Change status
+            deposit.payment_type = payment_type
+            deposit.time_received = timezone.now()
+            is_received = True
         deposit.save()
         deposit.create_balance_changes()
-    if deposit.status == 'underpaid':
-        raise InsufficientFunds
+    return is_received
 
 
 def handle_bip70_payment(deposit, payment_message):
@@ -133,6 +152,10 @@ def handle_bip70_payment(deposit, payment_message):
         payment_message: pb2-encoded message
     Returns:
         payment_ack: pb2-encoded message
+    Raises:
+        InvalidPaymentMessage
+        InvalidTransaction
+        InsufficientFunds
     """
     try:
         transactions, refund_addresses, payment_ack = \
@@ -141,12 +164,9 @@ def handle_bip70_payment(deposit, payment_message):
         logger.exception(error)
         raise InvalidPaymentMessage
     # Validate payment
-    validate_payment(deposit, transactions, refund_addresses)
-    # Update status
-    if deposit.time_received is None:
-        deposit.payment_type = PAYMENT_TYPES.BIP70
-        deposit.time_received = timezone.now()
-        deposit.save()
+    is_received = validate_payment(deposit, transactions, refund_addresses,
+                                   PAYMENT_TYPES.BIP70)
+    if is_received:
         run_periodic_task(wait_for_confidence, [deposit.pk], interval=5)
         logger.info('payment received (%s)', deposit.pk)
     return payment_ack
@@ -159,7 +179,7 @@ def wait_for_payment(deposit_id):
         deposit_id: integer
     """
     deposit = Deposit.objects.get(pk=deposit_id)
-    if deposit.status == 'timeout':
+    if deposit.time_created + DEPOSIT_TIMEOUT < timezone.now():
         # Timeout, cancel job
         cancel_current_task()
     if deposit.time_received is not None:
@@ -167,8 +187,8 @@ def wait_for_payment(deposit_id):
         cancel_current_task()
         return
     if deposit.time_cancelled is not None:
+        # Cancel job, but check deposit address for the last time
         cancel_current_task()
-        return
     # Connect to bitcoind
     bc = BlockChain(deposit.coin.name)
     transactions = bc.get_unspent_transactions(deposit.deposit_address.address)
@@ -182,20 +202,15 @@ def wait_for_payment(deposit_id):
         refund_addresses = [inp['address'] for inp in tx_inputs]
         # Validate payment
         try:
-            validate_payment(deposit, transactions, refund_addresses)
-        except InsufficientFunds:
-            # Don't cancel task, wait for next transaction
-            pass
+            is_received = validate_payment(
+                deposit, transactions, refund_addresses,
+                PAYMENT_TYPES.BIP21)
         except Exception as error:
             cancel_current_task()
             logger.exception(error)
         else:
-            cancel_current_task()
-            # Update status and wait for confidence
-            if deposit.time_received is None:
-                deposit.payment_type = PAYMENT_TYPES.BIP21
-                deposit.time_received = timezone.now()
-                deposit.save()
+            if is_received:
+                cancel_current_task()
                 run_periodic_task(wait_for_confidence, [deposit.pk], interval=5)
                 logger.info('payment received (%s)', deposit.pk)
 
@@ -215,8 +230,8 @@ def wait_for_confidence(deposit_id):
         cancel_current_task()
         return
     if deposit.time_cancelled is not None:
-        cancel_current_task()
-        return
+        # This task could not be started for cancelled deposits
+        raise AssertionError
     bc = BlockChain(deposit.coin.name)
     for incoming_tx_id in deposit.incoming_tx_ids:
         try:
@@ -255,7 +270,6 @@ def wait_for_confidence(deposit_id):
         cancel_current_task()
         deposit.time_broadcasted = timezone.now()
         deposit.save()
-        # TODO: prevent partial refund of cancelled deposits
         if deposit.paid_coin_amount > deposit.coin_amount:
             # Return extra coins to customer
             try:
@@ -315,6 +329,8 @@ def refund_deposit(deposit, only_extra=False):
     deposit = refresh_for_update(deposit)
     if not only_extra and deposit.time_notified is not None:
         raise RefundError('User already notified')
+    if only_extra and deposit.time_cancelled is not None:
+        raise RefundError('Partial refund is not possible for cancelled deposits')
     if deposit.refund_tx_id is not None:
         raise RefundError('Deposit already refunded')
     if not deposit.refund_address:
@@ -360,17 +376,23 @@ def check_deposit_status(deposit_id):
         deposit_id: deposit ID, integer
     """
     deposit = Deposit.objects.get(pk=deposit_id)
-    if deposit.status in ['timeout', 'cancelled']:
+    if deposit.status == 'timeout':
+        logger.info('deposit timeout (%s)', deposit.pk)
+        cancel_current_task()
+    elif deposit.status == 'cancelled' and \
+            deposit.time_created + DEPOSIT_TIMEOUT < timezone.now():
+        # Stop monitoring of cancelled deposits only after timeout
         try:
             refund_deposit(deposit)
-        except RefundError:
-            pass
-        cancel_current_task()
+        except RefundError as error:
+            if error.message != 'Nothing to refund':
+                logger.exception(error)
+            cancel_current_task()
     elif deposit.status == 'failed':
         try:
             refund_deposit(deposit)
-        except RefundError:
-            pass
+        except RefundError as error:
+            logger.exception(error)
         logger.error(
             'payment failed (%s)',
             deposit.pk,
