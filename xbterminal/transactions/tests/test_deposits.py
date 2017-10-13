@@ -725,6 +725,8 @@ class RefundDepositTestCase(TestCase):
         self.assertEqual(bc_mock.get_raw_unspent_outputs.call_count, 1)
         self.assertEqual(bc_mock.get_raw_unspent_outputs.call_args[0][0],
                          deposit.deposit_address.address)
+        self.assertIs(bc_mock.get_raw_transaction.called, False)
+        self.assertIs(bc_mock.get_tx_inputs.called, False)
         self.assertEqual(bc_mock.get_tx_fee.call_args[0], (1, 2))
         tx_inputs = create_tx_mock.call_args[0][0]
         self.assertEqual(len(tx_inputs), 1)
@@ -791,14 +793,37 @@ class RefundDepositTestCase(TestCase):
         self.assertEqual(context.exception.message,
                          'Deposit already refunded')
 
-    def test_no_refund_address(self):
+    @patch('transactions.deposits.BlockChain')
+    @patch('transactions.deposits.create_tx')
+    def test_payment_not_processed(self, create_tx_mock, bc_cls_mock):
         deposit = DepositFactory(
             cancelled=True,
+            timeout=True,
             refund_address=None)
-        with self.assertRaises(RefundError) as context:
-            refund_deposit(deposit)
-        self.assertEqual(context.exception.message,
-                         'No refund address')
+        refund_address = 'a' * 32
+        bc_cls_mock.return_value = bc_mock = Mock(**{
+            'get_raw_unspent_outputs.return_value': [{
+                'txid': '9' * 64,
+                'amount': Decimal('0.01'),
+            }],
+            'get_tx_inputs.return_value': [{
+                'address': refund_address,
+                'amount': Decimal('0.01'),
+            }],
+            'get_tx_fee.return_value': Decimal('0.0005'),
+            'send_raw_transaction.return_value': '6' * 64,
+        })
+        refund_deposit(deposit)
+
+        deposit.refresh_from_db()
+        self.assertEqual(deposit.balancechange_set.count(), 0)
+        self.assertEqual(bc_mock.get_raw_transaction.call_args[0][0],
+                         '9' * 64)
+        self.assertIs(bc_mock.get_tx_inputs.called, True)
+        tx_outputs = create_tx_mock.call_args[0][1]
+        self.assertEqual(len(tx_outputs.keys()), 1)
+        self.assertEqual(tx_outputs[refund_address],
+                         Decimal('0.0095'))
 
     @patch('transactions.deposits.BlockChain')
     def test_nothing_to_send(self, bc_cls_mock):
