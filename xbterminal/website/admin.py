@@ -23,6 +23,7 @@ class LanguageAdmin(admin.ModelAdmin):
 @admin.register(models.Currency)
 class CurrencyAdmin(admin.ModelAdmin):
 
+    list_display = ['name', 'is_fiat', 'is_enabled']
     readonly_fields = [
         'name',
         'prefix',

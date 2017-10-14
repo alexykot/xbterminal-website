@@ -153,8 +153,10 @@ class Currency(models.Model):
         max_digits=20,
         decimal_places=8,
         default=0)
+    is_enabled = models.BooleanField()
 
     class Meta:
+        ordering = ('is_fiat', 'id')
         verbose_name_plural = 'currencies'
 
     def __unicode__(self):
