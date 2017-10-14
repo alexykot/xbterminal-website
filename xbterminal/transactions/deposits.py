@@ -18,6 +18,7 @@ from transactions.constants import (
     DEPOSIT_CONFIRMATION_TIMEOUT,
     PAYMENT_TYPES)
 from transactions.exceptions import (
+    TransactionError,
     DustOutput,
     InvalidTransaction,
     InsufficientFunds,
@@ -50,6 +51,8 @@ def prepare_deposit(device_or_account, amount):
     elif isinstance(device_or_account, Account):
         device = None
         account = device_or_account
+    if not account.currency.is_enabled:
+        raise TransactionError('Account is disabled')
     # Create new address
     deposit_address = Address.create(account.currency.name,
                                      is_change=False)

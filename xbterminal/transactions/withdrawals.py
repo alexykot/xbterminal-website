@@ -45,6 +45,8 @@ def prepare_withdrawal(device_or_account, amount):
     elif isinstance(device_or_account, Account):
         device = None
         account = device_or_account
+    if not account.currency.is_enabled:
+        raise TransactionError('Account is disabled')
     if device is not None and amount > device.max_payout:
         raise TransactionError(
             'Amount exceeds max payout for current device')

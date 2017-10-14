@@ -113,6 +113,15 @@ class PrepareWithdrawalTestCase(TestCase):
         change_address = withdrawal.balancechange_set.get(amount__gt=0).address
         self.assertEqual(get_address_balance(change_address), Decimal('0.004'))
 
+    def test_currency_disabled(self):
+        device = DeviceFactory(account__currency__name='TBTC')
+        device.account.currency.is_enabled = False
+        with self.assertRaises(TransactionError) as context:
+            prepare_withdrawal(device, Decimal('10.00'))
+        self.assertEqual(
+            context.exception.message,
+            'Account is disabled')
+
     @patch('transactions.withdrawals.get_exchange_rate')
     @patch('transactions.withdrawals.BlockChain')
     def test_max_payout(self, bc_cls_mock, get_rate_mock):
