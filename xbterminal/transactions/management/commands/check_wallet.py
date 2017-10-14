@@ -8,7 +8,7 @@ from transactions.utils.compat import (
     get_account_balance,
     get_fee_account_balance)
 from wallet.models import Address
-from website.models import Account
+from website.models import Currency, Account
 
 logger = logging.getLogger(__name__)
 
@@ -18,21 +18,27 @@ class Command(BaseCommand):
     help = 'Check database balances'
 
     def add_arguments(self, parser):
-        parser.add_argument('currency', type=str)
+        parser.add_argument('currency', type=str, nargs='?', default=None)
 
     def handle(self, *args, **options):
-        for line in check_wallet(options['currency']):
-            self.stdout.write(line)
+        currencies = Currency.objects.filter(is_fiat=False, is_enabled=True)
+        if options['currency']:
+            currencies = currencies.filter(name=options['currency'])
+            if not currencies.exists():
+                self.stdout.write(self.style.ERROR('invalid currency name'))
+        for currency in currencies:
+            for line in check_wallet(currency):
+                self.stdout.write(line)
 
 
-def check_wallet(currency_name):
-    bc = BlockChain(currency_name)
+def check_wallet(currency):
+    bc = BlockChain(currency.name)
     wallet_value = Decimal(0)
     db_value = Decimal(0)
     pool_size = 0
-    for account in Account.objects.filter(currency__name=currency_name):
+    for account in Account.objects.filter(currency=currency):
         db_value += get_account_balance(account, include_offchain=False)
-    coin_type = get_coin_type(currency_name)
+    coin_type = get_coin_type(currency.name)
     db_value += get_fee_account_balance(coin_type, include_offchain=False)
     for address in Address.objects.filter(
             wallet_account__parent_key__coin_type=coin_type):
@@ -43,8 +49,11 @@ def check_wallet(currency_name):
     if wallet_value != db_value:
         logger.critical(
             'balance mismatch on %s wallet (%s != %s)',
-            currency_name, wallet_value, db_value)
-        yield 'balance mismatch, {0} != {1}'.format(wallet_value, db_value)
+            currency.name, wallet_value, db_value)
+        yield '{0}: balance mismatch, {1} != {2}'.format(
+            currency.name,
+            wallet_value,
+            db_value)
     else:
-        yield 'total balance {}'.format(wallet_value)
-    yield 'address pool size {}'.format(pool_size)
+        yield '{0}: total balance {1}'.format(currency.name, wallet_value)
+    yield '{0}: address pool size {1}'.format(currency.name, pool_size)

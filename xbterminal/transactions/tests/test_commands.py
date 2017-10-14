@@ -50,8 +50,8 @@ class CheckWalletTestCase(TestCase):
         output = buffer.getvalue().splitlines()
         self.assertEqual(
             output[0],
-            'total balance {}'.format(expected_balance))
-        self.assertEqual(output[1], 'address pool size 3')
+            'BTC: total balance {}'.format(expected_balance))
+        self.assertEqual(output[1], 'BTC: address pool size 3')
 
     @patch('transactions.management.commands.check_wallet.BlockChain')
     @patch('transactions.management.commands.check_wallet.logger')
@@ -71,5 +71,22 @@ class CheckWalletTestCase(TestCase):
         output = buffer.getvalue().splitlines()
         self.assertEqual(
             output[0],
-            'balance mismatch, {0} != {1}'.format(wallet_balance, bch.amount))
-        self.assertEqual(output[1], 'address pool size 1')
+            'BTC: balance mismatch, {0} != {1}'.format(
+                wallet_balance, bch.amount))
+        self.assertEqual(output[1], 'BTC: address pool size 1')
+
+    @patch('transactions.management.commands.check_wallet.check_wallet')
+    def test_all_coins(self, check_wallet_mock):
+        call_command('check_wallet')
+
+        currencies = set(call[0][0].name for call in
+                         check_wallet_mock.call_args_list)
+        self.assertEqual(currencies, {'BTC', 'TBTC', 'DASH', 'TDASH'})
+
+    @patch('transactions.management.commands.check_wallet.check_wallet')
+    def test_invalid_currency_name(self, check_wallet_mock):
+        buffer = StringIO()
+        call_command('check_wallet', 'XXX', stdout=buffer)
+
+        self.assertIn('invalid currency name', buffer.getvalue())
+        self.assertIs(check_wallet_mock.called, False)
