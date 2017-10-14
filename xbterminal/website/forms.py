@@ -343,7 +343,8 @@ class DeviceForm(forms.ModelForm):
         self.merchant = kwargs.pop('merchant')
         super(DeviceForm, self).__init__(*args, **kwargs)
         self.fields['account'].queryset = self.merchant.account_set.\
-            filter(currency__is_fiat=False)
+            filter(currency__is_fiat=False).\
+            filter(currency__is_enabled=True)
         self.fields['account'].required = True
         # Configure fields for hardware terminal
         terminal_settings_fields = [
