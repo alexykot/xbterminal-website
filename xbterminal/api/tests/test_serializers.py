@@ -14,7 +14,7 @@ from website.tests.factories import (
     DeviceFactory)
 from api.serializers import (
     MerchantSerializer,
-    PaymentInitSerializer,
+    DepositInitSerializer,
     DepositSerializer,
     WithdrawalInitSerializer,
     WithdrawalSerializer,
@@ -39,7 +39,7 @@ class MerchantSerializerTestCase(TestCase):
                          merchant.verification_status)
 
 
-class PaymentInitSerializerTestCase(TestCase):
+class DepositInitSerializerTestCase(TestCase):
 
     def test_validate_with_device(self):
         device = DeviceFactory.create(status='active')
@@ -47,7 +47,7 @@ class PaymentInitSerializerTestCase(TestCase):
             'device': device.key,
             'amount': '1.25',
         }
-        serializer = PaymentInitSerializer(data=data)
+        serializer = DepositInitSerializer(data=data)
         self.assertTrue(serializer.is_valid())
         self.assertEqual(serializer.validated_data['device'].pk,
                          device.pk)
@@ -61,7 +61,7 @@ class PaymentInitSerializerTestCase(TestCase):
             'account': account.pk,
             'amount': '1.25',
         }
-        serializer = PaymentInitSerializer(data=data)
+        serializer = DepositInitSerializer(data=data)
         self.assertTrue(serializer.is_valid())
         self.assertEqual(serializer.validated_data['account'].pk,
                          account.pk)
@@ -70,7 +70,7 @@ class PaymentInitSerializerTestCase(TestCase):
         data = {
             'amount': '1.25',
         }
-        serializer = PaymentInitSerializer(data=data)
+        serializer = DepositInitSerializer(data=data)
         self.assertFalse(serializer.is_valid())
         self.assertEqual(serializer.errors['non_field_errors'][0],
                          'Either device or account must be specified.')
@@ -80,7 +80,7 @@ class PaymentInitSerializerTestCase(TestCase):
             'device': '120313',
             'amount': '1.25',
         }
-        serializer = PaymentInitSerializer(data=data)
+        serializer = DepositInitSerializer(data=data)
         self.assertFalse(serializer.is_valid())
         self.assertEqual(serializer.errors['device'][0],
                          'Invalid device key.')
@@ -92,7 +92,7 @@ class PaymentInitSerializerTestCase(TestCase):
             'amount': '1.25',
             'bt_mac': '00:11:22:33:44'
         }
-        serializer = PaymentInitSerializer(data=data)
+        serializer = DepositInitSerializer(data=data)
         self.assertFalse(serializer.is_valid())
         self.assertEqual(serializer.errors['bt_mac'][0],
                          'This value does not match the required pattern.')

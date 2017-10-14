@@ -16,7 +16,7 @@ from website.models import Device, DeviceBatch
 from website.utils.devices import get_device_info
 
 from api.serializers import (
-    PaymentInitSerializer,
+    DepositInitSerializer,
     DepositSerializer,
     WithdrawalInitSerializer,
     WithdrawalSerializer,
@@ -57,7 +57,7 @@ class DepositViewSet(viewsets.GenericViewSet):
         return queryset
 
     def create(self, *args, **kwargs):
-        serializer = PaymentInitSerializer(data=self.request.data)
+        serializer = DepositInitSerializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         # Prepare deposit
         try:

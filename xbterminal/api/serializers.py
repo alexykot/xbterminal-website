@@ -28,7 +28,7 @@ class MerchantSerializer(serializers.ModelSerializer):
         ]
 
 
-class PaymentInitSerializer(serializers.Serializer):
+class DepositInitSerializer(serializers.Serializer):
 
     device = serializers.CharField(required=False)
     account = serializers.CharField(required=False)
