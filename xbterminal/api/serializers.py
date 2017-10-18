@@ -162,6 +162,13 @@ class DeviceSerializer(serializers.ModelSerializer):
             'settings',
         ]
 
+    def to_representation(self, device):
+        # TODO: remove
+        result = super(DeviceSerializer, self).to_representation(device)
+        if result['bitcoin_network'] is None:
+            del result['bitcoin_network']
+        return result
+
     def get_bitcoin_network(self, device):
         try:
             return device.bitcoin_network
