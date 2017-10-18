@@ -166,7 +166,7 @@ class DeviceSerializer(serializers.ModelSerializer):
         try:
             return device.bitcoin_network
         except ValueError:
-            return 'mainnet'
+            return None
 
     def get_language(self, device):
         if device.status == 'registered':

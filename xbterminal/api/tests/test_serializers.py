@@ -219,7 +219,7 @@ class DeviceSerializerTestCase(TestCase):
         device = DeviceFactory(account__currency__name='DASH')
         data = DeviceSerializer(device).data
         self.assertEqual(data['coin'], 'DASH')
-        self.assertEqual(data['bitcoin_network'], 'mainnet')
+        self.assertIsNone(data['bitcoin_network'])
 
 
 class DeviceRegistrationSerializerTestCase(TestCase):
