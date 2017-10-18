@@ -1,4 +1,4 @@
-from fabric.api import task, prefix, local
+from fabric.api import task, prefix, local, settings, hide, abort
 
 
 @task
@@ -25,8 +25,20 @@ def unit(target='website operations api transactions wallet'):
         local('coverage report -i')
 
 
+@task
+def migrations():
+    with prefix('. venv/bin/activate'):
+        with settings(hide('output'), warn_only=True):
+            result = local(
+                'python xbterminal/manage.py makemigrations --dry-run',
+                capture=True)
+    if result and "Migrations for '" in result:
+        abort('New migrations detected')
+
+
 @task(default=True)
 def all():
     style()
     security()
     unit()
+    migrations()
