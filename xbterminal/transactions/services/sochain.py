@@ -3,6 +3,7 @@ import requests
 SOCHAIN_NETWORKS = {
     'BTC': 'BTC',
     'TBTC': 'BTCTEST',
+    'DASH': 'DASH',
 }
 
 

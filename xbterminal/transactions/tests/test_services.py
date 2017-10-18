@@ -26,11 +26,21 @@ class WrappersTestCase(TestCase):
         so_mock.return_value = 0.95
         result = wrappers.is_tx_reliable('tx_id', 0.9, 'BTC')
         self.assertIs(result, True)
+        self.assertEqual(bc_mock.call_args[0], ('tx_id', 'BTC'))
 
     @patch('transactions.services.wrappers.blockcypher.get_tx_confidence')
-    def test_is_tx_reliable_dash(self, bc_mock):
+    @patch('transactions.services.wrappers.sochain.get_tx_confidence')
+    def test_is_tx_reliable_dash(self, so_mock, bc_mock):
+        bc_mock.return_value = 0.95
         result = wrappers.is_tx_reliable('tx_id', 0.9, 'DASH')
         self.assertIs(result, True)
+        self.assertIs(bc_mock.called, True)
+        self.assertIs(so_mock.called, False)
+
+    @patch('transactions.services.wrappers.blockcypher.get_tx_confidence')
+    def test_is_tx_reliable_no_service(self, bc_mock):
+        result = wrappers.is_tx_reliable('tx_id', 0.9, 'TDASH')
+        self.assertIs(result, False)
         self.assertIs(bc_mock.called, False)
 
     @patch('transactions.services.wrappers.blockcypher.get_tx_confidence')

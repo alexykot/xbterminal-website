@@ -2,8 +2,9 @@ import requests
 from constance import config
 
 BLOCKCYPHER_CHAINS = {
-    'BTC': 'main',
-    'TBTC': 'test3',
+    'BTC': 'btc/main',
+    'TBTC': 'btc/test3',
+    'DASH': 'dash/main',
 }
 
 BLOCKCYPHER_CHAINS_LIVE = {
@@ -16,7 +17,7 @@ def get_tx_confidence(tx_id, coin_name):
     """
     http://dev.blockcypher.com/#transaction-confidence-endpoint
     """
-    api_url = 'https://api.blockcypher.com/v1/btc/{chain}/txs/{tx_id}'.format(
+    api_url = 'https://api.blockcypher.com/v1/{chain}/txs/{tx_id}'.format(
         chain=BLOCKCYPHER_CHAINS[coin_name],
         tx_id=tx_id)
     payload = {'includeConfidence': 'true'}
