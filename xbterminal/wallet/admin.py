@@ -64,6 +64,8 @@ class AddressAdmin(admin.ModelAdmin):
         'address',
     ]
     list_filter = ['wallet_account__parent_key__coin_type']
+    ordering = ['-id']
+    search_fields = ['address']
 
     def has_add_permission(self, request):
         return False

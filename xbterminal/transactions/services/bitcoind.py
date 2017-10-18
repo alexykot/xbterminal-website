@@ -1,15 +1,13 @@
 from decimal import Decimal
-import urllib
 
 from bitcoin.rpc import RawProxy, InvalidAddressOrKeyError
 
 from django.conf import settings
 from constance import config
-from pycoin.key.validate import is_address_valid as is_address_valid_
 from pycoin.serialize import b2h_rev
 from pycoin.tx import Tx
 
-from transactions.constants import BTC_DEC_PLACES, BTC_MIN_FEE
+from transactions.constants import COIN_DEC_PLACES, COIN_MIN_FEE
 from transactions.exceptions import (
     DoubleSpend,
     TransactionModified)
@@ -24,8 +22,8 @@ class BlockChain(object):
 
     def __init__(self, coin_name):
         self.pycoin_code = getattr(COINS, coin_name).pycoin_code
-        network = get_bitcoin_network(coin_name)
         if hasattr(settings, 'BITCOIND_SERVERS'):
+            network = get_bitcoin_network(coin_name)
             config = settings.BITCOIND_SERVERS[network]
         else:
             config = settings.BLOCKCHAINS[coin_name]
@@ -52,7 +50,7 @@ class BlockChain(object):
         Accepts:
             address: string
         Returns:
-            balance: BTC amount (Decimal)
+            balance: coin amount (Decimal)
         """
         minconf = 0
         txouts = self._proxy.listunspent(minconf, self.MAXCONF, [address])
@@ -204,51 +202,9 @@ class BlockChain(object):
         elif settings.DEBUG and fee_per_kb < config.TX_DEFAULT_FEE:
             # Always use TX_DEFAULT_FEE in stage and dev environments
             fee_per_kb = config.TX_DEFAULT_FEE
-        elif fee_per_kb <= BTC_MIN_FEE:
-            fee_per_kb = BTC_MIN_FEE
+        elif fee_per_kb <= COIN_MIN_FEE:
+            fee_per_kb = COIN_MIN_FEE
         return get_tx_fee(n_inputs, n_outputs, fee_per_kb)
-
-
-def construct_bitcoin_uri(address, amount_btc, name, *request_urls):
-    """
-    https://github.com/bitcoin/bips/blob/master/bip-0021.mediawiki
-    Accepts:
-        address: CBitcoinAddress
-        amount_btc: Decimal
-        name: merchant name
-        request_urls: urls, strings
-    Returns:
-        bitcoin uri: string
-    """
-    amount_btc = amount_btc.quantize(Decimal('0.00000000'))
-    uri = "bitcoin:{0}?amount={1}&label={2}&message={3}".format(
-        str(address),
-        str(amount_btc),
-        urllib.quote(name),
-        urllib.quote(name))
-    for idx, request_url in enumerate(request_urls):
-        param_name = "r" if idx == 0 else "r{0}".format(idx)
-        uri += "&{0}={1}".format(param_name, request_url)
-    return uri
-
-
-def validate_bitcoin_address(address, coin_name):
-    """
-    Validate address
-    Accepts:
-        address: string
-        coin_name: coin name or None
-    Returns:
-        error message or None
-    """
-    if coin_name is not None:
-        pycoin_code = getattr(COINS, coin_name).pycoin_code
-        if not is_address_valid_(address,
-                                 allowable_netcodes=[pycoin_code]):
-            return 'Invalid address for coin {0}.'.format(coin_name)
-    else:
-        if not is_address_valid_(address):
-            return 'Invalid address.'
 
 
 def get_tx_fee(n_inputs, n_outputs, fee_per_kb):
@@ -261,4 +217,4 @@ def get_tx_fee(n_inputs, n_outputs, fee_per_kb):
     """
     tx_size = n_inputs * 148 + n_outputs * 34 + 10 + n_inputs
     fee = (fee_per_kb / 1024) * tx_size
-    return fee.quantize(BTC_DEC_PLACES)
+    return fee.quantize(COIN_DEC_PLACES)

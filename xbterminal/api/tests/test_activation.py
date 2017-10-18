@@ -1,6 +1,9 @@
 import datetime
 from mock import Mock, patch
+
 from django.test import TestCase
+
+from django_fsm import TransitionNotAllowed
 from rq.job import NoSuchJobError
 
 from api.utils.activation import (
@@ -20,10 +23,14 @@ class ActivationTestCase(TestCase):
     @patch('api.utils.activation.rq_helpers.run_periodic_task')
     def test_start(self, run_periodic_mock, run_mock):
         merchant = MerchantAccountFactory.create(currency__name='USD')
-        AccountFactory.create(merchant=merchant, currency__name='BTC')
-        AccountFactory.create(merchant=merchant, currency__name='GBP')
-        account_usd = AccountFactory.create(merchant=merchant,
-                                            currency__name='USD')
+        account_gbp = AccountFactory(merchant=merchant,  # noqa: F841
+                                     currency__name='GBP')
+        account_usd = AccountFactory(merchant=merchant,  # noqa: F841
+                                     currency__name='USD')
+        account_btc = AccountFactory(merchant=merchant,
+                                     currency__name='BTC')
+        account_tbtc = AccountFactory(merchant=merchant,  # noqa: F841
+                                      currency__name='TBTC')
         device = DeviceFactory.create(status='registered')
         start(device, merchant)
         self.assertTrue(run_mock.called)
@@ -32,7 +39,7 @@ class ActivationTestCase(TestCase):
         device_updated = Device.objects.get(pk=device.pk)
         self.assertEqual(device_updated.status, 'activation_in_progress')
         self.assertEqual(device_updated.merchant.pk, merchant.pk)
-        self.assertEqual(device_updated.account.pk, account_usd.pk)
+        self.assertEqual(device_updated.account.pk, account_btc.pk)
         self.assertEqual(device.amount_1,
                          merchant.currency.amount_1)
         self.assertEqual(device.amount_2,
@@ -42,7 +49,7 @@ class ActivationTestCase(TestCase):
         self.assertEqual(device.amount_shift,
                          merchant.currency.amount_shift)
         self.assertEqual(device.max_payout,
-                         account_usd.currency.max_payout)
+                         account_btc.currency.max_payout)
 
     @patch('api.utils.activation.rq_helpers.run_task')
     @patch('api.utils.activation.rq_helpers.run_periodic_task')
@@ -65,6 +72,13 @@ class ActivationTestCase(TestCase):
         self.assertEqual(device_updated.status, 'active')
         self.assertEqual(device_updated.merchant.pk, merchant.pk)
         self.assertEqual(device_updated.account.pk, account.pk)
+
+    def test_start_no_account(self):
+        merchant = MerchantAccountFactory.create(currency__name='GBP')
+        AccountFactory(merchant=merchant, currency__name='GBP')
+        device = DeviceFactory.create(status='registered')
+        with self.assertRaises(TransitionNotAllowed):
+            start(device, merchant)
 
     @patch('api.utils.activation.Salt')
     @patch('api.utils.activation.get_latest_version')

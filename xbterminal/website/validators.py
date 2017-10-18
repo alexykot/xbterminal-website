@@ -4,8 +4,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 
 from api.utils.crypto import load_public_key
-from transactions.services.bitcoind import \
-    validate_bitcoin_address as validate_bitcoin_address_
+from transactions.utils.payments import \
+    validate_address as validate_coin_address_
 
 
 def validate_percent(value):
@@ -34,10 +34,14 @@ validate_name = RegexValidator(
     code='invalid_name')
 
 
-def validate_bitcoin_address(address, coin_name=None):
-    error_message = validate_bitcoin_address_(address, coin_name)
+def validate_coin_address(address, coin_name=None):
+    error_message = validate_coin_address_(address, coin_name)
     if error_message is not None:
         raise ValidationError(error_message)
+
+
+# TODO: remove alias
+validate_bitcoin_address = validate_coin_address
 
 
 def validate_public_key(value):

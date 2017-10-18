@@ -16,7 +16,7 @@ from website.models import Device, DeviceBatch
 from website.utils.devices import get_device_info
 
 from api.serializers import (
-    PaymentInitSerializer,
+    DepositInitSerializer,
     DepositSerializer,
     WithdrawalInitSerializer,
     WithdrawalSerializer,
@@ -35,7 +35,8 @@ from transactions.exceptions import TransactionError
 from transactions.models import Deposit, Withdrawal
 from transactions.deposits import prepare_deposit, handle_bip70_payment
 from transactions.withdrawals import prepare_withdrawal, send_transaction
-from transactions.services.bitcoind import construct_bitcoin_uri
+from transactions.utils.payments import construct_payment_uri
+from transactions.utils.bip70 import get_bip70_content_type
 
 from common import rq_helpers
 
@@ -56,7 +57,7 @@ class DepositViewSet(viewsets.GenericViewSet):
         return queryset
 
     def create(self, *args, **kwargs):
-        serializer = PaymentInitSerializer(data=self.request.data)
+        serializer = DepositInitSerializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         # Prepare deposit
         try:
@@ -80,7 +81,8 @@ class DepositViewSet(viewsets.GenericViewSet):
             payment_bluetooth_request = deposit.create_payment_request(
                 payment_bluetooth_url)
             # Send payment request in response
-            data['payment_uri'] = construct_bitcoin_uri(
+            data['payment_uri'] = construct_payment_uri(
+                deposit.coin.name,
                 deposit.deposit_address.address,
                 deposit.coin_amount,
                 deposit.merchant.company_name,
@@ -88,7 +90,8 @@ class DepositViewSet(viewsets.GenericViewSet):
                 payment_request_url)
             data['payment_request'] = payment_bluetooth_request.encode('base64')
         else:
-            data['payment_uri'] = construct_bitcoin_uri(
+            data['payment_uri'] = construct_payment_uri(
+                deposit.coin.name,
                 deposit.deposit_address.address,
                 deposit.coin_amount,
                 deposit.merchant.company_name,
@@ -128,7 +131,10 @@ class DepositViewSet(viewsets.GenericViewSet):
             kwargs={'uid': deposit.uid})
         payment_request = deposit.create_payment_request(
             payment_response_url)
-        response = Response(payment_request)
+        response = Response(
+            payment_request,
+            content_type=get_bip70_content_type(
+                deposit.coin.name, 'paymentrequest'))
         response['Content-Transfer-Encoding'] = 'binary'
         return response
 
@@ -144,7 +150,7 @@ class DepositViewSet(viewsets.GenericViewSet):
             raise Http404
         # Check and parse message
         content_type = self.request.META.get('CONTENT_TYPE')
-        if content_type != 'application/bitcoin-payment':
+        if content_type != get_bip70_content_type(deposit.coin.name, 'payment'):
             return Response(status=status.HTTP_400_BAD_REQUEST)
         if len(self.request.body) > 50000:
             # Payment messages larger than 50,000 bytes should be rejected by server
@@ -154,7 +160,10 @@ class DepositViewSet(viewsets.GenericViewSet):
         except Exception as error:
             logger.exception(error)
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        response = Response(payment_ack)
+        response = Response(
+            payment_ack,
+            content_type=get_bip70_content_type(
+                deposit.coin.name, 'paymentack'))
         response['Content-Transfer-Encoding'] = 'binary'
         return response
 

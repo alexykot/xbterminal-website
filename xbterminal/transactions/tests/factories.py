@@ -11,7 +11,7 @@ from pycoin.networks import address_prefix_for_netcode
 
 from transactions import models
 from transactions.constants import (
-    BTC_DEC_PLACES,
+    COIN_DEC_PLACES,
     PAYMENT_TYPES,
     DEPOSIT_TIMEOUT,
     DEPOSIT_CONFIDENCE_TIMEOUT,
@@ -118,12 +118,12 @@ class DepositFactory(factory.DjangoModelFactory):
 
     @factory.lazy_attribute
     def merchant_coin_amount(self):
-        return (self.amount / self.exchange_rate).quantize(BTC_DEC_PLACES)
+        return (self.amount / self.exchange_rate).quantize(COIN_DEC_PLACES)
 
     @factory.lazy_attribute
     def fee_coin_amount(self):
         return (self.amount * Decimal(config.OUR_FEE_SHARE) /
-                self.exchange_rate).quantize(BTC_DEC_PLACES)
+                self.exchange_rate).quantize(COIN_DEC_PLACES)
 
     @factory.post_generation
     def time_created(self, create, extracted, **kwargs):
@@ -202,7 +202,7 @@ class WithdrawalFactory(factory.DjangoModelFactory):
 
     @factory.lazy_attribute
     def customer_coin_amount(self):
-        return (self.amount / self.exchange_rate).quantize(BTC_DEC_PLACES)
+        return (self.amount / self.exchange_rate).quantize(COIN_DEC_PLACES)
 
     @factory.post_generation
     def time_created(self, create, extracted, **kwargs):

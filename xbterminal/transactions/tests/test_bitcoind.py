@@ -5,22 +5,41 @@ from mock import patch, Mock
 from constance.test import override_config
 
 from transactions.exceptions import TransactionModified, DoubleSpend
-from transactions.constants import BTC_MIN_FEE
-from transactions.services.bitcoind import (
-    BlockChain,
-    validate_bitcoin_address,
-    get_tx_fee)
+from transactions.constants import COIN_MIN_FEE
+from transactions.services.bitcoind import BlockChain, get_tx_fee
 
 
 class BlockChainTestCase(TestCase):
 
+    @override_settings(BLOCKCHAINS={
+        'BTC': {
+            'HOST': 'localhost',
+            'PORT': 8332,
+            'USER': 'test',
+            'PASSWORD': 'test',
+        },
+    })
     @patch('transactions.services.bitcoind.RawProxy')
-    def test_init(self, proxy_cls_mock):
+    def test_init_btc(self, proxy_cls_mock):
         bc = BlockChain('BTC')
-        self.assertTrue(proxy_cls_mock.called)
         service_url = proxy_cls_mock.call_args[0][0]
-        self.assertTrue(service_url.startswith('http'))
+        self.assertEqual(service_url, 'http://test:test@localhost:8332')
         self.assertEqual(bc.pycoin_code, 'BTC')
+
+    @override_settings(BLOCKCHAINS={
+        'DASH': {
+            'HOST': 'localhost',
+            'PORT': 9998,
+            'USER': 'test',
+            'PASSWORD': 'test',
+        },
+    })
+    @patch('transactions.services.bitcoind.RawProxy')
+    def test_init_dash(self, proxy_cls_mock):
+        bc = BlockChain('DASH')
+        service_url = proxy_cls_mock.call_args[0][0]
+        self.assertEqual(service_url, 'http://test:test@localhost:9998')
+        self.assertEqual(bc.pycoin_code, 'DASH')
 
     @patch('transactions.services.bitcoind.RawProxy')
     def test_import_address(self, proxy_cls_mock):
@@ -307,23 +326,5 @@ class BlockChainTestCase(TestCase):
             'estimatefee.return_value': Decimal('0.00000223'),
         })
         bc = BlockChain('BTC')
-        expected_fee = get_tx_fee(1, 1, BTC_MIN_FEE)
+        expected_fee = get_tx_fee(1, 1, COIN_MIN_FEE)
         self.assertEqual(bc.get_tx_fee(1, 1), expected_fee)
-
-
-class UtilsTestCase(TestCase):
-
-    def test_address_validation(self):
-        main_addr = '1JpY93MNoeHJ914CHLCQkdhS7TvBM68Xp6'
-        self.assertIsNone(
-            validate_bitcoin_address(main_addr, 'BTC'))
-        test_addr = 'mxqpfcxzKnPfgZw8JKs7DU6m7DTysxBBWn'
-        self.assertIsNone(
-            validate_bitcoin_address(test_addr, 'TBTC'))
-        self.assertEqual(
-            validate_bitcoin_address(test_addr, 'BTC'),
-            'Invalid address for coin BTC.')
-        invalid_addr = '1wFSdAv9rGpA4CvX3UtxZpUwaumsWM68pC'
-        self.assertEqual(
-            validate_bitcoin_address(invalid_addr, None),
-            'Invalid address.')

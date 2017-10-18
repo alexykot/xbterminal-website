@@ -1,22 +1,23 @@
 import logging
 
-from transactions.services import coindesk, btcaverage, blockcypher, sochain
+from transactions.services import (
+    coinmarketcap,
+    blockcypher,
+    dashorg,
+    sochain)
 
 logger = logging.getLogger(__name__)
 
 
-def get_exchange_rate(currency_name):
+def get_exchange_rate(currency_name, coin_name):
     """
     Accepts:
-        currency_code: 3-letter code
+        currency_code: currency name (fiat)
+        coin_name: coin name (crypto)
     Returns:
         exchange_rate: Decimal
     """
-    try:
-        return coindesk.get_exchange_rate(currency_name)
-    except Exception as error:
-        logger.exception(error)
-        return btcaverage.get_exchange_rate(currency_name)
+    return coinmarketcap.get_exchange_rate(currency_name, coin_name)
 
 
 def is_tx_reliable(tx_id, threshold, coin_name):
@@ -28,6 +29,9 @@ def is_tx_reliable(tx_id, threshold, coin_name):
     Returns:
         boolean
     """
+    if coin_name not in blockcypher.BLOCKCYPHER_CHAINS:
+        # TODO: find confidence service for DASH
+        return True
     try:
         confidence = blockcypher.get_tx_confidence(tx_id, coin_name)
     except Exception as error:
@@ -43,3 +47,17 @@ def is_tx_reliable(tx_id, threshold, coin_name):
         return True
     else:
         return False
+
+
+def get_tx_url(tx_id, coin_name):
+    if coin_name in blockcypher.BLOCKCYPHER_CHAINS_LIVE:
+        return blockcypher.get_tx_url(tx_id, coin_name)
+    elif coin_name in dashorg.DASHORG_DOMAINS:
+        return dashorg.get_tx_url(tx_id, coin_name)
+
+
+def get_address_url(address, coin_name):
+    if coin_name in blockcypher.BLOCKCYPHER_CHAINS_LIVE:
+        return blockcypher.get_address_url(address, coin_name)
+    elif coin_name in dashorg.DASHORG_DOMAINS:
+        return dashorg.get_address_url(address, coin_name)

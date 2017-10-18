@@ -2,26 +2,36 @@ from decimal import Decimal
 from django.test import TestCase
 from mock import patch, Mock
 
-from transactions.services import wrappers, blockcypher, sochain
+from transactions.services import (
+    wrappers,
+    blockcypher,
+    dashorg,
+    sochain,
+    coinmarketcap)
 
 
 class WrappersTestCase(TestCase):
 
-    @patch('transactions.services.wrappers.coindesk.get_exchange_rate')
-    @patch('transactions.services.wrappers.btcaverage.get_exchange_rate')
-    def test_get_exchage_rate(self, btcavg_mock, coindesk_mock):
-        coindesk_mock.side_effect = ValueError
-        btcavg_mock.return_value = Decimal('200')
-        rate = wrappers.get_exchange_rate('USD')
-        self.assertEqual(rate, Decimal('200'))
+    @patch('transactions.services.wrappers.coinmarketcap.get_exchange_rate')
+    def test_get_exchage_rate(self, cmc_mock):
+        cmc_mock.return_value = Decimal('3000.0')
+        rate = wrappers.get_exchange_rate('USD', 'BTC')
+        self.assertEqual(rate, Decimal('3000.0'))
+        self.assertIs(cmc_mock.called, True)
 
     @patch('transactions.services.wrappers.blockcypher.get_tx_confidence')
     @patch('transactions.services.wrappers.sochain.get_tx_confidence')
-    def test_is_tx_reliable(self, so_mock, bc_mock):
+    def test_is_tx_reliable_btc(self, so_mock, bc_mock):
         bc_mock.side_effect = ValueError
         so_mock.return_value = 0.95
         result = wrappers.is_tx_reliable('tx_id', 0.9, 'BTC')
         self.assertIs(result, True)
+
+    @patch('transactions.services.wrappers.blockcypher.get_tx_confidence')
+    def test_is_tx_reliable_dash(self, bc_mock):
+        result = wrappers.is_tx_reliable('tx_id', 0.9, 'DASH')
+        self.assertIs(result, True)
+        self.assertIs(bc_mock.called, False)
 
     @patch('transactions.services.wrappers.blockcypher.get_tx_confidence')
     @patch('transactions.services.wrappers.sochain.get_tx_confidence')
@@ -30,6 +40,18 @@ class WrappersTestCase(TestCase):
         so_mock.side_effect = ValueError
         result = wrappers.is_tx_reliable('tx_id', 0.9, 'BTC')
         self.assertIs(result, False)
+
+    def test_get_tx_url(self):
+        btc_url = wrappers.get_tx_url('test', 'BTC')
+        self.assertIn('blockcypher.com', btc_url)
+        dash_url = wrappers.get_tx_url('test', 'DASH')
+        self.assertIn('dash.org', dash_url)
+
+    def test_get_address_url(self):
+        btc_url = wrappers.get_address_url('test', 'BTC')
+        self.assertIn('blockcypher.com', btc_url)
+        dash_url = wrappers.get_address_url('test', 'DASH')
+        self.assertIn('dash.org', dash_url)
 
 
 class BlockcypherTestCase(TestCase):
@@ -77,6 +99,21 @@ class BlockcypherTestCase(TestCase):
                          'https://live.blockcypher.com/btc/address/test/')
 
 
+class DashOrgTestCase(TestCase):
+
+    def test_get_tx_url(self):
+        tx = 'test'
+        result = dashorg.get_tx_url(tx, 'DASH')
+        self.assertEqual(result,
+                         'https://explorer.dash.org/tx/test')
+
+    def test_get_address_url(self):
+        address = 'test'
+        result = dashorg.get_address_url(address, 'DASH')
+        self.assertEqual(result,
+                         'https://explorer.dash.org/address/test')
+
+
 class SoChainTestCase(TestCase):
 
     @patch('transactions.services.sochain.requests.get')
@@ -110,3 +147,19 @@ class SoChainTestCase(TestCase):
 
         self.assertEqual(result, 1.0)
         self.assertIn('/BTC/', get_mock.call_args[0][0])
+
+
+class CoinMarketCapTestCase(TestCase):
+
+    @patch('transactions.services.coinmarketcap.requests.get')
+    def test_get_exchange_rate(self, get_mock):
+        get_mock.return_value = Mock(**{
+            'json.return_value': [{
+                'id': 'bitcoin',
+                'price_gbp': '3641.2160576',
+            }],
+        })
+        result = coinmarketcap.get_exchange_rate('GBP', 'BTC')
+
+        self.assertEqual(result, Decimal('3641.2160576'))
+        self.assertIn('/bitcoin/?convert=GBP', get_mock.call_args[0][0])

@@ -28,7 +28,7 @@ class MerchantSerializer(serializers.ModelSerializer):
         ]
 
 
-class PaymentInitSerializer(serializers.Serializer):
+class DepositInitSerializer(serializers.Serializer):
 
     device = serializers.CharField(required=False)
     account = serializers.CharField(required=False)
@@ -143,6 +143,10 @@ class WithdrawalSerializer(serializers.ModelSerializer):
 
 class DeviceSerializer(serializers.ModelSerializer):
 
+    coin = serializers.CharField(
+        source='account.currency.name',
+        read_only=True)
+    bitcoin_network = serializers.SerializerMethodField()
     language = serializers.SerializerMethodField()
     currency = serializers.SerializerMethodField()
     settings = serializers.SerializerMethodField()
@@ -151,11 +155,25 @@ class DeviceSerializer(serializers.ModelSerializer):
         model = Device
         fields = [
             'status',
-            'bitcoin_network',
+            'coin',
+            'bitcoin_network',  # TODO: remove field
             'language',
             'currency',
             'settings',
         ]
+
+    def to_representation(self, device):
+        # TODO: remove
+        result = super(DeviceSerializer, self).to_representation(device)
+        if result['bitcoin_network'] is None:
+            del result['bitcoin_network']
+        return result
+
+    def get_bitcoin_network(self, device):
+        try:
+            return device.bitcoin_network
+        except ValueError:
+            return None
 
     def get_language(self, device):
         if device.status == 'registered':

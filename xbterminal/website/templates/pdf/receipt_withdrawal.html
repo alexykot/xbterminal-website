@@ -28,7 +28,7 @@
     <tr>
         <td class="col1">{% trans 'Destination address' %}</td>
         <td class="col2">
-            <a class="external-link" href="{% btc_address_url withdrawal.customer_address withdrawal.coin.name %}">
+            <a class="external-link" href="{% coin_address_url withdrawal.customer_address withdrawal.coin.name %}">
                 {{ withdrawal.customer_address }}
             </a>
         </td>
@@ -36,7 +36,7 @@
     <tr>
         <td class="col1">{% trans 'Bitcoin transaction ID' %}</td>
         <td class="col2">
-            <a class="external-link" href="{% btc_tx_url withdrawal.outgoing_tx_id withdrawal.coin.name %}">
+            <a class="external-link" href="{% coin_tx_url withdrawal.outgoing_tx_id withdrawal.coin.name %}">
                 {{ withdrawal.outgoing_tx_id }}
             </a>
         </td>

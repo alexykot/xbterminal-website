@@ -37,6 +37,18 @@ CURRENCIES = [
         'postfix': 'tBTC',
         'is_fiat': False,
     },
+    {
+        'id': 7,
+        'name': 'DASH',
+        'postfix': 'DASH',
+        'is_fiat': False,
+    },
+    {
+        'id': 8,
+        'name': 'TDASH',
+        'postfix': 'tDASH',
+        'is_fiat': False,
+    },
 ]
 
 

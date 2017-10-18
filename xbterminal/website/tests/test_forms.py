@@ -376,13 +376,21 @@ class AccountFormTestCase(TestCase):
         self.assertIn('forward_address', form.errors)
 
     def test_update_btc_invalid_forward_address(self):
-        account = AccountFactory.create(currency__name='TBTC')
+        account = AccountFactory.create()
         form_data = {
-            'forward_address': '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9vE',
+            'forward_address': '1PWVL1fW7Ysomg9rXNsS8ng5ZzURa2p9v',
         }
         form = AccountForm(data=form_data, instance=account)
         self.assertFalse(form.is_valid())
         self.assertIn('forward_address', form.errors)
+
+    def test_update_dash(self):
+        account = AccountFactory(currency__name='DASH')
+        form_data = {
+            'forward_address': 'XfXzCt8S7atiVyqnGZdeXunjArgnkuLCc5',
+        }
+        form = AccountForm(data=form_data, instance=account)
+        self.assertIs(form.is_valid(), True)
 
     def test_update_gbp(self):
         account = AccountFactory.create(currency__name='GBP')

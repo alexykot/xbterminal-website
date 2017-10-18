@@ -28,12 +28,13 @@ from website.validators import (
     validate_phone,
     validate_post_code,
     validate_name,
-    validate_bitcoin_address,
+    validate_coin_address,
     validate_public_key)
 from website.utils.files import (
     get_verification_file_name,
     verification_file_path_gen)
 from common.uids import generate_alphanumeric_code, generate_b58_uid
+from transactions.constants import COIN_DEC_PLACES
 from transactions.utils.compat import (
     get_bitcoin_network,
     get_account_balance,
@@ -152,8 +153,10 @@ class Currency(models.Model):
         max_digits=20,
         decimal_places=8,
         default=0)
+    is_enabled = models.BooleanField()
 
     class Meta:
+        ordering = ('is_fiat', 'id')
         verbose_name_plural = 'currencies'
 
     def __unicode__(self):
@@ -368,13 +371,13 @@ BITCOIN_NETWORKS = [
 
 class Account(models.Model):
     """
-    Represents internal BTC account or external instantfiat account
+    Represents internal crypto account or external instantfiat account
     """
     merchant = models.ForeignKey(MerchantAccount)
     currency = models.ForeignKey(Currency)
     forward_address = models.CharField(
         max_length=35,
-        validators=[validate_bitcoin_address],
+        validators=[validate_coin_address],
         blank=True,
         null=True)
     instantfiat = models.BooleanField()
@@ -402,10 +405,10 @@ class Account(models.Model):
         unique_together = ('merchant', 'currency')
 
     def __unicode__(self):
-        if self.currency.name in ['BTC', 'TBTC']:
-            balance_str = '{0:.8f}'.format(self.balance)
-        else:
+        if self.currency.is_fiat:
             balance_str = '{0:.2f}'.format(self.balance)
+        else:
+            balance_str = '{0:.8f}'.format(self.balance)
         return u'{name} - {balance}'.format(
             name=self.currency.name,
             balance=balance_str)
@@ -427,7 +430,7 @@ class Account(models.Model):
     @property
     def balance_min(self):
         result = self.device_set.aggregate(models.Sum('max_payout'))
-        return result['max_payout__sum'] or Decimal('0.00000000')
+        return result['max_payout__sum'] or COIN_DEC_PLACES
 
     @property
     def balance_max(self):
@@ -472,7 +475,7 @@ class Address(models.Model):
     address = models.CharField(
         max_length=35,
         unique=True,
-        validators=[validate_bitcoin_address])
+        validators=[validate_coin_address])
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -741,6 +744,7 @@ class Device(models.Model):
 
     @property
     def bitcoin_network(self):
+        # WARNING: deprecated, must be used only for API v1
         if self.account:
             return get_bitcoin_network(self.account.currency.name)
         else:

@@ -11,8 +11,8 @@ from api.utils.urls import get_admin_url
 from common.db import lock_table
 from common.rq_helpers import run_periodic_task, cancel_current_task
 from transactions.constants import (
-    BTC_DEC_PLACES,
-    BTC_MIN_OUTPUT,
+    COIN_DEC_PLACES,
+    COIN_MIN_OUTPUT,
     WITHDRAWAL_CONFIDENCE_TIMEOUT,
     WITHDRAWAL_CONFIRMATION_TIMEOUT)
 from transactions.exceptions import TransactionError, TransactionModified
@@ -21,8 +21,9 @@ from transactions.utils.compat import (
     get_address_balance,
     get_account_balance)
 from transactions.utils.tx import create_tx
+from transactions.utils.payments import validate_address
 from transactions.services.wrappers import get_exchange_rate, is_tx_reliable
-from transactions.services.bitcoind import BlockChain, validate_bitcoin_address
+from transactions.services.bitcoind import BlockChain
 from wallet.models import Address
 from website.models import Device, Account
 
@@ -44,6 +45,8 @@ def prepare_withdrawal(device_or_account, amount):
     elif isinstance(device_or_account, Account):
         device = None
         account = device_or_account
+    if not account.currency.is_enabled:
+        raise TransactionError('Account is disabled')
     if device is not None and amount > device.max_payout:
         raise TransactionError(
             'Amount exceeds max payout for current device')
@@ -55,10 +58,11 @@ def prepare_withdrawal(device_or_account, amount):
         amount=amount,
         coin=account.currency)
     # Get exchange rate and calculate customer amount
-    exchange_rate = get_exchange_rate(withdrawal.currency.name)
+    exchange_rate = get_exchange_rate(withdrawal.currency.name,
+                                      withdrawal.coin.name)
     withdrawal.customer_coin_amount = (withdrawal.amount / exchange_rate).\
-        quantize(BTC_DEC_PLACES)
-    if withdrawal.customer_coin_amount < BTC_MIN_OUTPUT:
+        quantize(COIN_DEC_PLACES)
+    if withdrawal.customer_coin_amount < COIN_MIN_OUTPUT:
         raise TransactionError('Customer coin amount is below dust threshold')
     with atomic():
         # Find unspent outputs which are not reserved by other withdrawals
@@ -88,7 +92,7 @@ def prepare_withdrawal(device_or_account, amount):
         logger.info('reserved funds on %s addresses', len(balance_changes))
         # Calculate change amount
         change_coin_amount = reserved_sum - withdrawal.coin_amount
-        if change_coin_amount < BTC_MIN_OUTPUT:
+        if change_coin_amount < COIN_MIN_OUTPUT:
             withdrawal.customer_coin_amount += change_coin_amount
         else:
             change_address = Address.create(withdrawal.coin.name, is_change=True)
@@ -114,8 +118,8 @@ def send_transaction(withdrawal, customer_address):
         customer_address: bitcoin address, string
     """
     # Validate customer address
-    error_message = validate_bitcoin_address(customer_address,
-                                             withdrawal.coin.name)
+    error_message = validate_address(customer_address,
+                                     withdrawal.coin.name)
     if error_message:
         raise TransactionError(error_message)
     else:

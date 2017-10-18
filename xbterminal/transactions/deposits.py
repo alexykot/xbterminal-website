@@ -11,13 +11,14 @@ from api.utils.urls import get_admin_url
 from common.rq_helpers import run_periodic_task, cancel_current_task
 from common.db import refresh_for_update
 from transactions.constants import (
-    BTC_DEC_PLACES,
-    BTC_MIN_OUTPUT,
+    COIN_DEC_PLACES,
+    COIN_MIN_OUTPUT,
     DEPOSIT_TIMEOUT,
     DEPOSIT_CONFIDENCE_TIMEOUT,
     DEPOSIT_CONFIRMATION_TIMEOUT,
     PAYMENT_TYPES)
 from transactions.exceptions import (
+    TransactionError,
     DustOutput,
     InvalidTransaction,
     InsufficientFunds,
@@ -50,6 +51,8 @@ def prepare_deposit(device_or_account, amount):
     elif isinstance(device_or_account, Account):
         device = None
         account = device_or_account
+    if not account.currency.is_enabled:
+        raise TransactionError('Account is disabled')
     # Create new address
     deposit_address = Address.create(account.currency.name,
                                      is_change=False)
@@ -65,16 +68,17 @@ def prepare_deposit(device_or_account, amount):
     bc = BlockChain(deposit.coin.name)
     bc.import_address(deposit_address.address, rescan=False)
     # Get exchange rate
-    exchange_rate = get_exchange_rate(deposit.currency.name)
+    exchange_rate = get_exchange_rate(deposit.currency.name,
+                                      deposit.coin.name)
     # Merchant amount
     deposit.merchant_coin_amount = (deposit.amount /
-                                    exchange_rate).quantize(BTC_DEC_PLACES)
-    if deposit.merchant_coin_amount < BTC_MIN_OUTPUT:
-        deposit.merchant_coin_amount = BTC_MIN_OUTPUT
+                                    exchange_rate).quantize(COIN_DEC_PLACES)
+    if deposit.merchant_coin_amount < COIN_MIN_OUTPUT:
+        deposit.merchant_coin_amount = COIN_MIN_OUTPUT
     # Fee
     deposit.fee_coin_amount = (deposit.amount *
                                Decimal(config.OUR_FEE_SHARE) /
-                               exchange_rate).quantize(BTC_DEC_PLACES)
+                               exchange_rate).quantize(COIN_DEC_PLACES)
     deposit.save()
     # Wait for payment
     run_periodic_task(wait_for_payment, [deposit.pk], interval=2)
@@ -97,7 +101,7 @@ def validate_payment(deposit, transactions, refund_addresses,
     """
     bc = BlockChain(deposit.coin.name)
     incoming_tx_ids = set()
-    received_amount = BTC_DEC_PLACES
+    received_amount = COIN_DEC_PLACES
     for incoming_tx in transactions:
         # Validate and broadcast TX
         incoming_tx_id = incoming_tx.id()
@@ -337,7 +341,7 @@ def refund_deposit(deposit, only_extra=False):
     bc = BlockChain(deposit.coin.name)
     private_key = deposit.deposit_address.get_private_key()
     tx_inputs = []
-    tx_amount = BTC_DEC_PLACES
+    tx_amount = COIN_DEC_PLACES
     for output in bc.get_raw_unspent_outputs(deposit.deposit_address.address):
         tx_inputs.append(dict(output, private_key=private_key))
         tx_amount += output['amount']

@@ -31,6 +31,16 @@ class WalletKeyTestCase(TestCase):
         self.assertEqual(key.path, "0'/1'")
         self.assertIs(key.private_key.startswith('tprv'), True)
 
+    def test_factory_dash(self):
+        key = WalletKeyFactory(coin_type=BIP44_COIN_TYPES.DASH)
+        self.assertEqual(key.path, "0'/5'")
+        self.assertIs(key.private_key.startswith('drkv'), True)
+
+    def test_factory_tdash(self):
+        key = WalletKeyFactory(coin_type=BIP44_COIN_TYPES.TDASH)
+        self.assertEqual(key.path, "0'/1005'")
+        self.assertIs(key.private_key.startswith('DRKV'), True)
+
     def test_factory_already_created(self):
         key_1 = WalletKeyFactory()
         key_2 = WalletKeyFactory()
@@ -93,6 +103,16 @@ class AddressTestCase(TestCase):
         address = AddressFactory(
             wallet_account__parent_key__coin_type=BIP44_COIN_TYPES.TBTC)
         self.assertIn(address.address[0], ['m', 'n'])
+
+    def test_factory_dash(self):
+        address = AddressFactory(
+            wallet_account__parent_key__coin_type=BIP44_COIN_TYPES.DASH)
+        self.assertIs(address.address.startswith('X'), True)
+
+    def test_factory_tdash(self):
+        address = AddressFactory(
+            wallet_account__parent_key__coin_type=BIP44_COIN_TYPES.TDASH)
+        self.assertIs(address.address.startswith('y'), True)
 
     def test_unique_index(self):
         account = WalletAccountFactory()

@@ -41,6 +41,8 @@ class PrepareWithdrawalTestCase(TestCase):
 
         self.assertEqual(get_rate_mock.call_args[0][0],
                          withdrawal.currency.name)
+        self.assertEqual(get_rate_mock.call_args[0][1],
+                         withdrawal.coin.name)
         self.assertEqual(bc_mock.get_tx_fee.call_count, 1)
         self.assertEqual(bc_mock.import_address.call_count, 1)
         self.assertEqual(run_task_mock.call_args[0][0].__name__,
@@ -110,6 +112,15 @@ class PrepareWithdrawalTestCase(TestCase):
         self.assertEqual(get_address_balance(bch_2.address), 0)
         change_address = withdrawal.balancechange_set.get(amount__gt=0).address
         self.assertEqual(get_address_balance(change_address), Decimal('0.004'))
+
+    def test_currency_disabled(self):
+        device = DeviceFactory(account__currency__name='TBTC')
+        device.account.currency.is_enabled = False
+        with self.assertRaises(TransactionError) as context:
+            prepare_withdrawal(device, Decimal('10.00'))
+        self.assertEqual(
+            context.exception.message,
+            'Account is disabled')
 
     @patch('transactions.withdrawals.get_exchange_rate')
     @patch('transactions.withdrawals.BlockChain')

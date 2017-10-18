@@ -5,7 +5,7 @@ import time
 from django.utils import timezone
 from rq.job import Job, NoSuchJobError
 
-from website.models import Account, Device
+from website.models import Device
 from api.utils.salt import Salt
 from api.utils.aptly import get_latest_version
 from common import rq_helpers
@@ -18,10 +18,9 @@ logger = logging.getLogger(__name__)
 
 def start(device, merchant):
     device.merchant = merchant
-    try:
-        device.account = merchant.account_set.get(currency=merchant.currency)
-    except Account.DoesNotExist:
-        device.account = merchant.account_set.get(currency__name='BTC')
+    device.account = merchant.account_set.\
+        filter(currency__is_fiat=False, currency__is_enabled=True).\
+        first()
     device.start_activation()
     device.save()
     activation_job_timeout = int(ACTIVATION_TIMEOUT.total_seconds()) + 600

@@ -6,6 +6,7 @@ from mock import patch, Mock
 
 from transactions.constants import PAYMENT_TYPES
 from transactions.exceptions import (
+    TransactionError,
     DustOutput,
     InvalidTransaction,
     InsufficientFunds,
@@ -63,6 +64,8 @@ class PrepareDepositTestCase(TestCase):
                          deposit.deposit_address.address)
         self.assertEqual(get_rate_mock.call_args[0][0],
                          deposit.currency.name)
+        self.assertEqual(get_rate_mock.call_args[0][1],
+                         deposit.coin.name)
         self.assertEqual(run_task_mock.call_count, 2)
         self.assertEqual(run_task_mock.call_args_list[0][0][0].__name__,
                          'wait_for_payment')
@@ -88,6 +91,15 @@ class PrepareDepositTestCase(TestCase):
             deposit.deposit_address.wallet_account.parent_key.coin_type,
             BIP44_COIN_TYPES.BTC)
         self.assertEqual(run_task_mock.call_count, 2)
+
+    def test_currency_disabled(self):
+        account = AccountFactory(currency__name='TBTC')
+        account.currency.is_enabled = False
+        with self.assertRaises(TransactionError) as context:
+            prepare_deposit(account, Decimal('10.00'))
+        self.assertEqual(
+            context.exception.message,
+            'Account is disabled')
 
 
 class ValidatePaymentTestCase(TestCase):

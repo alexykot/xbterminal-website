@@ -12,7 +12,7 @@ from website.validators import (
     validate_bitcoin_address,
     validate_transaction)
 
-from transactions.constants import BTC_DEC_PLACES
+from transactions.constants import COIN_DEC_PLACES
 from operations import (
     PAYMENT_TIMEOUT,
     PAYMENT_VALIDATION_TIMEOUT,
@@ -188,7 +188,7 @@ class PaymentOrder(models.Model):
 
     @property
     def effective_exchange_rate(self):
-        return (self.fiat_amount / self.btc_amount).quantize(BTC_DEC_PLACES)
+        return (self.fiat_amount / self.btc_amount).quantize(COIN_DEC_PLACES)
 
     def create_payment_request(self, response_url):
         return create_payment_request(
@@ -278,7 +278,7 @@ class WithdrawalOrder(models.Model):
 
     @property
     def effective_exchange_rate(self):
-        return (self.fiat_amount / self.btc_amount).quantize(BTC_DEC_PLACES)
+        return (self.fiat_amount / self.btc_amount).quantize(COIN_DEC_PLACES)
 
     @property
     def receipt_url(self):

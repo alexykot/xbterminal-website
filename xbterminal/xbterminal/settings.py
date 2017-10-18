@@ -249,6 +249,18 @@ BLOCKCHAINS = {
         'USER': 'xbt',
         'PASSWORD': 'xbt',
     },
+    'DASH': {
+        'HOST': 'localhost',
+        'PORT': 9998,
+        'USER': 'xbt',
+        'PASSWORD': 'xbt',
+    },
+    'TDASH': {
+        'HOST': 'localhost',
+        'PORT': 19998,
+        'USER': 'xbt',
+        'PASSWORD': 'xbt',
+    },
 }
 
 # Salt

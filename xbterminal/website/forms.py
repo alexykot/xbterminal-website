@@ -27,7 +27,7 @@ from website.models import (
 from website.widgets import (
     FileWidget,
     ForeignKeyWidget)
-from website.validators import validate_bitcoin_address
+from website.validators import validate_coin_address
 from website.utils.email import (
     send_registration_email,
     send_reset_password_email)
@@ -343,7 +343,8 @@ class DeviceForm(forms.ModelForm):
         self.merchant = kwargs.pop('merchant')
         super(DeviceForm, self).__init__(*args, **kwargs)
         self.fields['account'].queryset = self.merchant.account_set.\
-            filter(currency__is_fiat=False)
+            filter(currency__is_fiat=False).\
+            filter(currency__is_enabled=True)
         self.fields['account'].required = True
         # Configure fields for hardware terminal
         terminal_settings_fields = [
@@ -416,7 +417,7 @@ class DeviceAdminForm(forms.ModelForm):
             for address in addresses:
                 try:
                     if cleaned_data[address]:
-                        validate_bitcoin_address(
+                        validate_coin_address(
                             cleaned_data[address],
                             coin_name=account.currency.name)
                 except forms.ValidationError as error:
@@ -439,7 +440,7 @@ class AccountForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(AccountForm, self).__init__(*args, **kwargs)
         assert self.instance and self.instance.pk
-        if self.instance.currency.name in ['BTC', 'TBTC']:
+        if not self.instance.currency.is_fiat:
             del self.fields['bank_account_name']
             del self.fields['bank_account_bic']
             del self.fields['bank_account_iban']
@@ -455,7 +456,7 @@ class AccountForm(forms.ModelForm):
         forward_address = cleaned_data.get('forward_address')
         if forward_address:
             try:
-                validate_bitcoin_address(
+                validate_coin_address(
                     forward_address,
                     coin_name=self.instance.currency.name)
             except forms.ValidationError as error:

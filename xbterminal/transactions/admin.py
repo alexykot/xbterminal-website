@@ -5,7 +5,7 @@ from django.utils.safestring import mark_safe
 from transactions import models
 from transactions.deposits import check_deposit_confirmation
 from transactions.withdrawals import check_withdrawal_confirmation
-from transactions.services import blockcypher
+from transactions.services.wrappers import get_tx_url, get_address_url
 from api.utils.urls import get_link_to_object
 
 
@@ -14,7 +14,7 @@ def get_address_link(address, coin_name):
         return '-'
     return format_html(
         '<a target="_blank" href="{0}">{1}</a>',
-        blockcypher.get_address_url(address, coin_name),
+        get_address_url(address, coin_name),
         address)
 
 
@@ -23,7 +23,7 @@ def get_tx_link(tx_id, coin_name):
         return '-'
     return format_html(
         '<a target="_blank" href="{0}">{1}</a><br>',
-        blockcypher.get_tx_url(tx_id, coin_name),
+        get_tx_url(tx_id, coin_name),
         tx_id)
 
 

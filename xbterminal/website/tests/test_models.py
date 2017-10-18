@@ -90,30 +90,49 @@ class CurrencyTestCase(TestCase):
         self.assertEqual(gbp.amount_3, Decimal('10.00'))
         self.assertEqual(gbp.amount_shift, Decimal('0.05'))
         self.assertEqual(gbp.max_payout, 0)
+        self.assertIs(gbp.is_enabled, True)
 
     def test_fixture_usd(self):
         usd = Currency.objects.get(name='USD')
         self.assertEqual(usd.prefix, u'$')
         self.assertEqual(usd.postfix, '')
         self.assertIs(usd.is_fiat, True)
+        self.assertIs(usd.is_enabled, True)
 
     def test_fixture_eur(self):
         eur = Currency.objects.get(name='EUR')
         self.assertEqual(eur.prefix, u'€')
         self.assertEqual(eur.postfix, '')
         self.assertIs(eur.is_fiat, True)
+        self.assertIs(eur.is_enabled, True)
 
     def test_fixture_btc(self):
         btc = Currency.objects.get(name='BTC')
         self.assertEqual(btc.prefix, '')
         self.assertEqual(btc.postfix, 'BTC')
         self.assertIs(btc.is_fiat, False)
+        self.assertIs(btc.is_enabled, True)
 
     def test_fixture_tbtc(self):
         tbtc = Currency.objects.get(name='TBTC')
         self.assertEqual(tbtc.prefix, '')
         self.assertEqual(tbtc.postfix, 'tBTC')
         self.assertIs(tbtc.is_fiat, False)
+        self.assertIs(tbtc.is_enabled, True)
+
+    def test_fixture_dash(self):
+        dash = Currency.objects.get(name='DASH')
+        self.assertEqual(dash.prefix, '')
+        self.assertEqual(dash.postfix, 'DASH')
+        self.assertIs(dash.is_fiat, False)
+        self.assertIs(dash.is_enabled, True)
+
+    def test_fixture_tdash(self):
+        tdash = Currency.objects.get(name='TDASH')
+        self.assertEqual(tdash.prefix, '')
+        self.assertEqual(tdash.postfix, 'tDASH')
+        self.assertIs(tdash.is_fiat, False)
+        self.assertIs(tdash.is_enabled, True)
 
     def test_factory(self):
         gbp = CurrencyFactory.create()
