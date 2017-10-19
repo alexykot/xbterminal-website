@@ -77,12 +77,16 @@ class MerchantRegistrationFormTestCase(TestCase):
         oauth_app = Application.objects.get(user=merchant.user)
         self.assertEqual(oauth_app.client_id, form_data['contact_email'])
         # Accounts
-        self.assertEqual(merchant.account_set.count(), 1)
-        account_btc_internal = merchant.account_set.get(
-            currency__name='BTC', instantfiat=False)
-        self.assertEqual(account_btc_internal.balance, 0)
-        self.assertEqual(account_btc_internal.balance_max, 0)
-        self.assertIsNone(account_btc_internal.instantfiat_account_id)
+        self.assertEqual(merchant.account_set.count(), 2)
+        account_btc = merchant.account_set.get(currency__name='BTC')
+        self.assertEqual(account_btc.balance, 0)
+        self.assertEqual(account_btc.balance_max, 0)
+        self.assertIs(account_btc.instantfiat, False)
+        self.assertIsNone(account_btc.instantfiat_account_id)
+        account_dash = merchant.account_set.get(currency__name='DASH')
+        self.assertEqual(account_dash.balance, 0)
+        self.assertEqual(account_dash.balance_max, 0)
+        self.assertIs(account_dash.instantfiat, False)
         # Email
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to[0], form_data['contact_email'])

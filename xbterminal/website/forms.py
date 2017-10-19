@@ -199,11 +199,11 @@ class SimpleMerchantRegistrationForm(forms.ModelForm):
             client_type='confidential',
             authorization_grant_type='password',
             client_secret='AFoUFXG8orJ2H5ztnycc5a95')
-        # Create internal BTC account
-        Account.objects.create(
-            merchant=merchant,
-            currency=Currency.objects.get(name='BTC'),
-            instantfiat=False)
+        # Create default accounts
+        for currency_name in ['BTC', 'DASH']:
+            merchant.account_set.create(
+                currency=Currency.objects.get(name=currency_name),
+                instantfiat=False)
         # Send email
         send_registration_email(merchant.contact_email, password)
         return merchant
