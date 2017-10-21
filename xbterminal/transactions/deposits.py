@@ -397,7 +397,7 @@ def check_deposit_status(deposit_id):
         except RefundError as error:
             if error.message != 'Nothing to refund':
                 logger.exception(error)
-            cancel_current_task()
+        cancel_current_task()
     elif deposit.status == 'failed':
         try:
             refund_deposit(deposit)
