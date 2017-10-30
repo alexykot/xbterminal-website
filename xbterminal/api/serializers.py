@@ -143,37 +143,20 @@ class WithdrawalSerializer(serializers.ModelSerializer):
 
 class DeviceSerializer(serializers.ModelSerializer):
 
-    coin = serializers.CharField(
-        source='account.currency.name',
-        read_only=True)
-    bitcoin_network = serializers.SerializerMethodField()
     language = serializers.SerializerMethodField()
     currency = serializers.SerializerMethodField()
+    coin = serializers.SerializerMethodField()
     settings = serializers.SerializerMethodField()
 
     class Meta:
         model = Device
         fields = [
             'status',
-            'coin',
-            'bitcoin_network',  # TODO: remove field
             'language',
             'currency',
+            'coin',
             'settings',
         ]
-
-    def to_representation(self, device):
-        # TODO: remove
-        result = super(DeviceSerializer, self).to_representation(device)
-        if result['bitcoin_network'] is None:
-            del result['bitcoin_network']
-        return result
-
-    def get_bitcoin_network(self, device):
-        try:
-            return device.bitcoin_network
-        except ValueError:
-            return None
 
     def get_language(self, device):
         if device.status == 'registered':
@@ -195,6 +178,16 @@ class DeviceSerializer(serializers.ModelSerializer):
             'name': currency.name,
             'prefix': currency.prefix,
             'postfix': currency.postfix,
+        }
+
+    def get_coin(self, device):
+        if device.status == 'registered':
+            return None
+        coin = device.account.currency
+        return {
+            'name': coin.name,
+            'prefix': coin.prefix,
+            'postfix': coin.postfix,
         }
 
     def get_settings(self, device):

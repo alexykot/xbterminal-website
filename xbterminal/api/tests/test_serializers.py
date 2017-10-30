@@ -175,10 +175,9 @@ class DeviceSerializerTestCase(TestCase):
         device = DeviceFactory.create(status='registered')
         data = DeviceSerializer(device).data
         self.assertEqual(data['status'], 'registered')
-        self.assertIsNone(data['coin'])
-        self.assertEqual(data['bitcoin_network'], 'mainnet')
         self.assertEqual(data['language']['code'], 'en')
         self.assertEqual(data['currency']['name'], 'GBP')
+        self.assertIsNone(data['coin'])
         self.assertIsNone(data['settings']['amount_1'])
         self.assertIsNone(data['settings']['amount_2'])
         self.assertIsNone(data['settings']['amount_3'])
@@ -199,13 +198,16 @@ class DeviceSerializerTestCase(TestCase):
             merchant__currency=Currency.objects.get(name='EUR'))
         data = DeviceSerializer(device).data
         self.assertEqual(data['status'], 'active')
-        self.assertEqual(data['coin'], 'BTC')
-        self.assertEqual(data['bitcoin_network'], 'mainnet')
         self.assertEqual(data['language']['code'], 'de')
         self.assertEqual(data['language']['fractional_split'], '.')
         self.assertEqual(data['language']['thousands_split'], ',')
         self.assertEqual(data['currency']['name'], 'EUR')
         self.assertEqual(data['currency']['prefix'], u'€')
+        self.assertEqual(data['coin'], {
+            'name': 'BTC',
+            'prefix': '',
+            'postfix': 'BTC',
+        })
         self.assertEqual(data['settings']['amount_1'],
                          str(device.amount_1))
         self.assertEqual(data['settings']['amount_2'],
@@ -218,8 +220,11 @@ class DeviceSerializerTestCase(TestCase):
     def test_operational_dash(self):
         device = DeviceFactory(account__currency__name='DASH')
         data = DeviceSerializer(device).data
-        self.assertEqual(data['coin'], 'DASH')
-        self.assertNotIn('bitcoin_network', data)
+        self.assertEqual(data['coin'], {
+            'name': 'DASH',
+            'prefix': '',
+            'postfix': 'DASH',
+        })
 
 
 class DeviceRegistrationSerializerTestCase(TestCase):
