@@ -56,9 +56,9 @@ var paymentInit = function (form) {
         form.hide();
         $('.payment-init').show();
         $('.fiat-amount').text(
-            parseFloat(data.fiat_amount).toFixed(2));
-        $('.mbtc-amount').text(
-            (parseFloat(data.btc_amount) * 1000).toFixed(2));
+            parseFloat(data.amount).toFixed(2));
+        $('.coin-amount').text(
+            (parseFloat(data.coin_amount) * 1000).toFixed(2));
         $('.exchange-rate').text(
             (parseFloat(data.exchange_rate) / 1000).toFixed(3));
         $('.payment-request').

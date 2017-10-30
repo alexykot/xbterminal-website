@@ -17,7 +17,7 @@
     <div class="payment-init">
         <div class="payment-message-1">
             <div class="fiat-amount-wrapper">{{ account.merchant.currency.prefix }} <span class="fiat-amount"></span></div>
-            <div class="mbtc-amount-wrapper">m฿ <span class="mbtc-amount"></span></div>
+            <div class="coin-amount-wrapper"><span class="coin-amount"></span> m{{ account.currency.postfix }}</div>
         </div>
         <div class="payment-message-2">{% trans 'exchange rate' %}: <span class="exchange-rate"></span></div>
         <div class="payment-request"></div>

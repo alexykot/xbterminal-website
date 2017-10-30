@@ -19,20 +19,13 @@ body {
 
 .logo {
     float: left;
-    width: 33%;
-}
-
-.testnet-notice {
-    color: #AF1221;
-    float: left;
-    font-weight: bold;
-    width: 33%;
+    width: 50%;
 }
 
 .merchant-info {
     float: left;
     font-style: italic;
-    width: 33%;
+    width: 50%;
 }
 
 
@@ -81,7 +74,7 @@ body {
 }
 
 .payment-message-1 {
-    font-size: 2em;
+    font-size: 1.5em;
     margin-bottom: 10px;
 }
 
@@ -92,7 +85,7 @@ body {
     white-space: nowrap;
 }
 
-.payment-init .mbtc-amount-wrapper {
+.payment-init .coin-amount-wrapper {
     display: inline-block;
     text-align: right;
     min-width: 180px;
@@ -127,7 +120,6 @@ button {
     }
 
     .logo,
-    .testnet-notice,
     .merchant-info {
         float: none;
         width: 100%;
