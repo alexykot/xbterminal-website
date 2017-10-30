@@ -12,13 +12,21 @@
     </tr>
     <tr>
         <td class="col1">
-            {% trans 'Bitcoin amount withdrawn' %}
+            {% trans 'Cryptocurrency amount withdrawn' %}
         </td>
-        <td class="col2 btc-amount">m<span class="btc-symbol">&#xf15a;</span> {{ withdrawal.coin_amount|scale|floatformat:5 }}</td>
+        <td class="col2">
+            <!-- m<span class="btc-symbol">&#xf15a;</span> -->
+            {{ withdrawal.coin_amount|scale|floatformat:5 }}
+            m{{ withdrawal.coin.postfix }}
+        </td>
     </tr>
     <tr>
         <td class="col1">{% trans 'Network fee' %}</td>
-        <td class="col2 btc-amount">m<span class="btc-symbol">&#xf15a;</span> {{ withdrawal.tx_fee_coin_amount|scale|floatformat:5 }}</td>
+        <td class="col2">
+            <!-- m<span class="btc-symbol">&#xf15a;</span> -->
+            {{ withdrawal.tx_fee_coin_amount|scale|floatformat:5 }}
+            m{{ withdrawal.coin.postfix }}
+        </td>
     </tr>
     <tr>
         <td class="col1">{% trans 'Effective exchange rate' %}</td>
@@ -34,7 +42,7 @@
         </td>
     </tr>
     <tr>
-        <td class="col1">{% trans 'Bitcoin transaction ID' %}</td>
+        <td class="col1">{% trans 'Cryptocurrency transaction ID' %}</td>
         <td class="col2">
             <a class="external-link" href="{% coin_tx_url withdrawal.outgoing_tx_id withdrawal.coin.name %}">
                 {{ withdrawal.outgoing_tx_id }}

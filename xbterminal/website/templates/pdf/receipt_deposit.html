@@ -12,9 +12,13 @@
     </tr>
     <tr>
         <td class="col1">
-            {% trans 'Bitcoin amount paid' %}
+            {% trans 'Cryptocurrency amount paid' %}
         </td>
-        <td class="col2 btc-amount">m<span class="btc-symbol">&#xf15a;</span> {{ deposit.coin_amount|scale|floatformat:5 }}</td>
+        <td class="col2">
+            <!-- m<span class="btc-symbol">&#xf15a;</span> -->
+            {{ deposit.paid_coin_amount|scale|floatformat:5 }}
+            m{{ deposit.coin.postfix }}
+        </td>
     </tr>
     <tr>
         <td class="col1">{% trans 'Effective exchange rate' %}</td>
@@ -30,7 +34,7 @@
         </td>
     </tr>
     <tr>
-        <td class="col1">{% trans 'Bitcoin transaction ID' %}</td>
+        <td class="col1">{% trans 'Cryptocurrency transaction ID' %}</td>
         <td class="col2">
             {% for incoming_tx_id in deposit.incoming_tx_ids %}
             <a class="external-link" href="{% coin_tx_url incoming_tx_id deposit.coin.name %}">
