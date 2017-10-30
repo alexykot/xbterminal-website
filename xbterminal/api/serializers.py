@@ -63,6 +63,7 @@ class DepositInitSerializer(serializers.Serializer):
 
 class DepositSerializer(serializers.ModelSerializer):
 
+    # TODO: remove deprecated fields
     fiat_amount = serializers.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -75,6 +76,7 @@ class DepositSerializer(serializers.ModelSerializer):
         max_digits=18,
         decimal_places=8,
         source='paid_coin_amount')
+
     exchange_rate = serializers.DecimalField(
         max_digits=18,
         decimal_places=8,
@@ -87,6 +89,9 @@ class DepositSerializer(serializers.ModelSerializer):
             'fiat_amount',
             'btc_amount',
             'paid_btc_amount',
+            'amount',
+            'coin_amount',
+            'paid_coin_amount',
             'exchange_rate',
             'status',
         ]
@@ -110,6 +115,7 @@ class WithdrawalInitSerializer(serializers.Serializer):
 
 class WithdrawalSerializer(serializers.ModelSerializer):
 
+    # TODO: remove deprecated fields
     fiat_amount = serializers.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -122,6 +128,7 @@ class WithdrawalSerializer(serializers.ModelSerializer):
         max_digits=18,
         decimal_places=8,
         source='tx_fee_coin_amount')
+
     exchange_rate = serializers.DecimalField(
         max_digits=18,
         decimal_places=8,
@@ -135,6 +142,9 @@ class WithdrawalSerializer(serializers.ModelSerializer):
             'fiat_amount',
             'btc_amount',
             'tx_fee_btc_amount',
+            'amount',
+            'coin_amount',
+            'tx_fee_coin_amount',
             'exchange_rate',
             'address',
             'status',

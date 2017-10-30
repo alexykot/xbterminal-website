@@ -43,9 +43,11 @@ class DepositViewSetTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data
         self.assertEqual(data['uid'], deposit.uid)
-        self.assertEqual(data['fiat_amount'], '10.00')
-        self.assertEqual(data['btc_amount'], '0.05000000')
-        self.assertEqual(data['exchange_rate'], '200.00000000')
+        self.assertEqual(data['amount'], deposit.amount)
+        self.assertEqual(data['coin_amount'], deposit.coin_amount)
+        self.assertEqual(data['paid_coin_amount'], 0)
+        self.assertEqual(data['exchange_rate'],
+                         deposit.effective_exchange_rate)
         self.assertIn('payment_uri', data)
 
         self.assertEqual(prepare_mock.call_args[0][0], device)
@@ -73,9 +75,10 @@ class DepositViewSetTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data
         self.assertEqual(data['uid'], deposit.uid)
-        self.assertEqual(data['fiat_amount'], '10.00')
-        self.assertEqual(data['btc_amount'], '0.05000000')
-        self.assertEqual(data['exchange_rate'], '200.00000000')
+        self.assertEqual(data['amount'], deposit.amount)
+        self.assertEqual(data['coin_amount'], deposit.coin_amount)
+        self.assertEqual(data['exchange_rate'],
+                         deposit.effective_exchange_rate)
         self.assertIn('payment_uri', data)
         self.assertIn('payment_request', data)
 
@@ -99,9 +102,10 @@ class DepositViewSetTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data
         self.assertEqual(data['uid'], deposit.uid)
-        self.assertEqual(data['fiat_amount'], '10.00')
-        self.assertEqual(data['btc_amount'], '0.05000000')
-        self.assertEqual(data['exchange_rate'], '200.00000000')
+        self.assertEqual(data['amount'], deposit.amount)
+        self.assertEqual(data['coin_amount'], deposit.coin_amount)
+        self.assertEqual(data['exchange_rate'],
+                         deposit.effective_exchange_rate)
         self.assertIn('payment_uri', data)
         self.assertEqual(prepare_mock.call_args[0][0], account)
         self.assertEqual(prepare_mock.call_args[0][1], Decimal('10'))
@@ -334,10 +338,12 @@ class WithdrawalViewSetTestCase(APITestCase):
         response = view(request)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['uid'], withdrawal.uid)
-        self.assertEqual(response.data['btc_amount'],
-                         str(withdrawal.coin_amount))
+        self.assertEqual(response.data['amount'],
+                         withdrawal.amount)
+        self.assertEqual(response.data['coin_amount'],
+                         withdrawal.coin_amount)
         self.assertEqual(response.data['exchange_rate'],
-                         str(withdrawal.effective_exchange_rate))
+                         withdrawal.effective_exchange_rate)
         self.assertEqual(response.data['status'], 'new')
 
     def test_create_invalid_device_key(self):

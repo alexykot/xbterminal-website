@@ -104,13 +104,12 @@ class DepositSerializerTestCase(TestCase):
         deposit = DepositFactory(received=True)
         data = DepositSerializer(deposit).data
         self.assertEqual(data['uid'], deposit.uid)
-        self.assertEqual(data['fiat_amount'].rstrip('0'),
-                         str(deposit.amount).rstrip('0'))
-        self.assertEqual(data['btc_amount'], str(deposit.coin_amount))
-        self.assertEqual(data['paid_btc_amount'],
-                         str(deposit.paid_coin_amount))
+        self.assertEqual(data['amount'], deposit.amount)
+        self.assertEqual(data['coin_amount'], deposit.coin_amount)
+        self.assertEqual(data['paid_coin_amount'],
+                         deposit.paid_coin_amount)
         self.assertEqual(data['exchange_rate'],
-                         str(deposit.effective_exchange_rate))
+                         deposit.effective_exchange_rate)
         self.assertEqual(data['status'], deposit.status)
 
 
@@ -158,13 +157,13 @@ class WithdrawalSerializerTestCase(TestCase):
         withdrawal = WithdrawalFactory()
         data = WithdrawalSerializer(withdrawal).data
         self.assertEqual(data['uid'], withdrawal.uid)
-        self.assertEqual(data['fiat_amount'].rstrip('0'),
-                         str(withdrawal.amount).rstrip('0'))
-        self.assertEqual(data['btc_amount'], str(withdrawal.coin_amount))
-        self.assertEqual(data['tx_fee_btc_amount'].rstrip('0'),
-                         str(withdrawal.tx_fee_coin_amount))
+        self.assertEqual(data['amount'], withdrawal.amount)
+        self.assertEqual(data['coin_amount'],
+                         withdrawal.coin_amount)
+        self.assertEqual(data['tx_fee_coin_amount'],
+                         withdrawal.tx_fee_coin_amount)
         self.assertEqual(data['exchange_rate'],
-                         str(withdrawal.effective_exchange_rate))
+                         withdrawal.effective_exchange_rate)
         self.assertEqual(data['address'], withdrawal.customer_address)
         self.assertEqual(data['status'], withdrawal.status)
 
