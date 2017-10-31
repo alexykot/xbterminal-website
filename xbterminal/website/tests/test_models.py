@@ -108,28 +108,28 @@ class CurrencyTestCase(TestCase):
 
     def test_fixture_btc(self):
         btc = Currency.objects.get(name='BTC')
-        self.assertEqual(btc.prefix, '')
+        self.assertEqual(btc.prefix, u'\uf15a')
         self.assertEqual(btc.postfix, 'BTC')
         self.assertIs(btc.is_fiat, False)
         self.assertIs(btc.is_enabled, True)
 
     def test_fixture_tbtc(self):
         tbtc = Currency.objects.get(name='TBTC')
-        self.assertEqual(tbtc.prefix, '')
+        self.assertEqual(tbtc.prefix, u'\uf15a')
         self.assertEqual(tbtc.postfix, 'tBTC')
         self.assertIs(tbtc.is_fiat, False)
         self.assertIs(tbtc.is_enabled, True)
 
     def test_fixture_dash(self):
         dash = Currency.objects.get(name='DASH')
-        self.assertEqual(dash.prefix, '')
+        self.assertEqual(dash.prefix, u'\uf15b')
         self.assertEqual(dash.postfix, 'DASH')
         self.assertIs(dash.is_fiat, False)
         self.assertIs(dash.is_enabled, True)
 
     def test_fixture_tdash(self):
         tdash = Currency.objects.get(name='TDASH')
-        self.assertEqual(tdash.prefix, '')
+        self.assertEqual(tdash.prefix, u'\uf15b')
         self.assertEqual(tdash.postfix, 'tDASH')
         self.assertIs(tdash.is_fiat, False)
         self.assertIs(tdash.is_enabled, True)

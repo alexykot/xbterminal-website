@@ -15,17 +15,15 @@
             {% trans 'Cryptocurrency amount withdrawn' %}
         </td>
         <td class="col2">
-            <!-- m<span class="btc-symbol">&#xf15a;</span> -->
+            m<span class="coin-symbol">{{ withdrawal.coin.prefix }}</span>
             {{ withdrawal.coin_amount|scale|floatformat:5 }}
-            m{{ withdrawal.coin.postfix }}
         </td>
     </tr>
     <tr>
         <td class="col1">{% trans 'Network fee' %}</td>
         <td class="col2">
-            <!-- m<span class="btc-symbol">&#xf15a;</span> -->
+            m<span class="coin-symbol">{{ withdrawal.coin.prefix }}</span>
             {{ withdrawal.tx_fee_coin_amount|scale|floatformat:5 }}
-            m{{ withdrawal.coin.postfix }}
         </td>
     </tr>
     <tr>

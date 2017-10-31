@@ -204,7 +204,7 @@ class DeviceSerializerTestCase(TestCase):
         self.assertEqual(data['currency']['prefix'], u'€')
         self.assertEqual(data['coin'], {
             'name': 'BTC',
-            'prefix': '',
+            'prefix': u'\uf15a',
             'postfix': 'BTC',
         })
         self.assertEqual(data['settings']['amount_1'],
@@ -221,7 +221,7 @@ class DeviceSerializerTestCase(TestCase):
         data = DeviceSerializer(device).data
         self.assertEqual(data['coin'], {
             'name': 'DASH',
-            'prefix': '',
+            'prefix': u'\uf15b',
             'postfix': 'DASH',
         })
 

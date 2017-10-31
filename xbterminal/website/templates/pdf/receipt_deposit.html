@@ -15,9 +15,8 @@
             {% trans 'Cryptocurrency amount paid' %}
         </td>
         <td class="col2">
-            <!-- m<span class="btc-symbol">&#xf15a;</span> -->
+            m<span class="coin-symbol">{{ deposit.coin.prefix }}</span>
             {{ deposit.paid_coin_amount|scale|floatformat:5 }}
-            m{{ deposit.coin.postfix }}
         </td>
     </tr>
     <tr>

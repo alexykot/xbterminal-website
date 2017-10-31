@@ -28,24 +28,28 @@ CURRENCIES = [
     {
         'id': 5,
         'name': 'BTC',
+        'prefix': u'\uf15a',
         'postfix': 'BTC',
         'is_fiat': False,
     },
     {
         'id': 6,
         'name': 'TBTC',
+        'prefix': u'\uf15a',
         'postfix': 'tBTC',
         'is_fiat': False,
     },
     {
         'id': 7,
         'name': 'DASH',
+        'prefix': u'\uf15b',
         'postfix': 'DASH',
         'is_fiat': False,
     },
     {
         'id': 8,
         'name': 'TDASH',
+        'prefix': u'\uf15b',
         'postfix': 'tDASH',
         'is_fiat': False,
     },
