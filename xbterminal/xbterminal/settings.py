@@ -155,6 +155,9 @@ REST_FRAMEWORK = {
     'COERCE_DECIMAL_TO_STRING': False,
     'DEFAULT_PERMISSION_CLASSES': [],
     'DEFAULT_AUTHENTICATION_CLASSES': [],
+    'DEFAULT_RENDERER_CLASSES': [
+        'api.renderers.CustomJSONRenderer',
+    ],
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
 }
 

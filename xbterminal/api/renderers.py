@@ -1,4 +1,23 @@
-from rest_framework.renderers import BaseRenderer
+from decimal import Decimal
+
+from django.utils import six
+
+from rest_framework.renderers import BaseRenderer, JSONRenderer
+from rest_framework.utils.encoders import JSONEncoder
+
+
+class CustomJSONEncoder(JSONEncoder):
+
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            # Coerce to string
+            return six.text_type(obj)
+        return super(CustomJSONEncoder, self).default(obj)
+
+
+class CustomJSONRenderer(JSONRenderer):
+
+    encoder_class = CustomJSONEncoder
 
 
 class PlainTextRenderer(BaseRenderer):
