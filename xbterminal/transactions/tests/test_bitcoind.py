@@ -127,7 +127,10 @@ class BlockChainTestCase(TestCase):
             },
         })
         bc = BlockChain('BTC')
-        tx = Mock(txs_in=[Mock(previous_hash='\x11' * 32)])
+        tx = Mock(txs_in=[Mock(
+            previous_hash='\x11' * 32,
+            previous_index=0,
+        )])
         result = bc.get_tx_inputs(tx)
 
         self.assertEqual(result, [{
