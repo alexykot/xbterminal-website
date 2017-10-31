@@ -225,6 +225,12 @@ class DeviceSerializerTestCase(TestCase):
             'postfix': 'DASH',
         })
 
+    def test_operational_old_version(self):
+        device = DeviceFactory(
+            system_info={'packages': {'xbterminal-rpc': '0.22.0'}})
+        data = DeviceSerializer(device).data
+        self.assertEqual(data['coin'], 'BTC')
+
 
 class DeviceRegistrationSerializerTestCase(TestCase):
 

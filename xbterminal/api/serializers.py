@@ -1,5 +1,7 @@
 from decimal import Decimal
 import re
+
+from distutils.version import LooseVersion
 from rest_framework import serializers
 
 from api.utils.salt import Salt
@@ -194,6 +196,12 @@ class DeviceSerializer(serializers.ModelSerializer):
         if device.status == 'registered':
             return None
         coin = device.account.currency
+        # TODO: remove
+        client_version = (device.system_info or {}).\
+            get('packages', {}).\
+            get('xbterminal-rpc', '0.22.1')
+        if LooseVersion(client_version) < LooseVersion('0.22.1'):
+            return coin.name
         return {
             'name': coin.name,
             'prefix': coin.prefix,
