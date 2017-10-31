@@ -103,10 +103,10 @@ class BlockChain(object):
             list of inputs (Decimal amount, address)
         """
         inputs = []
-        for idx, txin in enumerate(transaction.txs_in):
+        for txin in transaction.txs_in:
             input_tx_id = b2h_rev(txin.previous_hash)
             input_tx_info = self._proxy.getrawtransaction(input_tx_id, 1)
-            input_tx_out = input_tx_info['vout'][idx]
+            input_tx_out = input_tx_info['vout'][txin.previous_index]
             amount = Decimal(input_tx_out['value'])
             address = input_tx_out['scriptPubKey']['addresses'][0]
             inputs.append({'amount': amount, 'address': address})
