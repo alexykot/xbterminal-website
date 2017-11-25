@@ -7,7 +7,7 @@ import os
 
 from django.conf import settings
 
-from pycoin.tx import Tx
+from pycoin.tx.Tx import Tx
 from pycoin.tx.pay_to import script_obj_from_script
 from pycoin.ui import standard_tx_out_script
 

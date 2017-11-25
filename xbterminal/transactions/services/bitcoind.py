@@ -5,7 +5,7 @@ from bitcoin.rpc import RawProxy, InvalidAddressOrKeyError
 from django.conf import settings
 from constance import config
 from pycoin.serialize import b2h_rev
-from pycoin.tx import Tx
+from pycoin.tx.Tx import Tx
 
 from transactions.constants import COIN_DEC_PLACES, COIN_MIN_FEE
 from transactions.exceptions import (
